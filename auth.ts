@@ -1,34 +1,22 @@
 import NextAuth from "next-auth";
-import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/db";
+import { authConfig } from "./auth.config";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
     adapter: PrismaAdapter(prisma),
-    // Use JWT for sessions (works in Edge Runtime)
-    session: {
-        strategy: "jwt",
-    },
-    providers: [
-        Google({
-            clientId: process.env.GOOGLE_CLIENT_ID!,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-            allowDangerousEmailAccountLinking: true,
-        }),
-    ],
-    pages: {
-        signIn: "/login",
-    },
-    trustHost: true,
+    session: { strategy: "jwt" },
+    ...authConfig,
     callbacks: {
+        ...authConfig.callbacks,
+        // Override JWT to add DB role check (Node.js only)
         async jwt({ token, user, trigger }) {
-            // Persist user id to the token on first sign in
+            // First run base jwt logic
             if (user) {
                 token.id = user.id;
             }
 
-            // Obtener rol del usuario desde la BD
-            // Solo consultar si tenemos un id y el rol no está en el token
+            // Then DB check
             if (token.id && (!token.role || user || trigger === "update")) {
                 try {
                     const dbUser = await prisma.user.findUnique({
@@ -43,22 +31,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     token.planId = null;
                 }
             }
-
             return token;
         },
+        // Override Session to pass role
         async session({ session, token }) {
-            // Add user ID and role to session from JWT token
+            // Base session logic
             if (session.user && token.id) {
                 session.user.id = token.id as string;
                 (session.user as { role?: string }).role = token.role as string || "USER";
                 (session.user as { planId?: string | null }).planId = token.planId as string | null;
             }
             return session;
-        },
-        async redirect({ url, baseUrl }) {
-            if (url.startsWith(baseUrl)) return url;
-            if (url.startsWith("/")) return `${baseUrl}${url}`;
-            return baseUrl + "/dashboard";
         },
     },
     debug: process.env.NODE_ENV === "development",
