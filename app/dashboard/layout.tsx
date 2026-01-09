@@ -1,0 +1,112 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
+import { Camera, LayoutGrid, Plus, Settings, LogOut, CalendarDays, ChevronDown, User, Monitor, CreditCard } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useState } from "react";
+
+export default function DashboardLayout({
+    children,
+}: {
+    children: React.ReactNode;
+}) {
+    const pathname = usePathname();
+    const { data: session } = useSession();
+    const [showUserMenu, setShowUserMenu] = useState(false);
+
+    const navItems = [
+        { href: "/dashboard/settings", label: "Perfil público", icon: <User className="w-5 h-5" /> },
+        { href: "/dashboard", label: "Mis Galerías", icon: <LayoutGrid className="w-5 h-5" /> },
+        { href: "/dashboard/bookings", label: "Mis reservas", icon: <CalendarDays className="w-5 h-5" /> },
+        { href: "/dashboard/clouds", label: "Nubes conectadas", icon: <Settings className="w-5 h-5" /> },
+        { href: "/dashboard/billing", label: "Cuentas y pagos", icon: <CreditCard className="w-5 h-5" /> },
+    ];
+
+    return (
+        <div className="flex min-h-screen bg-neutral-950 text-neutral-100 font-sans">
+            {/* Sidebar */}
+            <aside className="w-64 border-r border-neutral-800 flex flex-col fixed inset-y-0 left-0 bg-neutral-900/30 backdrop-blur-xl z-20">
+                <div className="p-6 border-b border-neutral-800 flex items-center gap-2">
+                    <Camera className="w-6 h-6 text-white" />
+                    <span className="font-light text-xl tracking-tight">Closeframe</span>
+                </div>
+
+                <nav className="flex-1 p-4 space-y-1">
+                    {navItems.map((item) => {
+                        const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+                        return (
+                            <Link
+                                key={item.href}
+                                href={item.href}
+                                className={cn(
+                                    "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
+                                    isActive
+                                        ? "bg-white text-black font-medium"
+                                        : "text-neutral-400 hover:text-white hover:bg-neutral-800"
+                                )}
+                            >
+                                {item.icon}
+                                <span>{item.label}</span>
+                            </Link>
+                        );
+                    })}
+                </nav>
+
+                {/* User Profile Section */}
+                <div className="p-4 border-t border-neutral-800">
+                    <div className="relative">
+                        <button
+                            onClick={() => setShowUserMenu(!showUserMenu)}
+                            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-neutral-800 transition group"
+                        >
+                            {session?.user?.image ? (
+                                <img
+                                    src={session.user.image}
+                                    alt={session.user.name || "Avatar"}
+                                    className="w-9 h-9 rounded-full border-2 border-neutral-700 group-hover:border-neutral-500 transition"
+                                    referrerPolicy="no-referrer"
+                                />
+                            ) : (
+                                <div className="w-9 h-9 rounded-full bg-neutral-700 flex items-center justify-center">
+                                    <User className="w-5 h-5 text-neutral-400" />
+                                </div>
+                            )}
+                            <div className="flex-1 text-left">
+                                <p className="text-sm font-medium truncate max-w-[120px]">
+                                    {session?.user?.name || "Usuario"}
+                                </p>
+                                <p className="text-xs text-neutral-500 truncate max-w-[120px]">
+                                    {session?.user?.email}
+                                </p>
+                            </div>
+                            <ChevronDown className={cn(
+                                "w-4 h-4 text-neutral-500 transition-transform",
+                                showUserMenu && "rotate-180"
+                            )} />
+                        </button>
+
+                        {/* Dropdown Menu */}
+                        {showUserMenu && (
+                            <div className="absolute bottom-full left-0 right-0 mb-2 bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden shadow-xl">
+                                <button
+                                    onClick={() => signOut({ callbackUrl: "/" })}
+                                    className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-neutral-800 transition"
+                                >
+                                    <LogOut className="w-4 h-4" />
+                                    <span className="text-sm">Cerrar sesión</span>
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </aside>
+
+            {/* Main Content */}
+            <main className="flex-1 ml-64 p-8 md:p-12 overflow-y-auto">
+                {children}
+            </main>
+        </div>
+    );
+}

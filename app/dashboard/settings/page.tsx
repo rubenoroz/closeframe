@@ -1,0 +1,486 @@
+"use client";
+
+import React, { useEffect, useState, useRef, useMemo } from "react";
+import {
+    User, Building, Globe, Instagram, Phone, FileText, Save,
+    Loader2, Camera, X, Check, Copy, ExternalLink,
+    Sun, Moon, Monitor, Maximize, MousePointer2, Info, Folder,
+    Image as ImageIcon, Link2, Eye
+} from "lucide-react";
+import Link from "next/link";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
+
+export default function SettingsPage() {
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [copied, setCopied] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const [user, setUser] = useState({
+        id: "",
+        name: "",
+        email: "",
+        businessName: "",
+        businessLogo: "",
+        businessWebsite: "",
+        businessInstagram: "",
+        businessPhone: "",
+        bio: "",
+        theme: "dark",
+        businessLogoScale: 100,
+        projects: [] as any[],
+    });
+
+    useEffect(() => {
+        fetch("/api/user/settings")
+            .then((res) => res.json())
+            .then((data) => {
+                if (data.user) {
+                    setUser({
+                        id: data.user.id || "",
+                        name: data.user.name || "",
+                        email: data.user.email || "",
+                        businessName: data.user.businessName || "",
+                        businessLogo: data.user.businessLogo || "",
+                        businessWebsite: data.user.businessWebsite || "",
+                        businessInstagram: data.user.businessInstagram || "",
+                        businessPhone: data.user.businessPhone || "",
+                        bio: data.user.bio || "",
+                        theme: data.user.theme || "dark",
+                        businessLogoScale: data.user.businessLogoScale || 100,
+                        projects: data.user.projects || [],
+                    });
+                }
+                setLoading(false);
+            })
+            .catch((err) => {
+                console.error(err);
+                setLoading(false);
+            });
+    }, []);
+
+    const toggleProjectVisibility = async (projectId: string, currentStatus: boolean) => {
+        try {
+            const res = await fetch("/api/projects", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    id: projectId,
+                    public: !currentStatus
+                }),
+            });
+
+            if (!res.ok) throw new Error("Failed to update visibility");
+
+            // Update local state
+            setUser(prev => ({
+                ...prev,
+                projects: prev.projects.map(p =>
+                    p.id === projectId ? { ...p, public: !currentStatus } : p
+                )
+            }));
+        } catch (err) {
+            console.error(err);
+            alert("No se pudo actualizar la visibilidad de la galería.");
+        }
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (file.size > 2 * 1024 * 1024) {
+            alert("El logo es demasiado pesado. Máximo 2MB.");
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            let result = event.target?.result as string;
+
+            // Extensive SVG compatibility fix
+            if (file.type === 'image/svg+xml' || file.name.endsWith('.svg')) {
+                if (!result.startsWith('data:image/svg+xml')) {
+                    // Try to force correct mime type
+                    result = result.replace('data:image/octet-stream', 'data:image/svg+xml')
+                        .replace('data:text/plain', 'data:image/svg+xml');
+                }
+            }
+
+            setUser({ ...user, businessLogo: result });
+        };
+        reader.onerror = () => {
+            alert("Error al leer el archivo.");
+        };
+
+        // Use readAsDataURL which is usually safe for both PNG and SVG
+        reader.readAsDataURL(file);
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSaving(true);
+        try {
+            const res = await fetch("/api/user/settings", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(user),
+            });
+
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.details || "Error updating settings");
+            }
+
+            const data = await res.json();
+            if (data.user) {
+                setUser(prev => ({
+                    ...prev,
+                    id: data.user.id || "",
+                    name: data.user.name || "",
+                    email: data.user.email || "",
+                    businessName: data.user.businessName || "",
+                    businessLogo: data.user.businessLogo || "",
+                    businessWebsite: data.user.businessWebsite || "",
+                    businessInstagram: data.user.businessInstagram || "",
+                    businessPhone: data.user.businessPhone || "",
+                    bio: data.user.bio || "",
+                    theme: data.user.theme || "dark",
+                    businessLogoScale: data.user.businessLogoScale || 100,
+                }));
+            }
+            alert("¡Identidad guardada con éxito!");
+        } catch (err: any) {
+            console.error(err);
+            alert(`Hubo un error al guardar los cambios: ${err.message} `);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const copyProfileLink = () => {
+        const url = `${window.location.origin}/p/${user.id}`;
+        navigator.clipboard.writeText(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    if (loading) {
+        return (
+            <div className="flex h-screen items-center justify-center text-neutral-500 gap-2 bg-black">
+                <Loader2 className="w-5 h-5 animate-spin" /> Cargando identidad...
+            </div>
+        );
+    }
+
+    const isLight = user.theme === 'light';
+
+    return (
+        <div className={cn(
+            "min-h-[calc(100vh-6rem)] -m-8 md:-m-12 p-8 md:p-12 transition-colors duration-500",
+            isLight ? "bg-white text-neutral-900" : "bg-neutral-950 text-neutral-100"
+        )}>
+            <header className={cn(
+                "mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6 border-b pb-8 transition-colors duration-500",
+                isLight ? "border-neutral-200" : "border-neutral-900"
+            )}>
+                <div>
+                    <h1 className={cn("text-3xl md:text-4xl font-light mb-4 transition-colors", isLight ? "text-neutral-900" : "text-white")}>
+                        Editar perfil público
+                    </h1>
+                    <p className="text-neutral-500 text-sm italic">Define tu presencia digital y personaliza tu marca.</p>
+                </div>
+                <div className={cn(
+                    "flex items-center gap-4 p-2 rounded-2xl border transition-all",
+                    isLight ? "bg-neutral-50 border-neutral-200" : "bg-neutral-900/50 border-neutral-800"
+                )}>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 ml-2">Tema</span>
+                    <button
+                        onClick={() => setUser({ ...user, theme: isLight ? 'dark' : 'light' })}
+                        className={cn(
+                            "flex items-center gap-2 px-4 py-2 rounded-xl transition text-xs font-medium",
+                            isLight
+                                ? "bg-white border border-neutral-200 text-neutral-600 hover:bg-neutral-100"
+                                : "bg-neutral-800 hover:bg-neutral-700 text-neutral-300"
+                        )}
+                    >
+                        {isLight ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
+                        {isLight ? 'Modo Oscuro' : 'Modo Claro'}
+                    </button>
+                </div>
+            </header>
+
+            <form onSubmit={handleSubmit} className="space-y-16">
+                {/* BASIC INFO */}
+                <section>
+                    <div className="flex items-center gap-3 mb-8 text-neutral-400 text-xs uppercase tracking-widest font-bold">
+                        <User className="w-4 h-4 text-emerald-500" /> Información básica
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-8">
+                        <div className="space-y-3">
+                            <label className="text-[10px] font-bold opacity-40 uppercase tracking-widest ml-1">Nombre profesional</label>
+                            <input
+                                type="text"
+                                value={user.name}
+                                onChange={(e) => setUser({ ...user, name: e.target.value })}
+                                className={cn(
+                                    "w-full border rounded-xl px-5 py-4 outline-none transition-all",
+                                    isLight
+                                        ? "bg-neutral-50 border-neutral-200 text-neutral-900 focus:bg-white focus:border-emerald-500/50"
+                                        : "bg-neutral-900/50 border-neutral-800 text-neutral-100 focus:border-emerald-500/50"
+                                )}
+                                placeholder="Tu nombre o estudio"
+                            />
+                        </div>
+                        <div className="space-y-3">
+                            <label className="text-[10px] font-bold opacity-40 uppercase tracking-widest ml-1">Correo de contacto</label>
+                            <input
+                                type="email"
+                                value={user.email}
+                                onChange={(e) => setUser({ ...user, email: e.target.value })}
+                                className={cn(
+                                    "w-full border rounded-xl px-5 py-4 outline-none transition-all",
+                                    isLight
+                                        ? "bg-neutral-50 border-neutral-200 text-neutral-600 focus:bg-white focus:border-emerald-500/50"
+                                        : "bg-neutral-900/50 border-neutral-800 text-neutral-400 focus:border-emerald-500/50"
+                                )}
+                                placeholder="tu@correo.com"
+                            />
+                        </div>
+                        <div className="md:col-span-2 space-y-3">
+                            <label className="text-[10px] font-bold opacity-40 uppercase tracking-widest ml-1">Biografía / Reseña corta</label>
+                            <textarea
+                                value={user.bio}
+                                onChange={(e) => setUser({ ...user, bio: e.target.value })}
+                                className={cn(
+                                    "w-full border rounded-xl px-5 py-4 h-32 outline-none transition-all resize-none leading-relaxed",
+                                    isLight
+                                        ? "bg-neutral-50 border-neutral-200 text-neutral-900 focus:bg-white focus:border-emerald-500/50"
+                                        : "bg-neutral-900/50 border-neutral-800 text-neutral-100 focus:border-emerald-500/50"
+                                )}
+                                placeholder="Cuéntale a tus clientes quién eres y tu estilo..."
+                            />
+                        </div>
+                    </div>
+                </section>
+
+                {/* IMAGE / LOGO */}
+                <section>
+                    <div className="flex items-center gap-3 mb-8 text-neutral-400 text-xs uppercase tracking-widest font-bold">
+                        <ImageIcon className="w-4 h-4 text-emerald-500" /> Imagen principal / Logo
+                    </div>
+
+                    <div className="flex flex-col md:flex-row items-center gap-10">
+                        <div className="relative group">
+                            <div className={cn(
+                                "w-32 h-32 rounded-full border flex items-center justify-center overflow-hidden p-4 shadow-2xl transition-colors",
+                                isLight ? "bg-white border-neutral-200" : "bg-neutral-900 border-neutral-800"
+                            )}>
+                                {user.businessLogo ? (
+                                    <img
+                                        src={user.businessLogo}
+                                        alt="Logo"
+                                        className="max-h-full max-w-full object-contain transition-transform duration-300"
+                                        style={{ transform: `scale(${user.businessLogoScale / 100})` }}
+                                    />
+                                ) : (
+                                    <Camera className={cn("w-8 h-8", isLight ? "text-neutral-300" : "text-neutral-700")} />
+                                )}
+                            </div>
+                            {user.businessLogo && (
+                                <button
+                                    onClick={() => setUser({ ...user, businessLogo: "" })}
+                                    className="absolute -top-1 -right-1 p-1.5 bg-red-500 text-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition"
+                                >
+                                    <X className="w-3 h-3" />
+                                </button>
+                            )}
+                        </div>
+
+                        <div className="flex-1 space-y-6 w-full max-w-sm">
+                            <div className="flex items-center gap-4">
+                                <button
+                                    type="button"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="px-8 py-3 rounded-full bg-white text-black text-sm font-bold hover:bg-neutral-200 transition"
+                                >
+                                    Subir imagen
+                                </button>
+                                <p className="text-[10px] text-neutral-500 max-w-[150px]">Recomendado PNG transparente o SVG.</p>
+                            </div>
+
+                            {user.businessLogo && (
+                                <div className="space-y-3">
+                                    <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest opacity-40">
+                                        <span>Tamaño del logo</span>
+                                        <span className="text-emerald-500">{user.businessLogoScale}%</span>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        min="20"
+                                        max="200"
+                                        value={user.businessLogoScale}
+                                        onChange={(e) => setUser({ ...user, businessLogoScale: parseInt(e.target.value) })}
+                                        className={cn(
+                                            "w-full h-1.5 rounded-lg appearance-none cursor-pointer accent-emerald-500 transition-colors",
+                                            isLight ? "bg-neutral-200" : "bg-neutral-800"
+                                        )}
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </section>
+
+                {/* LINKS */}
+                <section>
+                    <div className="flex items-center gap-3 mb-8 text-neutral-400 text-xs uppercase tracking-widest font-bold">
+                        <Link2 className="w-4 h-4 text-emerald-500" /> Links y redes
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-8">
+                        <div className="space-y-3">
+                            <label className="text-[10px] font-bold opacity-40 uppercase tracking-widest ml-1">Instagram (@usuario)</label>
+                            <div className="relative">
+                                <Instagram className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-600" />
+                                <input
+                                    type="text"
+                                    value={user.businessInstagram}
+                                    onChange={(e) => setUser({ ...user, businessInstagram: e.target.value })}
+                                    className={cn(
+                                        "w-full border rounded-xl pl-12 pr-5 py-4 outline-none transition-all",
+                                        isLight
+                                            ? "bg-neutral-50 border-neutral-200 text-neutral-900 focus:bg-white focus:border-emerald-500/50"
+                                            : "bg-neutral-900/50 border-neutral-800 text-neutral-100 focus:border-emerald-500/50"
+                                    )}
+                                    placeholder="@tu_perfil"
+                                />
+                            </div>
+                        </div>
+                        <div className="space-y-3">
+                            <label className="text-[10px] font-bold opacity-40 uppercase tracking-widest ml-1">Sitio Web (URL)</label>
+                            <div className="relative">
+                                <Globe className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-600" />
+                                <input
+                                    type="url"
+                                    value={user.businessWebsite}
+                                    onChange={(e) => setUser({ ...user, businessWebsite: e.target.value })}
+                                    className={cn(
+                                        "w-full border rounded-xl pl-12 pr-5 py-4 outline-none transition-all",
+                                        isLight
+                                            ? "bg-neutral-50 border-neutral-200 text-neutral-900 focus:bg-white focus:border-emerald-500/50"
+                                            : "bg-neutral-900/50 border-neutral-800 text-neutral-100 focus:border-emerald-500/50"
+                                    )}
+                                    placeholder="https://..."
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* PUBLIC GALLERIES */}
+                <section>
+                    <div className="flex items-center gap-3 mb-8 text-neutral-400 text-xs uppercase tracking-widest font-bold">
+                        <Eye className="w-4 h-4 text-emerald-500" /> Galerías públicas
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        {user.projects.length === 0 ? (
+                            <div className={cn(
+                                "md:col-span-2 py-10 rounded-2xl border border-dashed text-center text-sm transition-colors",
+                                isLight ? "border-neutral-200 text-neutral-400" : "border-neutral-800 text-neutral-600"
+                            )}>
+                                No hay galerías creadas aún.
+                            </div>
+                        ) : (
+                            user.projects.map((project) => (
+                                <motion.div
+                                    key={project.id}
+                                    whileHover={{ scale: 1.01 }}
+                                    className={cn(
+                                        "flex items-center justify-between p-4 rounded-xl border transition-all",
+                                        isLight
+                                            ? "bg-white border-neutral-200 hover:border-emerald-500/30"
+                                            : "bg-neutral-900/30 border-neutral-800 hover:bg-neutral-900 ml-0"
+                                    )}
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className={cn(
+                                            "w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center transition-colors",
+                                            isLight ? "bg-neutral-100 border border-neutral-100" : "bg-neutral-800 border border-neutral-700"
+                                        )}>
+                                            {project.coverImage ? (
+                                                <img src={project.coverImage} className="w-full h-full object-cover" alt="" />
+                                            ) : (
+                                                <Folder className={cn("w-4 h-4", isLight ? "text-neutral-300" : "text-neutral-600")} />
+                                            )}
+                                        </div>
+                                        <span className={cn("text-sm font-medium", isLight ? "text-neutral-900" : "text-white")}>{project.name}</span>
+                                    </div>
+                                    <input
+                                        type="checkbox"
+                                        checked={project.public}
+                                        onChange={() => toggleProjectVisibility(project.id, project.public)}
+                                        className="w-5 h-5 accent-emerald-500 rounded cursor-pointer"
+                                    />
+                                </motion.div>
+                            ))
+                        )}
+                    </div>
+                </section>
+
+                {/* ACTIONS */}
+                <footer className={cn(
+                    "pt-10 border-t flex flex-col md:flex-row justify-between items-center gap-6 transition-colors",
+                    isLight ? "border-neutral-200" : "border-neutral-900"
+                )}>
+                    <div className="flex items-center gap-4">
+                        <button
+                            type="button"
+                            onClick={copyProfileLink}
+                            className={cn(
+                                "flex items-center gap-2 px-6 py-3 rounded-full text-xs transition font-bold border",
+                                isLight
+                                    ? "bg-neutral-50 border-neutral-200 text-neutral-600 hover:bg-white"
+                                    : "bg-neutral-900/50 border-neutral-800 text-neutral-300 hover:bg-neutral-800"
+                            )}
+                        >
+                            {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                            Copiar Link
+                        </button>
+                        <Link
+                            href={`/p/${user.id}`}
+                            target="_blank"
+                            className="flex items-center gap-2 text-sm text-neutral-500 hover:text-emerald-500 transition"
+                        >
+                            <Eye className="w-4 h-4" /> Ver perfil público
+                        </Link>
+                    </div>
+                    <button
+                        type="submit"
+                        disabled={saving}
+                        className={cn(
+                            "w-full md:w-auto flex items-center justify-center gap-3 px-12 py-4 rounded-full font-bold transition-all shadow-xl disabled:opacity-50",
+                            isLight
+                                ? "bg-neutral-900 text-white hover:bg-black shadow-neutral-200/50"
+                                : "bg-white text-black hover:bg-neutral-200 shadow-white/5"
+                        )}
+                    >
+                        {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-4 h-4" />}
+                        Guardar cambios
+                    </button>
+                </footer>
+            </form>
+
+            <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept="image/*,.svg,image/svg+xml"
+                className="hidden"
+            />
+        </div>
+    );
+}
