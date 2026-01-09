@@ -59,7 +59,7 @@ Tip: Usa herramientas como Lightroom para exportar renombrando tus archivos en s
 
         const filename = "Plantilla_Estructura_TuSet.zip";
 
-        return new NextResponse(content, {
+        return new NextResponse(new Uint8Array(content), {
             headers: {
                 "Content-Type": "application/zip",
                 "Content-Disposition": `attachment; filename="${filename}"`,

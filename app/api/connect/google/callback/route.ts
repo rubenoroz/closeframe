@@ -18,8 +18,8 @@ export async function GET(request: Request) {
             return NextResponse.redirect(new URL("/login?error=not_authenticated", request.url));
         }
 
-        // TEMPORARY TEST: Hardcode to ensure NO spaces or weird parsing
-        const REDIRECT_URI = "http://localhost:3000/api/connect/google/callback";
+        // Dynamic Redirect URI based on environment
+        const REDIRECT_URI = `${process.env.NEXT_PUBLIC_APP_URL}/api/connect/google/callback`;
 
         const oauth2Client = new google.auth.OAuth2(
             process.env.GOOGLE_CLIENT_ID,

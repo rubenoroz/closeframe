@@ -7,7 +7,7 @@ export async function GET() {
 
     console.log("OAuth Callback - Redirect URI:", `|${process.env.GOOGLE_REDIRECT_URI}|`);
 
-    const REDIRECT_URI = "http://localhost:3000/api/connect/google/callback";
+    const REDIRECT_URI = `${process.env.NEXT_PUBLIC_APP_URL}/api/connect/google/callback`;
 
     const oauth2Client = new google.auth.OAuth2(
         process.env.GOOGLE_CLIENT_ID,
