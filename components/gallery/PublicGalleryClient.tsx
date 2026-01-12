@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from "react";
 import GalleryViewer from "@/components/gallery/GalleryViewer";
 import GalleryLock from "@/components/gallery/GalleryLock";
+import GalleryHeader from "@/components/gallery/GalleryHeader";
+import MediaTabs from "@/components/gallery/MediaTabs";
 import Link from "next/link";
 import { Camera } from "lucide-react";
 
@@ -17,6 +19,12 @@ interface PublicGalleryClientProps {
         downloadEnabled: boolean;
         downloadJpgEnabled: boolean;
         downloadRawEnabled: boolean;
+        headerTitle?: string | null;
+        headerFontFamily?: string | null;
+        headerColor?: string | null;
+        headerBackground?: string | null;
+        videoFolderId?: string | null;
+        enableVideoTab?: boolean | null;
         user?: {
             businessName?: string | null;
             businessLogo?: string | null;
@@ -29,6 +37,21 @@ interface PublicGalleryClientProps {
 
 export default function PublicGalleryClient({ project }: PublicGalleryClientProps) {
     const [isLocked, setIsLocked] = useState(project.passwordProtected);
+    const [activeTab, setActiveTab] = useState<"photos" | "videos">("photos");
+
+    // Restore tab preference from localStorage
+    useEffect(() => {
+        const savedTab = localStorage.getItem(`gallery_tab_${project.slug}`);
+        if (savedTab === "videos" && project.enableVideoTab) {
+            setActiveTab("videos");
+        }
+    }, [project.slug, project.enableVideoTab]);
+
+    // Save tab preference when changed
+    const handleTabChange = (tab: "photos" | "videos") => {
+        setActiveTab(tab);
+        localStorage.setItem(`gallery_tab_${project.slug}`, tab);
+    };
 
     useEffect(() => {
         // Check if it was already unlocked in this session
@@ -50,11 +73,41 @@ export default function PublicGalleryClient({ project }: PublicGalleryClientProp
         );
     }
 
+    // Determine which folder to load based on active tab
+    const currentFolderId =
+        activeTab === "videos" && project.videoFolderId
+            ? project.videoFolderId
+            : project.rootFolderId;
+
+    // Get header configuration with fallbacks
+    const headerTitle = project.headerTitle || project.name;
+    const headerFontFamily = project.headerFontFamily || "Inter";
+    const headerColor = project.headerColor || "#FFFFFF";
+    const headerBackground = (project.headerBackground as "dark" | "light") || "dark";
+    const showVideoTab = project.enableVideoTab || false;
+
     return (
-        <div className={`relative min-h-screen transition-colors duration-500 ${project.user?.theme === 'light' ? 'bg-white' : 'bg-black'}`}>
+        <div className={`relative min-h-screen transition-colors duration-500 ${headerBackground === 'light' ? 'bg-white' : 'bg-black'}`}>
+            {/* Customizable Header */}
+            <GalleryHeader
+                title={headerTitle}
+                fontFamily={headerFontFamily}
+                color={headerColor}
+                background={headerBackground}
+            />
+
+            {/* Media Tabs (Photos/Videos) */}
+            <MediaTabs
+                activeTab={activeTab}
+                onTabChange={handleTabChange}
+                showVideoTab={showVideoTab}
+                theme={headerBackground}
+            />
+
+            {/* Gallery Viewer */}
             <GalleryViewer
                 cloudAccountId={project.cloudAccountId}
-                folderId={project.rootFolderId}
+                folderId={currentFolderId}
                 projectName={project.name}
                 downloadEnabled={project.downloadEnabled}
                 downloadJpgEnabled={project.downloadJpgEnabled}
@@ -62,7 +115,7 @@ export default function PublicGalleryClient({ project }: PublicGalleryClientProp
                 studioName={project.user?.businessName || "Closeframe"}
                 studioLogo={project.user?.businessLogo || ""}
                 studioLogoScale={project.user?.businessLogoScale || 100}
-                theme={project.user?.theme || "dark"}
+                theme={headerBackground}
             />
 
             {/* Minimal branding */}

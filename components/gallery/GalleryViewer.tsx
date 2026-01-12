@@ -23,13 +23,15 @@ interface Props {
 interface CloudFile {
     id: string;
     name: string;
+    mimeType?: string;
     thumbnailLink?: string;
     width?: number;
     height?: number;
     formats?: {
         web: string;
-        jpg: string | null;
-        raw: string | { id: string; name: string } | null;
+        jpg?: string | null;
+        hd?: string | null;
+        raw?: string | { id: string; name: string } | null;
     };
 }
 
@@ -276,7 +278,7 @@ export default function GalleryViewer({
                     </div>
                 ) : files.length === 0 ? (
                     <div className="flex justify-center items-center py-40 text-neutral-500">
-                        Esta carpeta no contiene imágenes.
+                        Esta carpeta no contiene imágenes ni videos.
                     </div>
                 ) : (
                     <>
@@ -286,10 +288,11 @@ export default function GalleryViewer({
                                     {col.map((item) => {
                                         const originalIndex = files.findIndex((f) => f.id === item.id);
                                         return (
-                                            <ImageCard
+                                            <MediaCard
                                                 key={item.id}
                                                 item={item}
                                                 index={originalIndex}
+                                                cloudAccountId={cloudAccountId}
                                                 downloadEnabled={anyDownloadEnabled}
                                                 isSelected={selectedIds.has(item.id)}
                                                 onSelect={() => toggleSelect(item.id)}
@@ -307,10 +310,11 @@ export default function GalleryViewer({
                                     {col.map((item) => {
                                         const originalIndex = files.findIndex((f) => f.id === item.id);
                                         return (
-                                            <ImageCard
+                                            <MediaCard
                                                 key={item.id}
                                                 item={item}
                                                 index={originalIndex}
+                                                cloudAccountId={cloudAccountId}
                                                 downloadEnabled={anyDownloadEnabled}
                                                 isSelected={selectedIds.has(item.id)}
                                                 onSelect={() => toggleSelect(item.id)}
@@ -385,7 +389,7 @@ export default function GalleryViewer({
                                         onClick={() => handleDownloadZip("jpg")}
                                     >
                                         {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                                        Descargar JPG
+                                        Descargar Baja
                                     </button>
                                 </div>
                             )}
@@ -401,9 +405,9 @@ export default function GalleryViewer({
                                             ? 'bg-emerald-600 text-white hover:bg-emerald-500 shadow-emerald-200'
                                             : 'bg-white text-black hover:bg-neutral-200'
                                         }`}
-                                    title="Descargar RAWs"
+                                    title="Descargar Alta Calidad"
                                 >
-                                    <span className="text-xs font-black tracking-wider">RAW</span>
+                                    <span className="text-xs font-black tracking-wider">ALTA</span>
                                 </button>
                             )}
                         </div>
@@ -414,9 +418,10 @@ export default function GalleryViewer({
     );
 }
 
-function ImageCard({
+function MediaCard({
     item,
     index,
+    cloudAccountId,
     isSelected,
     downloadEnabled,
     onSelect,
@@ -424,12 +429,24 @@ function ImageCard({
 }: {
     item: CloudFile;
     index: number;
+    cloudAccountId: string;
     isSelected: boolean;
     downloadEnabled: boolean;
     onSelect: () => void;
     onView: () => void
 }) {
     const [loaded, setLoaded] = useState(false);
+    const [error, setError] = useState(false);
+    const isVideo = item.mimeType?.startsWith('video/');
+
+    // Calculate aspect ratio for placeholder sizing (avoids layout shift)
+    // Default to 4:3 if dimensions unknown
+    const aspectRatio = (item.width && item.height)
+        ? item.width / item.height
+        : 4 / 3;
+
+    // Use eager loading for first 8 items (likely in viewport)
+    const loadingStrategy = index < 8 ? "eager" : "lazy";
 
     return (
         <motion.div
@@ -437,21 +454,57 @@ function ImageCard({
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ delay: (index % 10) * 0.05 }}
-            className={`relative w-full rounded-xl bg-neutral-900 overflow-hidden cursor-pointer group border-2 transition-all duration-300 ${isSelected ? "border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]" : "border-transparent"
+            className={`relative w-full rounded-xl bg-neutral-800 overflow-hidden cursor-pointer group border-2 transition-all duration-300 ${isSelected ? "border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]" : "border-transparent"
                 }`}
         >
-            <div className="relative">
-                <div onClick={onView}>
-                    {!loaded && <Skeleton className="absolute inset-0 w-full h-full min-h-[150px]" />}
+            <div
+                className="relative"
+                style={{ aspectRatio: aspectRatio }}
+            >
+                <div onClick={onView} className="absolute inset-0">
+                    {/* Skeleton placeholder with shimmer effect */}
+                    {!loaded && !error && (
+                        <div className="absolute inset-0 bg-neutral-800 overflow-hidden">
+                            <div className="absolute inset-0 bg-gradient-to-r from-neutral-800 via-neutral-700 to-neutral-800 animate-pulse" />
+                            {isVideo && (
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <div className="w-12 h-12 rounded-full bg-neutral-700/50 flex items-center justify-center">
+                                        <svg className="w-6 h-6 text-neutral-500" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M8 5v14l11-7z" />
+                                        </svg>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Error state */}
+                    {error && (
+                        <div className="absolute inset-0 bg-neutral-900 flex items-center justify-center">
+                            <span className="text-neutral-500 text-xs">Error</span>
+                        </div>
+                    )}
+
                     <img
-                        src={item.thumbnailLink ? item.thumbnailLink.replace("=s220", "=s800") : ""}
+                        src={`/api/cloud/thumbnail?c=${cloudAccountId}&f=${item.id}&s=400`}
                         alt={item.name}
-                        className={`w-full h-auto block transform group-hover:scale-105 transition duration-500 ${loaded ? "opacity-100" : "opacity-0"
-                            }`}
+                        className={`absolute inset-0 w-full h-full object-cover transform group-hover:scale-105 transition duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
                         onLoad={() => setLoaded(true)}
+                        onError={() => setError(true)}
                         referrerPolicy="no-referrer"
-                        loading="lazy"
+                        loading={loadingStrategy}
                     />
+
+                    {/* Video play icon overlay */}
+                    {isVideo && loaded && (
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div className="w-16 h-16 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center border-2 border-white/30 shadow-xl">
+                                <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M8 5v14l11-7z" />
+                                </svg>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Selection Checkbox */}

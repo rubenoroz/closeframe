@@ -110,6 +110,21 @@ model Project {
   userId            String
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
+  
+  // Gallery Header Customization
+  headerTitle       String?      // Custom title (e.g., "Boda de Ana & Carlos")
+  headerFontFamily  String       @default("Inter")
+  headerColor       String       @default("#FFFFFF")
+  headerBackground  String       @default("dark") // "dark" | "light"
+  
+  // Video Tab
+  videoFolderId     String?      // Drive folder ID for videos
+  enableVideoTab    Boolean      @default(false)
+  
+  // Video Download Options (similar to photo proxies)
+  downloadVideoHdEnabled  Boolean @default(true)
+  downloadVideoRawEnabled Boolean @default(false)
+  
   user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   cloudAccount      CloudAccount @relation(fields: [cloudAccountId], references: [id])
 }

@@ -33,3 +33,22 @@ Para que tu aplicación "TuSet" pueda conectarse a Google Drive, necesitas regis
 Google te mostrará dos códigos:
 - **ID de Cliente** -> Copia esto en `GOOGLE_CLIENT_ID` en tu archivo `.env`.
 - **Secreto de Cliente** -> Copia esto en `GOOGLE_CLIENT_SECRET` en tu archivo `.env`.
+
+## Solución de Problemas: Permanencia de la Conexión (Token Expiration)
+
+Si notas que tus galerías funcionan bien al principio pero dejan de conectar después de 7 días, es porque tu proyecto de Google Cloud está en modo **"Testing"**.
+
+**Síntoma:**
+- Las galerías cargan bien recién conectadas.
+- A los 7 días exactos, aparece error de autenticación o la galería sale vacía.
+
+**Causa:**
+- Google aplica una caducidad de 7 días a los tokens de refresco en aplicaciones en estado de "Prueba" (Testing).
+
+**Solución:**
+1. Ve a [Google Cloud Console](https://console.cloud.google.com/) > **Pantalla de consentimiento de OAuth**.
+2. En "Estado de la publicación", haz clic en **"Publicar la aplicación"** (Publish App).
+3. Confirma el cuadro de diálogo.
+   - Tu app pasará a estado "En producción".
+   - **Nota:** No necesitas verificar la app si es para uso interno. Ignora las advertencias de "App no verificada".
+   - Al estar en Producción, los tokens ya no caducan a los 7 días.

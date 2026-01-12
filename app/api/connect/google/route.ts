@@ -7,7 +7,11 @@ export async function GET() {
 
     console.log("OAuth Callback - Redirect URI:", `|${process.env.GOOGLE_REDIRECT_URI}|`);
 
-    const REDIRECT_URI = `${process.env.NEXT_PUBLIC_APP_URL}/api/connect/google/callback`;
+    let baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    if (baseUrl.endsWith('/')) {
+        baseUrl = baseUrl.slice(0, -1);
+    }
+    const REDIRECT_URI = `${baseUrl}/api/connect/google/callback`;
 
     const oauth2Client = new google.auth.OAuth2(
         process.env.GOOGLE_CLIENT_ID,
@@ -23,7 +27,8 @@ export async function GET() {
     const url = oauth2Client.generateAuthUrl({
         access_type: "offline",
         scope: scopes,
-        prompt: "select_account consent",
+        prompt: "consent", // Force consent screen to ensure we get a refresh_token
+        include_granted_scopes: true,
     });
 
     console.log("FULL AUTH URL:", url);

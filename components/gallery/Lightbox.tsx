@@ -7,11 +7,13 @@ import { X, ChevronLeft, ChevronRight, Download, Share2, Loader2 } from "lucide-
 interface CloudFile {
     id: string;
     name: string;
+    mimeType?: string;
     thumbnailLink?: string;
     formats?: {
         web: string;
-        jpg: string | null;
-        raw: string | { id: string; name: string } | null;
+        jpg?: string | null;
+        hd?: string | null;
+        raw?: string | { id: string; name: string } | null;
     };
 }
 
@@ -47,7 +49,7 @@ export default function Lightbox({
         onNavigate((currentIndex - 1 + files.length) % files.length);
     }, [currentIndex, files.length, onNavigate]);
 
-    const handleDownloadFormat = async (format: "jpg" | "raw") => {
+    const handleDownloadFormat = async (format: "jpg" | "hd" | "raw") => {
         let fileId: string | undefined;
         let fileName = currentFile.name; // Default filename (usually JPG name)
 
@@ -196,16 +198,18 @@ export default function Lightbox({
 
                     {/* Top Actions: Proxy/Format Downloads */}
                     <div className="absolute top-6 left-6 flex items-center gap-3 z-[110]">
-                        {downloadJpgEnabled && currentFile.formats?.jpg && (
+                        {/* For photos: JPG button, For videos: Baja (hd) button */}
+                        {downloadJpgEnabled && (currentFile.formats?.jpg || currentFile.formats?.hd) && (
                             <button
-                                onClick={() => handleDownloadFormat("jpg")}
+                                onClick={() => handleDownloadFormat(currentFile.mimeType?.startsWith('video/') ? "hd" : "jpg")}
                                 disabled={!!isDownloading}
                                 className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 hover:bg-emerald-500 text-white transition backdrop-blur-md border border-white/10 text-xs font-bold uppercase tracking-wider disabled:opacity-50"
                             >
-                                {isDownloading === "jpg" ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
-                                JPG Alta Res
+                                {(isDownloading === "jpg" || isDownloading === "hd") ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
+                                {currentFile.mimeType?.startsWith('video/') ? 'Baja' : 'JPG Alta Res'}
                             </button>
                         )}
+                        {/* For photos: RAW button, For videos: Alta button */}
                         {downloadRawEnabled && currentFile.formats?.raw && (
                             <button
                                 onClick={() => handleDownloadFormat("raw")}
@@ -213,7 +217,7 @@ export default function Lightbox({
                                 className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 hover:bg-orange-500 text-white transition backdrop-blur-md border border-white/10 text-xs font-bold uppercase tracking-wider disabled:opacity-50"
                             >
                                 {isDownloading === "raw" ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
-                                RAW
+                                {currentFile.mimeType?.startsWith('video/') ? 'Alta' : 'RAW'}
                             </button>
                         )}
                         <button className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-white transition backdrop-blur-md border border-white/10 text-sm font-medium">
@@ -221,7 +225,7 @@ export default function Lightbox({
                         </button>
                     </div>
 
-                    {/* Image Container */}
+                    {/* Media Container - Video or Image */}
                     <motion.div
                         key={currentIndex}
                         initial={{ opacity: 0, scale: 0.95 }}
@@ -231,12 +235,26 @@ export default function Lightbox({
                         className="w-full h-full p-4 md:p-12 flex items-center justify-center"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <img
-                            src={currentFile.thumbnailLink?.replace("=s220", "=s1600")}
-                            alt={currentFile.name}
-                            className="max-w-full max-h-full object-contain shadow-2xl rounded-lg border border-white/5"
-                            referrerPolicy="no-referrer"
-                        />
+                        {currentFile.mimeType?.startsWith('video/') ? (
+                            <video
+                                key={`video-${currentFile.id}`}
+                                controls
+                                autoPlay
+                                playsInline
+                                poster={currentFile.thumbnailLink?.replace("=s220", "=s1600")}
+                                className="max-w-full max-h-full object-contain shadow-2xl rounded-lg border border-white/5"
+                                src={`/api/cloud/video-stream?c=${cloudAccountId}&f=${currentFile.formats?.web || currentFile.id}`}
+                            >
+                                Tu navegador no soporta la reproducción de video.
+                            </video>
+                        ) : (
+                            <img
+                                src={currentFile.thumbnailLink?.replace("=s220", "=s1600")}
+                                alt={currentFile.name}
+                                className="max-w-full max-h-full object-contain shadow-2xl rounded-lg border border-white/5"
+                                referrerPolicy="no-referrer"
+                            />
+                        )}
                     </motion.div>
 
                     {/* Bottom Info */}
@@ -250,8 +268,8 @@ export default function Lightbox({
                             </span>
                             {currentFile.formats?.raw && (
                                 <span className={`text-[10px] font-bold uppercase tracking-tighter px-1.5 py-0.5 rounded border ${downloadRawEnabled
-                                        ? "text-orange-400 bg-orange-400/10 border-orange-400/20"
-                                        : "text-neutral-500 bg-neutral-800 border-neutral-700 opacity-50"
+                                    ? "text-orange-400 bg-orange-400/10 border-orange-400/20"
+                                    : "text-neutral-500 bg-neutral-800 border-neutral-700 opacity-50"
                                     }`}>
                                     RAW {downloadRawEnabled ? "Disponible" : "Protegido"}
                                 </span>

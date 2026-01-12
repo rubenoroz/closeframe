@@ -18,24 +18,35 @@ export class GoogleDriveProvider implements CloudProvider {
         const drive = this.getDriveClient(authSource);
 
         const res = await drive.files.list({
-            q: `'${folderId}' in parents and mimeType contains 'image/' and trashed = false`,
-            fields: "files(id, name, mimeType, thumbnailLink, webContentLink, imageMediaMetadata, size, modifiedTime)",
+            q: `'${folderId}' in parents and (mimeType contains 'image/' or mimeType contains 'video/') and trashed = false`,
+            fields: "files(id, name, mimeType, thumbnailLink, webContentLink, imageMediaMetadata, videoMediaMetadata, size, modifiedTime)",
             pageSize: 100,
         });
 
         const files = res.data.files || [];
 
-        return files.map((file) => ({
-            id: file.id || "",
-            name: file.name || "Untitled",
-            mimeType: file.mimeType || "application/octet-stream",
-            thumbnailLink: file.thumbnailLink || undefined,
-            previewLink: file.webContentLink || undefined,
-            downloadLink: file.webContentLink || undefined,
-            width: file.imageMediaMetadata?.width || undefined,
-            height: file.imageMediaMetadata?.height || undefined,
-            lastModified: file.modifiedTime || undefined,
-        }));
+        return files.map((file) => {
+            const isVideo = file.mimeType?.startsWith('video/');
+
+            // Use Google's provided thumbnailLink when available (works better with auth)
+            // For videos without thumbnailLink, try Drive's thumbnail API as fallback
+            let thumbnailLink = file.thumbnailLink;
+            if (!thumbnailLink && isVideo && file.id) {
+                thumbnailLink = `https://drive.google.com/thumbnail?id=${file.id}&sz=w400`;
+            }
+
+            return {
+                id: file.id || "",
+                name: file.name || "Untitled",
+                mimeType: file.mimeType || "application/octet-stream",
+                thumbnailLink: thumbnailLink || undefined,
+                previewLink: file.webContentLink || undefined,
+                downloadLink: file.webContentLink || undefined,
+                width: isVideo ? file.videoMediaMetadata?.width : file.imageMediaMetadata?.width || undefined,
+                height: isVideo ? file.videoMediaMetadata?.height : file.imageMediaMetadata?.height || undefined,
+                lastModified: file.modifiedTime || undefined,
+            };
+        });
     }
 
     async listFolders(folderId: string, authSource: string | any): Promise<CloudFolder[]> {

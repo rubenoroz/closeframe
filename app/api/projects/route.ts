@@ -66,7 +66,23 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
-        const { name, cloudAccountId, rootFolderId, password, downloadEnabled, downloadJpgEnabled, downloadRawEnabled } = body;
+        const {
+            name,
+            cloudAccountId,
+            rootFolderId,
+            password,
+            downloadEnabled,
+            downloadJpgEnabled,
+            downloadRawEnabled,
+            headerTitle,
+            headerFontFamily,
+            headerColor,
+            headerBackground,
+            enableVideoTab,
+            videoFolderId,
+            downloadVideoHdEnabled,
+            downloadVideoRawEnabled,
+        } = body;
 
         if (!name || !cloudAccountId || !rootFolderId) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -105,6 +121,16 @@ export async function POST(request: Request) {
                 downloadEnabled: downloadEnabled ?? true,
                 downloadJpgEnabled: downloadJpgEnabled ?? true,
                 downloadRawEnabled: downloadRawEnabled ?? false,
+                // Header customization
+                headerTitle: headerTitle || name, // Fallback to project name
+                headerFontFamily: headerFontFamily || "Inter",
+                headerColor: headerColor || "#FFFFFF",
+                headerBackground: headerBackground || "dark",
+                // Video tab
+                enableVideoTab: enableVideoTab || false,
+                videoFolderId: enableVideoTab ? videoFolderId : null,
+                downloadVideoHdEnabled: downloadVideoHdEnabled ?? true,
+                downloadVideoRawEnabled: downloadVideoRawEnabled ?? false,
             },
         });
 

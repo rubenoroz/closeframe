@@ -27,7 +27,8 @@ export default async function PublicGalleryPage({ params }: Props) {
                     businessLogoScale: true
                 }
             }
-        }
+        },
+        // Include all fields (Prisma will automatically include new schema fields)
     });
 
     if (!project) {
