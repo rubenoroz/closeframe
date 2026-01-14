@@ -130,29 +130,29 @@ export default function BookingsPage() {
     if (loading) {
         return (
             <div className="max-w-7xl mx-auto">
-                <header className="flex items-center justify-between mb-8">
+                <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 md:mb-8">
                     <div>
-                        <Skeleton className="h-10 w-48 mb-2" />
-                        <Skeleton className="h-4 w-64" />
+                        <Skeleton className="h-8 md:h-10 w-36 md:w-48 mb-2" />
+                        <Skeleton className="h-4 w-48 md:w-64" />
                     </div>
-                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-4 w-20 md:w-24" />
                 </header>
-                <Skeleton className="h-[700px] w-full rounded-2xl" />
+                <Skeleton className="h-[500px] md:h-[600px] lg:h-[700px] w-full rounded-xl md:rounded-2xl" />
             </div>
         );
     }
 
     return (
         <div className="max-w-7xl mx-auto">
-            <header className="flex items-center justify-between mb-8">
+            <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 md:mb-8">
                 <div>
-                    <h1 className="text-3xl font-light mb-1 flex items-center gap-3">
-                        <CalendarDays className="w-8 h-8 text-emerald-500" />
+                    <h1 className="text-xl md:text-3xl font-light mb-1 flex items-center gap-2 md:gap-3">
+                        <CalendarDays className="w-5 h-5 md:w-8 md:h-8 text-emerald-500" />
                         Reservas
                     </h1>
-                    <p className="text-neutral-500 text-sm">Gestiona tus sesiones fotográficas.</p>
+                    <p className="text-neutral-500 text-xs md:text-sm">Gestiona tus sesiones.</p>
                 </div>
-                <div className="text-sm text-neutral-400">
+                <div className="text-xs md:text-sm text-neutral-400">
                     {bookings.length} reserva{bookings.length !== 1 ? "s" : ""}
                 </div>
             </header>
@@ -162,6 +162,24 @@ export default function BookingsPage() {
                 onEventAdd={handleSlotSelect}
                 onEventSelect={handleEventSelect}
             />
+
+            {/* Floating Add Button for Mobile (touch events don't work well with react-big-calendar) */}
+            <button
+                onClick={() => {
+                    setSelectedEvent(null);
+                    setFormData({
+                        customerName: "",
+                        customerEmail: "",
+                        date: formatToLocalISO(new Date()),
+                        notes: "",
+                    });
+                    setShowModal(true);
+                }}
+                className="fixed bottom-6 right-6 w-14 h-14 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full shadow-xl flex items-center justify-center text-2xl z-40 md:hidden transition-all active:scale-95"
+                aria-label="Nueva reserva"
+            >
+                +
+            </button>
 
             {/* Modal */}
             {showModal && (

@@ -40,7 +40,10 @@ interface Props {
 
 export default function BookingCalendar({ events, onEventAdd, onEventDrop, onEventSelect }: Props) {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [currentView, setCurrentView] = useState<(typeof Views)[keyof typeof Views]>(Views.WEEK);
+  // Default to day view on mobile for better UX
+  const [currentView, setCurrentView] = useState<(typeof Views)[keyof typeof Views]>(
+    typeof window !== 'undefined' && window.innerWidth < 768 ? Views.DAY : Views.WEEK
+  );
 
   const handleSelectSlot = useCallback(
     (slotInfo: SlotInfo) => {
@@ -102,7 +105,7 @@ export default function BookingCalendar({ events, onEventAdd, onEventDrop, onEve
   );
 
   return (
-    <div className="h-[700px] bg-neutral-900 rounded-2xl p-4 border border-neutral-800">
+    <div className="h-[500px] md:h-[600px] lg:h-[700px] bg-neutral-900 rounded-xl md:rounded-2xl p-2 md:p-4 border border-neutral-800">
       <DnDCalendar
         localizer={localizer}
         events={events}
@@ -122,25 +125,55 @@ export default function BookingCalendar({ events, onEventAdd, onEventDrop, onEve
         style={{ height: "100%" }}
         messages={{
           today: "Hoy",
-          previous: "Anterior",
-          next: "Siguiente",
+          previous: "<",
+          next: ">",
           month: "Mes",
-          week: "Semana",
+          week: "Sem",
           day: "Día",
-          agenda: "Agenda",
-          noEventsInRange: "No hay reservas en este período",
+          agenda: "Lista",
+          noEventsInRange: "No hay reservas",
         }}
         className="booking-calendar"
       />
       <style jsx global>{`
         .booking-calendar .rbc-toolbar {
-          margin-bottom: 1rem;
+          margin-bottom: 0.5rem;
           color: #fff;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+        }
+        .booking-calendar .rbc-toolbar-label {
+          font-size: 14px;
+          font-weight: 500;
+          order: -1;
+          width: 100%;
+          text-align: center;
+          margin-bottom: 0.5rem;
+        }
+        @media (min-width: 768px) {
+          .booking-calendar .rbc-toolbar {
+            margin-bottom: 1rem;
+            flex-wrap: nowrap;
+          }
+          .booking-calendar .rbc-toolbar-label {
+            font-size: 16px;
+            order: 0;
+            width: auto;
+            margin-bottom: 0;
+          }
         }
         .booking-calendar .rbc-toolbar button {
           color: #a3a3a3;
           border-color: #525252;
           background: transparent;
+          padding: 4px 8px;
+          font-size: 11px;
+        }
+        @media (min-width: 768px) {
+          .booking-calendar .rbc-toolbar button {
+            padding: 6px 12px;
+            font-size: 13px;
+          }
         }
         .booking-calendar .rbc-toolbar button:hover {
           background: #262626;
@@ -153,7 +186,14 @@ export default function BookingCalendar({ events, onEventAdd, onEventDrop, onEve
         .booking-calendar .rbc-header {
           color: #a3a3a3;
           border-color: #404040;
-          padding: 8px 0;
+          padding: 4px 0;
+          font-size: 10px;
+        }
+        @media (min-width: 768px) {
+          .booking-calendar .rbc-header {
+            padding: 8px 0;
+            font-size: 12px;
+          }
         }
         .booking-calendar .rbc-month-view,
         .booking-calendar .rbc-time-view,
