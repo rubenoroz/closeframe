@@ -5,7 +5,7 @@ import { getFreshGoogleAuth } from "@/lib/cloud/google-auth";
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const cloudAccountId = searchParams.get("cloudAccountId");
-    const folderId = searchParams.get("folderId");
+    let folderId = searchParams.get("folderId");
 
     if (!cloudAccountId || !folderId) {
         return NextResponse.json({ error: "Cloud Account ID and Folder ID required" }, { status: 400 });
@@ -18,7 +18,14 @@ export async function GET(request: Request) {
         const provider = new GoogleDriveProvider();
 
         // 1. Check for special subfolders (photos AND videos)
-        const subfolders = await provider.listFolders(folderId, auth);
+        let subfolders = await provider.listFolders(folderId, auth);
+
+        // Check if there's a "Fotografias" subfolder - if so, use it as the actual source
+        const fotografiasFolder = subfolders.find(f => f.name.toLowerCase() === "fotografias");
+        if (fotografiasFolder) {
+            folderId = fotografiasFolder.id;
+            subfolders = await provider.listFolders(folderId, auth);
+        }
 
         // Photo proxies
         const webjpgFolder = subfolders.find(f => f.name.toLowerCase() === "webjpg");

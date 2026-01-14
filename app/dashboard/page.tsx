@@ -18,6 +18,13 @@ interface Project {
     downloadEnabled: boolean;
     downloadJpgEnabled: boolean;
     downloadRawEnabled: boolean;
+    downloadVideoHdEnabled?: boolean;
+    downloadVideoRawEnabled?: boolean;
+    enableVideoTab?: boolean;
+    headerTitle?: string;
+    headerFontFamily?: string;
+    headerColor?: string;
+    headerBackground?: string;
     public: boolean;
     layoutType: string;
     cloudAccount: {
@@ -49,6 +56,12 @@ export default function DashboardPage() {
         downloadEnabled: true,
         downloadJpgEnabled: true,
         downloadRawEnabled: false,
+        downloadVideoHdEnabled: true,
+        downloadVideoRawEnabled: false,
+        headerTitle: "",
+        headerFontFamily: "Inter",
+        headerColor: "#FFFFFF",
+        headerBackground: "dark",
         public: true,
     });
 
@@ -87,9 +100,15 @@ export default function DashboardPage() {
             name: project.name,
             password: "",
             downloadEnabled: project.downloadEnabled,
-            downloadJpgEnabled: project.downloadJpgEnabled !== false, // default true if undefined
-            downloadRawEnabled: project.downloadRawEnabled === true, // default false if undefined
-            public: project.public !== false, // Por defecto true si no es false
+            downloadJpgEnabled: project.downloadJpgEnabled !== false,
+            downloadRawEnabled: project.downloadRawEnabled === true,
+            downloadVideoHdEnabled: project.downloadVideoHdEnabled !== false,
+            downloadVideoRawEnabled: project.downloadVideoRawEnabled === true,
+            headerTitle: project.headerTitle || project.name,
+            headerFontFamily: project.headerFontFamily || "Inter",
+            headerColor: project.headerColor || "#FFFFFF",
+            headerBackground: project.headerBackground || "dark",
+            public: project.public !== false,
         });
         setActiveMenu(null);
     };
@@ -110,6 +129,12 @@ export default function DashboardPage() {
                     downloadEnabled: editData.downloadEnabled,
                     downloadJpgEnabled: editData.downloadJpgEnabled,
                     downloadRawEnabled: editData.downloadRawEnabled,
+                    downloadVideoHdEnabled: editData.downloadVideoHdEnabled,
+                    downloadVideoRawEnabled: editData.downloadVideoRawEnabled,
+                    headerTitle: editData.headerTitle,
+                    headerFontFamily: editData.headerFontFamily,
+                    headerColor: editData.headerColor,
+                    headerBackground: editData.headerBackground,
                     public: editData.public,
                 })
             });
@@ -464,6 +489,87 @@ export default function DashboardPage() {
                                     />
                                 </div>
 
+                                {/* Header Customization Section */}
+                                <div className={`${isLight ? 'bg-neutral-50 border-neutral-100' : 'bg-neutral-800/50 border-neutral-800'} p-4 rounded-2xl border`}>
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <Layout className="w-4 h-4 text-emerald-500" />
+                                        <span className="text-sm font-medium">Personalización del Header</span>
+                                    </div>
+
+                                    <div className="space-y-4 pl-7">
+                                        <div>
+                                            <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-2 block">Título del Header</label>
+                                            <input
+                                                type="text"
+                                                value={editData.headerTitle}
+                                                onChange={(e) => setEditData({ ...editData, headerTitle: e.target.value })}
+                                                placeholder="Ej: Boda de Ana & Carlos"
+                                                className={`w-full border rounded-xl px-4 py-2.5 text-sm outline-none transition-all ${isLight ? 'bg-white border-neutral-200 focus:border-emerald-500' : 'bg-neutral-900 border-neutral-700 focus:border-emerald-500'}`}
+                                            />
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-2 block">Tipografía</label>
+                                                <select
+                                                    value={editData.headerFontFamily}
+                                                    onChange={(e) => setEditData({ ...editData, headerFontFamily: e.target.value })}
+                                                    className={`w-full border rounded-xl px-4 py-2.5 text-sm outline-none transition-all ${isLight ? 'bg-white border-neutral-200 focus:border-emerald-500' : 'bg-neutral-900 border-neutral-700 focus:border-emerald-500'}`}
+                                                >
+                                                    <option value="Inter">Inter</option>
+                                                    <option value="Playfair Display">Playfair Display</option>
+                                                    <option value="Montserrat">Montserrat</option>
+                                                    <option value="Lora">Lora</option>
+                                                    <option value="Cormorant Garamond">Cormorant Garamond</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-2 block">Color del Texto</label>
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        type="color"
+                                                        value={editData.headerColor}
+                                                        onChange={(e) => setEditData({ ...editData, headerColor: e.target.value })}
+                                                        className="w-10 h-10 rounded-lg border-0 cursor-pointer"
+                                                    />
+                                                    <input
+                                                        type="text"
+                                                        value={editData.headerColor}
+                                                        onChange={(e) => setEditData({ ...editData, headerColor: e.target.value })}
+                                                        className={`flex-1 border rounded-xl px-3 py-2 text-sm font-mono outline-none transition-all ${isLight ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-700'}`}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-2 block">Tema de Fondo</label>
+                                            <div className="flex gap-3">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setEditData({ ...editData, headerBackground: "dark" })}
+                                                    className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all ${editData.headerBackground === "dark"
+                                                        ? "bg-neutral-900 text-white border-2 border-emerald-500"
+                                                        : "bg-neutral-800 text-neutral-400 border border-neutral-700 hover:border-neutral-600"
+                                                        }`}
+                                                >
+                                                    🌙 Oscuro
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setEditData({ ...editData, headerBackground: "light" })}
+                                                    className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all ${editData.headerBackground === "light"
+                                                        ? "bg-white text-black border-2 border-emerald-500"
+                                                        : "bg-neutral-100 text-neutral-600 border border-neutral-200 hover:border-neutral-300"
+                                                        }`}
+                                                >
+                                                    ☀️ Claro
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-2">
                                     <div className={`${isLight ? 'bg-neutral-50 border-neutral-100' : 'bg-neutral-800/50 border-neutral-800'} p-4 rounded-2xl border md:col-span-2`}>
                                         <div className="flex items-center gap-3 mb-4">
@@ -508,6 +614,37 @@ export default function DashboardPage() {
                                                             className="w-5 h-5 accent-emerald-500 rounded bg-neutral-700"
                                                         />
                                                     </label>
+
+                                                    {/* Video Download Options */}
+                                                    <div className={`mt-4 pt-4 border-t ${isLight ? 'border-neutral-200' : 'border-neutral-700/50'}`}>
+                                                        <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-3 block">Videos</span>
+                                                        <div className="space-y-3">
+                                                            <label className="flex items-center justify-between cursor-pointer group">
+                                                                <div className="flex flex-col">
+                                                                    <span className={`text-sm hover:opacity-100 transition-colors ${isLight ? 'text-neutral-600 hover:text-black' : 'text-neutral-400 hover:text-white'}`}>HD (1080p)</span>
+                                                                    <span className="text-[9px] text-neutral-500">Videos en alta definición</span>
+                                                                </div>
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={editData.downloadVideoHdEnabled}
+                                                                    onChange={(e) => setEditData({ ...editData, downloadVideoHdEnabled: e.target.checked })}
+                                                                    className="w-5 h-5 accent-emerald-500 rounded bg-neutral-700"
+                                                                />
+                                                            </label>
+                                                            <label className="flex items-center justify-between cursor-pointer group">
+                                                                <div className="flex flex-col">
+                                                                    <span className={`text-sm hover:opacity-100 transition-colors ${isLight ? 'text-neutral-600 hover:text-black' : 'text-neutral-400 hover:text-white'}`}>Alta Calidad (4K/ProRes)</span>
+                                                                    <span className="text-[9px] text-neutral-500">Videos en máxima calidad</span>
+                                                                </div>
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={editData.downloadVideoRawEnabled}
+                                                                    onChange={(e) => setEditData({ ...editData, downloadVideoRawEnabled: e.target.checked })}
+                                                                    className="w-5 h-5 accent-emerald-500 rounded bg-neutral-700"
+                                                                />
+                                                            </label>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>

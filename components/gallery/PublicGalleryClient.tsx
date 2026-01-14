@@ -106,6 +106,7 @@ export default function PublicGalleryClient({ project }: PublicGalleryClientProp
 
             {/* Gallery Viewer */}
             <GalleryViewer
+                key={activeTab}
                 cloudAccountId={project.cloudAccountId}
                 folderId={currentFolderId}
                 projectName={project.name}
@@ -116,6 +117,7 @@ export default function PublicGalleryClient({ project }: PublicGalleryClientProp
                 studioLogo={project.user?.businessLogo || ""}
                 studioLogoScale={project.user?.businessLogoScale || 100}
                 theme={headerBackground}
+                mediaType={activeTab}
             />
 
             {/* Minimal branding */}

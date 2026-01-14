@@ -29,13 +29,25 @@ export async function GET() {
                 const auth = await getFreshGoogleAuth(project.cloudAccount.id);
                 const drive = google.drive({ version: "v3", auth });
 
+                // First, check root folder for subfolders
                 const res = await drive.files.list({
                     q: `'${project.rootFolderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
-                    fields: "files(name)",
+                    fields: "files(id, name)",
                 });
 
                 const folders = res.data.files || [];
-                const names = folders.map((f: any) => f.name?.toLowerCase());
+                let names = folders.map((f: any) => f.name?.toLowerCase());
+
+                // Check if there's a "Fotografias" subfolder - if so, look inside it
+                const fotografiasFolder = folders.find((f: any) => f.name?.toLowerCase() === "fotografias");
+                if (fotografiasFolder) {
+                    const subRes = await drive.files.list({
+                        q: `'${fotografiasFolder.id}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
+                        fields: "files(name)",
+                    });
+                    const subFolders = subRes.data.files || [];
+                    names = subFolders.map((f: any) => f.name?.toLowerCase());
+                }
 
                 return {
                     ...project,
@@ -150,7 +162,13 @@ export async function PATCH(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { id, name, password, downloadEnabled, downloadJpgEnabled, downloadRawEnabled, layoutType, public: isPublic } = body;
+        const {
+            id, name, password,
+            downloadEnabled, downloadJpgEnabled, downloadRawEnabled,
+            downloadVideoHdEnabled, downloadVideoRawEnabled,
+            headerTitle, headerFontFamily, headerColor, headerBackground,
+            layoutType, public: isPublic
+        } = body;
 
         if (!id) {
             return NextResponse.json({ error: "Project ID is required" }, { status: 400 });
@@ -170,6 +188,12 @@ export async function PATCH(request: NextRequest) {
         if (downloadEnabled !== undefined) updateData.downloadEnabled = downloadEnabled;
         if (downloadJpgEnabled !== undefined) updateData.downloadJpgEnabled = downloadJpgEnabled;
         if (downloadRawEnabled !== undefined) updateData.downloadRawEnabled = downloadRawEnabled;
+        if (downloadVideoHdEnabled !== undefined) updateData.downloadVideoHdEnabled = downloadVideoHdEnabled;
+        if (downloadVideoRawEnabled !== undefined) updateData.downloadVideoRawEnabled = downloadVideoRawEnabled;
+        if (headerTitle !== undefined) updateData.headerTitle = headerTitle;
+        if (headerFontFamily !== undefined) updateData.headerFontFamily = headerFontFamily;
+        if (headerColor !== undefined) updateData.headerColor = headerColor;
+        if (headerBackground !== undefined) updateData.headerBackground = headerBackground;
         if (layoutType !== undefined) updateData.layoutType = layoutType;
 
         // Handle public status based on password

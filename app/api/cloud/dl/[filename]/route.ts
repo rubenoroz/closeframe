@@ -72,19 +72,26 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ file
             compression: "STORE"
         });
 
+        // Sanitize filename for Content-Disposition header (ASCII only)
+        const sanitizedFilename = filename
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '') // Remove diacritics/accents
+            .replace(/[^\x00-\x7F]/g, '_'); // Replace non-ASCII with underscore
+
         // Retornar ZIP
         return new NextResponse(new Uint8Array(zipContent), {
             status: 200,
             headers: {
                 "Content-Type": "application/zip",
-                // Intentamos poner el header también, pero si falla, la URL nos salva de todas formas
-                "Content-Disposition": `attachment; filename="${filename}"`,
+                // Use sanitized filename for the header
+                "Content-Disposition": `attachment; filename="${sanitizedFilename}"`,
                 "Cache-Control": "no-store"
             }
         });
 
-    } catch (error) {
-        console.error("DL Route Error:", error);
-        return NextResponse.json({ error: "Server Error" }, { status: 500 });
+    } catch (error: any) {
+        console.error("DL Route Error:", error?.message || error);
+        console.error("DL Route Stack:", error?.stack);
+        return NextResponse.json({ error: "Server Error", details: error?.message }, { status: 500 });
     }
 }

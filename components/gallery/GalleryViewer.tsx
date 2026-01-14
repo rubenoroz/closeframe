@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Camera, Folder, Heart, Loader2, Maximize2, CheckCircle2, Circle, Download, X } from "lucide-react";
 import Lightbox from "./Lightbox";
 import { Skeleton } from "@/components/Skeleton";
+import GalleryLoaderGrid from "./GalleryLoaderGrid";
 
 interface Props {
     cloudAccountId: string;
@@ -18,6 +19,7 @@ interface Props {
     studioLogoScale?: number;
     theme?: string;
     className?: string;
+    mediaType?: "photos" | "videos";
 }
 
 interface CloudFile {
@@ -46,7 +48,8 @@ export default function GalleryViewer({
     studioLogo = "",
     studioLogoScale = 100,
     theme = "dark",
-    className = ""
+    className = "",
+    mediaType = "photos"
 }: Props) {
     const [files, setFiles] = useState<CloudFile[]>([]);
     const [loading, setLoading] = useState(true);
@@ -105,19 +108,25 @@ export default function GalleryViewer({
             const filesData = selectedFiles.map(f => {
                 let fileId = f.id;
                 let fileName = f.name;
+                const isVideo = f.mimeType?.startsWith('video/');
 
                 if (format === "raw") {
                     const rawData = f.formats?.raw;
                     if (rawData && typeof rawData === 'object') {
                         fileId = rawData.id;
-                        fileName = rawData.name; // Usar nombre real (.CR2, .NEF)
+                        fileName = rawData.name; // Usar nombre real (.CR2, .NEF, .mov)
                     } else if (typeof rawData === 'string') {
                         fileId = rawData; // Legacy/Fallback
                     }
-                    // Si no hay RAW, se usará el ID por defecto (f.id) que es el JPG/Web
+                    // Si no hay RAW/Alta, se usará el ID por defecto (f.id) que es el Web
                 }
                 else if (format === "jpg") {
-                    fileId = f.formats?.jpg || f.id;
+                    // For videos, use HD format; for photos, use JPG format
+                    if (isVideo) {
+                        fileId = f.formats?.hd || f.id;
+                    } else {
+                        fileId = f.formats?.jpg || f.id;
+                    }
                 }
 
                 return { id: fileId, name: fileName };
@@ -266,11 +275,7 @@ export default function GalleryViewer({
             {/* Main Content */}
             <main className="px-4 md:px-8 pt-28 pb-32 min-h-screen">
                 {loading ? (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                            <Skeleton key={i} className={`w-full rounded-xl ${i % 2 === 0 ? "h-64" : "h-48"}`} />
-                        ))}
-                    </div>
+                    <GalleryLoaderGrid theme={theme} />
                 ) : error ? (
                     <div className="flex flex-col justify-center items-center py-40 text-red-400 gap-2">
                         <p>⚠️ {error}</p>
@@ -350,7 +355,7 @@ export default function GalleryViewer({
                     <div className="flex items-center gap-4 text-sm">
                         <div className={`flex items-center gap-2 ${theme === 'light' ? 'text-neutral-500' : 'text-neutral-400'}`}>
                             <Folder className="w-4 h-4" />
-                            <span>{files.length} fotos</span>
+                            <span>{files.length} {mediaType === "videos" ? "videos" : "fotos"}</span>
                         </div>
                         {selectedIds.size > 0 && (
                             <span className="text-emerald-500 font-bold">
@@ -389,7 +394,7 @@ export default function GalleryViewer({
                                         onClick={() => handleDownloadZip("jpg")}
                                     >
                                         {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                                        Descargar Baja
+                                        {mediaType === "videos" ? "Descargar HD" : "Descargar JPG"}
                                     </button>
                                 </div>
                             )}
@@ -405,9 +410,9 @@ export default function GalleryViewer({
                                             ? 'bg-emerald-600 text-white hover:bg-emerald-500 shadow-emerald-200'
                                             : 'bg-white text-black hover:bg-neutral-200'
                                         }`}
-                                    title="Descargar Alta Calidad"
+                                    title={mediaType === "videos" ? "Descargar Alta Calidad" : "Descargar RAW"}
                                 >
-                                    <span className="text-xs font-black tracking-wider">ALTA</span>
+                                    <span className="text-xs font-black tracking-wider">{mediaType === "videos" ? "ALTA" : "RAW"}</span>
                                 </button>
                             )}
                         </div>
@@ -486,7 +491,7 @@ function MediaCard({
                     )}
 
                     <img
-                        src={`/api/cloud/thumbnail?c=${cloudAccountId}&f=${item.id}&s=400`}
+                        src={`/api/cloud/thumbnail?c=${cloudAccountId}&f=${item.id}&s=800`}
                         alt={item.name}
                         className={`absolute inset-0 w-full h-full object-cover transform group-hover:scale-105 transition duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
                         onLoad={() => setLoaded(true)}

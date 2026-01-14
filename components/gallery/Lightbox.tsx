@@ -206,7 +206,7 @@ export default function Lightbox({
                                 className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 hover:bg-emerald-500 text-white transition backdrop-blur-md border border-white/10 text-xs font-bold uppercase tracking-wider disabled:opacity-50"
                             >
                                 {(isDownloading === "jpg" || isDownloading === "hd") ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
-                                {currentFile.mimeType?.startsWith('video/') ? 'Baja' : 'JPG Alta Res'}
+                                {currentFile.mimeType?.startsWith('video/') ? 'HD' : 'JPG Alta Res'}
                             </button>
                         )}
                         {/* For photos: RAW button, For videos: Alta button */}

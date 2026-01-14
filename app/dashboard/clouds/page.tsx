@@ -176,11 +176,18 @@ export default function CloudManager() {
                                 <h2 className="text-xl font-medium text-white">Kit de Organización Inteligente</h2>
                             </div>
                             <p className="text-neutral-400 leading-relaxed">
-                                ¿Quieres que tus RAWs y JPGs de alta resolución se detecten automáticamente?
+                                ¿Quieres que tus RAWs, JPGs y Videos se detecten automáticamente?
                                 Descarga nuestra estructura de carpetas oficial y úsala como plantilla en tu Google Drive.
                             </p>
                             <ul className="text-sm text-neutral-500 flex flex-col gap-2">
-                                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500" /> Carpetas listas: <code className="bg-black/30 px-1 rounded border border-white/5">webjpg</code>, <code className="bg-black/30 px-1 rounded border border-white/5">jpg</code>, <code className="bg-black/30 px-1 rounded border border-white/5">raw</code></li>
+                                <li className="flex items-center gap-2">
+                                    <Check className="w-4 h-4 text-emerald-500" />
+                                    <span>Fotografías: <code className="bg-black/30 px-1 rounded border border-white/5">webjpg</code>, <code className="bg-black/30 px-1 rounded border border-white/5">jpg</code>, <code className="bg-black/30 px-1 rounded border border-white/5">raw</code></span>
+                                </li>
+                                <li className="flex items-center gap-2">
+                                    <Check className="w-4 h-4 text-emerald-500" />
+                                    <span>Videos: <code className="bg-black/30 px-1 rounded border border-white/5">webmp4</code>, <code className="bg-black/30 px-1 rounded border border-white/5">hd</code>, <code className="bg-black/30 px-1 rounded border border-white/5">alta</code></span>
+                                </li>
                                 <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500" /> Incluye guía de nombrado de archivos</li>
                             </ul>
                         </div>
@@ -280,6 +287,21 @@ function QuotaDisplay({ accountId }: { accountId: string }) {
     const percent = quota.limit > 0 ? Math.min(100, (quota.usage / quota.limit) * 100) : 0;
     const isFull = percent > 90;
 
+    // Format percentage: show decimal for small values, round for larger ones
+    const displayPercent = percent < 1 && percent > 0
+        ? percent.toFixed(1)
+        : Math.round(percent).toString();
+
+    // Ensure minimum visible width for the progress bar when there's usage
+    const barWidth = percent > 0 ? Math.max(percent, 0.5) : 0;
+
+    // SVG circle progress calculations
+    const radius = 20;
+    const circumference = 2 * Math.PI * radius;
+    // For very small percentages, show at least a small visible arc
+    const visualPercent = percent > 0 ? Math.max(percent, 2) : 0;
+    const strokeDashoffset = circumference - (visualPercent / 100) * circumference;
+
     return (
         <div className="space-y-4 mb-8 w-full">
             <div className="flex items-end justify-between">
@@ -287,18 +309,41 @@ function QuotaDisplay({ accountId }: { accountId: string }) {
                     <span className="text-[10px] font-bold text-neutral-600 uppercase tracking-tighter">Espacio Utilizado</span>
                     <span className="text-lg font-light text-white tracking-widest">{usedGB} GB <span className="text-neutral-600 text-sm">/ {totalGB} GB</span></span>
                 </div>
-                <div className={cn("w-12 h-12 rounded-full border-2 flex items-center justify-center transition-colors",
-                    isFull ? "border-red-500/20 border-t-red-500" : "border-emerald-500/20 border-t-emerald-500"
-                )}>
-                    <span className={cn("text-[10px] font-bold", isFull ? "text-red-500" : "text-emerald-500")}>
-                        {Math.round(percent)}%
+                {/* SVG Progress Circle */}
+                <div className="relative w-12 h-12">
+                    <svg className="w-12 h-12 -rotate-90" viewBox="0 0 48 48">
+                        {/* Background circle */}
+                        <circle
+                            cx="24"
+                            cy="24"
+                            r={radius}
+                            fill="none"
+                            stroke={isFull ? "rgba(239, 68, 68, 0.2)" : "rgba(16, 185, 129, 0.2)"}
+                            strokeWidth="3"
+                        />
+                        {/* Progress circle */}
+                        <circle
+                            cx="24"
+                            cy="24"
+                            r={radius}
+                            fill="none"
+                            stroke={isFull ? "#ef4444" : "#10b981"}
+                            strokeWidth="3"
+                            strokeLinecap="round"
+                            strokeDasharray={circumference}
+                            strokeDashoffset={strokeDashoffset}
+                            className="transition-all duration-1000 ease-out"
+                        />
+                    </svg>
+                    <span className={cn("absolute inset-0 flex items-center justify-center text-[10px] font-bold", isFull ? "text-red-500" : "text-emerald-500")}>
+                        {displayPercent}%
                     </span>
                 </div>
             </div>
             <div className="w-full bg-neutral-800 h-1 rounded-full overflow-hidden">
                 <div
                     className={cn("h-full transition-all duration-1000 ease-out", isFull ? "bg-red-500" : "bg-emerald-500")}
-                    style={{ width: `${percent}%` }}
+                    style={{ width: `${barWidth}%` }}
                 />
             </div>
         </div>
