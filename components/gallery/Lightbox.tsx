@@ -51,105 +51,75 @@ export default function Lightbox({
 
     const handleDownloadFormat = async (format: "jpg" | "hd" | "raw") => {
         let fileId: string | undefined;
-        let fileName = currentFile.name; // Default filename (usually JPG name)
+        let fileName = currentFile.name;
 
         const formatData = currentFile.formats?.[format];
-
         if (!formatData) return;
 
         if (format === 'raw' && typeof formatData === 'object' && formatData !== null) {
             fileId = formatData.id;
-            fileName = formatData.name; // Use the REAL raw filename (e.g. .CR2, .NEF)
+            fileName = formatData.name;
         } else if (typeof formatData === 'string') {
             fileId = formatData;
-            // If it's a string ID, we keep currentFile.name (legacy behavior)
         }
 
         if (!fileId || !cloudAccountId) return;
 
         setIsDownloading(format);
 
-        // Clean base name for the ZIP filename (e.g. from "Photo.jpg" -> "Photo")
-        // We use currentFile.name as the base source of truth for the visual representation
-        const cleanName = currentFile.name.replace(/\.[^/.]+$/, "");
-        const timestamp = new Date().getTime();
-        const zipFilename = `${cleanName}_${format.toUpperCase()}_${timestamp}.zip`;
-
-        // Datos para backend: Aquí es clave pasar el fileName correcto (con extensión RAW si aplica)
-        const filesData = [{ id: fileId, name: fileName }];
-
-        const params = new URLSearchParams();
-        params.append("c", cloudAccountId);
-        params.append("f", JSON.stringify(filesData));
-        const finalEndpoint = `/api/cloud/dl/${zipFilename}?${params.toString()}`;
-
         try {
-            console.log("Iniciando proceso descarga Stream:", zipFilename);
+            // Use direct download API (no ZIP compression for single files)
+            const params = new URLSearchParams();
+            params.append("c", cloudAccountId);
+            params.append("f", fileId);
+            params.append("n", fileName);
+            const directUrl = `/api/cloud/download-direct?${params.toString()}`;
 
             let fileHandle: any = null;
             let writable: any = null;
 
-            // 1. Intentar obtener handle de archivo PRIMERO (Interacción usuario inmediata)
+            // Try File System Access API for better UX
             try {
                 // @ts-ignore
                 if (window.showSaveFilePicker) {
                     // @ts-ignore
                     fileHandle = await window.showSaveFilePicker({
-                        suggestedName: zipFilename,
-                        types: [{
-                            description: 'ZIP Archive',
-                            accept: { 'application/zip': ['.zip'] },
-                        }],
+                        suggestedName: fileName,
                     });
                     writable = await fileHandle.createWritable();
                 }
             } catch (err: any) {
                 if (err.name === 'AbortError') {
                     setIsDownloading(null);
-                    return; // Usuario canceló diálogo
+                    return;
                 }
-                console.warn("FS API no disponible o falló:", err);
             }
 
-            // 2. Iniciar descarga del servidor
-            const res = await fetch(finalEndpoint);
-            if (!res.ok) throw new Error("Error server download: " + res.status);
+            const res = await fetch(directUrl);
+            if (!res.ok) throw new Error("Error download: " + res.status);
 
-            // 3a. Si tenemos writable, usamos PipeTo (Stream directo al disco)
-            if (writable) {
-                console.log("Escribiendo stream a disco...");
-                if (res.body) {
-                    // @ts-ignore
-                    await res.body.pipeTo(writable);
-                } else {
-                    await writable.write(await res.blob());
-                    await writable.close();
-                }
-                console.log("Stream completado.");
-                setIsDownloading(null);
-                return;
+            if (writable && res.body) {
+                // @ts-ignore
+                await res.body.pipeTo(writable);
+            } else {
+                // Fallback: blob download
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = fileName;
+                a.style.display = "none";
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => {
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                }, 2000);
             }
-
-            // 3b. Fallback Clásico (Fetch -> Blob -> Link)
-            console.log("Usando Fallback Clásico...");
-            const blob = await res.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = zipFilename;
-            a.style.display = "none";
-            document.body.appendChild(a);
-            a.click();
-
-            setTimeout(() => {
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
-                setIsDownloading(null);
-            }, 2000);
-
         } catch (err: any) {
             console.error(err);
             alert("Error: " + err.message);
+        } finally {
             setIsDownloading(null);
         }
     };

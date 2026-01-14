@@ -348,45 +348,64 @@ export default function GalleryViewer({
 
             {/* Bottom Bar for Batch Download */}
             {anyDownloadEnabled && (
-                <footer className={`fixed bottom-0 left-0 right-0 transition-all border-t px-8 py-4 flex items-center justify-between z-40 ${theme === 'light'
+                <footer className={`fixed bottom-0 left-0 right-0 transition-all border-t px-4 md:px-8 py-3 md:py-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 md:gap-0 z-40 ${theme === 'light'
                     ? 'bg-white/90 backdrop-blur-xl border-neutral-100 shadow-[0_-10px_40px_rgba(0,0,0,0.02)]'
                     : 'bg-neutral-900/90 backdrop-blur-xl border-neutral-800'
                     }`}>
-                    <div className="flex items-center gap-4 text-sm">
-                        <div className={`flex items-center gap-2 ${theme === 'light' ? 'text-neutral-500' : 'text-neutral-400'}`}>
+                    <div className="flex items-center justify-between md:justify-start gap-4 text-sm">
+                        <div className={`hidden md:flex items-center gap-2 ${theme === 'light' ? 'text-neutral-500' : 'text-neutral-400'}`}>
                             <Folder className="w-4 h-4" />
                             <span>{files.length} {mediaType === "videos" ? "videos" : "fotos"}</span>
                         </div>
                         {selectedIds.size > 0 && (
-                            <span className="text-emerald-500 font-bold">
+                            <span className="text-emerald-500 font-bold text-xs md:text-sm">
                                 {selectedIds.size} seleccionadas
                             </span>
                         )}
+                        {/* Mobile selection buttons */}
+                        <div className="md:hidden">
+                            {selectedIds.size === 0 ? (
+                                <button
+                                    onClick={selectAll}
+                                    className={`text-xs transition font-medium ${theme === 'light' ? 'text-neutral-500' : 'text-neutral-400'}`}
+                                >
+                                    Seleccionar todas
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={clearSelection}
+                                    className={`text-xs transition font-medium ${theme === 'light' ? 'text-neutral-400' : 'text-neutral-400'}`}
+                                >
+                                    Desmarcar
+                                </button>
+                            )}
+                        </div>
                     </div>
-                    <div className="flex items-center gap-6">
-                        {selectedIds.size === 0 ? (
-                            <button
-                                onClick={selectAll}
-                                className={`text-sm transition font-medium ${theme === 'light' ? 'text-neutral-500 hover:text-black' : 'text-neutral-400 hover:text-white'}`}
-                            >
-                                Seleccionar todas
-                            </button>
-                        ) : (
-                            <button
-                                onClick={clearSelection}
-                                className={`text-sm transition font-medium ${theme === 'light' ? 'text-neutral-400 hover:text-red-500' : 'text-neutral-400 hover:text-white'}`}
-                            >
-                                Desmarcar todas
-                            </button>
-                        )}
-                        <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3 md:gap-6">
+                        {/* Desktop selection buttons */}
+                        <div className="hidden md:block">
+                            {selectedIds.size === 0 ? (
+                                <button
+                                    onClick={selectAll}
+                                    className={`text-sm transition font-medium ${theme === 'light' ? 'text-neutral-500 hover:text-black' : 'text-neutral-400 hover:text-white'}`}
+                                >
+                                    Seleccionar todas
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={clearSelection}
+                                    className={`text-sm transition font-medium ${theme === 'light' ? 'text-neutral-400 hover:text-red-500' : 'text-neutral-400 hover:text-white'}`}
+                                >
+                                    Desmarcar todas
+                                </button>
+                            )}
+                        </div>
+                        <div className="flex items-center gap-2 flex-1 md:flex-none">
                             {downloadJpgEnabled && (
-                                <div className="relative group">
+                                <div className="relative group flex-1 md:flex-none">
                                     <button
                                         disabled={selectedIds.size === 0 || isDownloading}
-                                        className={`px-6 py-3 rounded-l-2xl border-r text-sm transition-all font-bold disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg ${
-                                            // Handle border radius if only one button is present
-                                            !downloadRawEnabled ? "rounded-r-2xl border-r-0" : ""
+                                        className={`w-full md:w-auto px-4 md:px-6 py-2.5 md:py-3 rounded-l-xl md:rounded-l-2xl border-r text-xs md:text-sm transition-all font-bold disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg ${!downloadRawEnabled ? "rounded-r-xl md:rounded-r-2xl border-r-0" : ""
                                             } ${theme === 'light'
                                                 ? 'bg-emerald-600 text-white hover:bg-emerald-500 shadow-emerald-200 border-emerald-700'
                                                 : 'bg-white text-black hover:bg-neutral-200 border-neutral-200'
@@ -394,7 +413,8 @@ export default function GalleryViewer({
                                         onClick={() => handleDownloadZip("jpg")}
                                     >
                                         {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                                        {mediaType === "videos" ? "Descargar HD" : "Descargar JPG"}
+                                        <span className="hidden sm:inline">{mediaType === "videos" ? "Descargar HD" : "Descargar JPG"}</span>
+                                        <span className="sm:hidden">{mediaType === "videos" ? "HD" : "JPG"}</span>
                                     </button>
                                 </div>
                             )}
@@ -403,9 +423,7 @@ export default function GalleryViewer({
                                 <button
                                     disabled={selectedIds.size === 0 || isDownloading}
                                     onClick={() => handleDownloadZip("raw")}
-                                    className={`px-4 py-3 rounded-r-2xl text-sm transition-all font-bold disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg ${
-                                        // Handle border radius if only RAW is present
-                                        !downloadJpgEnabled ? "rounded-l-2xl" : ""
+                                    className={`px-3 md:px-4 py-2.5 md:py-3 rounded-r-xl md:rounded-r-2xl text-xs md:text-sm transition-all font-bold disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg ${!downloadJpgEnabled ? "rounded-l-xl md:rounded-l-2xl" : ""
                                         } ${theme === 'light'
                                             ? 'bg-emerald-600 text-white hover:bg-emerald-500 shadow-emerald-200'
                                             : 'bg-white text-black hover:bg-neutral-200'
