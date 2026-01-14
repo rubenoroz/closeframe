@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { Camera, LayoutGrid, Plus, Settings, LogOut, CalendarDays, ChevronDown, User, Monitor, CreditCard } from "lucide-react";
+import { Camera, LayoutGrid, Plus, Settings, LogOut, CalendarDays, ChevronDown, User, Monitor, CreditCard, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 
@@ -15,6 +15,7 @@ export default function DashboardLayout({
     const pathname = usePathname();
     const { data: session } = useSession();
     const [showUserMenu, setShowUserMenu] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
 
     const navItems = [
         { href: "/dashboard/settings", label: "Perfil público", icon: <User className="w-5 h-5" /> },
@@ -26,8 +27,35 @@ export default function DashboardLayout({
 
     return (
         <div className="flex min-h-screen bg-neutral-950 text-neutral-100 font-sans">
+            {/* Mobile Header */}
+            <header className="fixed top-0 left-0 right-0 h-14 bg-neutral-900/95 backdrop-blur-xl border-b border-neutral-800 flex items-center justify-between px-4 z-30 md:hidden">
+                <button
+                    onClick={() => setSidebarOpen(!sidebarOpen)}
+                    className="p-2 rounded-lg hover:bg-neutral-800 transition"
+                >
+                    {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                </button>
+                <div className="flex items-center gap-2">
+                    <Camera className="w-5 h-5 text-white" />
+                    <span className="font-light text-lg tracking-tight">Closeframe</span>
+                </div>
+                <div className="w-9" /> {/* Spacer for centering */}
+            </header>
+
+            {/* Mobile Overlay */}
+            {sidebarOpen && (
+                <div
+                    className="fixed inset-0 bg-black/60 z-20 md:hidden"
+                    onClick={() => setSidebarOpen(false)}
+                />
+            )}
+
             {/* Sidebar */}
-            <aside className="w-64 border-r border-neutral-800 flex flex-col fixed inset-y-0 left-0 bg-neutral-900/30 backdrop-blur-xl z-20">
+            <aside className={cn(
+                "w-64 border-r border-neutral-800 flex flex-col fixed inset-y-0 left-0 bg-neutral-900/95 backdrop-blur-xl z-30 transition-transform duration-300",
+                "md:translate-x-0",
+                sidebarOpen ? "translate-x-0" : "-translate-x-full"
+            )}>
                 <div className="p-6 border-b border-neutral-800 flex items-center gap-2">
                     <Camera className="w-6 h-6 text-white" />
                     <span className="font-light text-xl tracking-tight">Closeframe</span>
@@ -40,6 +68,7 @@ export default function DashboardLayout({
                             <Link
                                 key={item.href}
                                 href={item.href}
+                                onClick={() => setSidebarOpen(false)}
                                 className={cn(
                                     "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
                                     isActive
@@ -104,9 +133,10 @@ export default function DashboardLayout({
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 ml-64 p-8 md:p-12 overflow-y-auto">
+            <main className="flex-1 md:ml-64 pt-14 md:pt-0 p-4 md:p-8 lg:p-12 overflow-y-auto min-h-screen">
                 {children}
             </main>
         </div>
     );
 }
+

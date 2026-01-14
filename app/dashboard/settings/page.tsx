@@ -178,55 +178,55 @@ export default function SettingsPage() {
 
     return (
         <div className={cn(
-            "min-h-[calc(100vh-6rem)] -m-8 md:-m-12 p-8 md:p-12 transition-colors duration-500",
+            "min-h-[calc(100vh-6rem)] -m-4 md:-m-8 lg:-m-12 p-4 md:p-8 lg:p-12 transition-colors duration-500",
             isLight ? "bg-white text-neutral-900" : "bg-neutral-950 text-neutral-100"
         )}>
             <header className={cn(
-                "mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6 border-b pb-8 transition-colors duration-500",
+                "mb-8 md:mb-12 flex flex-col gap-4 md:gap-6 border-b pb-6 md:pb-8 transition-colors duration-500",
                 isLight ? "border-neutral-200" : "border-neutral-900"
             )}>
                 <div>
-                    <h1 className={cn("text-3xl md:text-4xl font-light mb-4 transition-colors", isLight ? "text-neutral-900" : "text-white")}>
-                        Editar perfil público
+                    <h1 className={cn("text-xl md:text-3xl lg:text-4xl font-light mb-2 md:mb-4 transition-colors", isLight ? "text-neutral-900" : "text-white")}>
+                        Editar perfil
                     </h1>
-                    <p className="text-neutral-500 text-sm italic">Define tu presencia digital y personaliza tu marca.</p>
+                    <p className="text-neutral-500 text-xs md:text-sm italic">Define tu presencia digital.</p>
                 </div>
                 <div className={cn(
-                    "flex items-center gap-4 p-2 rounded-2xl border transition-all",
+                    "flex items-center gap-2 md:gap-4 p-1.5 md:p-2 rounded-xl md:rounded-2xl border transition-all self-start",
                     isLight ? "bg-neutral-50 border-neutral-200" : "bg-neutral-900/50 border-neutral-800"
                 )}>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 ml-2">Tema</span>
+                    <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-neutral-500 ml-2">Tema</span>
                     <button
                         onClick={() => setUser({ ...user, theme: isLight ? 'dark' : 'light' })}
                         className={cn(
-                            "flex items-center gap-2 px-4 py-2 rounded-xl transition text-xs font-medium",
+                            "flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl transition text-[10px] md:text-xs font-medium",
                             isLight
                                 ? "bg-white border border-neutral-200 text-neutral-600 hover:bg-neutral-100"
                                 : "bg-neutral-800 hover:bg-neutral-700 text-neutral-300"
                         )}
                     >
-                        {isLight ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
-                        {isLight ? 'Modo Oscuro' : 'Modo Claro'}
+                        {isLight ? <Moon className="w-3 h-3 md:w-3.5 md:h-3.5" /> : <Sun className="w-3 h-3 md:w-3.5 md:h-3.5" />}
+                        <span className="hidden sm:inline">{isLight ? 'Modo Oscuro' : 'Modo Claro'}</span>
                     </button>
                 </div>
             </header>
 
-            <form onSubmit={handleSubmit} className="space-y-16">
+            <form onSubmit={handleSubmit} className="space-y-10 md:space-y-16">
                 {/* BASIC INFO */}
                 <section>
-                    <div className="flex items-center gap-3 mb-8 text-neutral-400 text-xs uppercase tracking-widest font-bold">
-                        <User className="w-4 h-4 text-emerald-500" /> Información básica
+                    <div className="flex items-center gap-2 md:gap-3 mb-5 md:mb-8 text-neutral-400 text-[10px] md:text-xs uppercase tracking-widest font-bold">
+                        <User className="w-3 h-3 md:w-4 md:h-4 text-emerald-500" /> Información básica
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-8">
-                        <div className="space-y-3">
-                            <label className="text-[10px] font-bold opacity-40 uppercase tracking-widest ml-1">Nombre profesional</label>
+                    <div className="grid md:grid-cols-2 gap-4 md:gap-8">
+                        <div className="space-y-2 md:space-y-3">
+                            <label className="text-[9px] md:text-[10px] font-bold opacity-40 uppercase tracking-widest ml-1">Nombre profesional</label>
                             <input
                                 type="text"
                                 value={user.name}
                                 onChange={(e) => setUser({ ...user, name: e.target.value })}
                                 className={cn(
-                                    "w-full border rounded-xl px-5 py-4 outline-none transition-all",
+                                    "w-full border rounded-lg md:rounded-xl px-4 md:px-5 py-3 md:py-4 outline-none transition-all text-sm",
                                     isLight
                                         ? "bg-neutral-50 border-neutral-200 text-neutral-900 focus:bg-white focus:border-emerald-500/50"
                                         : "bg-neutral-900/50 border-neutral-800 text-neutral-100 focus:border-emerald-500/50"
@@ -268,14 +268,14 @@ export default function SettingsPage() {
 
                 {/* IMAGE / LOGO */}
                 <section>
-                    <div className="flex items-center gap-3 mb-8 text-neutral-400 text-xs uppercase tracking-widest font-bold">
-                        <ImageIcon className="w-4 h-4 text-emerald-500" /> Imagen principal / Logo
+                    <div className="flex items-center gap-2 md:gap-3 mb-5 md:mb-8 text-neutral-400 text-[10px] md:text-xs uppercase tracking-widest font-bold">
+                        <ImageIcon className="w-3 h-3 md:w-4 md:h-4 text-emerald-500" /> Logo
                     </div>
 
-                    <div className="flex flex-col md:flex-row items-center gap-10">
+                    <div className="flex flex-col items-center gap-6 md:gap-10">
                         <div className="relative group">
                             <div className={cn(
-                                "w-32 h-32 rounded-full border flex items-center justify-center overflow-hidden p-4 shadow-2xl transition-colors",
+                                "w-24 h-24 md:w-32 md:h-32 rounded-full border flex items-center justify-center overflow-hidden p-3 md:p-4 shadow-2xl transition-colors",
                                 isLight ? "bg-white border-neutral-200" : "bg-neutral-900 border-neutral-800"
                             )}>
                                 {user.businessLogo ? (
@@ -286,29 +286,29 @@ export default function SettingsPage() {
                                         style={{ transform: `scale(${user.businessLogoScale / 100})` }}
                                     />
                                 ) : (
-                                    <Camera className={cn("w-8 h-8", isLight ? "text-neutral-300" : "text-neutral-700")} />
+                                    <Camera className={cn("w-6 h-6 md:w-8 md:h-8", isLight ? "text-neutral-300" : "text-neutral-700")} />
                                 )}
                             </div>
                             {user.businessLogo && (
                                 <button
                                     onClick={() => setUser({ ...user, businessLogo: "" })}
-                                    className="absolute -top-1 -right-1 p-1.5 bg-red-500 text-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition"
+                                    className="absolute -top-1 -right-1 p-1 md:p-1.5 bg-red-500 text-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition"
                                 >
-                                    <X className="w-3 h-3" />
+                                    <X className="w-2.5 h-2.5 md:w-3 md:h-3" />
                                 </button>
                             )}
                         </div>
 
-                        <div className="flex-1 space-y-6 w-full max-w-sm">
-                            <div className="flex items-center gap-4">
+                        <div className="flex-1 space-y-4 md:space-y-6 w-full max-w-sm">
+                            <div className="flex flex-col sm:flex-row items-center gap-3 md:gap-4">
                                 <button
                                     type="button"
                                     onClick={() => fileInputRef.current?.click()}
-                                    className="px-8 py-3 rounded-full bg-white text-black text-sm font-bold hover:bg-neutral-200 transition"
+                                    className="px-6 md:px-8 py-2.5 md:py-3 rounded-full bg-white text-black text-xs md:text-sm font-bold hover:bg-neutral-200 transition"
                                 >
                                     Subir imagen
                                 </button>
-                                <p className="text-[10px] text-neutral-500 max-w-[150px]">Recomendado PNG transparente o SVG.</p>
+                                <p className="text-[9px] md:text-[10px] text-neutral-500 text-center sm:text-left">PNG o SVG recomendado</p>
                             </div>
 
                             {user.businessLogo && (
@@ -336,11 +336,11 @@ export default function SettingsPage() {
 
                 {/* LINKS */}
                 <section>
-                    <div className="flex items-center gap-3 mb-8 text-neutral-400 text-xs uppercase tracking-widest font-bold">
-                        <Link2 className="w-4 h-4 text-emerald-500" /> Links y redes
+                    <div className="flex items-center gap-2 md:gap-3 mb-5 md:mb-8 text-neutral-400 text-[10px] md:text-xs uppercase tracking-widest font-bold">
+                        <Link2 className="w-3 h-3 md:w-4 md:h-4 text-emerald-500" /> Links y redes
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-8">
+                    <div className="grid md:grid-cols-2 gap-4 md:gap-8">
                         <div className="space-y-3">
                             <label className="text-[10px] font-bold opacity-40 uppercase tracking-widest ml-1">Instagram (@usuario)</label>
                             <div className="relative">
@@ -382,11 +382,11 @@ export default function SettingsPage() {
 
                 {/* PUBLIC GALLERIES */}
                 <section>
-                    <div className="flex items-center gap-3 mb-8 text-neutral-400 text-xs uppercase tracking-widest font-bold">
-                        <Eye className="w-4 h-4 text-emerald-500" /> Galerías públicas
+                    <div className="flex items-center gap-2 md:gap-3 mb-5 md:mb-8 text-neutral-400 text-[10px] md:text-xs uppercase tracking-widest font-bold">
+                        <Eye className="w-3 h-3 md:w-4 md:h-4 text-emerald-500" /> Galerías públicas
                     </div>
 
-                    <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-2">
                         {user.projects.length === 0 ? (
                             <div className={cn(
                                 "md:col-span-2 py-10 rounded-2xl border border-dashed text-center text-sm transition-colors",
@@ -433,43 +433,43 @@ export default function SettingsPage() {
 
                 {/* ACTIONS */}
                 <footer className={cn(
-                    "pt-10 border-t flex flex-col md:flex-row justify-between items-center gap-6 transition-colors",
+                    "pt-6 md:pt-10 border-t flex flex-col gap-4 md:gap-6 transition-colors",
                     isLight ? "border-neutral-200" : "border-neutral-900"
                 )}>
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 md:gap-4">
                         <button
                             type="button"
                             onClick={copyProfileLink}
                             className={cn(
-                                "flex items-center gap-2 px-6 py-3 rounded-full text-xs transition font-bold border",
+                                "flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 rounded-full text-[10px] md:text-xs transition font-bold border",
                                 isLight
                                     ? "bg-neutral-50 border-neutral-200 text-neutral-600 hover:bg-white"
                                     : "bg-neutral-900/50 border-neutral-800 text-neutral-300 hover:bg-neutral-800"
                             )}
                         >
-                            {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                            {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                             Copiar Link
                         </button>
                         <Link
                             href={`/p/${user.id}`}
                             target="_blank"
-                            className="flex items-center gap-2 text-sm text-neutral-500 hover:text-emerald-500 transition"
+                            className="flex items-center gap-2 text-xs md:text-sm text-neutral-500 hover:text-emerald-500 transition"
                         >
-                            <Eye className="w-4 h-4" /> Ver perfil público
+                            <Eye className="w-3 h-3 md:w-4 md:h-4" /> <span className="hidden sm:inline">Ver perfil</span>
                         </Link>
                     </div>
                     <button
                         type="submit"
                         disabled={saving}
                         className={cn(
-                            "w-full md:w-auto flex items-center justify-center gap-3 px-12 py-4 rounded-full font-bold transition-all shadow-xl disabled:opacity-50",
+                            "w-full flex items-center justify-center gap-2 md:gap-3 px-8 md:px-12 py-3 md:py-4 rounded-full font-bold transition-all shadow-xl disabled:opacity-50 text-sm md:text-base",
                             isLight
                                 ? "bg-neutral-900 text-white hover:bg-black shadow-neutral-200/50"
                                 : "bg-white text-black hover:bg-neutral-200 shadow-white/5"
                         )}
                     >
-                        {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-4 h-4" />}
-                        Guardar cambios
+                        {saving ? <Loader2 className="w-4 h-4 md:w-5 md:h-5 animate-spin" /> : <Save className="w-3 h-3 md:w-4 md:h-4" />}
+                        Guardar
                     </button>
                 </footer>
             </form>

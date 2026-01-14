@@ -78,23 +78,23 @@ export default function CloudManager() {
     }
 
     return (
-        <div className="max-w-6xl mx-auto space-y-12">
-            <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-neutral-900 pb-8">
+        <div className="max-w-6xl mx-auto space-y-8 md:space-y-12">
+            <header className="flex flex-col gap-3 md:gap-6 border-b border-neutral-900 pb-6 md:pb-8">
                 <div>
-                    <h1 className="text-3xl md:text-4xl font-light mb-4 text-white">Gestor de nubes</h1>
-                    <p className="text-neutral-500 text-sm italic">Administra tus conexiones y organiza tus fuentes de archivos.</p>
+                    <h1 className="text-xl md:text-3xl lg:text-4xl font-light mb-2 md:mb-4 text-white">Gestor de nubes</h1>
+                    <p className="text-neutral-500 text-xs md:text-sm italic">Administra tus conexiones.</p>
                 </div>
             </header>
 
             <main>
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                     {accounts.map((account) => (
                         <motion.div
                             key={account.id}
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             whileHover={{ scale: 1.02 }}
-                            className="rounded-2xl border border-neutral-700/50 bg-neutral-900 p-6 flex flex-col group transition-all hover:bg-neutral-800/80 hover:border-emerald-500/30 border-b-4 shadow-2xl shadow-black/50"
+                            className="rounded-xl md:rounded-2xl border border-neutral-700/50 bg-neutral-900 p-4 md:p-6 flex flex-col group transition-all hover:bg-neutral-800/80 hover:border-emerald-500/30 border-b-4 shadow-2xl shadow-black/50"
                         >
                             <div className="flex items-start justify-between mb-8">
                                 <div className="flex-1 min-w-0">
@@ -148,15 +148,15 @@ export default function CloudManager() {
                             <div className="flex gap-2 mt-auto">
                                 <button
                                     onClick={() => window.location.href = `/api/connect/google?prompt=consent`}
-                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-neutral-800 hover:border-neutral-700 hover:bg-neutral-800 transition text-[10px] font-bold uppercase tracking-widest text-neutral-400 hover:text-white"
+                                    className="flex-1 flex items-center justify-center gap-1.5 md:gap-2 px-3 md:px-4 py-2 md:py-2.5 rounded-lg md:rounded-xl border border-neutral-800 hover:border-neutral-700 hover:bg-neutral-800 transition text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-neutral-400 hover:text-white"
                                 >
-                                    <RefreshCw className="w-3 h-3" /> Reautorizar
+                                    <RefreshCw className="w-3 h-3" /> <span className="hidden sm:inline">Re</span>autorizar
                                 </button>
                                 <button
                                     onClick={() => handleDelete(account.id)}
-                                    className="flex items-center justify-center w-10 h-10 rounded-xl border border-neutral-800 hover:border-red-500/50 hover:bg-red-500/10 transition text-neutral-500 hover:text-red-500"
+                                    className="flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-lg md:rounded-xl border border-neutral-800 hover:border-red-500/50 hover:bg-red-500/10 transition text-neutral-500 hover:text-red-500"
                                 >
-                                    <Trash2 className="w-4 h-4" />
+                                    <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
                                 </button>
                             </div>
                         </motion.div>
@@ -164,40 +164,38 @@ export default function CloudManager() {
                 </div>
 
                 {/* Herramientas de Organización - Template Download */}
-                <section className="mt-12 bg-neutral-900 rounded-3xl border border-neutral-800 p-8 md:p-12 relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-emerald-500/20 transition-all duration-700 pointer-events-none" />
+                <section className="mt-8 md:mt-12 bg-neutral-900 rounded-2xl md:rounded-3xl border border-neutral-800 p-5 md:p-8 lg:p-12 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-32 md:w-64 h-32 md:h-64 bg-emerald-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-emerald-500/20 transition-all duration-700 pointer-events-none" />
 
-                    <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
-                        <div className="space-y-4 max-w-xl">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-emerald-500/20 rounded-lg text-emerald-500">
-                                    <Folder className="w-6 h-6" />
+                    <div className="relative z-10 flex flex-col gap-5 md:gap-8">
+                        <div className="space-y-3 md:space-y-4">
+                            <div className="flex items-center gap-2 md:gap-3">
+                                <div className="p-1.5 md:p-2 bg-emerald-500/20 rounded-lg text-emerald-500">
+                                    <Folder className="w-4 h-4 md:w-6 md:h-6" />
                                 </div>
-                                <h2 className="text-xl font-medium text-white">Kit de Organización Inteligente</h2>
+                                <h2 className="text-base md:text-xl font-medium text-white">Kit de Organización</h2>
                             </div>
-                            <p className="text-neutral-400 leading-relaxed">
-                                ¿Quieres que tus RAWs, JPGs y Videos se detecten automáticamente?
-                                Descarga nuestra estructura de carpetas oficial y úsala como plantilla en tu Google Drive.
+                            <p className="text-neutral-400 leading-relaxed text-xs md:text-base">
+                                Descarga la estructura de carpetas para que tus archivos se detecten automáticamente.
                             </p>
-                            <ul className="text-sm text-neutral-500 flex flex-col gap-2">
+                            <ul className="text-xs md:text-sm text-neutral-500 flex flex-col gap-1.5 md:gap-2">
                                 <li className="flex items-center gap-2">
-                                    <Check className="w-4 h-4 text-emerald-500" />
-                                    <span>Fotografías: <code className="bg-black/30 px-1 rounded border border-white/5">webjpg</code>, <code className="bg-black/30 px-1 rounded border border-white/5">jpg</code>, <code className="bg-black/30 px-1 rounded border border-white/5">raw</code></span>
+                                    <Check className="w-3 h-3 md:w-4 md:h-4 text-emerald-500 shrink-0" />
+                                    <span>Fotos: <code className="bg-black/30 px-1 rounded text-[10px] md:text-xs">webjpg</code>, <code className="bg-black/30 px-1 rounded text-[10px] md:text-xs">jpg</code>, <code className="bg-black/30 px-1 rounded text-[10px] md:text-xs">raw</code></span>
                                 </li>
                                 <li className="flex items-center gap-2">
-                                    <Check className="w-4 h-4 text-emerald-500" />
-                                    <span>Videos: <code className="bg-black/30 px-1 rounded border border-white/5">webmp4</code>, <code className="bg-black/30 px-1 rounded border border-white/5">hd</code>, <code className="bg-black/30 px-1 rounded border border-white/5">alta</code></span>
+                                    <Check className="w-3 h-3 md:w-4 md:h-4 text-emerald-500 shrink-0" />
+                                    <span>Videos: <code className="bg-black/30 px-1 rounded text-[10px] md:text-xs">webmp4</code>, <code className="bg-black/30 px-1 rounded text-[10px] md:text-xs">hd</code>, <code className="bg-black/30 px-1 rounded text-[10px] md:text-xs">alta</code></span>
                                 </li>
-                                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500" /> Incluye guía de nombrado de archivos</li>
                             </ul>
                         </div>
 
                         <a
                             href="/api/utils/download-template"
-                            className="bg-white text-black hover:bg-neutral-200 transition px-8 py-4 rounded-xl font-bold flex items-center gap-3 shadow-xl hover:shadow-2xl hover:-translate-y-1 transform duration-300 whitespace-nowrap"
+                            className="bg-white text-black hover:bg-neutral-200 transition px-5 md:px-8 py-3 md:py-4 rounded-lg md:rounded-xl font-bold flex items-center justify-center gap-2 md:gap-3 shadow-xl text-sm md:text-base w-full md:w-auto md:self-start"
                         >
-                            <Download className="w-5 h-5" />
-                            Descargar Estructura .ZIP
+                            <Download className="w-4 h-4 md:w-5 md:h-5" />
+                            Descargar .ZIP
                         </a>
                     </div>
                 </section>

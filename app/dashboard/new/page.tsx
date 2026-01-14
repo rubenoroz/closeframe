@@ -114,20 +114,20 @@ export default function NewProjectPage() {
     }
 
     return (
-        <div className="max-w-2xl mx-auto py-10 px-4">
-            <Link href="/dashboard" className="flex items-center gap-2 text-neutral-500 hover:text-white mb-8 transition text-sm">
+        <div className="max-w-2xl mx-auto py-6 md:py-10 px-4">
+            <Link href="/dashboard" className="flex items-center gap-2 text-neutral-500 hover:text-white mb-6 md:mb-8 transition text-xs md:text-sm">
                 <ArrowLeft className="w-4 h-4" /> Volver al dashboard
             </Link>
 
-            <h1 className="text-3xl font-light mb-2">Nueva Galería</h1>
-            <p className="text-neutral-400 mb-10 text-sm">Configura el origen de tus fotos para la nueva galería.</p>
+            <h1 className="text-2xl md:text-3xl font-light mb-2">Nueva Galería</h1>
+            <p className="text-neutral-400 mb-8 md:mb-10 text-xs md:text-sm">Configura el origen de tus fotos para la nueva galería.</p>
 
             {/* Step 1: Account Selection */}
             {step === "account" && (
-                <div className="space-y-6">
-                    <div className="flex items-center gap-4 mb-2">
-                        <div className="w-10 h-10 bg-white text-black rounded-full flex items-center justify-center text-lg font-bold">1</div>
-                        <h2 className="text-xl font-medium">Elige una cuenta de Drive</h2>
+                <div className="space-y-4 md:space-y-6">
+                    <div className="flex items-center gap-3 md:gap-4 mb-2">
+                        <div className="w-8 h-8 md:w-10 md:h-10 bg-white text-black rounded-full flex items-center justify-center text-base md:text-lg font-bold">1</div>
+                        <h2 className="text-lg md:text-xl font-medium">Elige una cuenta de Drive</h2>
                     </div>
 
                     <div className="grid grid-cols-1 gap-3">
@@ -135,17 +135,17 @@ export default function NewProjectPage() {
                             <button
                                 key={account.id}
                                 onClick={() => setSelectedAccount(account)}
-                                className={`flex items-center justify-between p-6 rounded-2xl border transition-all group shadow-2xl ${selectedAccount?.id === account.id
+                                className={`flex items-center justify-between p-4 md:p-6 rounded-xl md:rounded-2xl border transition-all group shadow-2xl ${selectedAccount?.id === account.id
                                     ? "bg-neutral-800 border-emerald-500/50 shadow-emerald-500/10"
                                     : "bg-neutral-900 border-neutral-700/50 hover:bg-neutral-800 hover:border-neutral-600"
                                     }`}
                             >
-                                <div className="flex items-center gap-5">
-                                    <div className={`p-3 rounded-xl transition-all ${selectedAccount?.id === account.id ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "bg-neutral-800 text-neutral-400 group-hover:bg-neutral-700"}`}>
-                                        <Cloud className="w-5 h-5" />
+                                <div className="flex items-center gap-3 md:gap-5">
+                                    <div className={`p-2 md:p-3 rounded-lg md:rounded-xl transition-all ${selectedAccount?.id === account.id ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "bg-neutral-800 text-neutral-400 group-hover:bg-neutral-700"}`}>
+                                        <Cloud className="w-4 h-4 md:w-5 md:h-5" />
                                     </div>
                                     <div className="text-left">
-                                        <p className={`font-medium text-lg leading-tight ${selectedAccount?.id === account.id ? "text-white" : "text-neutral-200"}`}>
+                                        <p className={`font-medium text-sm md:text-lg leading-tight ${selectedAccount?.id === account.id ? "text-white" : "text-neutral-200"}`}>
                                             {account.name || (account.email ? `Drive (${account.email})` : "Cuenta sin nombre")}
                                         </p>
                                         <div className="flex items-center gap-2 mt-1">
@@ -180,13 +180,13 @@ export default function NewProjectPage() {
                         </a>
                     </div>
 
-                    <div className="pt-6">
+                    <div className="pt-4 md:pt-6">
                         <button
                             onClick={() => setStep("folder")}
                             disabled={!selectedAccount}
-                            className="w-full py-4 bg-emerald-500 text-black rounded-2xl font-bold hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20 disabled:opacity-30 flex items-center justify-center gap-2"
+                            className="w-full py-3 md:py-4 bg-emerald-500 text-black rounded-xl md:rounded-2xl font-bold hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20 disabled:opacity-30 flex items-center justify-center gap-2 text-sm md:text-base"
                         >
-                            Continuar al navegador de archivos <ChevronRight className="w-4 h-4" />
+                            Continuar <ChevronRight className="w-4 h-4" />
                         </button>
                     </div>
                 </div>
@@ -194,67 +194,67 @@ export default function NewProjectPage() {
 
             {/* Step 2: Folder Selection */}
             {step === "folder" && selectedAccount && (
-                <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-8">
-                    <div className="flex items-center gap-4 mb-8 border-b border-neutral-800 pb-6">
-                        <div className="w-10 h-10 bg-emerald-900/20 text-emerald-400 rounded-full flex items-center justify-center text-lg font-bold">
-                            <Check className="w-5 h-5" />
+                <div className="bg-neutral-900 border border-neutral-800 rounded-xl md:rounded-2xl p-5 md:p-8">
+                    <div className="flex flex-wrap items-center gap-3 md:gap-4 mb-6 md:mb-8 border-b border-neutral-800 pb-4 md:pb-6">
+                        <div className="w-8 h-8 md:w-10 md:h-10 bg-emerald-900/20 text-emerald-400 rounded-full flex items-center justify-center text-base md:text-lg font-bold">
+                            <Check className="w-4 h-4 md:w-5 md:h-5" />
                         </div>
-                        <div>
-                            <p className="text-sm text-neutral-500">Nube activa</p>
-                            <p className="font-medium text-emerald-400">
+                        <div className="flex-1 min-w-0">
+                            <p className="text-xs md:text-sm text-neutral-500">Nube activa</p>
+                            <p className="font-medium text-emerald-400 text-sm md:text-base truncate">
                                 {selectedAccount.name || selectedAccount.email || "Cuenta conectada"}
                             </p>
                         </div>
                         <button
                             onClick={() => setStep("account")}
-                            className="ml-auto text-xs font-medium text-neutral-500 hover:text-white underline underline-offset-4"
+                            className="text-xs font-medium text-neutral-500 hover:text-white underline underline-offset-4"
                         >
-                            Cambiar cuenta
+                            Cambiar
                         </button>
                     </div>
 
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="w-10 h-10 bg-white text-black rounded-full flex items-center justify-center text-lg font-bold">2</div>
+                    <div className="flex items-center gap-3 md:gap-4 mb-4">
+                        <div className="w-8 h-8 md:w-10 md:h-10 bg-white text-black rounded-full flex items-center justify-center text-base md:text-lg font-bold">2</div>
                         <div>
-                            <p className="text-sm text-neutral-500">Origen de fotos</p>
-                            <h3 className="text-lg font-medium">Selecciona una carpeta</h3>
+                            <p className="text-xs md:text-sm text-neutral-500">Origen de fotos</p>
+                            <h3 className="text-base md:text-lg font-medium">Selecciona una carpeta</h3>
                         </div>
                     </div>
 
-                    <div className="pl-14">
-                        <p className="text-neutral-400 mb-6 text-sm">
-                            Elige la carpeta de Drive con tus fotos. El nombre de la carpeta se usará como título para la galería.
+                    <div className="pl-0 md:pl-14">
+                        <p className="text-neutral-400 mb-4 md:mb-6 text-xs md:text-sm">
+                            Elige la carpeta de Drive con tus fotos.
                         </p>
 
                         {/* Pro Tip: Folder Structure */}
-                        <div className="mb-8 bg-blue-500/5 border border-blue-500/10 rounded-2xl p-6">
-                            <div className="flex items-center gap-2 mb-4 text-blue-400">
-                                <Zap className="w-4 h-4" />
-                                <span className="text-xs font-bold uppercase tracking-widest">Tip Profesional: Estructura de Proxies</span>
+                        <div className="mb-6 md:mb-8 bg-blue-500/5 border border-blue-500/10 rounded-xl md:rounded-2xl p-4 md:p-6">
+                            <div className="flex items-center gap-2 mb-3 md:mb-4 text-blue-400">
+                                <Zap className="w-3 h-3 md:w-4 md:h-4" />
+                                <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest">Tip: Estructura de Proxies</span>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div className="space-y-1">
-                                    <div className="flex items-center gap-2 text-xs font-medium text-neutral-300">
-                                        <Folder className="w-3.5 h-3.5 text-blue-400" /> /webjpg
+                            <div className="grid grid-cols-3 gap-2 md:gap-4">
+                                <div className="space-y-0.5 md:space-y-1">
+                                    <div className="flex items-center gap-1 md:gap-2 text-[10px] md:text-xs font-medium text-neutral-300">
+                                        <Folder className="w-3 h-3 md:w-3.5 md:h-3.5 text-blue-400" /> /webjpg
                                     </div>
-                                    <p className="text-[10px] text-neutral-500 italic">Previsualización rápida</p>
+                                    <p className="text-[9px] md:text-[10px] text-neutral-500 italic hidden sm:block">Prevista</p>
                                 </div>
-                                <div className="space-y-1">
-                                    <div className="flex items-center gap-2 text-xs font-medium text-neutral-300">
-                                        <Folder className="w-3.5 h-3.5 text-emerald-400" /> /jpg
+                                <div className="space-y-0.5 md:space-y-1">
+                                    <div className="flex items-center gap-1 md:gap-2 text-[10px] md:text-xs font-medium text-neutral-300">
+                                        <Folder className="w-3 h-3 md:w-3.5 md:h-3.5 text-emerald-400" /> /jpg
                                     </div>
-                                    <p className="text-[10px] text-neutral-500 italic">Descargas alta res</p>
+                                    <p className="text-[9px] md:text-[10px] text-neutral-500 italic hidden sm:block">Alta res</p>
                                 </div>
-                                <div className="space-y-1">
-                                    <div className="flex items-center gap-2 text-xs font-medium text-neutral-300">
-                                        <Folder className="w-3.5 h-3.5 text-orange-400" /> /raw
+                                <div className="space-y-0.5 md:space-y-1">
+                                    <div className="flex items-center gap-1 md:gap-2 text-[10px] md:text-xs font-medium text-neutral-300">
+                                        <Folder className="w-3 h-3 md:w-3.5 md:h-3.5 text-orange-400" /> /raw
                                     </div>
-                                    <p className="text-[10px] text-neutral-500 italic">Archivos originales</p>
+                                    <p className="text-[9px] md:text-[10px] text-neutral-500 italic hidden sm:block">Original</p>
                                 </div>
                             </div>
-                            <div className="mt-4 pt-4 border-t border-blue-500/10 flex gap-3 text-[11px] text-neutral-400 leading-relaxed">
-                                <Info className="w-4 h-4 text-blue-400 flex-shrink-0" />
-                                <span>Asegúrate de que los archivos tengan el <b>mismo nombre</b> en todas las carpetas. TuSet los vincula automáticamente.</span>
+                            <div className="mt-3 md:mt-4 pt-3 md:pt-4 border-t border-blue-500/10 flex gap-2 md:gap-3 text-[10px] md:text-[11px] text-neutral-400 leading-relaxed">
+                                <Info className="w-3 h-3 md:w-4 md:h-4 text-blue-400 flex-shrink-0" />
+                                <span>Los archivos deben tener el <b>mismo nombre</b> en todas las carpetas.</span>
                             </div>
                         </div>
 
@@ -273,41 +273,41 @@ export default function NewProjectPage() {
 
             {/* Step 3: Header Customization */}
             {step === "header" && selectedAccount && selectedFolder && (
-                <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-8">
-                    <div className="flex items-center gap-4 mb-8 border-b border-neutral-800 pb-6">
-                        <div className="w-10 h-10 bg-emerald-900/20 text-emerald-400 rounded-full flex items-center justify-center text-lg font-bold">
-                            <Check className="w-5 h-5" />
+                <div className="bg-neutral-900 border border-neutral-800 rounded-xl md:rounded-2xl p-5 md:p-8">
+                    <div className="flex flex-wrap items-center gap-3 md:gap-4 mb-6 md:mb-8 border-b border-neutral-800 pb-4 md:pb-6">
+                        <div className="w-8 h-8 md:w-10 md:h-10 bg-emerald-900/20 text-emerald-400 rounded-full flex items-center justify-center text-base md:text-lg font-bold">
+                            <Check className="w-4 h-4 md:w-5 md:h-5" />
                         </div>
-                        <div>
-                            <p className="text-sm text-neutral-500">Carpeta seleccionada</p>
-                            <p className="font-medium text-emerald-400">{selectedFolder.name}</p>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-xs md:text-sm text-neutral-500">Carpeta seleccionada</p>
+                            <p className="font-medium text-emerald-400 text-sm md:text-base truncate">{selectedFolder.name}</p>
                         </div>
                         <button
                             onClick={() => setStep("folder")}
-                            className="ml-auto text-xs font-medium text-neutral-500 hover:text-white underline underline-offset-4"
+                            className="text-xs font-medium text-neutral-500 hover:text-white underline underline-offset-4"
                         >
-                            Cambiar carpeta
+                            Cambiar
                         </button>
                     </div>
 
-                    <div className="flex items-center gap-4 mb-6">
-                        <div className="w-10 h-10 bg-white text-black rounded-full flex items-center justify-center text-lg font-bold">3</div>
+                    <div className="flex items-center gap-3 md:gap-4 mb-4 md:mb-6">
+                        <div className="w-8 h-8 md:w-10 md:h-10 bg-white text-black rounded-full flex items-center justify-center text-base md:text-lg font-bold">3</div>
                         <div>
-                            <p className="text-sm text-neutral-500">Personalización</p>
-                            <h3 className="text-lg font-medium">Configura el header de tu galería</h3>
+                            <p className="text-xs md:text-sm text-neutral-500">Personalización</p>
+                            <h3 className="text-base md:text-lg font-medium">Configura el header</h3>
                         </div>
                     </div>
 
-                    <div className="pl-14 space-y-6">
+                    <div className="pl-0 md:pl-14 space-y-4 md:space-y-6">
                         {/* Título del Evento */}
                         <div>
-                            <label className="block text-sm font-medium mb-2 text-neutral-300">
+                            <label className="block text-xs md:text-sm font-medium mb-2 text-neutral-300">
                                 Título del Evento
                             </label>
                             <input
                                 type="text"
                                 placeholder="Ej: Boda de Ana & Carlos"
-                                className="w-full px-4 py-3 bg-neutral-800 border border-neutral-700 rounded-xl text-white placeholder:text-neutral-500 focus:border-emerald-500 focus:outline-none transition"
+                                className="w-full px-3 md:px-4 py-2.5 md:py-3 bg-neutral-800 border border-neutral-700 rounded-lg md:rounded-xl text-white placeholder:text-neutral-500 focus:border-emerald-500 focus:outline-none transition text-sm"
                                 value={headerTitle}
                                 onChange={(e) => setHeaderTitle(e.target.value)}
                             />
