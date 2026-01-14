@@ -222,28 +222,28 @@ export default function DashboardPage() {
             </div>
 
             <div className="max-w-6xl mx-auto relative z-10">
-                <header className="flex items-center justify-between mb-10">
+                <header className="flex flex-col md:flex-row md:items-center justify-between mb-6 md:mb-10 gap-4">
                     <div>
-                        <h1 className="text-3xl font-light mb-1">Mis Galerías</h1>
-                        <p className="text-neutral-500 text-sm">Gestiona y comparte tus proyectos fotográficos.</p>
+                        <h1 className="text-2xl md:text-3xl font-light mb-1">Mis Galerías</h1>
+                        <p className="text-neutral-500 text-xs md:text-sm">Gestiona y comparte tus proyectos fotográficos.</p>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
                         {userId && (
                             <Link
                                 href={`/p/${userId}`}
                                 target="_blank"
-                                className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-medium transition border shadow-sm ${isLight
+                                className={`flex items-center justify-center gap-2 px-4 md:px-5 py-2.5 rounded-full font-medium transition border shadow-sm text-sm ${isLight
                                     ? "bg-white border-neutral-200 text-neutral-600 hover:bg-neutral-50"
                                     : "bg-neutral-800 border-neutral-700 text-neutral-300 hover:bg-neutral-700"
                                     }`}
                             >
                                 <ExternalLink className="w-4 h-4" />
-                                Ver Perfil Público
+                                <span className="sm:inline">Ver Perfil Público</span>
                             </Link>
                         )}
                         <Link
                             href="/dashboard/new"
-                            className="flex items-center gap-2 px-5 py-2.5 bg-white text-black rounded-full font-medium hover:opacity-90 transition"
+                            className="flex items-center justify-center gap-2 px-4 md:px-5 py-2.5 bg-white text-black rounded-full font-medium hover:opacity-90 transition text-sm"
                         >
                             <Plus className="w-4 h-4" />
                             Nueva Galería
@@ -462,17 +462,17 @@ export default function DashboardPage() {
 
                 {/* Settings Modal */}
                 {selectedProject && (
-                    <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[110] p-4">
-                        <div className={`${isLight ? 'bg-white text-neutral-900 border-neutral-200' : 'bg-neutral-900 text-white border-neutral-800'} border rounded-[3rem] w-full max-w-lg p-10 relative shadow-2xl animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto`}>
+                    <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-end md:items-center justify-center z-[110] p-0 md:p-4">
+                        <div className={`${isLight ? 'bg-white text-neutral-900 border-neutral-200' : 'bg-neutral-900 text-white border-neutral-800'} border rounded-t-3xl md:rounded-[3rem] w-full max-w-lg p-6 md:p-10 relative shadow-2xl animate-in slide-in-from-bottom md:zoom-in-95 duration-300 max-h-[95vh] md:max-h-[90vh] overflow-y-auto`}>
                             <button
                                 onClick={() => setSelectedProject(null)}
-                                className="absolute top-8 right-8 text-neutral-500 hover:text-emerald-500 transition"
+                                className="absolute top-4 right-4 md:top-8 md:right-8 text-neutral-500 hover:text-emerald-500 transition"
                             >
-                                <X className="w-6 h-6" />
+                                <X className="w-5 h-5 md:w-6 md:h-6" />
                             </button>
 
-                            <h2 className="text-3xl font-light mb-10 flex items-center gap-4">
-                                <Settings className="w-8 h-8 text-emerald-500" />
+                            <h2 className="text-2xl md:text-3xl font-light mb-6 md:mb-10 flex items-center gap-3 md:gap-4">
+                                <Settings className="w-6 h-6 md:w-8 md:h-8 text-emerald-500" />
                                 Ajustes
                             </h2>
 
@@ -496,7 +496,7 @@ export default function DashboardPage() {
                                         <span className="text-sm font-medium">Personalización del Header</span>
                                     </div>
 
-                                    <div className="space-y-4 pl-7">
+                                    <div className="space-y-4 pl-0 md:pl-7">
                                         <div>
                                             <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-2 block">Título del Header</label>
                                             <input
@@ -508,7 +508,7 @@ export default function DashboardPage() {
                                             />
                                         </div>
 
-                                        <div className="grid grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div>
                                                 <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-2 block">Tipografía</label>
                                                 <select
@@ -577,7 +577,7 @@ export default function DashboardPage() {
                                             <span className="text-sm font-medium">Permisos de Descarga</span>
                                         </div>
 
-                                        <div className="space-y-3 pl-7">
+                                        <div className="space-y-3 pl-0 md:pl-7">
                                             <label className="flex items-center justify-between cursor-pointer">
                                                 <span className={`text-sm ${editData.downloadEnabled ? (isLight ? 'text-neutral-900' : 'text-white') : 'text-neutral-500'}`}>Activar Descargas</span>
                                                 <input
