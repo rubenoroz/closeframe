@@ -287,9 +287,9 @@ export default function GalleryViewer({
                     </div>
                 ) : (
                     <>
-                        <div className="hidden md:grid grid-cols-4 gap-4 items-start">
+                        <div className="hidden md:grid grid-cols-4 gap-1 items-start">
                             {columns.map((col, colIdx) => (
-                                <div key={colIdx} className="flex flex-col gap-4">
+                                <div key={colIdx} className="flex flex-col gap-1">
                                     {col.map((item) => {
                                         const originalIndex = files.findIndex((f) => f.id === item.id);
                                         return (
@@ -309,9 +309,9 @@ export default function GalleryViewer({
                             ))}
                         </div>
 
-                        <div className="grid md:hidden grid-cols-2 gap-3 items-start">
+                        <div className="grid md:hidden grid-cols-2 gap-1 items-start">
                             {mobileColumns.map((col, colIdx) => (
-                                <div key={colIdx} className="flex flex-col gap-3">
+                                <div key={colIdx} className="flex flex-col gap-1">
                                     {col.map((item) => {
                                         const originalIndex = files.findIndex((f) => f.id === item.id);
                                         return (
