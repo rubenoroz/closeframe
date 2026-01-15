@@ -166,6 +166,7 @@ export async function PATCH(request: NextRequest) {
             id, name, password,
             downloadEnabled, downloadJpgEnabled, downloadRawEnabled,
             downloadVideoHdEnabled, downloadVideoRawEnabled,
+            enableVideoTab, showInProfile,
             headerTitle, headerFontFamily, headerColor, headerBackground,
             layoutType, public: isPublic
         } = body;
@@ -190,6 +191,8 @@ export async function PATCH(request: NextRequest) {
         if (downloadRawEnabled !== undefined) updateData.downloadRawEnabled = downloadRawEnabled;
         if (downloadVideoHdEnabled !== undefined) updateData.downloadVideoHdEnabled = downloadVideoHdEnabled;
         if (downloadVideoRawEnabled !== undefined) updateData.downloadVideoRawEnabled = downloadVideoRawEnabled;
+        if (enableVideoTab !== undefined) updateData.enableVideoTab = enableVideoTab;
+        if (showInProfile !== undefined) updateData.showInProfile = showInProfile;
         if (headerTitle !== undefined) updateData.headerTitle = headerTitle;
         if (headerFontFamily !== undefined) updateData.headerFontFamily = headerFontFamily;
         if (headerColor !== undefined) updateData.headerColor = headerColor;

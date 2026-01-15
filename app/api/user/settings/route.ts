@@ -29,6 +29,7 @@ export async function GET() {
                         id: true,
                         name: true,
                         public: true,
+                        showInProfile: true,
                         coverImage: true,
                         createdAt: true
                     }

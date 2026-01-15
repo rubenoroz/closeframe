@@ -58,6 +58,7 @@ export default function DashboardPage() {
         downloadRawEnabled: false,
         downloadVideoHdEnabled: true,
         downloadVideoRawEnabled: false,
+        enableVideoTab: false,
         headerTitle: "",
         headerFontFamily: "Inter",
         headerColor: "#FFFFFF",
@@ -104,6 +105,7 @@ export default function DashboardPage() {
             downloadRawEnabled: project.downloadRawEnabled === true,
             downloadVideoHdEnabled: project.downloadVideoHdEnabled !== false,
             downloadVideoRawEnabled: project.downloadVideoRawEnabled === true,
+            enableVideoTab: project.enableVideoTab === true,
             headerTitle: project.headerTitle || project.name,
             headerFontFamily: project.headerFontFamily || "Inter",
             headerColor: project.headerColor || "#FFFFFF",
@@ -131,6 +133,7 @@ export default function DashboardPage() {
                     downloadRawEnabled: editData.downloadRawEnabled,
                     downloadVideoHdEnabled: editData.downloadVideoHdEnabled,
                     downloadVideoRawEnabled: editData.downloadVideoRawEnabled,
+                    enableVideoTab: editData.enableVideoTab,
                     headerTitle: editData.headerTitle,
                     headerFontFamily: editData.headerFontFamily,
                     headerColor: editData.headerColor,
@@ -298,6 +301,17 @@ export default function DashboardPage() {
                                     </Link>
 
                                     <div className="flex items-center gap-1">
+                                        {/* Visit gallery button */}
+                                        <Link
+                                            href={`/g/${project.slug}`}
+                                            target="_blank"
+                                            className={`p-2.5 rounded-full transition ${isLight ? 'bg-neutral-50 text-neutral-400 hover:bg-emerald-500 hover:text-white' : 'bg-white/5 text-neutral-400 hover:text-white hover:bg-white/10'}`}
+                                            title="Visitar galería"
+                                        >
+                                            <ExternalLink className="w-4 h-4" />
+                                        </Link>
+
+                                        {/* Copy link button */}
                                         <button
                                             onClick={() => copyPublicLink(project.slug, project.id)}
                                             className={`p-2.5 rounded-full transition relative ${copiedId === project.id
@@ -516,11 +530,12 @@ export default function DashboardPage() {
                                                     onChange={(e) => setEditData({ ...editData, headerFontFamily: e.target.value })}
                                                     className={`w-full border rounded-xl px-4 py-2.5 text-sm outline-none transition-all ${isLight ? 'bg-white border-neutral-200 focus:border-emerald-500' : 'bg-neutral-900 border-neutral-700 focus:border-emerald-500'}`}
                                                 >
-                                                    <option value="Inter">Inter</option>
-                                                    <option value="Playfair Display">Playfair Display</option>
-                                                    <option value="Montserrat">Montserrat</option>
-                                                    <option value="Lora">Lora</option>
-                                                    <option value="Cormorant Garamond">Cormorant Garamond</option>
+                                                    <option value="Inter">Inter (Profesional neutro)</option>
+                                                    <option value="DM Sans">DM Sans (Moderno cercano)</option>
+                                                    <option value="Fraunces">Fraunces (Editorial premium)</option>
+                                                    <option value="Playfair Display">Playfair Display (Bodas clásicas)</option>
+                                                    <option value="Cormorant">Cormorant (Artístico autoral)</option>
+                                                    <option value="Allura">Allura (Romance / Boda)</option>
                                                 </select>
                                             </div>
                                             <div>
@@ -615,35 +630,53 @@ export default function DashboardPage() {
                                                         />
                                                     </label>
 
-                                                    {/* Video Download Options */}
+                                                    {/* Video Tab Toggle */}
                                                     <div className={`mt-4 pt-4 border-t ${isLight ? 'border-neutral-200' : 'border-neutral-700/50'}`}>
-                                                        <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-3 block">Videos</span>
-                                                        <div className="space-y-3">
-                                                            <label className="flex items-center justify-between cursor-pointer group">
-                                                                <div className="flex flex-col">
-                                                                    <span className={`text-sm hover:opacity-100 transition-colors ${isLight ? 'text-neutral-600 hover:text-black' : 'text-neutral-400 hover:text-white'}`}>HD (1080p)</span>
-                                                                    <span className="text-[9px] text-neutral-500">Videos en alta definición</span>
+                                                        <label className="flex items-center justify-between cursor-pointer group mb-3">
+                                                            <div className="flex flex-col">
+                                                                <span className={`text-sm font-medium hover:opacity-100 transition-colors ${isLight ? 'text-neutral-700 hover:text-black' : 'text-neutral-300 hover:text-white'}`}>Mostrar pestaña de Videos</span>
+                                                                <span className="text-[9px] text-neutral-500">Permite ver videos en la galería</span>
+                                                            </div>
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={editData.enableVideoTab}
+                                                                onChange={(e) => setEditData({ ...editData, enableVideoTab: e.target.checked })}
+                                                                className="w-5 h-5 accent-emerald-500 rounded bg-neutral-700"
+                                                            />
+                                                        </label>
+
+                                                        {/* Video Download Options - only show if video tab is enabled */}
+                                                        {editData.enableVideoTab && (
+                                                            <>
+                                                                <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-3 block">Descargas de Video</span>
+                                                                <div className="space-y-3">
+                                                                    <label className="flex items-center justify-between cursor-pointer group">
+                                                                        <div className="flex flex-col">
+                                                                            <span className={`text-sm hover:opacity-100 transition-colors ${isLight ? 'text-neutral-600 hover:text-black' : 'text-neutral-400 hover:text-white'}`}>HD (1080p)</span>
+                                                                            <span className="text-[9px] text-neutral-500">Videos en alta definición</span>
+                                                                        </div>
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            checked={editData.downloadVideoHdEnabled}
+                                                                            onChange={(e) => setEditData({ ...editData, downloadVideoHdEnabled: e.target.checked })}
+                                                                            className="w-5 h-5 accent-emerald-500 rounded bg-neutral-700"
+                                                                        />
+                                                                    </label>
+                                                                    <label className="flex items-center justify-between cursor-pointer group">
+                                                                        <div className="flex flex-col">
+                                                                            <span className={`text-sm hover:opacity-100 transition-colors ${isLight ? 'text-neutral-600 hover:text-black' : 'text-neutral-400 hover:text-white'}`}>Alta Calidad (4K/ProRes)</span>
+                                                                            <span className="text-[9px] text-neutral-500">Videos en máxima calidad</span>
+                                                                        </div>
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            checked={editData.downloadVideoRawEnabled}
+                                                                            onChange={(e) => setEditData({ ...editData, downloadVideoRawEnabled: e.target.checked })}
+                                                                            className="w-5 h-5 accent-emerald-500 rounded bg-neutral-700"
+                                                                        />
+                                                                    </label>
                                                                 </div>
-                                                                <input
-                                                                    type="checkbox"
-                                                                    checked={editData.downloadVideoHdEnabled}
-                                                                    onChange={(e) => setEditData({ ...editData, downloadVideoHdEnabled: e.target.checked })}
-                                                                    className="w-5 h-5 accent-emerald-500 rounded bg-neutral-700"
-                                                                />
-                                                            </label>
-                                                            <label className="flex items-center justify-between cursor-pointer group">
-                                                                <div className="flex flex-col">
-                                                                    <span className={`text-sm hover:opacity-100 transition-colors ${isLight ? 'text-neutral-600 hover:text-black' : 'text-neutral-400 hover:text-white'}`}>Alta Calidad (4K/ProRes)</span>
-                                                                    <span className="text-[9px] text-neutral-500">Videos en máxima calidad</span>
-                                                                </div>
-                                                                <input
-                                                                    type="checkbox"
-                                                                    checked={editData.downloadVideoRawEnabled}
-                                                                    onChange={(e) => setEditData({ ...editData, downloadVideoRawEnabled: e.target.checked })}
-                                                                    className="w-5 h-5 accent-emerald-500 rounded bg-neutral-700"
-                                                                />
-                                                            </label>
-                                                        </div>
+                                                            </>
+                                                        )}
                                                     </div>
                                                 </div>
                                             )}

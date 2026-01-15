@@ -322,11 +322,12 @@ export default function NewProjectPage() {
                                 value={headerFontFamily}
                                 onChange={(e) => setHeaderFontFamily(e.target.value)}
                             >
-                                <option value="Inter">Inter (Moderna)</option>
-                                <option value="Playfair Display">Playfair Display (Elegante)</option>
-                                <option value="Montserrat">Montserrat (Limpia)</option>
-                                <option value="Cormorant Garamond">Cormorant Garamond (Clásica)</option>
-                                <option value="Poppins">Poppins (Geométrica)</option>
+                                <option value="Inter">Inter (Profesional neutro)</option>
+                                <option value="DM Sans">DM Sans (Moderno cercano)</option>
+                                <option value="Fraunces">Fraunces (Editorial premium)</option>
+                                <option value="Playfair Display">Playfair Display (Bodas clásicas)</option>
+                                <option value="Cormorant">Cormorant (Artístico autoral)</option>
+                                <option value="Allura">Allura (Romance / Boda)</option>
                             </select>
                         </div>
 

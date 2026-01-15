@@ -38,13 +38,15 @@ interface PublicGalleryClientProps {
 export default function PublicGalleryClient({ project }: PublicGalleryClientProps) {
     const [isLocked, setIsLocked] = useState(project.passwordProtected);
     const [activeTab, setActiveTab] = useState<"photos" | "videos">("photos");
+    const [tabMounted, setTabMounted] = useState(false);
 
-    // Restore tab preference from localStorage
+    // Read from localStorage after mount to avoid SSR hydration flash
     useEffect(() => {
         const savedTab = localStorage.getItem(`gallery_tab_${project.slug}`);
         if (savedTab === "videos" && project.enableVideoTab) {
             setActiveTab("videos");
         }
+        setTabMounted(true);
     }, [project.slug, project.enableVideoTab]);
 
     // Save tab preference when changed
@@ -96,13 +98,15 @@ export default function PublicGalleryClient({ project }: PublicGalleryClientProp
                 background={headerBackground}
             />
 
-            {/* Media Tabs (Photos/Videos) */}
-            <MediaTabs
-                activeTab={activeTab}
-                onTabChange={handleTabChange}
-                showVideoTab={showVideoTab}
-                theme={headerBackground}
-            />
+            {/* Media Tabs (Photos/Videos) - hidden until mounted to avoid flash */}
+            <div className={`transition-opacity duration-100 ${tabMounted ? 'opacity-100' : 'opacity-0'}`}>
+                <MediaTabs
+                    activeTab={activeTab}
+                    onTabChange={handleTabChange}
+                    showVideoTab={showVideoTab}
+                    theme={headerBackground}
+                />
+            </div>
 
             {/* Gallery Viewer */}
             <GalleryViewer

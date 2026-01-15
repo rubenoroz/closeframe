@@ -60,14 +60,14 @@ export default function SettingsPage() {
             });
     }, []);
 
-    const toggleProjectVisibility = async (projectId: string, currentStatus: boolean) => {
+    const toggleProfileVisibility = async (projectId: string, currentStatus: boolean) => {
         try {
             const res = await fetch("/api/projects", {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     id: projectId,
-                    public: !currentStatus
+                    showInProfile: !currentStatus
                 }),
             });
 
@@ -77,12 +77,12 @@ export default function SettingsPage() {
             setUser(prev => ({
                 ...prev,
                 projects: prev.projects.map(p =>
-                    p.id === projectId ? { ...p, public: !currentStatus } : p
+                    p.id === projectId ? { ...p, showInProfile: !currentStatus } : p
                 )
             }));
         } catch (err) {
             console.error(err);
-            alert("No se pudo actualizar la visibilidad de la galería.");
+            alert("No se pudo actualizar la visibilidad en el perfil.");
         }
     };
 
@@ -386,16 +386,16 @@ export default function SettingsPage() {
                         <Eye className="w-3 h-3 md:w-4 md:h-4 text-emerald-500" /> Galerías públicas
                     </div>
 
-                    <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-2">
-                        {user.projects.length === 0 ? (
+                    <div className="grid gap-2 md:gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+                        {user.projects.filter(p => p.public).length === 0 ? (
                             <div className={cn(
-                                "md:col-span-2 py-10 rounded-2xl border border-dashed text-center text-sm transition-colors",
+                                "col-span-full py-10 rounded-2xl border border-dashed text-center text-sm transition-colors",
                                 isLight ? "border-neutral-200 text-neutral-400" : "border-neutral-800 text-neutral-600"
                             )}>
-                                No hay galerías creadas aún.
+                                No hay galerías públicas. Marca una galería como pública desde el dashboard.
                             </div>
                         ) : (
-                            user.projects.map((project) => (
+                            user.projects.filter(p => p.public).map((project) => (
                                 <motion.div
                                     key={project.id}
                                     whileHover={{ scale: 1.01 }}
@@ -421,8 +421,8 @@ export default function SettingsPage() {
                                     </div>
                                     <input
                                         type="checkbox"
-                                        checked={project.public}
-                                        onChange={() => toggleProjectVisibility(project.id, project.public)}
+                                        checked={project.showInProfile}
+                                        onChange={() => toggleProfileVisibility(project.id, project.showInProfile)}
                                         className="w-5 h-5 accent-emerald-500 rounded cursor-pointer"
                                     />
                                 </motion.div>

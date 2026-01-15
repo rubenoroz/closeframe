@@ -36,11 +36,12 @@ export default async function PublicGalleryPage({ params }: Props) {
         return notFound();
     }
 
-    // Auto-detect Videos folder if not manually configured
-    let enableVideoTab = project.enableVideoTab || false;
+    // Use the user's explicit configuration for video tab visibility
+    const enableVideoTab = project.enableVideoTab || false;
     let videoFolderId = project.videoFolderId || null;
 
-    if (!videoFolderId) {
+    // Only auto-detect Videos folder if user explicitly enabled video tab but didn't configure a folder
+    if (enableVideoTab && !videoFolderId) {
         try {
             const auth = await getFreshGoogleAuth(project.cloudAccountId);
             const provider = new GoogleDriveProvider();
@@ -50,7 +51,6 @@ export default async function PublicGalleryPage({ params }: Props) {
             const videosFolder = subfolders.find(f => f.name.toLowerCase() === "videos");
 
             if (videosFolder) {
-                enableVideoTab = true;
                 videoFolderId = videosFolder.id;
             }
         } catch (error) {

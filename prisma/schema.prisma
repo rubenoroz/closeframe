@@ -105,7 +105,8 @@ model Project {
   downloadEnabled   Boolean      @default(true) // Master switch
   downloadJpgEnabled Boolean     @default(true)
   downloadRawEnabled Boolean     @default(false)
-  public            Boolean      @default(true)
+  public            Boolean      @default(true)  // Galería accesible sin contraseña
+  showInProfile     Boolean      @default(false) // Aparece en perfil público del fotógrafo
   layoutType        String       @default("grid")
   userId            String
   createdAt         DateTime     @default(now())
