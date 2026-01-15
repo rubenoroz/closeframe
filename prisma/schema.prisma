@@ -20,6 +20,7 @@ model User {
   businessInstagram String?
   businessPhone     String?
   bio               String?
+  specialty         String?        // Tagline/especialidad (ej: "Fotografía de bodas & retrato")
   theme             String         @default("dark")
   businessLogoScale Int            @default(100)
   role              String         @default("USER") // USER, ADMIN, SUPERADMIN

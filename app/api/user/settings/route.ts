@@ -22,6 +22,7 @@ export async function GET() {
                 businessInstagram: true,
                 businessPhone: true,
                 bio: true,
+                specialty: true,
                 theme: true,
                 businessLogoScale: true,
                 projects: {
@@ -68,6 +69,7 @@ export async function PATCH(req: NextRequest) {
             businessInstagram,
             businessPhone,
             bio,
+            specialty,
             theme,
             businessLogoScale
         } = body;
@@ -82,6 +84,7 @@ export async function PATCH(req: NextRequest) {
                 businessInstagram,
                 businessPhone,
                 bio,
+                specialty,
                 theme: theme || "dark",
                 businessLogoScale: businessLogoScale !== undefined ? Number(businessLogoScale) : 100,
             },
@@ -95,6 +98,7 @@ export async function PATCH(req: NextRequest) {
                 businessInstagram,
                 businessPhone,
                 bio,
+                specialty,
                 theme: theme || "dark",
                 businessLogoScale: businessLogoScale !== undefined ? Number(businessLogoScale) : 100,
             }

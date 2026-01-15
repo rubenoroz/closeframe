@@ -28,6 +28,7 @@ export default async function PublicProfilePage({ params }: Props) {
             businessInstagram: true,
             businessPhone: true,
             bio: true,
+            specialty: true,
             theme: true,
             businessLogoScale: true,
             projects: {
@@ -80,15 +81,15 @@ export default async function PublicProfilePage({ params }: Props) {
                 <h1 className="text-3xl md:text-4xl lg:text-5xl font-light mb-3 md:mb-4">{brandingName}</h1>
 
                 {/* Tagline/Specialty */}
+                {user.specialty && (
+                    <p className={`text-xs md:text-sm uppercase tracking-widest mb-4 md:mb-6 ${isLight ? 'text-neutral-500' : 'text-neutral-400'}`}>
+                        {user.specialty}
+                    </p>
+                )}
                 {user.bio && (
-                    <>
-                        <p className={`text-xs md:text-sm uppercase tracking-widest mb-4 md:mb-6 ${isLight ? 'text-neutral-500' : 'text-neutral-400'}`}>
-                            Fotografía profesional
-                        </p>
-                        <p className={`max-w-xl mx-auto leading-relaxed text-sm md:text-base ${isLight ? 'text-neutral-600' : 'text-neutral-400'}`}>
-                            {user.bio}
-                        </p>
-                    </>
+                    <p className={`max-w-xl mx-auto leading-relaxed text-sm md:text-base ${isLight ? 'text-neutral-600' : 'text-neutral-400'}`}>
+                        {user.bio}
+                    </p>
                 )}
 
                 {/* Social Links - Simple Icons */}

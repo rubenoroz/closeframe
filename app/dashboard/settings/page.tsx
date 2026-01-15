@@ -27,6 +27,7 @@ export default function SettingsPage() {
         businessInstagram: "",
         businessPhone: "",
         bio: "",
+        specialty: "",
         theme: "dark",
         businessLogoScale: 100,
         projects: [] as any[],
@@ -47,6 +48,7 @@ export default function SettingsPage() {
                         businessInstagram: data.user.businessInstagram || "",
                         businessPhone: data.user.businessPhone || "",
                         bio: data.user.bio || "",
+                        specialty: data.user.specialty || "",
                         theme: data.user.theme || "dark",
                         businessLogoScale: data.user.businessLogoScale || 100,
                         projects: data.user.projects || [],
@@ -263,6 +265,20 @@ export default function SettingsPage() {
                                 placeholder="Cuéntale a tus clientes quién eres y tu estilo..."
                             />
                         </div>
+                        <div className="md:col-span-2 space-y-3">
+                            <label className="text-[10px] font-bold opacity-40 uppercase tracking-widest ml-1">Especialidad / Tagline</label>
+                            <input
+                                value={user.specialty}
+                                onChange={(e) => setUser({ ...user, specialty: e.target.value })}
+                                className={cn(
+                                    "w-full border rounded-xl px-5 py-4 outline-none transition-all",
+                                    isLight
+                                        ? "bg-neutral-50 border-neutral-200 text-neutral-900 focus:bg-white focus:border-emerald-500/50"
+                                        : "bg-neutral-900/50 border-neutral-800 text-neutral-100 focus:border-emerald-500/50"
+                                )}
+                                placeholder="Ej: Fotografía de bodas & retrato"
+                            />
+                        </div>
                     </div>
                 </section>
 
@@ -433,7 +449,7 @@ export default function SettingsPage() {
 
                 {/* ACTIONS */}
                 <footer className={cn(
-                    "pt-6 md:pt-10 border-t flex flex-col gap-4 md:gap-6 transition-colors",
+                    "pt-6 md:pt-10 border-t flex flex-col md:flex-row flex-wrap items-center justify-center md:justify-between gap-4 md:gap-6 transition-colors",
                     isLight ? "border-neutral-200" : "border-neutral-900"
                 )}>
                     <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 md:gap-4">
@@ -462,7 +478,7 @@ export default function SettingsPage() {
                         type="submit"
                         disabled={saving}
                         className={cn(
-                            "w-full flex items-center justify-center gap-2 md:gap-3 px-8 md:px-12 py-3 md:py-4 rounded-full font-bold transition-all shadow-xl disabled:opacity-50 text-sm md:text-base",
+                            "flex items-center justify-center gap-2 md:gap-3 px-8 md:px-12 py-3 md:py-4 rounded-full font-bold transition-all shadow-xl disabled:opacity-50 text-sm md:text-base",
                             isLight
                                 ? "bg-neutral-900 text-white hover:bg-black shadow-neutral-200/50"
                                 : "bg-white text-black hover:bg-neutral-200 shadow-white/5"
