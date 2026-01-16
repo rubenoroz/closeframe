@@ -60,7 +60,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ file
                     { responseType: "arraybuffer" }
                 );
 
-                let fileBuffer = Buffer.from(response.data as ArrayBuffer);
+                let fileBuffer: any = Buffer.from(response.data as ArrayBuffer);
 
                 // 2. Si se pide resize, procesar con SHARP
                 if (resizeWidth) {
@@ -75,7 +75,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ file
                             })
                             // Convertir a JPEG para asegurar consistencia
                             .toFormat('jpeg', { quality: 85 })
-                            .toBuffer() as unknown as Buffer;
+                            .toBuffer();
                     } catch (sharpError) {
                         console.error(`Sharp resize error for ${file.name}:`, sharpError);
                         // Fallback: usar original si falla el resize (mejor que nada/corrupto)
@@ -92,7 +92,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ file
         // Usar compression: "STORE" para no comprimir. 
         // 1. Es mucho más rápido (evita timeouts con RAWs grandes).
         // 2. Archivos JPG/RAW ya están comprimidos o no ganan mucho, no vale la pena el gasto de CPU.
-        const zipContent = await zip.generateAsync({
+        const zipContent: any = await zip.generateAsync({
             type: "nodebuffer",
             compression: "STORE"
         });
