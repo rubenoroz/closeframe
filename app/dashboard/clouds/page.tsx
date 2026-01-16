@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
@@ -19,7 +19,7 @@ interface CloudAccount {
     projects: any[];
 }
 
-export default function CloudManager() {
+function CloudManagerContent() {
     const searchParams = useSearchParams();
     const [accounts, setAccounts] = useState<CloudAccount[]>([]);
     const [loading, setLoading] = useState(true);
@@ -365,5 +365,17 @@ function QuotaDisplay({ accountId }: { accountId: string }) {
                 />
             </div>
         </div>
+    );
+}
+
+export default function CloudManager() {
+    return (
+        <Suspense fallback={
+            <div className="flex h-[60vh] items-center justify-center text-neutral-500 gap-2">
+                <Loader2 className="w-5 h-5 animate-spin" /> Cargando...
+            </div>
+        }>
+            <CloudManagerContent />
+        </Suspense>
     );
 }
