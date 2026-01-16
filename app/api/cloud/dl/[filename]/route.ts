@@ -75,7 +75,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ file
                             })
                             // Convertir a JPEG para asegurar consistencia
                             .toFormat('jpeg', { quality: 85 })
-                            .toBuffer();
+                            .toBuffer() as unknown as Buffer;
                     } catch (sharpError) {
                         console.error(`Sharp resize error for ${file.name}:`, sharpError);
                         // Fallback: usar original si falla el resize (mejor que nada/corrupto)
