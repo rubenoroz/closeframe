@@ -83,6 +83,8 @@ export default async function PublicGalleryPage({ params }: Props) {
             maxImagesPerProject: planLimits.maxImagesPerProject ?? null,
             videoEnabled: planLimits.videoEnabled ?? true,
             lowResDownloads: planLimits.lowResDownloads ?? false,
+            lowResThumbnails: planLimits.lowResThumbnails ?? false,
+            zipDownloadsEnabled: planLimits.zipDownloadsEnabled ?? true,
             lowResMaxWidth: planLimits.lowResMaxWidth ?? 0,
             watermarkText: planLimits.watermarkText ?? null,
         } : null
