@@ -30,6 +30,16 @@ export interface PlanLimits {
     passwordProtection: boolean; // Proteger galerías con contraseña
     // Soporte
     prioritySupport: boolean;
+
+    // NUEVOS - Plan Free restrictions
+    maxImagesPerProject: number | null;  // null = ilimitado, Free = 20
+    videoEnabled: boolean;               // false = no video en galerías
+    maxSocialLinks: number;              // 1 = solo Instagram, -1 = ilimitado
+    lowResThumbnails: boolean;           // true = thumbnails baja calidad
+    lowResDownloads: boolean;            // true = descargas en baja resolución
+    lowResMaxWidth: number;              // max width para baja resolución (1200)
+    bioMaxLength: number | null;         // null = ilimitado, Free = 150
+    watermarkText: string | null;        // null = sin marca, "CloserLens" para Free
 }
 
 export interface UserWithPlan {

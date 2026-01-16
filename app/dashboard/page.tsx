@@ -21,6 +21,8 @@ interface Project {
     downloadVideoHdEnabled?: boolean;
     downloadVideoRawEnabled?: boolean;
     enableVideoTab?: boolean;
+    enableWatermark?: boolean;
+    category?: string;
     headerTitle?: string;
     headerFontFamily?: string;
     headerColor?: string;
@@ -48,6 +50,13 @@ export default function DashboardPage() {
     const [copiedId, setCopiedId] = useState<string | null>(null);
     const [userId, setUserId] = useState<string | null>(null);
     const [theme, setTheme] = useState<string>("dark");
+    const [profileViews, setProfileViews] = useState<number>(0);
+    const [username, setUsername] = useState<string | null>(null);
+    const [planLimits, setPlanLimits] = useState<{
+        videoEnabled?: boolean;
+        lowResDownloads?: boolean;
+        passwordProtection?: boolean;
+    } | null>(null);
     const isLight = theme === "light";
 
     const [editData, setEditData] = useState({
@@ -59,6 +68,8 @@ export default function DashboardPage() {
         downloadVideoHdEnabled: true,
         downloadVideoRawEnabled: false,
         enableVideoTab: false,
+        enableWatermark: false,
+        category: "",
         headerTitle: "",
         headerFontFamily: "Inter",
         headerColor: "#FFFFFF",
@@ -79,6 +90,17 @@ export default function DashboardPage() {
                 if (settingsData.user) {
                     setUserId(settingsData.user.id);
                     setTheme(settingsData.user.theme || "dark");
+                    setProfileViews(settingsData.user.profileViews || 0);
+                    setUsername(settingsData.user.username || null);
+                    // Parse plan limits
+                    if (settingsData.user.plan?.limits) {
+                        try {
+                            const limits = typeof settingsData.user.plan.limits === 'string'
+                                ? JSON.parse(settingsData.user.plan.limits)
+                                : settingsData.user.plan.limits;
+                            setPlanLimits(limits);
+                        } catch { }
+                    }
                 }
                 setLoading(false);
             })
@@ -106,6 +128,8 @@ export default function DashboardPage() {
             downloadVideoHdEnabled: project.downloadVideoHdEnabled !== false,
             downloadVideoRawEnabled: project.downloadVideoRawEnabled === true,
             enableVideoTab: project.enableVideoTab === true,
+            enableWatermark: project.enableWatermark === true,
+            category: project.category || "",
             headerTitle: project.headerTitle || project.name,
             headerFontFamily: project.headerFontFamily || "Inter",
             headerColor: project.headerColor || "#FFFFFF",
@@ -134,8 +158,10 @@ export default function DashboardPage() {
                     downloadVideoHdEnabled: editData.downloadVideoHdEnabled,
                     downloadVideoRawEnabled: editData.downloadVideoRawEnabled,
                     enableVideoTab: editData.enableVideoTab,
+                    enableWatermark: editData.enableWatermark,
+                    category: planLimits?.lowResDownloads ? "personal" : editData.category,
                     headerTitle: editData.headerTitle,
-                    headerFontFamily: editData.headerFontFamily,
+                    headerFontFamily: planLimits?.lowResDownloads ? "Inter" : editData.headerFontFamily,
                     headerColor: editData.headerColor,
                     headerBackground: editData.headerBackground,
                     public: editData.public,
@@ -253,6 +279,33 @@ export default function DashboardPage() {
                         </Link>
                     </div>
                 </header>
+
+                {/* STATS WIDGET */}
+                <div className={`grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-8 ${isLight ? '' : ''}`}>
+                    <div className={`p-4 rounded-2xl border ${isLight ? 'bg-neutral-50 border-neutral-200' : 'bg-neutral-900/50 border-neutral-800'}`}>
+                        <div className={`text-2xl md:text-3xl font-light ${isLight ? 'text-neutral-900' : 'text-white'}`}>{projects.length}</div>
+                        <div className={`text-[10px] md:text-xs uppercase tracking-wider ${isLight ? 'text-neutral-500' : 'text-neutral-500'}`}>Galerías</div>
+                    </div>
+                    <div className={`p-4 rounded-2xl border ${isLight ? 'bg-neutral-50 border-neutral-200' : 'bg-neutral-900/50 border-neutral-800'}`}>
+                        <div className={`text-2xl md:text-3xl font-light ${isLight ? 'text-neutral-900' : 'text-white'}`}>{profileViews}</div>
+                        <div className={`text-[10px] md:text-xs uppercase tracking-wider ${isLight ? 'text-neutral-500' : 'text-neutral-500'}`}>Vistas al perfil</div>
+                    </div>
+                    <div className={`p-4 rounded-2xl border ${isLight ? 'bg-neutral-50 border-neutral-200' : 'bg-neutral-900/50 border-neutral-800'}`}>
+                        <div className={`text-2xl md:text-3xl font-light ${isLight ? 'text-neutral-900' : 'text-white'}`}>{projects.filter(p => p.public).length}</div>
+                        <div className={`text-[10px] md:text-xs uppercase tracking-wider ${isLight ? 'text-neutral-500' : 'text-neutral-500'}`}>Públicas</div>
+                    </div>
+                    {username ? (
+                        <div className={`p-4 rounded-2xl border ${isLight ? 'bg-emerald-50 border-emerald-200' : 'bg-emerald-900/20 border-emerald-800'}`}>
+                            <div className={`text-sm md:text-base font-mono truncate ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>/u/{username}</div>
+                            <div className={`text-[10px] md:text-xs uppercase tracking-wider ${isLight ? 'text-emerald-600' : 'text-emerald-500'}`}>Tu URL</div>
+                        </div>
+                    ) : (
+                        <Link href="/dashboard/settings" className={`p-4 rounded-2xl border hover:border-emerald-500/50 transition ${isLight ? 'bg-neutral-50 border-neutral-200' : 'bg-neutral-900/50 border-neutral-800'}`}>
+                            <div className={`text-sm ${isLight ? 'text-neutral-600' : 'text-neutral-400'}`}>Sin configurar</div>
+                            <div className={`text-[10px] md:text-xs uppercase tracking-wider ${isLight ? 'text-emerald-600' : 'text-emerald-500'}`}>Crear URL →</div>
+                        </Link>
+                    )}
+                </div>
 
                 {projects.length === 0 ? (
                     <div className="border border-dashed border-neutral-800 rounded-3xl p-12 flex flex-col items-center justify-center text-center bg-neutral-900/20 hover:bg-neutral-900/40 transition group">
@@ -477,7 +530,7 @@ export default function DashboardPage() {
                 {/* Settings Modal */}
                 {selectedProject && (
                     <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-end md:items-center justify-center z-[110] p-0 md:p-4">
-                        <div className={`${isLight ? 'bg-white text-neutral-900 border-neutral-200' : 'bg-neutral-900 text-white border-neutral-800'} border rounded-t-3xl md:rounded-[3rem] w-full max-w-lg p-6 md:p-10 relative shadow-2xl animate-in slide-in-from-bottom md:zoom-in-95 duration-300 max-h-[95vh] md:max-h-[90vh] overflow-y-auto`}>
+                        <div className={`${isLight ? 'bg-white text-neutral-900 border-neutral-200' : 'bg-neutral-900 text-white border-neutral-800'} border rounded-t-3xl md:rounded-[2rem] w-full max-w-lg md:max-w-3xl p-6 md:p-8 relative shadow-2xl animate-in slide-in-from-bottom md:zoom-in-95 duration-300 max-h-[95vh] md:max-h-[90vh] overflow-y-auto`}>
                             <button
                                 onClick={() => setSelectedProject(null)}
                                 className="absolute top-4 right-4 md:top-8 md:right-8 text-neutral-500 hover:text-emerald-500 transition"
@@ -491,16 +544,44 @@ export default function DashboardPage() {
                             </h2>
 
                             <form onSubmit={handleUpdateProject} className="space-y-8">
-                                <div>
-                                    <label className="text-[10px] font-bold uppercase tracking-widest mb-3 block opacity-40">Nombre de Galería</label>
-                                    <input
-                                        type="text"
-                                        value={editData.name}
-                                        onChange={(e) => setEditData({ ...editData, name: e.target.value })}
-                                        className={`w-full border rounded-2xl px-6 py-4 outline-none transition-all ${isLight ? 'bg-neutral-50 border-neutral-100 focus:border-emerald-500' : 'bg-neutral-800 border-neutral-700 focus:border-emerald-500'
-                                            }`}
-                                        required
-                                    />
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-[10px] font-bold uppercase tracking-widest mb-3 block opacity-40">Nombre de Galería</label>
+                                        <input
+                                            type="text"
+                                            value={editData.name}
+                                            onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+                                            className={`w-full border rounded-2xl px-6 py-4 outline-none transition-all ${isLight ? 'bg-neutral-50 border-neutral-100 focus:border-emerald-500' : 'bg-neutral-800 border-neutral-700 focus:border-emerald-500'
+                                                }`}
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-bold uppercase tracking-widest mb-3 flex items-center gap-2 opacity-100">
+                                            Categoría
+                                            {planLimits?.lowResDownloads && (
+                                                <span className="text-[9px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded opacity-100">Plan Free</span>
+                                            )}
+                                        </label>
+                                        <select
+                                            value={planLimits?.lowResDownloads ? "personal" : editData.category || ""}
+                                            disabled={!!planLimits?.lowResDownloads}
+                                            onChange={(e) => setEditData({ ...editData, category: e.target.value })}
+                                            className={`w-full border rounded-2xl px-6 py-4 outline-none transition-all ${isLight ? 'bg-neutral-50 border-neutral-100 focus:border-emerald-500' : 'bg-neutral-800 border-neutral-700 focus:border-emerald-500'} ${planLimits?.lowResDownloads ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                        >
+                                            <option value="">Sin categoría</option>
+                                            <option value="editorial">📸 Editorial</option>
+                                            <option value="commercial">🛍️ Comercial</option>
+                                            <option value="wedding">💒 Bodas</option>
+                                            <option value="portrait">👤 Retrato</option>
+                                            <option value="fashion">👗 Moda</option>
+                                            <option value="test">🎭 Test / TFP</option>
+                                            <option value="personal">✨ Personal</option>
+                                        </select>
+                                        {planLimits?.lowResDownloads && (
+                                            <p className="text-[10px] text-neutral-500 mt-2">En el plan Personal la categoría es fija.</p>
+                                        )}
+                                    </div>
                                 </div>
 
                                 {/* Header Customization Section */}
@@ -524,19 +605,28 @@ export default function DashboardPage() {
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div>
-                                                <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-2 block">Tipografía</label>
+                                                <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-2 flex items-center gap-2">
+                                                    Tipografía
+                                                    {planLimits?.lowResDownloads && (
+                                                        <span className="text-[9px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">Plan Free</span>
+                                                    )}
+                                                </label>
                                                 <select
-                                                    value={editData.headerFontFamily}
+                                                    value={planLimits?.lowResDownloads ? "Inter" : editData.headerFontFamily}
+                                                    disabled={!!planLimits?.lowResDownloads}
                                                     onChange={(e) => setEditData({ ...editData, headerFontFamily: e.target.value })}
-                                                    className={`w-full border rounded-xl px-4 py-2.5 text-sm outline-none transition-all ${isLight ? 'bg-white border-neutral-200 focus:border-emerald-500' : 'bg-neutral-900 border-neutral-700 focus:border-emerald-500'}`}
+                                                    className={`w-full border rounded-xl px-4 py-2.5 text-sm outline-none transition-all ${isLight ? 'bg-white border-neutral-200 focus:border-emerald-500' : 'bg-neutral-900 border-neutral-700 focus:border-emerald-500'} ${planLimits?.lowResDownloads ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                 >
-                                                    <option value="Inter">Inter (Profesional neutro)</option>
-                                                    <option value="DM Sans">DM Sans (Moderno cercano)</option>
-                                                    <option value="Fraunces">Fraunces (Editorial premium)</option>
-                                                    <option value="Playfair Display">Playfair Display (Bodas clásicas)</option>
-                                                    <option value="Cormorant">Cormorant (Artístico autoral)</option>
-                                                    <option value="Allura">Allura (Romance / Boda)</option>
+                                                    <option value="Inter">Inter (Profesional)</option>
+                                                    <option value="DM Sans">DM Sans (Moderno)</option>
+                                                    <option value="Fraunces">Fraunces (Editorial)</option>
+                                                    <option value="Playfair Display">Playfair (Bodas)</option>
+                                                    <option value="Cormorant">Cormorant (Artístico)</option>
+                                                    <option value="Allura">Allura (Romance)</option>
                                                 </select>
+                                                {planLimits?.lowResDownloads && (
+                                                    <p className="text-[9px] text-neutral-500 mt-1">Solo 'Inter' disponible. Actualiza plan para más fuentes.</p>
+                                                )}
                                             </div>
                                             <div>
                                                 <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-2 block">Color del Texto</label>
@@ -556,34 +646,35 @@ export default function DashboardPage() {
                                                 </div>
                                             </div>
                                         </div>
+                                    </div>
 
-                                        <div>
-                                            <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-2 block">Tema de Fondo</label>
-                                            <div className="flex gap-3">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setEditData({ ...editData, headerBackground: "dark" })}
-                                                    className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all ${editData.headerBackground === "dark"
-                                                        ? "bg-neutral-900 text-white border-2 border-emerald-500"
-                                                        : "bg-neutral-800 text-neutral-400 border border-neutral-700 hover:border-neutral-600"
-                                                        }`}
-                                                >
-                                                    🌙 Oscuro
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setEditData({ ...editData, headerBackground: "light" })}
-                                                    className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all ${editData.headerBackground === "light"
-                                                        ? "bg-white text-black border-2 border-emerald-500"
-                                                        : "bg-neutral-100 text-neutral-600 border border-neutral-200 hover:border-neutral-300"
-                                                        }`}
-                                                >
-                                                    ☀️ Claro
-                                                </button>
-                                            </div>
+                                    <div>
+                                        <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-2 block">Tema de Fondo</label>
+                                        <div className="flex gap-3">
+                                            <button
+                                                type="button"
+                                                onClick={() => setEditData({ ...editData, headerBackground: "dark" })}
+                                                className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all ${editData.headerBackground === "dark"
+                                                    ? "bg-neutral-900 text-white border-2 border-emerald-500"
+                                                    : "bg-neutral-800 text-neutral-400 border border-neutral-700 hover:border-neutral-600"
+                                                    }`}
+                                            >
+                                                🌙 Oscuro
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setEditData({ ...editData, headerBackground: "light" })}
+                                                className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all ${editData.headerBackground === "light"
+                                                    ? "bg-white text-black border-2 border-emerald-500"
+                                                    : "bg-neutral-100 text-neutral-600 border border-neutral-200 hover:border-neutral-300"
+                                                    }`}
+                                            >
+                                                ☀️ Claro
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
+
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-2">
                                     <div className={`${isLight ? 'bg-neutral-50 border-neutral-100' : 'bg-neutral-800/50 border-neutral-800'} p-4 rounded-2xl border md:col-span-2`}>
@@ -607,8 +698,13 @@ export default function DashboardPage() {
                                                 <div className={`animate-in slide-in-from-top-2 fade-in duration-300 space-y-3 pt-2 border-t border-dashed ${isLight ? 'border-neutral-200' : 'border-neutral-700/50'}`}>
                                                     <label className="flex items-center justify-between cursor-pointer group">
                                                         <div className="flex flex-col">
-                                                            <span className={`text-sm hover:opacity-100 transition-colors ${isLight ? 'text-neutral-600 hover:text-black' : 'text-neutral-400 hover:text-white'}`}>Alta Resolución (JPG)</span>
-                                                            <span className="text-[9px] text-neutral-500">Para clientes finales</span>
+                                                            <span className={`text-sm hover:opacity-100 transition-colors ${isLight ? 'text-neutral-600 hover:text-black' : 'text-neutral-400 hover:text-white'}`}>
+                                                                {planLimits?.lowResDownloads ? 'JPG (Resolución Web)' : 'JPG (Alta Resolución)'}
+                                                                {planLimits?.lowResDownloads && <span className="text-[10px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded ml-2">Plan Free</span>}
+                                                            </span>
+                                                            <span className="text-[9px] text-neutral-500">
+                                                                {planLimits?.lowResDownloads ? 'Máximo 1200px' : 'Archivos listos para impresión'}
+                                                            </span>
                                                         </div>
                                                         <input
                                                             type="checkbox"
@@ -617,16 +713,23 @@ export default function DashboardPage() {
                                                             className="w-5 h-5 accent-emerald-500 rounded bg-neutral-700"
                                                         />
                                                     </label>
-                                                    <label className="flex items-center justify-between cursor-pointer group">
+                                                    <label className={`flex items-center justify-between ${planLimits?.lowResDownloads ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'} group`}>
                                                         <div className="flex flex-col">
-                                                            <span className={`text-sm hover:opacity-100 transition-colors ${isLight ? 'text-neutral-600 hover:text-black' : 'text-neutral-400 hover:text-white'}`}>Originales (RAW)</span>
-                                                            <span className="text-[9px] text-neutral-500">Archivos crudos de cámara</span>
+                                                            <span className={`text-sm hover:opacity-100 transition-colors ${isLight ? 'text-neutral-600 hover:text-black' : 'text-neutral-400 hover:text-white'}`}>
+                                                                Archivos RAW
+                                                                {planLimits?.lowResDownloads && <span className="text-[10px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded ml-2">Pro req.</span>}
+                                                            </span>
+                                                            <span className="text-[9px] text-neutral-500">Negativos digitales originales</span>
                                                         </div>
                                                         <input
                                                             type="checkbox"
-                                                            checked={editData.downloadRawEnabled}
-                                                            onChange={(e) => setEditData({ ...editData, downloadRawEnabled: e.target.checked })}
-                                                            className="w-5 h-5 accent-emerald-500 rounded bg-neutral-700"
+                                                            checked={planLimits?.lowResDownloads ? false : editData.downloadRawEnabled}
+                                                            disabled={!!planLimits?.lowResDownloads}
+                                                            onChange={(e) => {
+                                                                if (planLimits?.lowResDownloads) return;
+                                                                setEditData({ ...editData, downloadRawEnabled: e.target.checked });
+                                                            }}
+                                                            className="w-5 h-5 accent-emerald-500 rounded bg-neutral-700 disabled:opacity-50"
                                                         />
                                                     </label>
 
@@ -635,13 +738,24 @@ export default function DashboardPage() {
                                                         <label className="flex items-center justify-between cursor-pointer group mb-3">
                                                             <div className="flex flex-col">
                                                                 <span className={`text-sm font-medium hover:opacity-100 transition-colors ${isLight ? 'text-neutral-700 hover:text-black' : 'text-neutral-300 hover:text-white'}`}>Mostrar pestaña de Videos</span>
-                                                                <span className="text-[9px] text-neutral-500">Permite ver videos en la galería</span>
+                                                                {planLimits?.videoEnabled === false ? (
+                                                                    <span className="text-[9px] text-amber-400">Tu plan no incluye video. <a href="/pricing" className="underline">Actualizar</a></span>
+                                                                ) : (
+                                                                    <span className="text-[9px] text-neutral-500">Permite ver videos en la galería</span>
+                                                                )}
                                                             </div>
                                                             <input
                                                                 type="checkbox"
                                                                 checked={editData.enableVideoTab}
-                                                                onChange={(e) => setEditData({ ...editData, enableVideoTab: e.target.checked })}
-                                                                className="w-5 h-5 accent-emerald-500 rounded bg-neutral-700"
+                                                                disabled={planLimits?.videoEnabled === false}
+                                                                onChange={(e) => {
+                                                                    if (planLimits?.videoEnabled === false) {
+                                                                        alert('\u26a0\ufe0f Tu plan no incluye video\n\nActualiza tu plan para habilitar galer\u00edas de video.');
+                                                                        return;
+                                                                    }
+                                                                    setEditData({ ...editData, enableVideoTab: e.target.checked });
+                                                                }}
+                                                                className="w-5 h-5 accent-emerald-500 rounded bg-neutral-700 disabled:opacity-50"
                                                             />
                                                         </label>
 
@@ -683,47 +797,71 @@ export default function DashboardPage() {
                                         </div>
                                     </div>
 
-                                    <div className={`${isLight ? 'bg-neutral-50 border-neutral-100' : 'bg-neutral-800/50 border-neutral-800'} p-4 rounded-2xl border`}>
-                                        <label className="flex items-center justify-between cursor-pointer">
-                                            <div className="flex items-center gap-3">
-                                                <ExternalLink className="w-4 h-4 text-neutral-400" />
-                                                <span className="text-sm">Perfil Público</span>
-                                            </div>
-                                            <input
-                                                type="checkbox"
-                                                checked={editData.public}
-                                                onChange={(e) => {
-                                                    const isPublic = e.target.checked;
-                                                    setEditData({
-                                                        ...editData,
-                                                        public: isPublic,
-                                                        password: isPublic ? "" : editData.password
-                                                    });
-                                                }}
-                                                className="w-5 h-5 accent-emerald-500"
-                                            />
-                                        </label>
-                                        <p className="text-[10px] text-neutral-500 mt-2 ml-7">Muestra esta galería en tu portafolio.</p>
-                                    </div>
-
-                                    <div className={`${isLight ? 'bg-neutral-50 border-neutral-100' : 'bg-neutral-800/50 border-neutral-800'} p-4 rounded-2xl border`}>
-                                        <div className="flex items-center gap-3 mb-2">
-                                            <Layout className="w-4 h-4 text-neutral-400" />
-                                            <span className="text-sm">Diseño Grid</span>
+                                    {/* Settings Grid - 2 columns on desktop */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className={`${isLight ? 'bg-neutral-50 border-neutral-100' : 'bg-neutral-800/50 border-neutral-800'} p-4 rounded-2xl border`}>
+                                            <label className="flex items-center justify-between cursor-pointer">
+                                                <div className="flex items-center gap-3">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-neutral-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
+                                                    </svg>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-sm">Marca de Agua</span>
+                                                        <span className="text-[10px] text-neutral-500">Superpone tu logo</span>
+                                                    </div>
+                                                </div>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={editData.enableWatermark}
+                                                    onChange={(e) => setEditData({ ...editData, enableWatermark: e.target.checked })}
+                                                    className="w-5 h-5 accent-emerald-500 rounded bg-neutral-700"
+                                                />
+                                            </label>
                                         </div>
-                                        <p className="text-[10px] text-neutral-500 ml-7">Masonry (Predeterminado)</p>
+
+                                        <div className={`${isLight ? 'bg-neutral-50 border-neutral-100' : 'bg-neutral-800/50 border-neutral-800'} p-4 rounded-2xl border`}>
+                                            <label className="flex items-center justify-between cursor-pointer">
+                                                <div className="flex items-center gap-3">
+                                                    <ExternalLink className="w-4 h-4 text-neutral-400" />
+                                                    <div className="flex flex-col">
+                                                        <span className="text-sm">Perfil Público</span>
+                                                        <span className="text-[10px] text-neutral-500">Muestra en portafolio</span>
+                                                    </div>
+                                                </div>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={editData.public}
+                                                    onChange={(e) => {
+                                                        const isPublic = e.target.checked;
+                                                        setEditData({
+                                                            ...editData,
+                                                            public: isPublic,
+                                                            password: isPublic ? "" : editData.password
+                                                        });
+                                                    }}
+                                                    className="w-5 h-5 accent-emerald-500"
+                                                />
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label className="text-xs text-neutral-500 uppercase tracking-widest mb-2 block">Protección por Contraseña</label>
+                                    <label className="text-xs text-neutral-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                        Protección por Contraseña
+                                        {planLimits?.passwordProtection === false && (
+                                            <span className="text-[9px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">Plan Free</span>
+                                        )}
+                                    </label>
                                     <div className="relative">
-                                        <Shield className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500" />
+                                        <Shield className={`absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 ${planLimits?.passwordProtection === false ? 'text-neutral-600' : 'text-neutral-500'}`} />
                                         <input
                                             type="text"
-                                            placeholder={selectedProject.passwordProtected ? "•••••••• (Contraseña activa)" : "Introduce una contraseña para bloquear"}
+                                            disabled={planLimits?.passwordProtection === false}
+                                            placeholder={planLimits?.passwordProtection === false ? "Función no disponible en tu plan" : (selectedProject.passwordProtected ? "•••••••• (Contraseña activa)" : "Introduce una contraseña para bloquear")}
                                             value={editData.password}
                                             onChange={(e) => {
+                                                if (planLimits?.passwordProtection === false) return;
                                                 const val = e.target.value;
                                                 setEditData({
                                                     ...editData,
@@ -731,8 +869,14 @@ export default function DashboardPage() {
                                                     public: val.trim() !== "" ? false : editData.public
                                                 });
                                             }}
-                                            className={`w-full border rounded-xl pl-12 pr-4 py-3 focus:outline-none focus:border-emerald-500 transition placeholder:text-neutral-600 ${isLight ? 'bg-white border-neutral-200' : 'bg-neutral-800 border-neutral-700 text-white'}`}
+                                            className={`w-full pl-10 pr-4 py-3 rounded-xl border transition-all placeholder:text-neutral-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 ${isLight
+                                                ? 'bg-neutral-50 border-neutral-200 text-black focus:border-emerald-500'
+                                                : 'bg-neutral-800/50 border-neutral-800 text-white focus:border-emerald-500'
+                                                } ${planLimits?.passwordProtection === false ? 'opacity-50 cursor-not-allowed' : ''}`}
                                         />
+                                        {planLimits?.passwordProtection === false && (
+                                            <div className="absolute inset-0 z-10 cursor-not-allowed" title="Actualiza tu plan para proteger con contraseña" onClick={() => alert('🔒 Función Premium\n\nProtege tus galerías con contraseña actualizando tu plan.')} />
+                                        )}
                                     </div>
                                     <p className="text-[10px] text-neutral-500 mt-2">Deja en blanco para no cambiar. Introduce un espacio y borra si quieres quitarla.</p>
                                 </div>
@@ -757,8 +901,9 @@ export default function DashboardPage() {
                             </form>
                         </div>
                     </div>
-                )}
-            </div>
-        </div>
+                )
+                }
+            </div >
+        </div >
     );
 }

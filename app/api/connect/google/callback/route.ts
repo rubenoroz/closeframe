@@ -76,6 +76,25 @@ export async function GET(request: Request) {
             });
         } else {
             console.log("[OAuth Callback] Creating new account");
+
+            // Validate max cloud accounts limit
+            const user = await prisma.user.findUnique({
+                where: { id: session.user.id },
+                include: {
+                    plan: true,
+                    _count: { select: { cloudAccounts: true } }
+                }
+            });
+
+            const planLimits = user?.plan?.limits ? JSON.parse(user.plan.limits) : null;
+            const maxCloudAccounts = planLimits?.maxCloudAccounts ?? 1; // Default: 1 if no plan
+
+            if (user && user._count.cloudAccounts >= maxCloudAccounts) {
+                return NextResponse.redirect(
+                    new URL(`/dashboard/clouds?error=plan_limit&message=Has alcanzado el límite de ${maxCloudAccounts} nube(s) conectada(s) de tu plan`, request.url)
+                );
+            }
+
             if (!tokens.refresh_token) {
                 console.warn("[OAuth Callback] WARNING: Creating account WITHOUT refresh token!");
             }

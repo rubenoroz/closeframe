@@ -9,7 +9,8 @@ import {
     X,
     Loader2,
     DollarSign,
-    Users
+    Users,
+    GripVertical
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -18,13 +19,22 @@ interface PlanLimits {
     maxCloudAccounts: number;
     // Descargas ZIP
     zipDownloadsEnabled: boolean;
-    maxZipDownloadsPerMonth: number | null; // null = ilimitado
+    maxZipDownloadsPerMonth: number | null;
     // Funcionalidades
     watermarkRemoval: boolean;
     customBranding: boolean;
     passwordProtection: boolean;
     // Soporte
     prioritySupport: boolean;
+    // Plan Free restrictions
+    maxImagesPerProject: number | null;
+    videoEnabled: boolean;
+    maxSocialLinks: number;
+    lowResThumbnails: boolean;
+    lowResDownloads: boolean;
+    lowResMaxWidth: number;
+    bioMaxLength: number | null;
+    watermarkText: string | null;
 }
 
 interface Plan {
@@ -48,11 +58,20 @@ const defaultLimits: PlanLimits = {
     maxProjects: 5,
     maxCloudAccounts: 1,
     zipDownloadsEnabled: true,
-    maxZipDownloadsPerMonth: 10, // 10 descargas ZIP al mes
+    maxZipDownloadsPerMonth: 10,
     watermarkRemoval: false,
     customBranding: false,
     passwordProtection: false,
-    prioritySupport: false
+    prioritySupport: false,
+    // Plan Free defaults
+    maxImagesPerProject: null,
+    videoEnabled: true,
+    maxSocialLinks: -1,
+    lowResThumbnails: false,
+    lowResDownloads: false,
+    lowResMaxWidth: 1200,
+    bioMaxLength: null,
+    watermarkText: null
 };
 
 const emptyPlan: Omit<Plan, "id" | "_count"> = {
@@ -75,6 +94,9 @@ export default function PlansPage() {
     const [isCreating, setIsCreating] = useState(false);
     const [saving, setSaving] = useState(false);
     const [newFeature, setNewFeature] = useState("");
+    // Drag and drop state
+    const [draggedPlan, setDraggedPlan] = useState<string | null>(null);
+    const [dragOverPlan, setDragOverPlan] = useState<string | null>(null);
 
     const fetchPlans = async () => {
         try {
@@ -155,6 +177,70 @@ export default function PlansPage() {
         });
     };
 
+    // Drag and drop handlers
+    const handleDragStart = (e: React.DragEvent, planId: string) => {
+        setDraggedPlan(planId);
+        e.dataTransfer.effectAllowed = 'move';
+        // Hacer el elemento semi-transparente mientras se arrastra
+        (e.target as HTMLElement).style.opacity = '0.5';
+    };
+
+    const handleDragEnd = (e: React.DragEvent) => {
+        setDraggedPlan(null);
+        setDragOverPlan(null);
+        (e.target as HTMLElement).style.opacity = '1';
+    };
+
+    const handleDragOver = (e: React.DragEvent, planId: string) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        if (planId !== draggedPlan) {
+            setDragOverPlan(planId);
+        }
+    };
+
+    const handleDragLeave = () => {
+        setDragOverPlan(null);
+    };
+
+    const handleDrop = async (e: React.DragEvent, targetPlanId: string) => {
+        e.preventDefault();
+        if (!draggedPlan || draggedPlan === targetPlanId) {
+            setDraggedPlan(null);
+            setDragOverPlan(null);
+            return;
+        }
+
+        const draggedIndex = plans.findIndex(p => p.id === draggedPlan);
+        const targetIndex = plans.findIndex(p => p.id === targetPlanId);
+
+        if (draggedIndex === -1 || targetIndex === -1) return;
+
+        // Crear nuevo array con el orden actualizado
+        const newPlans = [...plans];
+        const [removed] = newPlans.splice(draggedIndex, 1);
+        newPlans.splice(targetIndex, 0, removed);
+
+        // Actualizar sortOrder de todos los planes afectados
+        try {
+            const updates = newPlans.map((plan, index) =>
+                fetch("/api/superadmin/plans", {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ id: plan.id, sortOrder: index })
+                })
+            );
+
+            await Promise.all(updates);
+            await fetchPlans();
+        } catch (error) {
+            console.error("Error reordering plans:", error);
+        }
+
+        setDraggedPlan(null);
+        setDragOverPlan(null);
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[60vh]">
@@ -187,12 +273,20 @@ export default function PlansPage() {
 
             {/* Plans Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {plans.map((plan) => (
+                {plans.map((plan, index) => (
                     <div
                         key={plan.id}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, plan.id)}
+                        onDragEnd={handleDragEnd}
+                        onDragOver={(e) => handleDragOver(e, plan.id)}
+                        onDragLeave={handleDragLeave}
+                        onDrop={(e) => handleDrop(e, plan.id)}
                         className={cn(
-                            "bg-neutral-900/50 border rounded-2xl p-6 relative",
-                            plan.isActive ? "border-neutral-800" : "border-neutral-800/50 opacity-60"
+                            "bg-neutral-900/50 border rounded-2xl p-6 relative cursor-grab active:cursor-grabbing transition-all duration-200",
+                            plan.isActive ? "border-neutral-800" : "border-neutral-800/50 opacity-60",
+                            draggedPlan === plan.id && "opacity-50 scale-95",
+                            dragOverPlan === plan.id && draggedPlan !== plan.id && "border-violet-500 border-2 scale-105"
                         )}
                     >
                         {/* Actions */}
@@ -214,12 +308,17 @@ export default function PlansPage() {
                             </button>
                         </div>
 
+                        {/* Order indicator - Drag handle */}
+                        <div className="absolute top-3 left-3 cursor-grab opacity-40 hover:opacity-100 transition">
+                            <GripVertical className="w-5 h-5 text-neutral-400" />
+                        </div>
+
                         {/* Plan Info */}
-                        <div className="mb-4">
+                        <div className="mb-4 pt-2">
+                            <h3 className="text-xl font-bold">{plan.displayName}</h3>
                             <span className="text-xs text-neutral-500 uppercase tracking-wider">
                                 {plan.name}
                             </span>
-                            <h3 className="text-xl font-bold mt-1">{plan.displayName}</h3>
                             {plan.description && (
                                 <p className="text-neutral-400 text-sm mt-1">{plan.description}</p>
                             )}
@@ -257,7 +356,7 @@ export default function PlansPage() {
 
                         {/* Status Badge */}
                         {!plan.isActive && (
-                            <div className="absolute top-4 left-4">
+                            <div className="absolute top-12 left-4">
                                 <span className="px-2 py-1 bg-neutral-700 text-neutral-300 text-xs rounded-md">
                                     Inactivo
                                 </span>
@@ -496,6 +595,116 @@ export default function PlansPage() {
                                         />
                                         <span className="text-sm text-neutral-300">Soporte prioritario</span>
                                     </label>
+                                </div>
+                            </div>
+
+                            {/* Content Restrictions */}
+                            <div>
+                                <h3 className="text-sm font-medium text-neutral-300 mb-3">Restricciones de Contenido</h3>
+                                <div className="grid grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <label className="block text-xs text-neutral-400 mb-1">Máx. Imágenes/Galería (0 = ilimitado)</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            value={editingPlan.limits.maxImagesPerProject ?? 0}
+                                            onChange={(e) => setEditingPlan({
+                                                ...editingPlan,
+                                                limits: { ...editingPlan.limits, maxImagesPerProject: parseInt(e.target.value) || null }
+                                            })}
+                                            className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-white text-sm focus:outline-none focus:border-violet-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-neutral-400 mb-1">Máx. Links Sociales (-1 = ilimitado)</label>
+                                        <input
+                                            type="number"
+                                            min="-1"
+                                            value={editingPlan.limits.maxSocialLinks}
+                                            onChange={(e) => setEditingPlan({
+                                                ...editingPlan,
+                                                limits: { ...editingPlan.limits, maxSocialLinks: parseInt(e.target.value) }
+                                            })}
+                                            className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-white text-sm focus:outline-none focus:border-violet-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-neutral-400 mb-1">Máx. Bio (0 = ilimitado)</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            value={editingPlan.limits.bioMaxLength ?? 0}
+                                            onChange={(e) => setEditingPlan({
+                                                ...editingPlan,
+                                                limits: { ...editingPlan.limits, bioMaxLength: parseInt(e.target.value) || null }
+                                            })}
+                                            className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-white text-sm focus:outline-none focus:border-violet-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-neutral-400 mb-1">Ancho máx. descarga (px)</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            value={editingPlan.limits.lowResMaxWidth}
+                                            onChange={(e) => setEditingPlan({
+                                                ...editingPlan,
+                                                limits: { ...editingPlan.limits, lowResMaxWidth: parseInt(e.target.value) || 1200 }
+                                            })}
+                                            className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-white text-sm focus:outline-none focus:border-violet-500"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3 mb-4">
+                                    <label className="flex items-center gap-2 cursor-pointer p-3 bg-neutral-800/50 rounded-lg">
+                                        <input
+                                            type="checkbox"
+                                            checked={editingPlan.limits.videoEnabled}
+                                            onChange={(e) => setEditingPlan({
+                                                ...editingPlan,
+                                                limits: { ...editingPlan.limits, videoEnabled: e.target.checked }
+                                            })}
+                                            className="w-4 h-4 rounded bg-neutral-800 border-neutral-700 text-violet-600 focus:ring-violet-500"
+                                        />
+                                        <span className="text-sm text-neutral-300">Video habilitado</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer p-3 bg-neutral-800/50 rounded-lg">
+                                        <input
+                                            type="checkbox"
+                                            checked={editingPlan.limits.lowResDownloads}
+                                            onChange={(e) => setEditingPlan({
+                                                ...editingPlan,
+                                                limits: { ...editingPlan.limits, lowResDownloads: e.target.checked }
+                                            })}
+                                            className="w-4 h-4 rounded bg-neutral-800 border-neutral-700 text-violet-600 focus:ring-violet-500"
+                                        />
+                                        <span className="text-sm text-neutral-300">Solo baja resolución</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer p-3 bg-neutral-800/50 rounded-lg">
+                                        <input
+                                            type="checkbox"
+                                            checked={editingPlan.limits.lowResThumbnails}
+                                            onChange={(e) => setEditingPlan({
+                                                ...editingPlan,
+                                                limits: { ...editingPlan.limits, lowResThumbnails: e.target.checked }
+                                            })}
+                                            className="w-4 h-4 rounded bg-neutral-800 border-neutral-700 text-violet-600 focus:ring-violet-500"
+                                        />
+                                        <span className="text-sm text-neutral-300">Thumbnails baja calidad</span>
+                                    </label>
+                                </div>
+                                <div>
+                                    <label className="block text-xs text-neutral-400 mb-1">Marca de agua (vacío = ninguna)</label>
+                                    <input
+                                        type="text"
+                                        value={editingPlan.limits.watermarkText || ""}
+                                        onChange={(e) => setEditingPlan({
+                                            ...editingPlan,
+                                            limits: { ...editingPlan.limits, watermarkText: e.target.value || null }
+                                        })}
+                                        placeholder="ej: CloserLens"
+                                        className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-white text-sm focus:outline-none focus:border-violet-500"
+                                    />
                                 </div>
                             </div>
 

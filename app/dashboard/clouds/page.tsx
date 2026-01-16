@@ -1,12 +1,14 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
     Cloud, HardDrive, CheckCircle, AlertCircle, RefreshCw,
     Trash2, Plus, Loader2, Edit2, Check, X, Folder, Download
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 interface CloudAccount {
     id: string;
@@ -18,10 +20,27 @@ interface CloudAccount {
 }
 
 export default function CloudManager() {
+    const searchParams = useSearchParams();
     const [accounts, setAccounts] = useState<CloudAccount[]>([]);
     const [loading, setLoading] = useState(true);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [tempName, setTempName] = useState("");
+
+    // Check for error params from OAuth redirect
+    const errorType = searchParams.get("error");
+    const errorMessage = searchParams.get("message");
+
+    // Show alert for plan limit error
+    useEffect(() => {
+        if (errorType === "plan_limit") {
+            const message = errorMessage
+                ? decodeURIComponent(errorMessage)
+                : "Has alcanzado el l\u00edmite de nubes conectadas de tu plan.";
+            alert(`\u26a0\ufe0f L\u00edmite de plan alcanzado\n\n${message}\n\nVisita la secci\u00f3n de planes para actualizar tu suscripci\u00f3n.`);
+            // Clean URL params
+            window.history.replaceState({}, "", "/dashboard/clouds");
+        }
+    }, [errorType, errorMessage]);
 
     useEffect(() => {
         fetchAccounts();
@@ -79,6 +98,7 @@ export default function CloudManager() {
 
     return (
         <div className="max-w-6xl mx-auto space-y-8 md:space-y-12">
+
             <header className="flex flex-col gap-3 md:gap-6 border-b border-neutral-900 pb-6 md:pb-8">
                 <div>
                     <h1 className="text-xl md:text-3xl lg:text-4xl font-light mb-2 md:mb-4 text-white">Gestor de nubes</h1>

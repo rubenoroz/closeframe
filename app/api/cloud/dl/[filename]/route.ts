@@ -2,20 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { google } from "googleapis";
 import { prisma } from "@/lib/db";
 import JSZip from "jszip";
+import sharp from "sharp";
 
 // Esta ruta captura cualquier llamada a /api/cloud/dl/LO_QUE_SEA.zip
 // El "LO_QUE_SEA.zip" es ignorado por la lógica, pero usado por el navegador para nombrar el archivo.
-// En Next.js 15+, params es una promesa que debe esperarse.
 export async function GET(req: NextRequest, { params }: { params: Promise<{ filename: string }> }) {
     try {
         const { filename } = await params;
         const { searchParams } = new URL(req.url);
         const cloudAccountId = searchParams.get("c");
         const filesJson = searchParams.get("f");
-
-        // El nombre ya viene en la URL, pero también lo recibimos por si acaso necesitamos lógica interna
-        // const projectName = searchParams.get("p"); 
-        // const format = searchParams.get("fmt");
 
         if (!cloudAccountId || !filesJson) {
             return NextResponse.json({ error: "Datos incompletos" }, { status: 400 });
@@ -51,15 +47,44 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ file
         const filesData = JSON.parse(filesJson);
         const zip = new JSZip();
 
+        const size = searchParams.get("s");
+        const resizeWidth = size ? parseInt(size) : null;
+
         // Procesar archivos
         await Promise.all(filesData.map(async (file: any) => {
             try {
+                // 1. Siempre descargar el ORIGINAL (fiable)
+                // Usamos byte array para poder procesarlo en memoria
                 const response = await drive.files.get(
                     { fileId: file.id, alt: "media" },
                     { responseType: "arraybuffer" }
                 );
-                zip.file(file.name, response.data as ArrayBuffer);
+
+                let fileBuffer = Buffer.from(response.data as ArrayBuffer);
+
+                // 2. Si se pide resize, procesar con SHARP
+                if (resizeWidth) {
+                    try {
+                        // Detectar si es imagen soportada por sharp antes de intentar
+                        fileBuffer = await sharp(fileBuffer)
+                            .resize({
+                                width: resizeWidth,
+                                height: resizeWidth, // Set both to force 'long edge' behavior
+                                withoutEnlargement: true,
+                                fit: 'inside'
+                            })
+                            // Convertir a JPEG para asegurar consistencia
+                            .toFormat('jpeg', { quality: 85 })
+                            .toBuffer();
+                    } catch (sharpError) {
+                        console.error(`Sharp resize error for ${file.name}:`, sharpError);
+                        // Fallback: usar original si falla el resize (mejor que nada/corrupto)
+                    }
+                }
+
+                zip.file(file.name, fileBuffer);
             } catch (err) {
+                console.error(`Error processing file ${file.name}:`, err);
                 zip.file(`${file.name}_ERROR.txt`, String(err));
             }
         }));
@@ -79,11 +104,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ file
             .replace(/[^\x00-\x7F]/g, '_'); // Replace non-ASCII with underscore
 
         // Retornar ZIP
-        return new NextResponse(new Uint8Array(zipContent), {
+        return new NextResponse(zipContent, {
             status: 200,
             headers: {
                 "Content-Type": "application/zip",
-                // Use sanitized filename for the header
                 "Content-Disposition": `attachment; filename="${sanitizedFilename}"`,
                 "Cache-Control": "no-store"
             }

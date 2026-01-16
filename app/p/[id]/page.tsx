@@ -2,7 +2,7 @@ import React from "react";
 import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Instagram, Globe, Mail, Camera } from "lucide-react";
+import { Instagram, Globe, Mail, Camera, Linkedin, Youtube, Video } from "lucide-react";
 import GalleryPreviewCard from "@/components/gallery/GalleryPreviewCard";
 
 interface Props {
@@ -31,6 +31,13 @@ export default async function PublicProfilePage({ params }: Props) {
             specialty: true,
             theme: true,
             businessLogoScale: true,
+            // Perfil expandido
+            profileType: true,
+            headline: true,
+            location: true,
+            socialLinks: true,
+            username: true,
+            profileViews: true,
             projects: {
                 where: {
                     showInProfile: true
@@ -78,7 +85,21 @@ export default async function PublicProfilePage({ params }: Props) {
                 </div>
 
                 {/* Name */}
-                <h1 className="text-3xl md:text-4xl lg:text-5xl font-light mb-3 md:mb-4">{brandingName}</h1>
+                <h1 className="text-3xl md:text-4xl lg:text-5xl font-light mb-2">{brandingName}</h1>
+
+                {/* Headline */}
+                {user.headline && (
+                    <p className={`text-sm md:text-base font-light mb-2 ${isLight ? 'text-neutral-700' : 'text-neutral-300'}`}>
+                        {user.headline}
+                    </p>
+                )}
+
+                {/* Location */}
+                {user.location && (
+                    <p className={`text-xs md:text-sm mb-4 ${isLight ? 'text-neutral-500' : 'text-neutral-500'}`}>
+                        📍 {user.location}
+                    </p>
+                )}
 
                 {/* Tagline/Specialty */}
                 {user.specialty && (
@@ -92,8 +113,9 @@ export default async function PublicProfilePage({ params }: Props) {
                     </p>
                 )}
 
-                {/* Social Links - Simple Icons */}
-                <div className={`flex justify-center gap-5 md:gap-6 mt-8 md:mt-10 ${isLight ? 'text-neutral-600' : 'text-neutral-400'}`}>
+                {/* Social Links - Dynamic */}
+                <div className={`flex justify-center flex-wrap gap-5 md:gap-6 mt-8 md:mt-10 ${isLight ? 'text-neutral-600' : 'text-neutral-400'}`}>
+                    {/* Legacy Instagram */}
                     {user.businessInstagram && (
                         <a
                             href={`https://instagram.com/${user.businessInstagram.replace('@', '')}`}
@@ -104,7 +126,63 @@ export default async function PublicProfilePage({ params }: Props) {
                             <Instagram className="w-5 h-5" />
                         </a>
                     )}
-                    {user.businessWebsite && (
+                    {/* SocialLinks Instagram (si no hay legacy) */}
+                    {!user.businessInstagram && (user.socialLinks as any)?.instagram && (
+                        <a
+                            href={`https://instagram.com/${((user.socialLinks as any).instagram as string).replace('@', '')}`}
+                            target="_blank"
+                            className={`transition-colors ${isLight ? 'hover:text-black' : 'hover:text-white'}`}
+                            title="Instagram"
+                        >
+                            <Instagram className="w-5 h-5" />
+                        </a>
+                    )}
+                    {/* LinkedIn */}
+                    {(user.socialLinks as any)?.linkedin && (
+                        <a
+                            href={(user.socialLinks as any).linkedin.startsWith('http') ? (user.socialLinks as any).linkedin : `https://${(user.socialLinks as any).linkedin}`}
+                            target="_blank"
+                            className={`transition-colors ${isLight ? 'hover:text-black' : 'hover:text-white'}`}
+                            title="LinkedIn"
+                        >
+                            <Linkedin className="w-5 h-5" />
+                        </a>
+                    )}
+                    {/* YouTube */}
+                    {(user.socialLinks as any)?.youtube && (
+                        <a
+                            href={(user.socialLinks as any).youtube.startsWith('http') ? (user.socialLinks as any).youtube : `https://${(user.socialLinks as any).youtube}`}
+                            target="_blank"
+                            className={`transition-colors ${isLight ? 'hover:text-black' : 'hover:text-white'}`}
+                            title="YouTube"
+                        >
+                            <Youtube className="w-5 h-5" />
+                        </a>
+                    )}
+                    {/* Vimeo */}
+                    {(user.socialLinks as any)?.vimeo && (
+                        <a
+                            href={(user.socialLinks as any).vimeo.startsWith('http') ? (user.socialLinks as any).vimeo : `https://${(user.socialLinks as any).vimeo}`}
+                            target="_blank"
+                            className={`transition-colors ${isLight ? 'hover:text-black' : 'hover:text-white'}`}
+                            title="Vimeo"
+                        >
+                            <Video className="w-5 h-5" />
+                        </a>
+                    )}
+                    {/* Website from socialLinks */}
+                    {(user.socialLinks as any)?.website && (
+                        <a
+                            href={(user.socialLinks as any).website.startsWith('http') ? (user.socialLinks as any).website : `https://${(user.socialLinks as any).website}`}
+                            target="_blank"
+                            className={`transition-colors ${isLight ? 'hover:text-black' : 'hover:text-white'}`}
+                            title="Sitio web"
+                        >
+                            <Globe className="w-5 h-5" />
+                        </a>
+                    )}
+                    {/* Legacy Website (si no hay socialLinks.website) */}
+                    {!(user.socialLinks as any)?.website && user.businessWebsite && (
                         <a
                             href={user.businessWebsite}
                             target="_blank"

@@ -41,11 +41,16 @@ export default function NewProjectPage() {
     const [downloadVideoHdEnabled, setDownloadVideoHdEnabled] = useState(true);
     const [downloadVideoRawEnabled, setDownloadVideoRawEnabled] = useState(false);
 
+    // Plan limits
+    const [planLimits, setPlanLimits] = useState<{
+        videoEnabled?: boolean;
+        lowResDownloads?: boolean;
+    } | null>(null);
+
     useEffect(() => {
         fetch("/api/cloud/accounts")
             .then((res) => res.json())
             .then((data) => {
-                // The API returns the array directly
                 const cloudAccounts = Array.isArray(data) ? data : (data.accounts || []);
                 setAccounts(cloudAccounts);
                 if (cloudAccounts.length > 0) {
@@ -57,6 +62,21 @@ export default function NewProjectPage() {
                 console.error(err);
                 setLoadingAccounts(false);
             });
+
+        // Fetch user plan limits
+        fetch("/api/user/settings")
+            .then((res) => res.json())
+            .then((data) => {
+                if (data.user?.plan?.limits) {
+                    try {
+                        const limits = typeof data.user.plan.limits === 'string'
+                            ? JSON.parse(data.user.plan.limits)
+                            : data.user.plan.limits;
+                        setPlanLimits(limits);
+                    } catch { }
+                }
+            })
+            .catch(() => { });
     }, []);
 
     const handleFolderSelect = (folder: { id: string; name: string }) => {
@@ -94,13 +114,24 @@ export default function NewProjectPage() {
                 })
             });
 
-            if (!res.ok) throw new Error("Failed to create project");
+            const data = await res.json();
+
+            if (!res.ok) {
+                // Check for plan limit error
+                if (data.code === "PLAN_LIMIT_REACHED") {
+                    alert(`\u26a0\ufe0f L\u00edmite de plan alcanzado\n\n${data.error}\n\nVisita la secci\u00f3n de planes para actualizar tu suscripci\u00f3n.`);
+                } else {
+                    alert(data.error || "Error al crear el proyecto");
+                }
+                setStep("header");
+                return;
+            }
 
             // Redirect to dashboard
             router.push("/dashboard");
         } catch (error) {
             console.error(error);
-            alert("Error al crear el proyecto");
+            alert("Error de conexi\u00f3n. Por favor intenta de nuevo.");
             setStep("header");
         }
     };
@@ -316,10 +347,16 @@ export default function NewProjectPage() {
 
                         {/* Selector de Fuente */}
                         <div>
-                            <label className="block text-sm font-medium mb-2 text-neutral-300">Fuente</label>
+                            <label className="block text-sm font-medium mb-2 text-neutral-300 flex items-center gap-2">
+                                Fuente
+                                {planLimits?.lowResDownloads && (
+                                    <span className="text-[10px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">Plan Free</span>
+                                )}
+                            </label>
                             <select
-                                className="w-full px-4 py-3 bg-neutral-800 border border-neutral-700 rounded-xl text-white focus:border-emerald-500 focus:outline-none transition"
-                                value={headerFontFamily}
+                                className={`w-full px-4 py-3 bg-neutral-800 border border-neutral-700 rounded-xl text-white focus:border-emerald-500 focus:outline-none transition ${planLimits?.lowResDownloads ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                value={planLimits?.lowResDownloads ? "Inter" : headerFontFamily}
+                                disabled={!!planLimits?.lowResDownloads}
                                 onChange={(e) => setHeaderFontFamily(e.target.value)}
                             >
                                 <option value="Inter">Inter (Profesional neutro)</option>
@@ -329,6 +366,9 @@ export default function NewProjectPage() {
                                 <option value="Cormorant">Cormorant (Artístico autoral)</option>
                                 <option value="Allura">Allura (Romance / Boda)</option>
                             </select>
+                            {planLimits?.lowResDownloads && (
+                                <p className="text-xs text-neutral-500 mt-1">Personalización de fuentes disponible en planes Pro.</p>
+                            )}
                         </div>
 
                         {/* Color Picker */}
@@ -383,35 +423,67 @@ export default function NewProjectPage() {
                                 <input
                                     type="checkbox"
                                     checked={downloadJpgEnabled}
-                                    onChange={(e) => setDownloadJpgEnabled(e.target.checked)}
+                                    onChange={(e) => {
+                                        // Always allow toggling, but if lowResDownloads is true, it means low res
+                                        setDownloadJpgEnabled(e.target.checked);
+                                    }}
                                     className="w-5 h-5 rounded accent-emerald-500"
                                 />
-                                <span className="text-sm text-neutral-300">Permitir descargas JPG (alta resolución)</span>
+                                <span className="text-sm text-neutral-300">
+                                    {planLimits?.lowResDownloads ? 'Permitir descargas JPG (Resolución Web)' : 'Permitir descargas JPG (Alta Resolución)'}
+                                </span>
+                                {planLimits?.lowResDownloads && (
+                                    <span className="text-[10px] text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded ml-2">Plan Free</span>
+                                )}
                             </label>
-                            <label className="flex items-center gap-3 cursor-pointer">
+                            <label className={`flex items-center gap-3 ${planLimits?.lowResDownloads ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
                                 <input
                                     type="checkbox"
-                                    checked={downloadRawEnabled}
-                                    onChange={(e) => setDownloadRawEnabled(e.target.checked)}
-                                    className="w-5 h-5 rounded accent-emerald-500"
+                                    checked={planLimits?.lowResDownloads ? false : downloadRawEnabled}
+                                    onChange={(e) => {
+                                        if (planLimits?.lowResDownloads) return;
+                                        setDownloadRawEnabled(e.target.checked);
+                                    }}
+                                    disabled={!!planLimits?.lowResDownloads}
+                                    className="w-5 h-5 rounded accent-emerald-500 disabled:opacity-50"
                                 />
                                 <span className="text-sm text-neutral-300">Permitir descargas RAW</span>
+                                {planLimits?.lowResDownloads && (
+                                    <span className="text-[10px] text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded ml-2">Pro req.</span>
+                                )}
                             </label>
+                            {planLimits?.lowResDownloads && (
+                                <p className="text-xs text-amber-400">Tu plan solo permite descargas en resolución web (1200px).</p>
+                            )}
                             <p className="text-xs text-neutral-500">Los clientes podrán descargar fotos en diferentes calidades según tu configuración</p>
                         </div>
 
                         {/* Habilitar Videos */}
                         <div className="border-t border-neutral-800 pt-6">
-                            <label className="flex items-center gap-3 cursor-pointer">
+                            <label className={`flex items-center gap-3 ${planLimits?.videoEnabled === false ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
                                 <input
                                     type="checkbox"
                                     checked={enableVideoTab}
-                                    onChange={(e) => setEnableVideoTab(e.target.checked)}
-                                    className="w-5 h-5 rounded accent-emerald-500"
+                                    onChange={(e) => {
+                                        if (planLimits?.videoEnabled === false) {
+                                            alert('\u26a0\ufe0f Tu plan no incluye video\n\nActualiza tu plan para habilitar galer\u00edas de video.');
+                                            return;
+                                        }
+                                        setEnableVideoTab(e.target.checked);
+                                    }}
+                                    disabled={planLimits?.videoEnabled === false}
+                                    className="w-5 h-5 rounded accent-emerald-500 disabled:opacity-50"
                                 />
                                 <span className="font-medium text-neutral-300">Habilitar tab de Videos</span>
+                                {planLimits?.videoEnabled === false && (
+                                    <span className="text-xs text-amber-400 bg-amber-500/10 px-2 py-1 rounded">Plan Free</span>
+                                )}
                             </label>
-                            <p className="text-xs text-neutral-500 mt-1 ml-8">Agrega una pestaña separada para videos</p>
+                            {planLimits?.videoEnabled === false ? (
+                                <p className="text-xs text-amber-400 mt-1 ml-8">Tu plan actual no incluye galer\u00edas de video. <a href="/pricing" className="underline">Actualizar plan</a></p>
+                            ) : (
+                                <p className="text-xs text-neutral-500 mt-1 ml-8">Agrega una pesta\u00f1a separada para videos</p>
+                            )}
                         </div>
 
                         {/* Selector de Carpeta de Videos (condicional) */}

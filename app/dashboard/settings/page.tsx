@@ -5,7 +5,8 @@ import {
     User, Building, Globe, Instagram, Phone, FileText, Save,
     Loader2, Camera, X, Check, Copy, ExternalLink,
     Sun, Moon, Monitor, Maximize, MousePointer2, Info, Folder,
-    Image as ImageIcon, Link2, Eye
+    Image as ImageIcon, Link2, Eye, Linkedin, Youtube, Video, AtSign, MapPin,
+    CreditCard, Cloud, Trash2, Calendar, Lock, Facebook, Twitter, Plus, ChevronDownIcon
 } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -30,8 +31,71 @@ export default function SettingsPage() {
         specialty: "",
         theme: "dark",
         businessLogoScale: 100,
+        // Perfil expandido
+        profileType: "",
+        headline: "",
+        location: "",
+        socialLinks: {} as Record<string, string>,
+        username: "",
+        // Plan y cuentas
+        plan: null as any,
+        planExpiresAt: null as string | null,
+        cloudAccounts: [] as any[],
         projects: [] as any[],
     });
+
+    // Parse plan limits for restrictions
+    const getPlanLimits = () => {
+        if (!user.plan?.limits) return null;
+        try {
+            return typeof user.plan.limits === 'string'
+                ? JSON.parse(user.plan.limits)
+                : user.plan.limits;
+        } catch {
+            return null;
+        }
+    };
+    const planLimits = getPlanLimits();
+    const bioMaxLength = planLimits?.bioMaxLength || null;
+    const maxSocialLinks = planLimits?.maxSocialLinks ?? -1; // -1 = unlimited
+    // Restricción de redes sociales (Solo IG en Free)
+    // Restricción de redes sociales (Solo IG en Free)
+    // "Free", "Gratis", "Basic" or NULL defines the restricted plan.
+    const currentPlanName = user.plan?.name || 'free';
+    const isRestrictedPlan = /free|gratis|basic|prueba/i.test(currentPlanName);
+    const advancedSocialAllowed = planLimits?.advancedSocialNetworks ?? !isRestrictedPlan;
+
+    // Dynamic Social Links State
+    const [selectedNetwork, setSelectedNetwork] = useState("instagram");
+    const [networkValue, setNetworkValue] = useState("");
+
+    const SOCIAL_PLATFORMS = [
+        { id: 'instagram', label: 'Instagram', icon: Instagram, prefix: '@', placeholder: 'usuario' },
+        { id: 'linkedin', label: 'LinkedIn', icon: Linkedin, prefix: 'linkedin.com/in/', placeholder: 'usuario' },
+        { id: 'youtube', label: 'YouTube', icon: Youtube, prefix: 'youtube.com/@', placeholder: 'canal' },
+        { id: 'vimeo', label: 'Vimeo', icon: Video, prefix: 'vimeo.com/', placeholder: 'usuario' },
+        { id: 'website', label: 'Sitio Web', icon: Globe, prefix: 'https://', placeholder: 'tu-sitio.com' },
+        { id: 'facebook', label: 'Facebook', icon: Facebook, prefix: 'facebook.com/', placeholder: 'usuario' },
+        { id: 'twitter', label: 'X / Twitter', icon: Twitter, prefix: 'x.com/', placeholder: 'usuario' },
+    ];
+
+    const handleAddSocial = () => {
+        if (!networkValue.trim()) return;
+        setUser(prev => ({
+            ...prev,
+            socialLinks: {
+                ...prev.socialLinks,
+                [selectedNetwork]: networkValue.trim()
+            }
+        }));
+        setNetworkValue("");
+    };
+
+    const handleRemoveSocial = (key: string) => {
+        const newLinks = { ...user.socialLinks };
+        delete newLinks[key];
+        setUser(prev => ({ ...prev, socialLinks: newLinks }));
+    };
 
     useEffect(() => {
         fetch("/api/user/settings")
@@ -51,6 +115,16 @@ export default function SettingsPage() {
                         specialty: data.user.specialty || "",
                         theme: data.user.theme || "dark",
                         businessLogoScale: data.user.businessLogoScale || 100,
+                        // Perfil expandido
+                        profileType: data.user.profileType || "",
+                        headline: data.user.headline || "",
+                        location: data.user.location || "",
+                        socialLinks: data.user.socialLinks || {},
+                        username: data.user.username || "",
+                        // Plan y cuentas
+                        plan: data.user.plan || null,
+                        planExpiresAt: data.user.planExpiresAt || null,
+                        cloudAccounts: data.user.cloudAccounts || [],
                         projects: data.user.projects || [],
                     });
                 }
@@ -148,8 +222,15 @@ export default function SettingsPage() {
                     businessInstagram: data.user.businessInstagram || "",
                     businessPhone: data.user.businessPhone || "",
                     bio: data.user.bio || "",
+                    specialty: data.user.specialty || "",
                     theme: data.user.theme || "dark",
                     businessLogoScale: data.user.businessLogoScale || 100,
+                    // Perfil expandido
+                    profileType: data.user.profileType || "",
+                    headline: data.user.headline || "",
+                    location: data.user.location || "",
+                    socialLinks: data.user.socialLinks || {},
+                    username: data.user.username || "",
                 }));
             }
             alert("¡Identidad guardada con éxito!");
@@ -252,10 +333,23 @@ export default function SettingsPage() {
                             />
                         </div>
                         <div className="md:col-span-2 space-y-3">
-                            <label className="text-[10px] font-bold opacity-40 uppercase tracking-widest ml-1">Biografía / Reseña corta</label>
+                            <label className="text-[10px] font-bold opacity-40 uppercase tracking-widest ml-1">
+                                Biografía / Reseña corta
+                                {bioMaxLength && (
+                                    <span className={`ml-2 ${user.bio.length >= bioMaxLength ? 'text-red-400' : 'text-neutral-500'}`}>
+                                        ({user.bio.length}/{bioMaxLength})
+                                    </span>
+                                )}
+                            </label>
                             <textarea
                                 value={user.bio}
-                                onChange={(e) => setUser({ ...user, bio: e.target.value })}
+                                onChange={(e) => {
+                                    const newBio = bioMaxLength
+                                        ? e.target.value.slice(0, bioMaxLength)
+                                        : e.target.value;
+                                    setUser({ ...user, bio: newBio });
+                                }}
+                                maxLength={bioMaxLength || undefined}
                                 className={cn(
                                     "w-full border rounded-xl px-5 py-4 h-32 outline-none transition-all resize-none leading-relaxed",
                                     isLight
@@ -264,6 +358,11 @@ export default function SettingsPage() {
                                 )}
                                 placeholder="Cuéntale a tus clientes quién eres y tu estilo..."
                             />
+                            {bioMaxLength && (
+                                <p className="text-[10px] text-neutral-500 ml-1">
+                                    Tu plan permite hasta {bioMaxLength} caracteres. <Link href="/pricing" className="text-emerald-500 hover:underline">Actualizar plan</Link>
+                                </p>
+                            )}
                         </div>
                         <div className="md:col-span-2 space-y-3">
                             <label className="text-[10px] font-bold opacity-40 uppercase tracking-widest ml-1">Especialidad / Tagline</label>
@@ -278,6 +377,203 @@ export default function SettingsPage() {
                                 )}
                                 placeholder="Ej: Fotografía de bodas & retrato"
                             />
+                        </div>
+                    </div>
+                </section>
+
+                {/* PROFILE TYPE */}
+                <section>
+                    <div className="flex items-center gap-2 md:gap-3 mb-5 md:mb-8 text-neutral-400 text-[10px] md:text-xs uppercase tracking-widest font-bold">
+                        <User className="w-3 h-3 md:w-4 md:h-4 text-emerald-500" /> Perfil Profesional
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                        <div className="space-y-3">
+                            <label className="text-[10px] font-bold opacity-40 uppercase tracking-widest ml-1">Tipo de Perfil</label>
+                            <select
+                                value={user.profileType}
+                                onChange={(e) => setUser({ ...user, profileType: e.target.value })}
+                                className={cn(
+                                    "w-full border rounded-xl px-5 py-4 outline-none transition-all",
+                                    isLight
+                                        ? "bg-neutral-50 border-neutral-200 text-neutral-900 focus:bg-white focus:border-emerald-500/50"
+                                        : "bg-neutral-900/50 border-neutral-800 text-neutral-100 focus:border-emerald-500/50"
+                                )}
+                            >
+                                <option value="">Selecciona...</option>
+                                <option value="photographer">📷 Fotógrafo</option>
+                                <option value="model">💃 Modelo / Talento</option>
+                                <option value="creative">🎬 Creativo Audiovisual</option>
+                                <option value="agency">🏢 Agencia</option>
+                                <option value="brand">🛍️ Marca</option>
+                            </select>
+                        </div>
+                        <div className="space-y-3">
+                            <label className="text-[10px] font-bold opacity-40 uppercase tracking-widest ml-1">Ubicación</label>
+                            <input
+                                value={user.location}
+                                onChange={(e) => setUser({ ...user, location: e.target.value })}
+                                className={cn(
+                                    "w-full border rounded-xl px-5 py-4 outline-none transition-all",
+                                    isLight
+                                        ? "bg-neutral-50 border-neutral-200 text-neutral-900 focus:bg-white focus:border-emerald-500/50"
+                                        : "bg-neutral-900/50 border-neutral-800 text-neutral-100 focus:border-emerald-500/50"
+                                )}
+                                placeholder="Ej: Ciudad de México, México"
+                            />
+                        </div>
+                        <div className="md:col-span-2 space-y-3">
+                            <label className="text-[10px] font-bold opacity-40 uppercase tracking-widest ml-1">Headline Profesional</label>
+                            <input
+                                value={user.headline}
+                                onChange={(e) => setUser({ ...user, headline: e.target.value })}
+                                className={cn(
+                                    "w-full border rounded-xl px-5 py-4 outline-none transition-all",
+                                    isLight
+                                        ? "bg-neutral-50 border-neutral-200 text-neutral-900 focus:bg-white focus:border-emerald-500/50"
+                                        : "bg-neutral-900/50 border-neutral-800 text-neutral-100 focus:border-emerald-500/50"
+                                )}
+                                placeholder="Ej: Director de Fotografía | Especialista en Moda"
+                            />
+                        </div>
+                        <div className="md:col-span-2 space-y-3">
+                            <label className="text-[10px] font-bold opacity-40 uppercase tracking-widest ml-1">Username (URL personalizada)</label>
+                            <div className="flex items-center gap-2">
+                                <span className={`text-sm ${isLight ? 'text-neutral-500' : 'text-neutral-500'}`}>closerlens.co/u/</span>
+                                <input
+                                    value={user.username}
+                                    onChange={(e) => setUser({ ...user, username: e.target.value.toLowerCase().replace(/[^a-z0-9-_]/g, '') })}
+                                    className={cn(
+                                        "flex-1 border rounded-xl px-5 py-4 outline-none transition-all font-mono",
+                                        isLight
+                                            ? "bg-neutral-50 border-neutral-200 text-neutral-900 focus:bg-white focus:border-emerald-500/50"
+                                            : "bg-neutral-900/50 border-neutral-800 text-neutral-100 focus:border-emerald-500/50"
+                                    )}
+                                    placeholder="tu-nombre"
+                                />
+                            </div>
+                            {user.username && (
+                                <p className="text-[10px] text-emerald-500 ml-1">Tu perfil estará en: closerlens.co/u/{user.username}</p>
+                            )}
+                        </div>
+                    </div>
+                </section>
+
+                {/* SOCIAL LINKS */}
+                <section>
+                    <div className="flex items-center gap-2 md:gap-3 mb-5 md:mb-8 text-neutral-400 text-[10px] md:text-xs uppercase tracking-widest font-bold">
+                        <Link2 className="w-3 h-3 md:w-4 md:h-4 text-emerald-500" /> Redes Sociales
+                    </div>
+
+                    <div className="space-y-6">
+                        {/* List of Added Networks */}
+                        <div className="space-y-3">
+                            {Object.entries(user.socialLinks || {}).map(([key, value]) => {
+                                const platform = SOCIAL_PLATFORMS.find(p => p.id === key);
+                                const Icon = platform ? platform.icon : Link2;
+                                return (
+                                    <div key={key} className={cn(
+                                        "flex items-center justify-between p-3 rounded-xl border transition-all",
+                                        isLight ? "bg-white border-neutral-200" : "bg-neutral-900 border-neutral-800"
+                                    )}>
+                                        <div className="flex items-center gap-3 overflow-hidden">
+                                            <div className={cn(
+                                                "p-2 rounded-full",
+                                                isLight ? "bg-neutral-100 text-neutral-600" : "bg-neutral-800 text-neutral-400"
+                                            )}>
+                                                <Icon className="w-4 h-4" />
+                                            </div>
+                                            <div className="flex flex-col min-w-0">
+                                                <span className="text-[10px] font-bold uppercase tracking-widest opacity-50">{platform?.label || key}</span>
+                                                <span className="text-sm truncate font-medium">{platform?.prefix}{value}</span>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => handleRemoveSocial(key)}
+                                            className="p-2 text-neutral-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* Add New Network */}
+                        <div className={cn(
+                            "p-4 rounded-2xl border border-dashed transition-all",
+                            isLight ? "bg-neutral-50/50 border-neutral-200" : "bg-neutral-900/30 border-neutral-800"
+                        )}>
+                            <div className="flex flex-col md:flex-row gap-3">
+                                {/* Network Selector */}
+                                <div className="md:w-auto">
+                                    <div className="relative">
+                                        <select
+                                            value={selectedNetwork}
+                                            onChange={(e) => setSelectedNetwork(e.target.value)}
+                                            className={cn(
+                                                "w-full md:w-48 appearance-none rounded-xl px-4 py-3 outline-none transition-all text-sm font-medium pr-10 cursor-pointer",
+                                                isLight
+                                                    ? "bg-white border border-neutral-200 text-neutral-900 focus:border-emerald-500"
+                                                    : "bg-neutral-900 border border-neutral-800 text-neutral-100 focus:border-emerald-500"
+                                            )}
+                                        >
+
+                                            {SOCIAL_PLATFORMS.map(p => (
+                                                <option key={p.id} value={p.id}>
+                                                    {p.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none opacity-50">
+                                            <ChevronDownIcon />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Input & Add Button */}
+                                <div className="flex items-center gap-2">
+                                    <div className="relative">
+                                        <input
+                                            value={networkValue}
+                                            onChange={(e) => setNetworkValue(e.target.value)}
+                                            placeholder={SOCIAL_PLATFORMS.find(p => p.id === selectedNetwork)?.placeholder || "Usuario o URL"}
+                                            disabled={!advancedSocialAllowed && selectedNetwork !== 'instagram'}
+                                            className={cn(
+                                                "w-full md:w-64 border rounded-xl px-4 py-3 outline-none transition-all text-sm",
+                                                isLight
+                                                    ? "bg-white border-neutral-200 text-neutral-900 focus:border-emerald-500"
+                                                    : "bg-neutral-900 border-neutral-800 text-neutral-100 focus:border-emerald-500",
+                                                (!advancedSocialAllowed && selectedNetwork !== 'instagram') && "opacity-50 cursor-not-allowed"
+                                            )}
+                                        />
+                                        {/* Prefix hint if needed or generic */}
+                                        {(!advancedSocialAllowed && selectedNetwork !== 'instagram') && (
+                                            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 bg-black/80 text-white px-2 py-1 rounded text-[10px] font-bold border border-white/10 pointer-events-none z-10">
+                                                <Lock className="w-3 h-3 text-orange-400" /> <span>PRO</span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <button
+                                        onClick={handleAddSocial}
+                                        disabled={!networkValue.trim() || (!advancedSocialAllowed && selectedNetwork !== 'instagram')}
+                                        className={cn(
+                                            "p-3 rounded-xl flex items-center justify-center transition-all",
+                                            (!advancedSocialAllowed && selectedNetwork !== 'instagram')
+                                                ? "bg-neutral-200 text-neutral-400 cursor-not-allowed"
+                                                : "bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg shadow-emerald-500/20"
+                                        )}
+                                    >
+                                        <Plus className="w-5 h-5" />
+                                    </button>
+                                </div>
+                            </div>
+                            <p className="mt-2 text-[10px] text-neutral-500 pl-1">
+                                {!advancedSocialAllowed && selectedNetwork !== 'instagram'
+                                    ? "Actualiza a PRO para añadir más redes sociales como LinkedIn, YouTube y Web."
+                                    : "Añade el enlace o usuario de tu red social."}
+                            </p>
                         </div>
                     </div>
                 </section>
@@ -443,6 +739,100 @@ export default function SettingsPage() {
                                     />
                                 </motion.div>
                             ))
+                        )}
+                    </div>
+                </section>
+
+                {/* ACCOUNT & PLAN */}
+                <section>
+                    <div className="flex items-center gap-2 md:gap-3 mb-5 md:mb-8 text-neutral-400 text-[10px] md:text-xs uppercase tracking-widest font-bold">
+                        <CreditCard className="w-3 h-3 md:w-4 md:h-4 text-emerald-500" /> Cuenta y Plan
+                    </div>
+
+                    {/* Current Plan */}
+                    <div className={`p-5 md:p-6 rounded-2xl border mb-6 ${isLight ? 'bg-neutral-50 border-neutral-200' : 'bg-neutral-900/50 border-neutral-800'}`}>
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                            <div>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <span className={`text-xl font-medium ${isLight ? 'text-neutral-900' : 'text-white'}`}>
+                                        {user.plan?.displayName || 'Free'}
+                                    </span>
+                                    {user.plan && user.plan.name !== 'free' && (
+                                        <span className="px-2 py-0.5 text-[10px] font-bold bg-emerald-500/20 text-emerald-400 rounded-full uppercase">
+                                            Activo
+                                        </span>
+                                    )}
+                                </div>
+                                <p className={`text-sm ${isLight ? 'text-neutral-600' : 'text-neutral-400'}`}>
+                                    {user.plan?.price ? (
+                                        <>${user.plan.price} {user.plan.currency}/{user.plan.interval === 'month' ? 'mes' : 'año'}</>
+                                    ) : (
+                                        <>Plan gratuito - sin costo</>
+                                    )}
+                                </p>
+                                {user.planExpiresAt && (
+                                    <p className="flex items-center gap-1 text-xs text-neutral-500 mt-2">
+                                        <Calendar className="w-3 h-3" />
+                                        Vence: {new Date(user.planExpiresAt).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                    </p>
+                                )}
+                            </div>
+                            <Link
+                                href="/pricing"
+                                className={`px-5 py-2.5 rounded-full text-sm font-medium transition ${isLight ? 'bg-neutral-900 text-white hover:bg-black' : 'bg-white text-black hover:bg-neutral-200'}`}
+                            >
+                                {user.plan?.name === 'free' || !user.plan ? 'Actualizar Plan' : 'Cambiar Plan'}
+                            </Link>
+                        </div>
+                    </div>
+
+                    {/* Connected Cloud Accounts */}
+                    <div className="mb-4">
+                        <div className="flex items-center justify-between mb-3">
+                            <span className={`text-[10px] font-bold opacity-40 uppercase tracking-widest ${isLight ? 'text-neutral-600' : 'text-neutral-400'}`}>
+                                Cuentas de nube conectadas
+                            </span>
+                            <Link
+                                href="/dashboard/clouds"
+                                className="text-xs text-emerald-500 hover:text-emerald-400 transition"
+                            >
+                                + Conectar
+                            </Link>
+                        </div>
+                        {user.cloudAccounts.length === 0 ? (
+                            <div className={`p-4 rounded-xl border-2 border-dashed text-center ${isLight ? 'border-neutral-200 text-neutral-500' : 'border-neutral-800 text-neutral-600'}`}>
+                                <Cloud className="w-6 h-6 mx-auto mb-2 opacity-50" />
+                                <p className="text-sm">No hay cuentas conectadas</p>
+                                <Link href="/dashboard/clouds" className="text-xs text-emerald-500 hover:underline">
+                                    Conecta Google Drive
+                                </Link>
+                            </div>
+                        ) : (
+                            <div className="space-y-2">
+                                {user.cloudAccounts.map((account: any) => (
+                                    <div
+                                        key={account.id}
+                                        className={`flex items-center justify-between p-3 rounded-xl border ${isLight ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'}`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${account.provider === 'google' ? 'bg-sky-500/20' : 'bg-neutral-500/20'}`}>
+                                                <Cloud className={`w-4 h-4 ${account.provider === 'google' ? 'text-sky-400' : 'text-neutral-400'}`} />
+                                            </div>
+                                            <div>
+                                                <p className={`text-sm font-medium ${isLight ? 'text-neutral-900' : 'text-white'}`}>
+                                                    {account.name || account.email || 'Google Drive'}
+                                                </p>
+                                                <p className="text-xs text-neutral-500">
+                                                    {account.email || account.provider}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <span className="text-[10px] text-neutral-500">
+                                            {new Date(account.createdAt).toLocaleDateString('es-MX')}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
                         )}
                     </div>
                 </section>

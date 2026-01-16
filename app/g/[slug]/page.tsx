@@ -26,7 +26,12 @@ export default async function PublicGalleryPage({ params }: Props) {
                     businessLogo: true,
                     businessWebsite: true,
                     theme: true,
-                    businessLogoScale: true
+                    businessLogoScale: true,
+                    plan: {
+                        select: {
+                            limits: true
+                        }
+                    }
                 }
             }
         },
@@ -36,8 +41,17 @@ export default async function PublicGalleryPage({ params }: Props) {
         return notFound();
     }
 
+    // Parse plan limits
+    const planLimits = project.user?.plan?.limits
+        ? JSON.parse(project.user.plan.limits)
+        : null;
+
+    // Check if video is enabled by plan (default: true if no plan)
+    const planAllowsVideo = planLimits?.videoEnabled ?? true;
+
     // Use the user's explicit configuration for video tab visibility
-    const enableVideoTab = project.enableVideoTab || false;
+    // But only if the plan allows video
+    const enableVideoTab = planAllowsVideo && (project.enableVideoTab || false);
     let videoFolderId = project.videoFolderId || null;
 
     // Only auto-detect Videos folder if user explicitly enabled video tab but didn't configure a folder
@@ -59,11 +73,19 @@ export default async function PublicGalleryPage({ params }: Props) {
         }
     }
 
-    // Create enhanced project object with detected video folder
+    // Create enhanced project object with detected video folder and plan limits
     const enhancedProject = {
         ...project,
         enableVideoTab,
         videoFolderId,
+        enableWatermark: project.enableWatermark || false,
+        planLimits: planLimits ? {
+            maxImagesPerProject: planLimits.maxImagesPerProject ?? null,
+            videoEnabled: planLimits.videoEnabled ?? true,
+            lowResDownloads: planLimits.lowResDownloads ?? false,
+            lowResMaxWidth: planLimits.lowResMaxWidth ?? 0,
+            watermarkText: planLimits.watermarkText ?? null,
+        } : null
     };
 
     return (

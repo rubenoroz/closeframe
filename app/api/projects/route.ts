@@ -100,6 +100,30 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
         }
 
+        // Get user with plan limits
+        const user = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            include: {
+                plan: true,
+                _count: { select: { projects: true } }
+            }
+        });
+
+        if (!user) {
+            return NextResponse.json({ error: "User not found" }, { status: 404 });
+        }
+
+        // Validate max projects limit
+        const planLimits = user.plan?.limits ? JSON.parse(user.plan.limits) : null;
+        const maxProjects = planLimits?.maxProjects ?? 3; // Default: 3 if no plan
+
+        if (user._count.projects >= maxProjects) {
+            return NextResponse.json({
+                error: `Has alcanzado el límite de ${maxProjects} galería(s) de tu plan. Actualiza tu plan para crear más.`,
+                code: "PLAN_LIMIT_REACHED"
+            }, { status: 403 });
+        }
+
         // Verify Cloud Account belongs to user
         const account = await prisma.cloudAccount.findFirst({
             where: { id: cloudAccountId, userId: session.user.id },
@@ -163,10 +187,10 @@ export async function PATCH(request: NextRequest) {
 
         const body = await request.json();
         const {
-            id, name, password,
+            id, name, password, category,
             downloadEnabled, downloadJpgEnabled, downloadRawEnabled,
             downloadVideoHdEnabled, downloadVideoRawEnabled,
-            enableVideoTab, showInProfile,
+            enableVideoTab, showInProfile, enableWatermark,
             headerTitle, headerFontFamily, headerColor, headerBackground,
             layoutType, public: isPublic
         } = body;
@@ -193,6 +217,8 @@ export async function PATCH(request: NextRequest) {
         if (downloadVideoRawEnabled !== undefined) updateData.downloadVideoRawEnabled = downloadVideoRawEnabled;
         if (enableVideoTab !== undefined) updateData.enableVideoTab = enableVideoTab;
         if (showInProfile !== undefined) updateData.showInProfile = showInProfile;
+        if (enableWatermark !== undefined) updateData.enableWatermark = enableWatermark;
+        if (category !== undefined) updateData.category = category;
         if (headerTitle !== undefined) updateData.headerTitle = headerTitle;
         if (headerFontFamily !== undefined) updateData.headerFontFamily = headerFontFamily;
         if (headerColor !== undefined) updateData.headerColor = headerColor;

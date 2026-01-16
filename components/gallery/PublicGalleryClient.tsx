@@ -25,6 +25,16 @@ interface PublicGalleryClientProps {
         headerBackground?: string | null;
         videoFolderId?: string | null;
         enableVideoTab?: boolean | null;
+        enableWatermark?: boolean;
+        planLimits?: {
+            maxImagesPerProject: number | null;
+            videoEnabled: boolean;
+            lowResThumbnails: boolean;
+            lowResDownloads: boolean;
+            lowResMaxWidth: number;
+            watermarkText: string | null;
+            zipDownloadsEnabled: boolean;
+        } | null;
         user?: {
             businessName?: string | null;
             businessLogo?: string | null;
@@ -122,6 +132,12 @@ export default function PublicGalleryClient({ project }: PublicGalleryClientProp
                 studioLogoScale={project.user?.businessLogoScale || 100}
                 theme={headerBackground}
                 mediaType={activeTab}
+                enableWatermark={project.enableWatermark || !!project.planLimits?.watermarkText}
+                maxImages={project.planLimits?.maxImagesPerProject || null}
+                watermarkText={project.planLimits?.watermarkText || null}
+                lowResDownloads={!!project.planLimits?.lowResDownloads}
+                lowResThumbnails={!!project.planLimits?.lowResThumbnails}
+                zipDownloadsEnabled={project.planLimits?.zipDownloadsEnabled !== false} // Default true if undefined
             />
 
             {/* Minimal branding */}

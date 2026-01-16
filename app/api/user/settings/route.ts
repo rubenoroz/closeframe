@@ -25,6 +25,38 @@ export async function GET() {
                 specialty: true,
                 theme: true,
                 businessLogoScale: true,
+                // Perfil expandido
+                profileType: true,
+                headline: true,
+                location: true,
+                socialLinks: true,
+                username: true,
+                profileViews: true,
+                // Plan y suscripción
+                planId: true,
+                planExpiresAt: true,
+                plan: {
+                    select: {
+                        id: true,
+                        name: true,
+                        displayName: true,
+                        price: true,
+                        currency: true,
+                        interval: true,
+                        features: true,
+                        limits: true
+                    }
+                },
+                // Cuentas de nube conectadas
+                cloudAccounts: {
+                    select: {
+                        id: true,
+                        provider: true,
+                        email: true,
+                        name: true,
+                        createdAt: true
+                    }
+                },
                 projects: {
                     select: {
                         id: true,
@@ -71,7 +103,13 @@ export async function PATCH(req: NextRequest) {
             bio,
             specialty,
             theme,
-            businessLogoScale
+            businessLogoScale,
+            // Perfil expandido
+            profileType,
+            headline,
+            location,
+            socialLinks,
+            username
         } = body;
 
         const updatedUser = await prisma.user.upsert({
@@ -87,6 +125,12 @@ export async function PATCH(req: NextRequest) {
                 specialty,
                 theme: theme || "dark",
                 businessLogoScale: businessLogoScale !== undefined ? Number(businessLogoScale) : 100,
+                // Perfil expandido
+                profileType,
+                headline,
+                location,
+                socialLinks,
+                username,
             },
             create: {
                 id: session.user.id,
@@ -101,6 +145,12 @@ export async function PATCH(req: NextRequest) {
                 specialty,
                 theme: theme || "dark",
                 businessLogoScale: businessLogoScale !== undefined ? Number(businessLogoScale) : 100,
+                // Perfil expandido
+                profileType,
+                headline,
+                location,
+                socialLinks,
+                username,
             }
         });
 

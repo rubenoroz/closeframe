@@ -26,6 +26,11 @@ interface LightboxProps {
     cloudAccountId?: string;
     downloadJpgEnabled?: boolean;
     downloadRawEnabled?: boolean;
+    enableWatermark?: boolean;
+    studioLogo?: string;
+    watermarkText?: string | null;
+    lowResDownloads?: boolean;
+    lowResMaxWidth?: number;
 }
 
 export default function Lightbox({
@@ -36,7 +41,12 @@ export default function Lightbox({
     onNavigate,
     cloudAccountId,
     downloadJpgEnabled = true,
-    downloadRawEnabled = false
+    downloadRawEnabled = false,
+    enableWatermark = false,
+    studioLogo = "",
+    watermarkText = null,
+    lowResDownloads = false,
+    lowResMaxWidth = 1200
 }: LightboxProps) {
     const [isDownloading, setIsDownloading] = useState<string | null>(null);
     const currentFile = files[currentIndex];
@@ -54,9 +64,17 @@ export default function Lightbox({
         let fileName = currentFile.name;
 
         const formatData = currentFile.formats?.[format];
-        if (!formatData) return;
 
-        if (format === 'raw' && typeof formatData === 'object' && formatData !== null) {
+        // Handle case where specific format proxy is missing
+        if (!formatData) {
+            // If Low Res restriction is ON and we want JPG, we can use the main file ID as source
+            // logic downstream will use /api/cloud/thumbnail which works with Main ID too.
+            if (lowResDownloads && format === 'jpg') {
+                fileId = currentFile.id;
+            } else {
+                return;
+            }
+        } else if (format === 'raw' && typeof formatData === 'object' && formatData !== null) {
             fileId = formatData.id;
             fileName = formatData.name;
         } else if (typeof formatData === 'string') {
@@ -68,12 +86,21 @@ export default function Lightbox({
         setIsDownloading(format);
 
         try {
-            // Use direct download API (no ZIP compression for single files)
-            const params = new URLSearchParams();
-            params.append("c", cloudAccountId);
-            params.append("f", fileId);
-            params.append("n", fileName);
-            const directUrl = `/api/cloud/download-direct?${params.toString()}`;
+            let directUrl: string;
+
+            // Handle Low Res Downloads for JPG
+            // Handle Low Res Downloads for JPG via Proxy (handles Auth & Resizing)
+            if (lowResDownloads && format === 'jpg') {
+                const size = lowResMaxWidth || 1200;
+                directUrl = `/api/cloud/thumbnail?c=${cloudAccountId}&f=${fileId}&s=${size}`;
+            } else {
+                // Use direct download API (no ZIP compression for single files)
+                const params = new URLSearchParams();
+                params.append("c", cloudAccountId);
+                params.append("f", fileId);
+                params.append("n", fileName);
+                directUrl = `/api/cloud/download-direct?${params.toString()}`;
+            }
 
             let fileHandle: any = null;
             let writable: any = null;
@@ -211,19 +238,58 @@ export default function Lightbox({
                                 controls
                                 autoPlay
                                 playsInline
-                                poster={currentFile.thumbnailLink?.replace("=s220", "=s1600")}
+                                poster={currentFile.thumbnailLink?.replace("=s220", `=s${lowResDownloads ? 1200 : 1600}`)}
                                 className="max-w-full max-h-full object-contain shadow-2xl rounded-lg border border-white/5"
                                 src={`/api/cloud/video-stream?c=${cloudAccountId}&f=${currentFile.formats?.web || currentFile.id}`}
                             >
                                 Tu navegador no soporta la reproducción de video.
                             </video>
                         ) : (
-                            <img
-                                src={currentFile.thumbnailLink?.replace("=s220", "=s1600")}
-                                alt={currentFile.name}
-                                className="max-w-full max-h-full object-contain shadow-2xl rounded-lg border border-white/5"
-                                referrerPolicy="no-referrer"
-                            />
+                            <div className="relative max-w-full max-h-full flex items-center justify-center group">
+                                <img
+                                    src={currentFile.thumbnailLink?.replace("=s220", `=s${lowResDownloads ? 1200 : 1600}`)}
+                                    alt={currentFile.name}
+                                    className="max-w-full max-h-[80vh] object-contain shadow-2xl rounded-lg border border-white/5"
+                                    referrerPolicy="no-referrer"
+                                />
+                                {/* Download overlay for images */}
+                                {downloadJpgEnabled && (
+                                    <div className="absolute bottom-4 right-4 flex bg-neutral-900/40 opacity-0 group-hover:opacity-100 transition duration-300 rounded-full border border-white/20 overflow-hidden backdrop-blur-md">
+                                        <button
+                                            onClick={() => handleDownloadFormat("jpg")}
+                                            disabled={isDownloading !== null}
+                                            className="px-5 py-2 hover:bg-white hover:text-black transition flex items-center gap-2 border-r border-white/20 last:border-0"
+                                        >
+                                            {isDownloading === "jpg" ? (
+                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                            ) : (
+                                                <Download className="w-4 h-4" />
+                                            )}
+                                            <span className="text-sm font-medium">{lowResDownloads ? 'Baja (Web)' : 'Alta'}</span>
+                                        </button>
+                                    </div>
+                                )}
+                                {/* Watermark overlay */}
+                                {enableWatermark && (
+                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                        {studioLogo ? (
+                                            <div className="opacity-25 max-w-[30%] max-h-[30%]">
+                                                <img
+                                                    src={studioLogo}
+                                                    alt=""
+                                                    className="w-full h-full object-contain drop-shadow-lg"
+                                                    style={{ filter: 'grayscale(100%) brightness(200%) contrast(100%)' }}
+                                                />
+                                            </div>
+                                        ) : watermarkText ? (
+                                            <div className="text-white/30 font-bold text-2xl md:text-4xl tracking-widest uppercase drop-shadow-lg select-none"
+                                                style={{ textShadow: '0 2px 8px rgba(0,0,0,0.5)' }}>
+                                                {watermarkText}
+                                            </div>
+                                        ) : null}
+                                    </div>
+                                )}
+                            </div>
                         )}
                     </motion.div>
 

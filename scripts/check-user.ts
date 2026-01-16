@@ -10,6 +10,7 @@ async function main() {
         where: { email },
         include: {
             accounts: true,
+            plan: true,
         },
     });
 

@@ -23,6 +23,15 @@ model User {
   specialty         String?        // Tagline/especialidad (ej: "Fotografía de bodas & retrato")
   theme             String         @default("dark")
   businessLogoScale Int            @default(100)
+  
+  // Perfil expandido (CloserLens v2)
+  profileType       String?        // "photographer" | "model" | "creative" | "agency" | "brand"
+  headline          String?        // "Director de Fotografía | CDMX"
+  location          String?        // "Ciudad de México, México"
+  socialLinks       Json?          // { instagram, linkedin, website, imdb, vimeo, etc }
+  profileViews      Int            @default(0)
+  username          String?        @unique // Vanity URL: /u/username
+  
   role              String         @default("USER") // USER, ADMIN, SUPERADMIN
   planId            String?
   planExpiresAt     DateTime?
@@ -108,6 +117,7 @@ model Project {
   downloadRawEnabled Boolean     @default(false)
   public            Boolean      @default(true)  // Galería accesible sin contraseña
   showInProfile     Boolean      @default(false) // Aparece en perfil público del fotógrafo
+  category          String?      // "editorial" | "commercial" | "wedding" | "portrait" | "test" | etc
   layoutType        String       @default("grid")
   userId            String
   createdAt         DateTime     @default(now())
@@ -126,6 +136,9 @@ model Project {
   // Video Download Options (similar to photo proxies)
   downloadVideoHdEnabled  Boolean @default(true)
   downloadVideoRawEnabled Boolean @default(false)
+  
+  // Watermark
+  enableWatermark   Boolean      @default(false) // Overlay con logo del fotógrafo
   
   user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   cloudAccount      CloudAccount @relation(fields: [cloudAccountId], references: [id])

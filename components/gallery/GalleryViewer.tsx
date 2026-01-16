@@ -20,7 +20,14 @@ interface Props {
     theme?: string;
     className?: string;
     mediaType?: "photos" | "videos";
+    enableWatermark?: boolean;
+    maxImages?: number | null;
+    watermarkText?: string | null; // Text watermark from plan limits
+    lowResDownloads?: boolean;
+    lowResThumbnails?: boolean;
+    zipDownloadsEnabled?: boolean;
 }
+
 
 interface CloudFile {
     id: string;
@@ -49,7 +56,13 @@ export default function GalleryViewer({
     studioLogoScale = 100,
     theme = "dark",
     className = "",
-    mediaType = "photos"
+    mediaType = "photos",
+    enableWatermark = false,
+    maxImages = null,
+    watermarkText = null,
+    lowResDownloads = false,
+    lowResThumbnails = false,
+    zipDownloadsEnabled = true
 }: Props) {
     const [files, setFiles] = useState<CloudFile[]>([]);
     const [loading, setLoading] = useState(true);
@@ -141,6 +154,12 @@ export default function GalleryViewer({
             const params = new URLSearchParams();
             params.append("c", cloudAccountId);
             params.append("f", JSON.stringify(filesData));
+
+            // Add size param if low res restriction is active
+            if (lowResDownloads) {
+                params.append("s", "1200"); // Or use lowResMaxWidth if available in props
+            }
+
             const finalEndpoint = `/api/cloud/dl/${filename}?${params.toString()}`;
 
             let fileHandle: any = null;
@@ -215,11 +234,18 @@ export default function GalleryViewer({
         if (!cloudAccountId || !folderId) return;
 
         setLoading(true);
+        console.log("[GalleryViewer] Loading files, maxImages limit:", maxImages);
         fetch(`/api/cloud/files?cloudAccountId=${cloudAccountId}&folderId=${folderId}`)
             .then((res) => res.json())
             .then((data) => {
                 if (data.files) {
-                    setFiles(data.files);
+                    console.log("[GalleryViewer] Received files:", data.files.length);
+                    // Apply max images limit if set
+                    const limitedFiles = maxImages && maxImages > 0
+                        ? data.files.slice(0, maxImages)
+                        : data.files;
+                    console.log("[GalleryViewer] After limit applied:", limitedFiles.length);
+                    setFiles(limitedFiles);
                 } else {
                     setError(data.error || "Error al cargar imágenes");
                 }
@@ -229,7 +255,7 @@ export default function GalleryViewer({
                 setError("Error de conexión");
                 setLoading(false);
             });
-    }, [cloudAccountId, folderId]);
+    }, [cloudAccountId, folderId, maxImages]);
 
     // Derived download state
     const anyDownloadEnabled = downloadEnabled && (downloadJpgEnabled || downloadRawEnabled);
@@ -299,9 +325,14 @@ export default function GalleryViewer({
                                                 index={originalIndex}
                                                 cloudAccountId={cloudAccountId}
                                                 downloadEnabled={anyDownloadEnabled}
+                                                enableWatermark={enableWatermark}
+                                                watermarkText={watermarkText}
+                                                studioLogo={studioLogo}
                                                 isSelected={selectedIds.has(item.id)}
-                                                onSelect={() => toggleSelect(item.id)}
+                                                onSelect={() => zipDownloadsEnabled && toggleSelect(item.id)}
                                                 onView={() => openLightbox(originalIndex)}
+                                                selectionEnabled={zipDownloadsEnabled}
+                                                lowResThumbnails={lowResThumbnails}
                                             />
                                         );
                                     })}
@@ -321,9 +352,13 @@ export default function GalleryViewer({
                                                 index={originalIndex}
                                                 cloudAccountId={cloudAccountId}
                                                 downloadEnabled={anyDownloadEnabled}
+                                                enableWatermark={enableWatermark}
+                                                watermarkText={watermarkText}
+                                                studioLogo={studioLogo}
                                                 isSelected={selectedIds.has(item.id)}
                                                 onSelect={() => toggleSelect(item.id)}
                                                 onView={() => openLightbox(originalIndex)}
+                                                lowResThumbnails={lowResThumbnails}
                                             />
                                         );
                                     })}
@@ -344,10 +379,14 @@ export default function GalleryViewer({
                 cloudAccountId={cloudAccountId}
                 downloadJpgEnabled={downloadEnabled && downloadJpgEnabled}
                 downloadRawEnabled={downloadEnabled && downloadRawEnabled}
+                enableWatermark={enableWatermark}
+                studioLogo={studioLogo}
+                watermarkText={watermarkText}
+                lowResDownloads={lowResDownloads}
             />
 
             {/* Bottom Bar for Batch Download */}
-            {anyDownloadEnabled && (
+            {anyDownloadEnabled && zipDownloadsEnabled && (
                 <footer className={`fixed bottom-0 left-0 right-0 transition-all border-t px-4 md:px-8 py-3 md:py-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 md:gap-0 z-40 ${theme === 'light'
                     ? 'bg-white/90 backdrop-blur-xl border-neutral-100 shadow-[0_-10px_40px_rgba(0,0,0,0.02)]'
                     : 'bg-neutral-900/90 backdrop-blur-xl border-neutral-800'
@@ -384,20 +423,22 @@ export default function GalleryViewer({
                     <div className="flex items-center gap-3 md:gap-6">
                         {/* Desktop selection buttons */}
                         <div className="hidden md:block">
-                            {selectedIds.size === 0 ? (
-                                <button
-                                    onClick={selectAll}
-                                    className={`text-sm transition font-medium ${theme === 'light' ? 'text-neutral-500 hover:text-black' : 'text-neutral-400 hover:text-white'}`}
-                                >
-                                    Seleccionar todas
-                                </button>
-                            ) : (
-                                <button
-                                    onClick={clearSelection}
-                                    className={`text-sm transition font-medium ${theme === 'light' ? 'text-neutral-400 hover:text-red-500' : 'text-neutral-400 hover:text-white'}`}
-                                >
-                                    Desmarcar todas
-                                </button>
+                            {zipDownloadsEnabled && (
+                                selectedIds.size === 0 ? (
+                                    <button
+                                        onClick={selectAll}
+                                        className={`text-sm transition font-medium ${theme === 'light' ? 'text-neutral-500 hover:text-black' : 'text-neutral-400 hover:text-white'}`}
+                                    >
+                                        Seleccionar todas
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={clearSelection}
+                                        className={`text-sm transition font-medium ${theme === 'light' ? 'text-neutral-400 hover:text-red-500' : 'text-neutral-400 hover:text-white'}`}
+                                    >
+                                        Desmarcar todas
+                                    </button>
+                                )
                             )}
                         </div>
                         <div className="flex items-center gap-2 flex-1 md:flex-none">
@@ -447,20 +488,33 @@ function MediaCard({
     cloudAccountId,
     isSelected,
     downloadEnabled,
+    enableWatermark,
+    watermarkText,
+    studioLogo,
     onSelect,
-    onView
+    onView,
+    selectionEnabled = true,
+    lowResThumbnails = false
 }: {
     item: CloudFile;
     index: number;
     cloudAccountId: string;
     isSelected: boolean;
     downloadEnabled: boolean;
+    enableWatermark: boolean;
+    watermarkText: string | null;
+    studioLogo: string;
     onSelect: () => void;
-    onView: () => void
+    onView: () => void;
+    selectionEnabled?: boolean;
+    lowResThumbnails?: boolean;
 }) {
     const [loaded, setLoaded] = useState(false);
     const [error, setError] = useState(false);
     const isVideo = item.mimeType?.startsWith('video/');
+
+    // Determine thumbnail size based on plan limits
+    const thumbSize = lowResThumbnails ? 200 : 800;
 
     // Calculate aspect ratio for placeholder sizing (avoids layout shift)
     // Default to 4:3 if dimensions unknown
@@ -509,7 +563,7 @@ function MediaCard({
                     )}
 
                     <img
-                        src={`/api/cloud/thumbnail?c=${cloudAccountId}&f=${item.id}&s=800`}
+                        src={`/api/cloud/thumbnail?c=${cloudAccountId}&f=${item.id}&s=${thumbSize}`}
                         alt={item.name}
                         className={`absolute inset-0 w-full h-full object-cover transform group-hover:scale-105 transition duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
                         onLoad={() => setLoaded(true)}
@@ -528,10 +582,31 @@ function MediaCard({
                             </div>
                         </div>
                     )}
+
+                    {/* Watermark overlay */}
+                    {enableWatermark && loaded && !isVideo && (
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            {studioLogo ? (
+                                <div className="opacity-30 max-w-[40%] max-h-[40%]">
+                                    <img
+                                        src={studioLogo}
+                                        alt=""
+                                        className="w-full h-full object-contain drop-shadow-lg"
+                                        style={{ filter: 'grayscale(100%) brightness(200%) contrast(100%)' }}
+                                    />
+                                </div>
+                            ) : watermarkText ? (
+                                <div className="text-white/40 font-bold text-lg md:text-xl tracking-widest uppercase drop-shadow-lg select-none"
+                                    style={{ textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
+                                    {watermarkText}
+                                </div>
+                            ) : null}
+                        </div>
+                    )}
                 </div>
 
                 {/* Selection Checkbox */}
-                {downloadEnabled && (
+                {downloadEnabled && selectionEnabled && (
                     <button
                         onClick={(e) => {
                             e.stopPropagation();
