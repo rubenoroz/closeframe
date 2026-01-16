@@ -437,20 +437,28 @@ export default function SettingsPage() {
                             />
                         </div>
                         <div className="md:col-span-2 space-y-3">
-                            <label className="text-[10px] font-bold opacity-40 uppercase tracking-widest ml-1">Username (URL personalizada)</label>
+                            <label className="flex items-center gap-2 text-[10px] font-bold opacity-40 uppercase tracking-widest ml-1">
+                                Username (URL personalizada)
+                                {isRestrictedPlan && <span className="flex items-center gap-1 bg-amber-500/10 text-amber-500 px-1.5 py-0.5 rounded border border-amber-500/20"><Lock className="w-2.5 h-2.5" /> PRO</span>}
+                            </label>
                             <div className="flex items-center gap-2">
                                 <span className={`text-sm ${isLight ? 'text-neutral-500' : 'text-neutral-500'}`}>closerlens.co/u/</span>
-                                <input
-                                    value={user.username}
-                                    onChange={(e) => setUser({ ...user, username: e.target.value.toLowerCase().replace(/[^a-z0-9-_]/g, '') })}
-                                    className={cn(
-                                        "flex-1 border rounded-xl px-5 py-4 outline-none transition-all font-mono",
-                                        isLight
-                                            ? "bg-neutral-50 border-neutral-200 text-neutral-900 focus:bg-white focus:border-emerald-500/50"
-                                            : "bg-neutral-900/50 border-neutral-800 text-neutral-100 focus:border-emerald-500/50"
-                                    )}
-                                    placeholder="tu-nombre"
-                                />
+                                <div className="relative flex-1">
+                                    <input
+                                        value={user.username}
+                                        onChange={(e) => setUser({ ...user, username: e.target.value.toLowerCase().replace(/[^a-z0-9-_]/g, '') })}
+                                        disabled={isRestrictedPlan}
+                                        className={cn(
+                                            "w-full border rounded-xl px-5 py-4 outline-none transition-all font-mono",
+                                            isLight
+                                                ? "bg-neutral-50 border-neutral-200 text-neutral-900 focus:bg-white focus:border-emerald-500/50"
+                                                : "bg-neutral-900/50 border-neutral-800 text-neutral-100 focus:border-emerald-500/50",
+                                            isRestrictedPlan && "opacity-50 cursor-not-allowed"
+                                        )}
+                                        placeholder={isRestrictedPlan ? "Solo disponible en planes PRO" : "tu-nombre"}
+                                    />
+                                    {isRestrictedPlan && <Lock className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500" />}
+                                </div>
                             </div>
                             {user.username && (
                                 <p className="text-[10px] text-emerald-500 ml-1">Tu perfil estará en: closerlens.co/u/{user.username}</p>
