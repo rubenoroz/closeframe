@@ -243,8 +243,8 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
             color: null,
             links: null,
             attachments: null,
-            images: [],
-            tags: [],
+            images: null,
+            tags: null,
             priority: "MEDIUM",
             checklist: null,
             parentId: null
