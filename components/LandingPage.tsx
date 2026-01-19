@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Cloud, Camera, Zap, ShieldCheck, Check, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
+import NextImage from "next/image";
 import { useEffect, useState } from "react";
 
 interface Plan {
@@ -93,7 +94,15 @@ export default function LandingPage() {
             {/* TOP NAV */}
             <header className="fixed top-0 left-0 right-0 z-50 bg-neutral-950/80 backdrop-blur border-b border-neutral-800">
                 <div className="max-w-6xl mx-auto px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
-                    <span className="text-lg md:text-xl font-light tracking-tight">CloserLens</span>
+                    <div className="relative w-32 h-8">
+                        <NextImage
+                            src="/logo-white.svg"
+                            alt="CloserLens"
+                            fill
+                            className="object-contain object-left"
+                            priority
+                        />
+                    </div>
                     <div className="flex items-center gap-3 md:gap-6">
                         <Link href="/dashboard" className="text-xs md:text-sm text-neutral-400 hover:text-white transition hidden sm:block">
                             Iniciar sesión
@@ -174,8 +183,16 @@ export default function LandingPage() {
             <section className="px-4 md:px-6 py-16 md:py-24 border-t border-neutral-800">
                 <div className="max-w-6xl mx-auto">
                     <div className="text-center mb-10 md:mb-16">
-                        <h2 className="text-2xl sm:text-3xl md:text-4xl font-light mb-4 tracking-tight">
-                            Para quién es <span className="text-emerald-400">CloserLens</span>
+                        <h2 className="text-2xl sm:text-3xl md:text-4xl font-light mb-4 tracking-tight flex items-center justify-center gap-3 flex-wrap">
+                            Para quién es
+                            <div className="relative w-40 h-10 md:w-52 md:h-12">
+                                <NextImage
+                                    src="/logo-white.svg"
+                                    alt="CloserLens"
+                                    fill
+                                    className="object-contain object-left"
+                                />
+                            </div>
                         </h2>
                         <p className="text-neutral-500 text-sm md:text-base">Una lente más cercana a lo que haces.</p>
                     </div>
@@ -331,7 +348,16 @@ export default function LandingPage() {
             </section>
 
             <footer className="px-4 md:px-6 py-8 md:py-10 border-t border-neutral-900 text-center">
-                <div className="text-base md:text-lg font-light mb-3 md:mb-4">CloserLens</div>
+                <div className="flex justify-center mb-3 md:mb-4">
+                    <div className="relative w-24 h-6 opacity-70 grayscale">
+                        <NextImage
+                            src="/logo-white.svg"
+                            alt="CloserLens"
+                            fill
+                            className="object-contain"
+                        />
+                    </div>
+                </div>
                 <div className="text-xs md:text-sm text-neutral-600 mb-4 md:mb-6 italic">Tu presencia visual profesional.</div>
                 <div className="text-[10px] md:text-xs text-neutral-700">© 2026 CloserLens · Hecho para creativos.</div>
             </footer>

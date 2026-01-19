@@ -16,6 +16,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Closeframe - Galerías Profesionales",
   description: "Plataforma de galerías fotográficas profesionales sin almacenamiento",
+  icons: {
+    icon: "/favicon-white.svg",
+  },
 };
 
 export default function RootLayout({
