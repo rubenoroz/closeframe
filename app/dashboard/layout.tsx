@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { Camera, LayoutGrid, Plus, Settings, LogOut, CalendarDays, ChevronDown, User, Monitor, CreditCard, Menu, X } from "lucide-react";
+import Image from "next/image";
 import { ScenaIcon } from "@/components/icons/ScenaIcon";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -44,9 +45,14 @@ export default function DashboardLayout({
                 >
                     {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
                 </button>
-                <div className="flex items-center gap-2">
-                    <Camera className="w-5 h-5 text-white" />
-                    <span className="font-light text-lg tracking-tight">Closeframe</span>
+                <div className="relative w-32 h-8">
+                    <Image
+                        src="/logo-white.svg"
+                        alt="CloserLens"
+                        fill
+                        className="object-contain object-center"
+                        priority
+                    />
                 </div>
                 <div className="w-9" /> {/* Spacer for centering */}
             </header>
@@ -65,9 +71,16 @@ export default function DashboardLayout({
                 "md:translate-x-0",
                 sidebarOpen ? "translate-x-0" : "-translate-x-full"
             )}>
-                <div className="p-6 border-b border-neutral-800 flex items-center gap-2">
-                    <Camera className="w-6 h-6 text-white" />
-                    <span className="font-light text-xl tracking-tight">Closeframe</span>
+                <div className="p-6 border-b border-neutral-800">
+                    <div className="relative w-40 h-8">
+                        <Image
+                            src="/logo-white.svg"
+                            alt="CloserLens"
+                            fill
+                            className="object-contain object-left"
+                            priority
+                        />
+                    </div>
                 </div>
 
                 <nav className="flex-1 p-4 space-y-1">
