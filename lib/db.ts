@@ -19,4 +19,8 @@ export const prisma =
 // Always cache the prisma client in global to prevent connection pool exhaustion
 // This is critical in serverless environments (Vercel) where each invocation
 // would otherwise create a new PrismaClient instance
-if (!globalForPrisma.prisma) globalForPrisma.prisma = prisma;
+if (!globalForPrisma.prisma) {
+    globalForPrisma.prisma = prisma;
+} else {
+    // console.log("Reusing cached Prisma client");
+}

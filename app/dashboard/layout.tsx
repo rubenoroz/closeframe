@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { Camera, LayoutGrid, Plus, Settings, LogOut, CalendarDays, ChevronDown, User, Monitor, CreditCard, Menu, X } from "lucide-react";
+import { ScenaIcon } from "@/components/icons/ScenaIcon";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 
@@ -17,10 +18,18 @@ export default function DashboardLayout({
     const [showUserMenu, setShowUserMenu] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
+    const userPlan = ((session?.user as any)?.planName || '').toLowerCase();
+    const userRole = (session?.user as any)?.role;
+    const showScena = ['studio', 'agency'].includes(userPlan) || userRole === 'SUPERADMIN' || userRole === 'ADMIN';
+
     const navItems = [
         { href: "/dashboard/settings", label: "Perfil público", icon: <User className="w-5 h-5" /> },
         { href: "/dashboard", label: "Mis Galerías", icon: <LayoutGrid className="w-5 h-5" /> },
-        { href: "/dashboard/bookings", label: "Mis reservas", icon: <CalendarDays className="w-5 h-5" /> },
+        { href: "/dashboard/bookings", label: "Mi Agenda", icon: <CalendarDays className="w-5 h-5" /> },
+        // Conditional Scena Link
+        ...(showScena
+            ? [{ href: "/dashboard/scena", label: "Scena", icon: <ScenaIcon className="w-5 h-5" /> }]
+            : []),
         { href: "/dashboard/clouds", label: "Nubes conectadas", icon: <Settings className="w-5 h-5" /> },
         { href: "/dashboard/billing", label: "Cuentas y pagos", icon: <CreditCard className="w-5 h-5" /> },
     ];
