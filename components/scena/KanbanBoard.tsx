@@ -230,8 +230,6 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
         const optimisticTask: FetchedTask = {
             id: optimisticId,
             title,
-            content: title,
-            dueDate: null,
             columnId,
             order: tasks.filter(t => t.columnId === columnId).length,
             createdAt: new Date(),
