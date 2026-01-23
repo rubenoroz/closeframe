@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import PublicGalleryClient from "@/components/gallery/PublicGalleryClient";
 import { GoogleDriveProvider } from "@/lib/cloud/google-drive-provider";
 import { getFreshGoogleAuth } from "@/lib/cloud/google-auth";
+import { getEffectivePlanConfig } from "@/lib/plans.config";
 
 interface Props {
     params: Promise<{
@@ -27,9 +28,11 @@ export default async function PublicGalleryPage({ params }: Props) {
                     businessWebsite: true,
                     theme: true,
                     businessLogoScale: true,
+                    featureOverrides: true,
                     plan: {
                         select: {
-                            limits: true
+                            name: true,
+                            config: true // Fetch New Modular Config
                         }
                     }
                 }
@@ -41,13 +44,14 @@ export default async function PublicGalleryPage({ params }: Props) {
         return notFound();
     }
 
-    // Parse plan limits
-    const planLimits = project.user?.plan?.limits
-        ? JSON.parse(project.user.plan.limits)
-        : null;
+    // Calculate Effective Config server-side
+    const effectiveConfig = getEffectivePlanConfig(
+        project.user?.plan?.config || project.user?.plan?.name,
+        project.user?.featureOverrides
+    );
 
-    // Check if video is enabled by plan (default: true if no plan)
-    const planAllowsVideo = planLimits?.videoEnabled ?? true;
+    // Check if video is enabled by plan
+    const planAllowsVideo = effectiveConfig.features?.videoGallery ?? false;
 
     // Use the user's explicit configuration for video tab visibility
     // But only if the plan allows video
@@ -79,15 +83,17 @@ export default async function PublicGalleryPage({ params }: Props) {
         enableVideoTab,
         videoFolderId,
         enableWatermark: project.enableWatermark || false,
-        planLimits: planLimits ? {
-            maxImagesPerProject: planLimits.maxImagesPerProject ?? null,
-            videoEnabled: planLimits.videoEnabled ?? true,
-            lowResDownloads: planLimits.lowResDownloads ?? false,
-            lowResThumbnails: planLimits.lowResThumbnails ?? false,
-            zipDownloadsEnabled: planLimits.zipDownloadsEnabled ?? true,
-            lowResMaxWidth: planLimits.lowResMaxWidth ?? 0,
-            watermarkText: planLimits.watermarkText ?? null,
-        } : null
+        planLimits: {
+            maxImagesPerProject: effectiveConfig.limits?.maxImagesPerProject ?? null,
+            videoEnabled: effectiveConfig.features?.videoGallery ?? false,
+            lowResDownloads: effectiveConfig.features?.lowResDownloads ?? false,
+            lowResThumbnails: effectiveConfig.features?.lowResThumbnails ?? false,
+            zipDownloadsEnabled: effectiveConfig.features?.zipDownloadsEnabled ?? false,
+            lowResMaxWidth: effectiveConfig.limits?.lowResMaxWidth ?? 0,
+            watermarkText: effectiveConfig.limits?.watermarkText ?? null,
+            hideBranding: effectiveConfig.features?.hideBranding ?? false,
+            galleryCover: effectiveConfig.features?.galleryCover ?? false,
+        }
     };
 
     return (

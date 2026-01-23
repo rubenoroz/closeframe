@@ -1,15 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireSuperAdmin } from "@/lib/superadmin";
+import { auth } from "@/auth";
 
-// GET - Listar todos los planes
+// GET: List all plans with their modular config
 export async function GET() {
-    const authError = await requireSuperAdmin();
-    if (authError) return authError;
-
     try {
+        const session = await auth();
+        if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+        // Verify Superadmin
+        const currentUser = await prisma.user.findUnique({
+            where: { email: session.user.email },
+            select: { role: true }
+        });
+
+        if (currentUser?.role !== "SUPERUSER" && currentUser?.role !== "SUPERADMIN") {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+
         const plans = await prisma.plan.findMany({
-            orderBy: { sortOrder: "asc" },
+            orderBy: { sortOrder: 'asc' },
             include: {
                 _count: {
                     select: { users: true }
@@ -17,209 +27,146 @@ export async function GET() {
             }
         });
 
-        // Parsear features y limits de JSON
-        const formattedPlans = plans.map(plan => ({
-            ...plan,
-            features: JSON.parse(plan.features || "[]"),
-            limits: JSON.parse(plan.limits || "{}")
+        // Parse legacy JSON strings if needed, or rely on config
+        const parsedPlans = plans.map(p => ({
+            ...p,
+            features: p.features ? JSON.parse(p.features) : [],
+            limits: p.limits ? JSON.parse(p.limits) : {},
         }));
 
-        return NextResponse.json(formattedPlans);
-
+        return NextResponse.json({ plans: parsedPlans });
     } catch (error) {
-        console.error("Error fetching plans:", error);
-        return NextResponse.json(
-            { error: "Error al obtener planes" },
-            { status: 500 }
-        );
+        console.error("GET Plans Error:", error);
+        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
 
-// POST - Crear nuevo plan
-export async function POST(request: NextRequest) {
-    const authError = await requireSuperAdmin();
-    if (authError) return authError;
-
+// PUT: Bulk update or Single Update plans
+export async function PUT(req: NextRequest) {
     try {
-        const body = await request.json();
-        const {
-            name,
-            displayName,
-            description,
-            price,
-            currency,
-            interval,
-            features,
-            limits,
-            isActive,
-            sortOrder
-        } = body;
+        const session = await auth();
+        if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-        // Validaciones básicas
-        if (!name || !displayName) {
-            return NextResponse.json(
-                { error: "name y displayName son requeridos" },
-                { status: 400 }
-            );
-        }
-
-        // Verificar que no exista un plan con ese nombre
-        const existingPlan = await prisma.plan.findUnique({
-            where: { name }
+        // Verify Superadmin
+        const currentUser = await prisma.user.findUnique({
+            where: { email: session.user.email },
+            select: { role: true }
         });
 
-        if (existingPlan) {
-            return NextResponse.json(
-                { error: "Ya existe un plan con ese nombre" },
-                { status: 400 }
-            );
+        if (currentUser?.role !== "SUPERUSER" && currentUser?.role !== "SUPERADMIN") {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
 
-        const plan = await prisma.plan.create({
+        const body = await req.json();
+
+        // Handle Sort Order Bulk Update
+        if (!body.planId && body.id && typeof body.sortOrder === 'number') {
+            const updated = await prisma.plan.update({
+                where: { id: body.id },
+                data: { sortOrder: body.sortOrder }
+            });
+            return NextResponse.json({ plan: updated });
+        }
+
+        const { planId, id, config, name, displayName, description, price, currency, interval, isActive, features, limits } = body;
+        const targetId = planId || id;
+
+        if (!targetId) {
+            return NextResponse.json({ error: "Missing planId" }, { status: 400 });
+        }
+
+        const updateData: any = {};
+        if (config !== undefined) updateData.config = config;
+        if (name !== undefined) updateData.name = name;
+        if (displayName !== undefined) updateData.displayName = displayName;
+        if (description !== undefined) updateData.description = description;
+        if (price !== undefined) updateData.price = price;
+        if (currency !== undefined) updateData.currency = currency;
+        if (interval !== undefined) updateData.interval = interval;
+        if (isActive !== undefined) updateData.isActive = isActive;
+
+        // Handle legacy fields for backward compatibility if PlansPage sends them
+        if (features !== undefined) updateData.features = JSON.stringify(features);
+        if (limits !== undefined) updateData.limits = JSON.stringify(limits);
+
+        const updatedPlan = await prisma.plan.update({
+            where: { id: targetId },
+            data: updateData
+        });
+
+        return NextResponse.json({ plan: updatedPlan });
+
+    } catch (error) {
+        console.error("PUT Plans Error:", error);
+        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    }
+}
+
+export async function POST(req: NextRequest) {
+    try {
+        const session = await auth();
+        if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+        const currentUser = await prisma.user.findUnique({
+            where: { email: session.user.email },
+            select: { role: true }
+        });
+
+        if (currentUser?.role !== "SUPERUSER" && currentUser?.role !== "SUPERADMIN") {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+
+        const body = await req.json();
+        const { name, displayName, description, price, currency, interval, features, limits, isActive, config } = body;
+
+        const newPlan = await prisma.plan.create({
             data: {
                 name,
                 displayName,
-                description: description || null,
-                price: price || 0,
-                currency: currency || "USD",
-                interval: interval || "month",
+                description,
+                price,
+                currency,
+                interval,
+                isActive: isActive ?? true,
                 features: JSON.stringify(features || []),
                 limits: JSON.stringify(limits || {}),
-                isActive: isActive ?? true,
-                sortOrder: sortOrder || 0
+                config: config || {},
             }
         });
 
-        return NextResponse.json({
-            ...plan,
-            features: JSON.parse(plan.features),
-            limits: JSON.parse(plan.limits)
-        });
+        return NextResponse.json({ plan: newPlan });
 
     } catch (error) {
-        console.error("Error creating plan:", error);
-        return NextResponse.json(
-            { error: "Error al crear plan" },
-            { status: 500 }
-        );
+        console.error("POST Plans Error:", error);
+        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
 
-// PUT - Actualizar plan
-export async function PUT(request: NextRequest) {
-    const authError = await requireSuperAdmin();
-    if (authError) return authError;
-
+export async function DELETE(req: NextRequest) {
     try {
-        const body = await request.json();
-        const {
-            id,
-            name,
-            displayName,
-            description,
-            price,
-            currency,
-            interval,
-            features,
-            limits,
-            isActive,
-            sortOrder
-        } = body;
+        const session = await auth();
+        if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-        if (!id) {
-            return NextResponse.json(
-                { error: "id es requerido" },
-                { status: 400 }
-            );
-        }
-
-        // Si se cambia el nombre, verificar que no exista
-        if (name) {
-            const existingPlan = await prisma.plan.findFirst({
-                where: {
-                    name,
-                    NOT: { id }
-                }
-            });
-
-            if (existingPlan) {
-                return NextResponse.json(
-                    { error: "Ya existe un plan con ese nombre" },
-                    { status: 400 }
-                );
-            }
-        }
-
-        const plan = await prisma.plan.update({
-            where: { id },
-            data: {
-                ...(name && { name }),
-                ...(displayName && { displayName }),
-                ...(description !== undefined && { description }),
-                ...(price !== undefined && { price }),
-                ...(currency && { currency }),
-                ...(interval && { interval }),
-                ...(features && { features: JSON.stringify(features) }),
-                ...(limits && { limits: JSON.stringify(limits) }),
-                ...(isActive !== undefined && { isActive }),
-                ...(sortOrder !== undefined && { sortOrder })
-            }
+        const currentUser = await prisma.user.findUnique({
+            where: { email: session.user.email },
+            select: { role: true }
         });
 
-        return NextResponse.json({
-            ...plan,
-            features: JSON.parse(plan.features),
-            limits: JSON.parse(plan.limits)
-        });
-
-    } catch (error) {
-        console.error("Error updating plan:", error);
-        return NextResponse.json(
-            { error: "Error al actualizar plan" },
-            { status: 500 }
-        );
-    }
-}
-
-// DELETE - Eliminar plan
-export async function DELETE(request: NextRequest) {
-    const authError = await requireSuperAdmin();
-    if (authError) return authError;
-
-    try {
-        const { searchParams } = new URL(request.url);
-        const planId = searchParams.get("id");
-
-        if (!planId) {
-            return NextResponse.json(
-                { error: "id es requerido" },
-                { status: 400 }
-            );
+        if (currentUser?.role !== "SUPERUSER" && currentUser?.role !== "SUPERADMIN") {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
 
-        // Verificar si hay usuarios con este plan
-        const usersWithPlan = await prisma.user.count({
-            where: { planId }
-        });
+        const { searchParams } = new URL(req.url);
+        const id = searchParams.get('id');
 
-        if (usersWithPlan > 0) {
-            return NextResponse.json(
-                { error: `No se puede eliminar: ${usersWithPlan} usuario(s) tienen este plan` },
-                { status: 400 }
-            );
-        }
+        if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
 
-        await prisma.plan.delete({
-            where: { id: planId }
-        });
+        await prisma.plan.delete({ where: { id } });
 
         return NextResponse.json({ success: true });
 
     } catch (error) {
-        console.error("Error deleting plan:", error);
-        return NextResponse.json(
-            { error: "Error al eliminar plan" },
-            { status: 500 }
-        );
+        console.error("DELETE Plans Error:", error);
+        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

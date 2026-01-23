@@ -17,6 +17,7 @@ export async function GET(req: NextRequest) {
         const cloudAccountId = searchParams.get("c");
         const fileId = searchParams.get("f");
         const size = searchParams.get("s") || "400";
+        const providedThumbnail = searchParams.get("t");
 
         if (!cloudAccountId || !fileId) {
             return NextResponse.json({ error: "Missing parameters" }, { status: 400 });
@@ -50,15 +51,18 @@ export async function GET(req: NextRequest) {
             });
         }
 
-        const drive = google.drive({ version: "v3", auth });
+        let thumbnailUrl = providedThumbnail;
 
-        // Get file metadata with thumbnail
-        const fileMeta = await drive.files.get({
-            fileId: fileId,
-            fields: "thumbnailLink,mimeType"
-        });
+        if (!thumbnailUrl) {
+            const drive = google.drive({ version: "v3", auth });
 
-        let thumbnailUrl = fileMeta.data.thumbnailLink;
+            // Get file metadata with thumbnail
+            const fileMeta = await drive.files.get({
+                fileId: fileId,
+                fields: "thumbnailLink,mimeType"
+            });
+            thumbnailUrl = fileMeta.data.thumbnailLink || null;
+        }
 
         // If no thumbnail link, construct one
         if (!thumbnailUrl) {

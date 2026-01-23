@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import GalleryViewer from "@/components/gallery/GalleryViewer";
 import GalleryLock from "@/components/gallery/GalleryLock";
+import GalleryCover from "@/components/gallery/GalleryCover";
 import GalleryHeader from "@/components/gallery/GalleryHeader";
 import MediaTabs from "@/components/gallery/MediaTabs";
 import Link from "next/link";
@@ -14,6 +15,7 @@ interface PublicGalleryClientProps {
         name: string;
         slug: string;
         cloudAccountId: string;
+        projectId?: string;
         rootFolderId: string;
         passwordProtected: boolean;
         downloadEnabled: boolean;
@@ -23,6 +25,7 @@ interface PublicGalleryClientProps {
         headerFontFamily?: string | null;
         headerColor?: string | null;
         headerBackground?: string | null;
+        coverImage?: string | null;
         videoFolderId?: string | null;
         enableVideoTab?: boolean | null;
         enableWatermark?: boolean;
@@ -34,6 +37,8 @@ interface PublicGalleryClientProps {
             lowResMaxWidth: number;
             watermarkText: string | null;
             zipDownloadsEnabled: boolean;
+            hideBranding: boolean;
+            galleryCover: boolean;
         } | null;
         user?: {
             businessName?: string | null;
@@ -46,7 +51,10 @@ interface PublicGalleryClientProps {
 }
 
 export default function PublicGalleryClient({ project }: PublicGalleryClientProps) {
+
+
     const [isLocked, setIsLocked] = useState(project.passwordProtected);
+    const [showCover, setShowCover] = useState(!!project.coverImage && !!project.planLimits?.galleryCover && !sessionStorage.getItem(`gallery_covered_${project.slug}`));
     const [activeTab, setActiveTab] = useState<"photos" | "videos">("photos");
     const [tabMounted, setTabMounted] = useState(false);
 
@@ -65,6 +73,11 @@ export default function PublicGalleryClient({ project }: PublicGalleryClientProp
         localStorage.setItem(`gallery_tab_${project.slug}`, tab);
     };
 
+    const handleEnterGallery = () => {
+        setShowCover(false);
+        sessionStorage.setItem(`gallery_covered_${project.slug}`, "true");
+    };
+
     useEffect(() => {
         // Check if it was already unlocked in this session
         if (project.passwordProtected) {
@@ -75,12 +88,27 @@ export default function PublicGalleryClient({ project }: PublicGalleryClientProp
         }
     }, [project.passwordProtected, project.slug]);
 
+    if (showCover && project.coverImage) {
+        return (
+            <GalleryCover
+                coverImage={project.coverImage}
+                logo={project.user?.businessLogo}
+                studioName={project.user?.businessName || "CloserLens Gallery"}
+                projectName={project.name}
+                onEnter={handleEnterGallery}
+                cloudAccountId={project.cloudAccountId}
+            />
+        );
+    }
+
     if (isLocked) {
         return (
             <GalleryLock
                 slug={project.slug}
                 projectName={project.name}
                 onUnlock={() => setIsLocked(false)}
+                logo={project.user?.businessLogo}
+                studioName={project.user?.businessName || "CloserLens Gallery"}
             />
         );
     }
@@ -106,6 +134,7 @@ export default function PublicGalleryClient({ project }: PublicGalleryClientProp
                 fontFamily={headerFontFamily}
                 color={headerColor}
                 background={headerBackground}
+                logo={project.user?.businessLogo}
             />
 
             {/* Media Tabs (Photos/Videos) - hidden until mounted to avoid flash */}
@@ -123,11 +152,12 @@ export default function PublicGalleryClient({ project }: PublicGalleryClientProp
                 key={activeTab}
                 cloudAccountId={project.cloudAccountId}
                 folderId={currentFolderId}
+                projectId={project.id} // Enforce manual order if set
                 projectName={project.name}
                 downloadEnabled={project.downloadEnabled}
                 downloadJpgEnabled={project.downloadJpgEnabled}
                 downloadRawEnabled={project.downloadRawEnabled}
-                studioName={project.user?.businessName || "Closeframe"}
+                studioName={project.user?.businessName || "CloserLens"}
                 studioLogo={project.user?.businessLogo || ""}
                 studioLogoScale={project.user?.businessLogoScale || 100}
                 theme={headerBackground}
@@ -141,15 +171,17 @@ export default function PublicGalleryClient({ project }: PublicGalleryClientProp
             />
 
             {/* Minimal branding */}
-            <div className="fixed bottom-4 left-0 right-0 flex justify-center pointer-events-none z-30 opacity-50 hover:opacity-100 transition">
-                <Link
-                    href="/"
-                    className="pointer-events-auto flex items-center gap-2 px-3 py-1 bg-black/50 backdrop-blur rounded-full text-xs text-white/50 hover:text-white border border-white/5"
-                >
-                    <Camera className="w-3 h-3" />
-                    <span>Powered by Closeframe</span>
-                </Link>
-            </div>
+            {!project.planLimits?.hideBranding && (
+                <div className="fixed bottom-4 left-0 right-0 flex justify-center pointer-events-none z-30 opacity-50 hover:opacity-100 transition">
+                    <Link
+                        href="/"
+                        className="pointer-events-auto flex items-center gap-2 px-3 py-1 bg-black/50 backdrop-blur rounded-full text-xs text-white/50 hover:text-white border border-white/5"
+                    >
+                        <Camera className="w-3 h-3" />
+                        <span>Powered by Closerlens</span>
+                    </Link>
+                </div>
+            )}
         </div>
     );
 }

@@ -67,7 +67,12 @@ export default function NewProjectPage() {
         fetch("/api/user/settings")
             .then((res) => res.json())
             .then((data) => {
-                if (data.user?.plan?.limits) {
+                if (data.effectiveConfig) {
+                    setPlanLimits({
+                        videoEnabled: data.effectiveConfig.features?.videoGallery,
+                        lowResDownloads: data.effectiveConfig.features?.lowResDownloads,
+                    });
+                } else if (data.user?.plan?.limits) {
                     try {
                         const limits = typeof data.user.plan.limits === 'string'
                             ? JSON.parse(data.user.plan.limits)

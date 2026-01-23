@@ -7,6 +7,7 @@ interface GalleryHeaderProps {
     fontFamily: string;
     color: string;
     background: "dark" | "light";
+    logo?: string | null;
 }
 
 export default function GalleryHeader({
@@ -14,6 +15,7 @@ export default function GalleryHeader({
     fontFamily,
     color,
     background,
+    logo,
 }: GalleryHeaderProps) {
     useEffect(() => {
         // Dynamically load Google Font if not Inter (default system font)
@@ -35,18 +37,29 @@ export default function GalleryHeader({
 
     return (
         <div
-            className={`py-12 md:py-20 text-center transition-colors duration-500 ${background === "light" ? "bg-white" : "bg-black"
+            className={`py-12 md:py-20 text-center transition-colors duration-500 flex flex-col items-center justify-center gap-6 ${background === "light" ? "bg-white" : "bg-black"
                 }`}
         >
-            <h1
-                style={{
-                    fontFamily: fontFamily,
-                    color: color,
-                }}
-                className="text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight px-4 transition-all duration-300"
-            >
-                {title}
-            </h1>
+            {/* Logo Logic: Client Logo OR Default Closeframe Logo */}
+            {logo ? (
+                // Client Logo
+                <div className="relative h-16 w-auto max-w-[200px]">
+                    <img
+                        src={logo}
+                        alt="Studio Logo"
+                        className="h-full w-auto object-contain"
+                    />
+                </div>
+            ) : (
+                // Default Closeframe Logo (Fallback)
+                <div className="relative h-8 w-auto opacity-80">
+                    <img
+                        src={background === "light" ? "/scenai-icon.svg" : "/logo-white.svg"} // Using logo-white for dark mode, scenai-icon (placeholder) or maybe generic text for light?
+                        alt="Closeframe"
+                        className="h-full w-auto object-contain"
+                    />
+                </div>
+            )}
         </div>
     );
 }

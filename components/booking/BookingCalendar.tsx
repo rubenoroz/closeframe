@@ -25,6 +25,7 @@ export interface BookingEvent {
   end: Date;
   customerName?: string;
   customerEmail?: string;
+  customerPhone?: string;
   notes?: string;
   status?: string;
 }
@@ -114,6 +115,7 @@ export default function BookingCalendar({ events, onEventAdd, onEventDrop, onEve
         onNavigate={(date: Date) => setCurrentDate(date)}
         view={currentView}
         onView={(view: (typeof Views)[keyof typeof Views]) => setCurrentView(view)}
+        views={['month', 'week', 'day', 'agenda']}
         selectable
         resizable
         onSelectSlot={handleSelectSlot}

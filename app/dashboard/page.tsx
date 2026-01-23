@@ -1,13 +1,15 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
     Folder, MoreVertical, Plus, ExternalLink, Calendar, X,
     Shield, Download, Layout, Save, Loader2, Settings, Trash2,
-    Link as LinkIcon, Check, Copy, AlertCircle
+    Link as LinkIcon, Check, Copy, AlertCircle, Image as ImageIcon
 } from "lucide-react";
 import { Skeleton } from "@/components/Skeleton";
+import DriveFilePicker from "@/components/DriveFilePicker";
 
 interface Project {
     id: string;
@@ -29,6 +31,8 @@ interface Project {
     headerBackground?: string;
     public: boolean;
     layoutType: string;
+    coverImage?: string;
+    cloudAccountId: string;
     cloudAccount: {
         email: string;
         provider: string;
@@ -56,11 +60,15 @@ export default function DashboardPage() {
         videoEnabled?: boolean;
         lowResDownloads?: boolean;
         passwordProtection?: boolean;
+        galleryCover?: boolean;
     } | null>(null);
+    const [showCoverPicker, setShowCoverPicker] = useState(false);
     const isLight = theme === "light";
+    const router = useRouter();
 
     const [editData, setEditData] = useState({
         name: "",
+        coverImage: "",
         password: "",
         downloadEnabled: true,
         downloadJpgEnabled: true,
@@ -77,6 +85,7 @@ export default function DashboardPage() {
         public: true,
     });
 
+
     const fetchData = () => {
         setLoading(true);
         // Fetch projects
@@ -92,8 +101,15 @@ export default function DashboardPage() {
                     setTheme(settingsData.user.theme || "dark");
                     setProfileViews(settingsData.user.profileViews || 0);
                     setUsername(settingsData.user.username || null);
-                    // Parse plan limits
-                    if (settingsData.user.plan?.limits) {
+                    // Use Effective Config from Server (Modular System)
+                    if (settingsData.effectiveConfig) {
+                        setPlanLimits({
+                            videoEnabled: settingsData.effectiveConfig.features?.videoGallery,
+                            lowResDownloads: settingsData.effectiveConfig.features?.lowResDownloads,
+                            passwordProtection: settingsData.effectiveConfig.features?.passwordProtection,
+                            galleryCover: settingsData.effectiveConfig.features?.galleryCover
+                        });
+                    } else if (settingsData.user.plan?.limits) {
                         try {
                             const limits = typeof settingsData.user.plan.limits === 'string'
                                 ? JSON.parse(settingsData.user.plan.limits)
@@ -134,6 +150,7 @@ export default function DashboardPage() {
             headerFontFamily: project.headerFontFamily || "Inter",
             headerColor: project.headerColor || "#FFFFFF",
             headerBackground: project.headerBackground || "dark",
+            coverImage: project.coverImage || "",
             public: project.public !== false,
         });
         setActiveMenu(null);
@@ -418,6 +435,13 @@ export default function DashboardPage() {
                                                     >
                                                         <ExternalLink className="w-4 h-4" /> Abrir Galería
                                                     </a>
+                                                    <button
+                                                        onClick={() => router.push(`/dashboard/organize/${project.id}`)}
+                                                        className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 transition ${isLight ? "text-neutral-700 hover:bg-neutral-50" : "text-neutral-300 hover:bg-white/5"
+                                                            }`}
+                                                    >
+                                                        <Layout className="w-4 h-4" /> Organizar Fotos
+                                                    </button>
                                                     <div className={`h-px my-1 ${isLight ? 'bg-neutral-100' : 'bg-neutral-800'}`}></div>
                                                     <button
                                                         onClick={() => {
@@ -648,6 +672,55 @@ export default function DashboardPage() {
                                         </div>
                                     </div>
 
+                                    {planLimits?.galleryCover && (
+                                        <div className="mb-6">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider block">
+                                                    Imagen de Portada (Splash Screen)
+                                                </label>
+                                                {editData.coverImage && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setEditData({ ...editData, coverImage: "" })}
+                                                        className="text-[10px] text-red-500 hover:text-red-400 font-medium"
+                                                    >
+                                                        Eliminar
+                                                    </button>
+                                                )}
+                                            </div>
+
+                                            {editData.coverImage ? (
+                                                <div className="relative aspect-video rounded-xl overflow-hidden border border-neutral-800 group">
+                                                    <img
+                                                        src={`/api/cloud/thumbnail?fileId=${editData.coverImage}&cloudId=${selectedProject?.cloudAccountId}`}
+                                                        alt="Cover"
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setShowCoverPicker(true)}
+                                                            className="px-3 py-1.5 bg-white text-black text-xs font-medium rounded-lg"
+                                                        >
+                                                            Cambiar Imagen
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowCoverPicker(true)}
+                                                    className="w-full h-24 border border-dashed border-neutral-700 hover:border-neutral-500 rounded-xl flex flex-col items-center justify-center gap-2 text-neutral-500 hover:text-neutral-300 transition-colors"
+                                                >
+                                                    <div className="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center">
+                                                        <ImageIcon className="w-4 h-4" />
+                                                    </div>
+                                                    <span className="text-xs">Seleccionar imagen de Drive</span>
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
+
                                     <div>
                                         <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-2 block">Tema de Fondo</label>
                                         <div className="flex gap-3">
@@ -807,7 +880,7 @@ export default function DashboardPage() {
                                                     </svg>
                                                     <div className="flex flex-col">
                                                         <span className="text-sm">Marca de Agua</span>
-                                                        <span className="text-[10px] text-neutral-500">Superpone tu logo</span>
+                                                        <span className="text-[10px] text-neutral-500">Simulada. En plan gratuito se añade el imagotipo de Closerlens</span>
                                                     </div>
                                                 </div>
                                                 <input

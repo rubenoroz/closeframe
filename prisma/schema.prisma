@@ -44,6 +44,23 @@ model User {
   sessions          Session[]
   plan              Plan?          @relation(fields: [planId], references: [id])
   
+  // Pro Plan / Enhanced Profile
+  coverImage        String?
+  pronouns          String?
+  callToAction      Json?          // { text, url, type }
+  bookingWindow     Int?           @default(4) // 0 = unlimited, N = weeks
+  bookingLeadTime   Int?           @default(1) // Minimum days notice required
+  
+  // Feature Overrides (Allow temporary unlocks)
+  featureOverrides  Json?          // { "bioMaxLength": 500, "advancedSocialNetworks": true }
+  
+  
+  // Stripe Integration
+  stripeCustomerId       String?   @unique
+  stripeSubscriptionId   String?   @unique
+  stripePriceId          String?
+  stripeCurrentPeriodEnd DateTime?
+  
   // Scena Integration
   scenaProjects     ScenaProject[]
   tasks             Task[]         @relation("TaskAssignees")
@@ -127,7 +144,7 @@ model Project {
   userId            String
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
-  
+    
   // Gallery Header Customization
   headerTitle       String?      // Custom title (e.g., "Boda de Ana & Carlos")
   headerFontFamily  String       @default("Inter")
@@ -145,6 +162,11 @@ model Project {
   // Watermark
   enableWatermark   Boolean      @default(false) // Overlay con logo del fotógrafo
   
+  // Pro Features
+  fileOrder         Json?        // Array of file IDs describing custom order
+  isTemplate        Boolean      @default(false) // If true, can be duplicated
+  callToAction      Json?        // Project-specific CTA
+  
   user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   cloudAccount      CloudAccount @relation(fields: [cloudAccountId], references: [id])
 }
@@ -153,6 +175,7 @@ model Booking {
   id            String   @id @default(cuid())
   customerName  String
   customerEmail String
+  customerPhone String?
   date          DateTime
   notes         String?
   status        String   @default("pending")
@@ -171,8 +194,9 @@ model Plan {
   price       Float    @default(0)
   currency    String   @default("USD")
   interval    String   @default("month") // "month", "year"
-  features    String   // JSON array de características
-  limits      String   // JSON con límites (proyectos, almacenamiento, etc.)
+  features    String   // JSON array de características (Legacy)
+  limits      String   // JSON con límites (Legacy)
+  config      Json?    // New Modular Configuration
   isActive    Boolean  @default(true)
   sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())

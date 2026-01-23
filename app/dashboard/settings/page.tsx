@@ -6,15 +6,18 @@ import {
     Loader2, Camera, X, Check, Copy, ExternalLink,
     Sun, Moon, Monitor, Maximize, MousePointer2, Info, Folder,
     Image as ImageIcon, Link2, Eye, Linkedin, Youtube, Video, AtSign, MapPin,
-    CreditCard, Cloud, Trash2, Calendar, Lock, Facebook, Twitter, Plus, ChevronDownIcon
+    CreditCard, Cloud, Trash2, Calendar, Lock, Facebook, Twitter, Plus, ChevronDownIcon, Upload
 } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
+import { getPlanConfig } from "@/lib/plans.config";
+
 export default function SettingsPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [planConfig, setPlanConfig] = useState<any>(null); // Store effective config
     const [copied, setCopied] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -34,36 +37,45 @@ export default function SettingsPage() {
         // Perfil expandido
         profileType: "",
         headline: "",
+        pronouns: "",
         location: "",
+        coverImage: "",
+        callToAction: { label: "", url: "", type: "" },
+        bookingWindow: 4, // Default 4 weeks
+        bookingLeadTime: 1, // Default 1 day buffer
         socialLinks: {} as Record<string, string>,
         username: "",
         // Plan y cuentas
         plan: null as any,
+        featureOverrides: null as any,
         planExpiresAt: null as string | null,
         cloudAccounts: [] as any[],
         projects: [] as any[],
+        effectiveConfig: null as any // Add this for typing if needed
     });
 
-    // Parse plan limits for restrictions
-    const getPlanLimits = () => {
-        if (!user.plan?.limits) return null;
-        try {
-            return typeof user.plan.limits === 'string'
-                ? JSON.parse(user.plan.limits)
-                : user.plan.limits;
-        } catch {
-            return null;
-        }
-    };
-    const planLimits = getPlanLimits();
-    const bioMaxLength = planLimits?.bioMaxLength || null;
-    const maxSocialLinks = planLimits?.maxSocialLinks ?? -1; // -1 = unlimited
-    // Restricción de redes sociales (Solo IG en Free)
-    // Restricción de redes sociales (Solo IG en Free)
-    // "Free", "Gratis", "Basic" or NULL defines the restricted plan.
-    const currentPlanName = user.plan?.name || 'free';
-    const isRestrictedPlan = /free|gratis|basic|prueba/i.test(currentPlanName);
-    const advancedSocialAllowed = planLimits?.advancedSocialNetworks ?? !isRestrictedPlan;
+    // Derived state for UI locks
+    const bioMaxLength = planConfig?.limits?.bioMaxLength || 150;
+    const maxSocialLinks = planConfig?.limits?.maxSocialLinks || 1;
+    const advancedSocialAllowed = planConfig?.features?.advancedSocialNetworks || false;
+    const isProfessionalProfile = planConfig?.features?.professionalProfile || false;
+    const isCoverImageAllowed = planConfig?.features?.coverImage ?? isProfessionalProfile; // Specific or fallback to bundle
+    const isCTAAllowed = planConfig?.features?.callToAction ?? isProfessionalProfile; // Specific or fallback to bundle
+    const isBookingConfigAllowed = (planConfig?.features?.bookingConfig ?? isProfessionalProfile) || isCTAAllowed; // Booking config is linked to CTA or Pro logic
+    const isCustomFieldsAllowed = planConfig?.features?.customFields ?? isProfessionalProfile; // Headline, Location, etc.
+    const isRestrictedPlan = !advancedSocialAllowed; // Keep legacy variable for social, but use logic above
+
+    // Helper for locked inputs
+    const LockedOverlay = ({ label = "Plan Profesional" }: { label?: string }) => (
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 bg-black/80 text-white px-2 py-1 rounded text-[10px] font-bold border border-white/10 pointer-events-none z-10">
+            <Lock className="w-3 h-3 text-emerald-400" /> <span>{label}</span>
+        </div>
+    );
+
+    // Note: isRestrictedPlan logic is tricky with overrides. 
+    // If we override advancedSocialAllowed=true, then they are effectively not restricted functionality-wise, 
+    // but their "Plan Name" is still 'free'. 
+    // We should trust the 'advancedSocialAllowed' flag for UI locks.
 
     // Dynamic Social Links State
     const [selectedNetwork, setSelectedNetwork] = useState("instagram");
@@ -81,6 +93,14 @@ export default function SettingsPage() {
 
     const handleAddSocial = () => {
         if (!networkValue.trim()) return;
+
+        // Enforce Max Social Links
+        const currentLinksCount = Object.keys(user.socialLinks || {}).length;
+        if (maxSocialLinks !== -1 && currentLinksCount >= maxSocialLinks) {
+            alert(`Tu plan solo permite ${maxSocialLinks} enlace(s) social(es). Actualiza tu plan para añadir más.`);
+            return;
+        }
+
         setUser(prev => ({
             ...prev,
             socialLinks: {
@@ -118,15 +138,25 @@ export default function SettingsPage() {
                         // Perfil expandido
                         profileType: data.user.profileType || "",
                         headline: data.user.headline || "",
+                        pronouns: data.user.pronouns || "",
                         location: data.user.location || "",
+                        coverImage: data.user.coverImage || "",
+                        callToAction: data.user.callToAction || { label: "", url: "", type: "" },
+                        bookingWindow: data.user.bookingWindow !== undefined ? data.user.bookingWindow : 4,
+                        bookingLeadTime: data.user.bookingLeadTime !== undefined ? data.user.bookingLeadTime : 1,
                         socialLinks: data.user.socialLinks || {},
                         username: data.user.username || "",
                         // Plan y cuentas
                         plan: data.user.plan || null,
+                        featureOverrides: data.user.featureOverrides || null,
                         planExpiresAt: data.user.planExpiresAt || null,
                         cloudAccounts: data.user.cloudAccounts || [],
                         projects: data.user.projects || [],
+                        effectiveConfig: data.effectiveConfig || null
                     });
+                    if (data.effectiveConfig) {
+                        setPlanConfig(data.effectiveConfig);
+                    }
                 }
                 setLoading(false);
             })
@@ -184,7 +214,7 @@ export default function SettingsPage() {
                 }
             }
 
-            setUser({ ...user, businessLogo: result });
+            setUser({ ...user, [uploadTarget || 'businessLogo']: result });
         };
         reader.onerror = () => {
             alert("Error al leer el archivo.");
@@ -193,6 +223,22 @@ export default function SettingsPage() {
         // Use readAsDataURL which is usually safe for both PNG and SVG
         reader.readAsDataURL(file);
     };
+
+    const handleUploadClick = (target: 'coverImage' | 'businessLogo') => {
+        // Trigger file input
+        if (fileInputRef.current) {
+            // Store which field we are updating in a way handleFileChange knows? 
+            // Actually handleFileChange currently updates 'businessLogo' hardcoded.
+            // We need to update handleFileChange to support dynamic fields or use a stateRef.
+            // Let's modify handleFileChange first or use a simple hack if time is tight.
+            // Better: update handleFileChange to check a ref or just use separate inputs? 
+            // Re-using single input is best but we need to know context.
+            // Let's attach a temporary property to the ref or use a state 'uploadTarget'.
+            setUploadTarget(target);
+            fileInputRef.current.click();
+        }
+    };
+    const [uploadTarget, setUploadTarget] = useState<'coverImage' | 'businessLogo' | null>(null);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -302,6 +348,7 @@ export default function SettingsPage() {
                     </div>
 
                     <div className="grid md:grid-cols-2 gap-4 md:gap-8">
+
                         <div className="space-y-2 md:space-y-3">
                             <label className="text-[9px] md:text-[10px] font-bold opacity-40 uppercase tracking-widest ml-1">Nombre profesional</label>
                             <input
@@ -390,51 +437,67 @@ export default function SettingsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                         <div className="space-y-3">
                             <label className="text-[10px] font-bold opacity-40 uppercase tracking-widest ml-1">Tipo de Perfil</label>
-                            <select
-                                value={user.profileType}
-                                onChange={(e) => setUser({ ...user, profileType: e.target.value })}
-                                className={cn(
-                                    "w-full border rounded-xl px-5 py-4 outline-none transition-all",
-                                    isLight
-                                        ? "bg-neutral-50 border-neutral-200 text-neutral-900 focus:bg-white focus:border-emerald-500/50"
-                                        : "bg-neutral-900/50 border-neutral-800 text-neutral-100 focus:border-emerald-500/50"
-                                )}
-                            >
-                                <option value="">Selecciona...</option>
-                                <option value="photographer">📷 Fotógrafo</option>
-                                <option value="model">💃 Modelo / Talento</option>
-                                <option value="creative">🎬 Creativo Audiovisual</option>
-                                <option value="agency">🏢 Agencia</option>
-                                <option value="brand">🛍️ Marca</option>
-                            </select>
+                            <div className="relative">
+                                <select
+                                    value={user.profileType}
+                                    onChange={(e) => setUser({ ...user, profileType: e.target.value })}
+                                    disabled={!isProfessionalProfile}
+                                    className={cn(
+                                        "w-full border rounded-xl px-5 py-4 outline-none transition-all appearance-none",
+                                        isLight
+                                            ? "bg-neutral-50 border-neutral-200 text-neutral-900 focus:bg-white focus:border-emerald-500/50"
+                                            : "bg-neutral-900/50 border-neutral-800 text-neutral-100 focus:border-emerald-500/50",
+                                        !isProfessionalProfile && "opacity-50 cursor-not-allowed"
+                                    )}
+                                >
+                                    <option value="">Selecciona...</option>
+                                    <option value="photographer">📷 Fotógrafo</option>
+                                    <option value="model">💃 Modelo / Talento</option>
+                                    <option value="creative">🎬 Creativo Audiovisual</option>
+                                    <option value="agency">🏢 Agencia</option>
+                                    <option value="brand">🛍️ Marca</option>
+                                </select>
+                                {!isProfessionalProfile && <LockedOverlay />}
+                            </div>
                         </div>
                         <div className="space-y-3">
                             <label className="text-[10px] font-bold opacity-40 uppercase tracking-widest ml-1">Ubicación</label>
-                            <input
-                                value={user.location}
-                                onChange={(e) => setUser({ ...user, location: e.target.value })}
-                                className={cn(
-                                    "w-full border rounded-xl px-5 py-4 outline-none transition-all",
-                                    isLight
-                                        ? "bg-neutral-50 border-neutral-200 text-neutral-900 focus:bg-white focus:border-emerald-500/50"
-                                        : "bg-neutral-900/50 border-neutral-800 text-neutral-100 focus:border-emerald-500/50"
-                                )}
-                                placeholder="Ej: Ciudad de México, México"
-                            />
+                            <div className="relative">
+                                <input
+                                    value={user.location}
+                                    placeholder="San Pedro Garza García, NL"
+                                    onChange={(e) => setUser({ ...user, location: e.target.value })}
+                                    disabled={!isCustomFieldsAllowed}
+                                    className={cn(
+                                        "w-full border rounded-xl px-5 py-4 pl-11 outline-none transition-all",
+                                        isLight
+                                            ? "bg-neutral-50 border-neutral-200 text-neutral-900 focus:bg-white focus:border-emerald-500/50"
+                                            : "bg-neutral-900/50 border-neutral-800 text-neutral-100 focus:border-emerald-500/50",
+                                        !isCustomFieldsAllowed && "opacity-50 cursor-not-allowed"
+                                    )}
+                                />
+                                {!isCustomFieldsAllowed && <LockedOverlay />}
+                            </div>
                         </div>
                         <div className="md:col-span-2 space-y-3">
-                            <label className="text-[10px] font-bold opacity-40 uppercase tracking-widest ml-1">Headline Profesional</label>
-                            <input
-                                value={user.headline}
-                                onChange={(e) => setUser({ ...user, headline: e.target.value })}
-                                className={cn(
-                                    "w-full border rounded-xl px-5 py-4 outline-none transition-all",
-                                    isLight
-                                        ? "bg-neutral-50 border-neutral-200 text-neutral-900 focus:bg-white focus:border-emerald-500/50"
-                                        : "bg-neutral-900/50 border-neutral-800 text-neutral-100 focus:border-emerald-500/50"
-                                )}
-                                placeholder="Ej: Director de Fotografía | Especialista en Moda"
-                            />
+                            <label className="text-[10px] font-bold opacity-40 uppercase tracking-widest ml-1">Headline (Profesión/Título)</label>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    value={user.headline || ""}
+                                    onChange={(e) => setUser({ ...user, headline: e.target.value })}
+                                    disabled={!isCustomFieldsAllowed}
+                                    className={cn(
+                                        "w-full border rounded-xl px-5 py-4 outline-none transition-all",
+                                        isLight
+                                            ? "bg-neutral-50 border-neutral-200 text-neutral-900 focus:bg-white focus:border-emerald-500/50"
+                                            : "bg-neutral-900/50 border-neutral-800 text-neutral-100 focus:border-emerald-500/50",
+                                        !isCustomFieldsAllowed && "opacity-50 cursor-not-allowed"
+                                    )}
+                                    placeholder="Ej: Director de Fotografía | Especialista en Moda"
+                                />
+                                {!isCustomFieldsAllowed && <LockedOverlay />}
+                            </div>
                         </div>
                         <div className="md:col-span-2 space-y-3">
                             <label className="flex items-center gap-2 text-[10px] font-bold opacity-40 uppercase tracking-widest ml-1">
@@ -463,6 +526,58 @@ export default function SettingsPage() {
                             {user.username && (
                                 <p className="text-[10px] text-emerald-500 ml-1">Tu perfil estará en: closerlens.co/u/{user.username}</p>
                             )}
+                        </div>
+                    </div>
+                </section>
+
+                {/* COVER IMAGE */}
+                <section>
+                    <div className="flex items-center gap-2 md:gap-3 mb-5 md:mb-8 text-neutral-400 text-[10px] md:text-xs uppercase tracking-widest font-bold">
+                        <ImageIcon className="w-3 h-3 md:w-4 md:h-4 text-emerald-500" /> Imagen de Portada
+                    </div>
+
+                    <div className="relative group">
+                        {!isCoverImageAllowed && <LockedOverlay />}
+
+                        <div className={cn(
+                            "w-full h-32 md:h-48 rounded-2xl overflow-hidden relative border transition-colors",
+                            isLight
+                                ? "bg-neutral-100 border-neutral-200"
+                                : "bg-neutral-900 border-neutral-800",
+                            !isCoverImageAllowed && "opacity-40 grayscale"
+                        )}>
+                            {user.coverImage ? (
+                                <img src={user.coverImage} className="w-full h-full object-cover" alt="Cover" />
+                            ) : (
+                                <div className="absolute inset-0 flex items-center justify-center opacity-20">
+                                    <ImageIcon className="w-10 h-10" />
+                                </div>
+                            )}
+
+                            {/* Buttons only accessible if allowed */}
+                            <div className={cn(
+                                "absolute bottom-3 right-3 flex gap-2",
+                                !isCoverImageAllowed && "pointer-events-none display-none" // Extra safety
+                            )}>
+                                <button
+                                    type="button"
+                                    onClick={() => handleUploadClick('coverImage')}
+                                    disabled={!isCoverImageAllowed}
+                                    className="p-2 md:px-4 md:py-2 rounded-lg bg-black/50 hover:bg-black/70 text-white backdrop-blur-md text-xs font-bold transition flex items-center gap-2"
+                                >
+                                    <Upload className="w-3 h-3 md:w-4 md:h-4" />
+                                    <span className="hidden md:inline">Subir</span>
+                                </button>
+                                {user.coverImage && isCoverImageAllowed && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setUser({ ...user, coverImage: "" })}
+                                        className="p-2 rounded-lg bg-red-500/80 hover:bg-red-500 text-white backdrop-blur-md transition"
+                                    >
+                                        <X className="w-3 h-3 md:w-4 md:h-4" />
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -589,14 +704,19 @@ export default function SettingsPage() {
                 {/* IMAGE / LOGO */}
                 <section>
                     <div className="flex items-center gap-2 md:gap-3 mb-5 md:mb-8 text-neutral-400 text-[10px] md:text-xs uppercase tracking-widest font-bold">
-                        <ImageIcon className="w-3 h-3 md:w-4 md:h-4 text-emerald-500" /> Logo
+                        <Camera className="w-3 h-3 md:w-4 md:h-4 text-emerald-500" /> Logo del Negocio
                     </div>
 
-                    <div className="flex flex-col items-center gap-6 md:gap-10">
-                        <div className="relative group">
+                    <div className="flex flex-col md:flex-row gap-6 md:gap-10">
+                        {/* Logo Upload */}
+                        <div className="relative">
+                            {!isProfessionalProfile && <LockedOverlay />}
                             <div className={cn(
-                                "w-24 h-24 md:w-32 md:h-32 rounded-full border flex items-center justify-center overflow-hidden p-3 md:p-4 shadow-2xl transition-colors",
-                                isLight ? "bg-white border-neutral-200" : "bg-neutral-900 border-neutral-800"
+                                "w-24 h-24 md:w-32 md:h-32 rounded-full flex items-center justify-center relative overflow-hidden shrink-0 border transition-all",
+                                isLight
+                                    ? "bg-neutral-100 border-neutral-200"
+                                    : "bg-neutral-900 border-neutral-800",
+                                !isProfessionalProfile && "opacity-40 grayscale"
                             )}>
                                 {user.businessLogo ? (
                                     <img
@@ -608,100 +728,219 @@ export default function SettingsPage() {
                                 ) : (
                                     <Camera className={cn("w-6 h-6 md:w-8 md:h-8", isLight ? "text-neutral-300" : "text-neutral-700")} />
                                 )}
+                                <div className={cn(
+                                    "absolute inset-0 flex items-center justify-center gap-2 bg-black/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity",
+                                    !isProfessionalProfile && "hidden"
+                                )}>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleUploadClick('businessLogo')}
+                                        disabled={!isProfessionalProfile}
+                                        className="p-1.5 rounded-full bg-black/50 hover:bg-black/70 text-white backdrop-blur-md transition"
+                                    >
+                                        <Upload className="w-3 h-3" />
+                                    </button>
+                                    {user.businessLogo && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setUser({ ...user, businessLogo: "" })}
+                                            disabled={!isProfessionalProfile}
+                                            className="p-1.5 rounded-full bg-red-500/80 hover:bg-red-500 text-white backdrop-blur-md transition"
+                                        >
+                                            <X className="w-3 h-3" />
+                                        </button>
+                                    )}
+                                </div>
                             </div>
-                            {user.businessLogo && (
-                                <button
-                                    onClick={() => setUser({ ...user, businessLogo: "" })}
-                                    className="absolute -top-1 -right-1 p-1 md:p-1.5 bg-red-500 text-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition"
-                                >
-                                    <X className="w-2.5 h-2.5 md:w-3 md:h-3" />
-                                </button>
-                            )}
                         </div>
 
-                        <div className="flex-1 space-y-4 md:space-y-6 w-full max-w-sm">
-                            <div className="flex flex-col sm:flex-row items-center gap-3 md:gap-4">
-                                <button
-                                    type="button"
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className="px-6 md:px-8 py-2.5 md:py-3 rounded-full bg-white text-black text-xs md:text-sm font-bold hover:bg-neutral-200 transition"
-                                >
-                                    Subir imagen
-                                </button>
-                                <p className="text-[9px] md:text-[10px] text-neutral-500 text-center sm:text-left">PNG o SVG recomendado</p>
-                            </div>
-
-                            {user.businessLogo && (
-                                <div className="space-y-3">
-                                    <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest opacity-40">
-                                        <span>Tamaño del logo</span>
-                                        <span className="text-emerald-500">{user.businessLogoScale}%</span>
+                        {/* Logo Settings */}
+                        <div className="flex-1 space-y-6">
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-bold opacity-40 uppercase tracking-widest ml-1">Escala del Logo (%)</label>
+                                <div className="space-y-2 relative">
+                                    <div className="flex items-center justify-between text-xs font-mono opacity-60">
+                                        <span>20%</span>
+                                        <span>{user.businessLogoScale || 100}%</span>
+                                        <span>200%</span>
                                     </div>
                                     <input
                                         type="range"
                                         min="20"
                                         max="200"
-                                        value={user.businessLogoScale}
+                                        value={user.businessLogoScale || 100}
                                         onChange={(e) => setUser({ ...user, businessLogoScale: parseInt(e.target.value) })}
+                                        disabled={!isProfessionalProfile}
                                         className={cn(
-                                            "w-full h-1.5 rounded-lg appearance-none cursor-pointer accent-emerald-500 transition-colors",
-                                            isLight ? "bg-neutral-200" : "bg-neutral-800"
+                                            "w-full h-2 rounded-lg appearance-none cursor-pointer",
+                                            isLight ? "bg-neutral-200 accent-neutral-900" : "bg-neutral-800 accent-white",
+                                            !isProfessionalProfile && "opacity-50 cursor-not-allowed"
                                         )}
                                     />
+                                    {!isProfessionalProfile && (
+                                        <div className="absolute inset-0 z-20 cursor-not-allowed"></div>
+                                    )}
                                 </div>
-                            )}
+                            </div>
                         </div>
                     </div>
                 </section>
 
-                {/* LINKS */}
+                {/* CALL TO ACTION */}
                 <section>
                     <div className="flex items-center gap-2 md:gap-3 mb-5 md:mb-8 text-neutral-400 text-[10px] md:text-xs uppercase tracking-widest font-bold">
-                        <Link2 className="w-3 h-3 md:w-4 md:h-4 text-emerald-500" /> Links y redes
+                        <MousePointer2 className="w-3 h-3 md:w-4 md:h-4 text-emerald-500" /> Call to Action (Botón Principal)
+                        {!isCTAAllowed && <span className="flex items-center gap-1 bg-amber-500/10 text-amber-500 px-1.5 py-0.5 rounded border border-amber-500/20"><Lock className="w-2.5 h-2.5" /> PRO</span>}
                     </div>
 
                     <div className="grid md:grid-cols-2 gap-4 md:gap-8">
                         <div className="space-y-3">
-                            <label className="text-[10px] font-bold opacity-40 uppercase tracking-widest ml-1">Instagram (@usuario)</label>
+                            <label className="text-[10px] font-bold opacity-40 uppercase tracking-widest ml-1">Texto del botón</label>
                             <div className="relative">
-                                <Instagram className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-600" />
                                 <input
                                     type="text"
-                                    value={user.businessInstagram}
-                                    onChange={(e) => setUser({ ...user, businessInstagram: e.target.value })}
+                                    value={user.callToAction?.label || ""}
+                                    onChange={(e) => setUser({
+                                        ...user,
+                                        callToAction: { ...user.callToAction, label: e.target.value }
+                                    })}
+                                    disabled={!isCTAAllowed}
                                     className={cn(
-                                        "w-full border rounded-xl pl-12 pr-5 py-4 outline-none transition-all",
+                                        "w-full border rounded-xl px-5 py-4 outline-none transition-all",
                                         isLight
                                             ? "bg-neutral-50 border-neutral-200 text-neutral-900 focus:bg-white focus:border-emerald-500/50"
-                                            : "bg-neutral-900/50 border-neutral-800 text-neutral-100 focus:border-emerald-500/50"
+                                            : "bg-neutral-900/50 border-neutral-800 text-neutral-100 focus:border-emerald-500/50",
+                                        !isCTAAllowed && "opacity-50 cursor-not-allowed"
                                     )}
-                                    placeholder="@tu_perfil"
+                                    placeholder={user.callToAction?.type === 'booking' ? "Ej: Agenda tu sesión" : "Ej: Ver portafolio"}
                                 />
+                                {!isCTAAllowed && <LockedOverlay />}
                             </div>
                         </div>
+
                         <div className="space-y-3">
-                            <label className="text-[10px] font-bold opacity-40 uppercase tracking-widest ml-1">Sitio Web (URL)</label>
-                            <div className="relative">
-                                <Globe className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-600" />
-                                <input
-                                    type="url"
-                                    value={user.businessWebsite}
-                                    onChange={(e) => setUser({ ...user, businessWebsite: e.target.value })}
+                            <label className="text-[10px] font-bold opacity-40 uppercase tracking-widest ml-1">Tipo de Acción</label>
+                            <div className="grid grid-cols-2 gap-2 relative">
+                                {!isCTAAllowed && (
+                                    <div className="absolute inset-0 z-20 cursor-not-allowed"></div>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={() => setUser({ ...user, callToAction: { ...user.callToAction, type: 'link' } })}
+                                    disabled={!isCTAAllowed}
                                     className={cn(
-                                        "w-full border rounded-xl pl-12 pr-5 py-4 outline-none transition-all",
-                                        isLight
-                                            ? "bg-neutral-50 border-neutral-200 text-neutral-900 focus:bg-white focus:border-emerald-500/50"
-                                            : "bg-neutral-900/50 border-neutral-800 text-neutral-100 focus:border-emerald-500/50"
+                                        "px-4 py-3 rounded-lg text-sm font-medium border transition-all",
+                                        user.callToAction?.type !== 'booking'
+                                            ? (isLight ? "bg-neutral-900 text-white border-neutral-900" : "bg-white text-black border-white")
+                                            : (isLight ? "bg-white text-neutral-600 border-neutral-200 hover:border-neutral-300" : "bg-neutral-900/30 text-neutral-400 border-neutral-800 hover:border-neutral-700"),
+                                        !isCTAAllowed && "opacity-50"
                                     )}
-                                    placeholder="https://..."
-                                />
+                                >
+                                    Enlace Externo
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setUser({ ...user, callToAction: { ...user.callToAction, type: 'booking' } })}
+                                    disabled={!isCTAAllowed}
+                                    className={cn(
+                                        "px-4 py-3 rounded-lg text-sm font-medium border transition-all",
+                                        user.callToAction?.type === 'booking'
+                                            ? (isLight ? "bg-neutral-900 text-white border-neutral-900" : "bg-white text-black border-white")
+                                            : (isLight ? "bg-white text-neutral-600 border-neutral-200 hover:border-neutral-300" : "bg-neutral-900/30 text-neutral-400 border-neutral-800 hover:border-neutral-700"),
+                                        !isCTAAllowed && "opacity-50"
+                                    )}
+                                >
+                                    Formulario de Reserva
+                                </button>
                             </div>
+                        </div>
+
+                        {/* URL INPUT ONLY FOR LINK TYPE */}
+                        {user.callToAction?.type !== 'booking' && (
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-bold opacity-40 uppercase tracking-widest ml-1">Enlace (URL)</label>
+                                <div className="relative">
+                                    <input
+                                        type="url"
+                                        value={user.callToAction?.url || ""}
+                                        onChange={(e) => setUser({
+                                            ...user,
+                                            callToAction: { ...user.callToAction, url: e.target.value }
+                                        })}
+                                        disabled={!isCTAAllowed}
+                                        className={cn(
+                                            "w-full border rounded-xl px-5 py-4 outline-none transition-all",
+                                            isLight
+                                                ? "bg-neutral-50 border-neutral-200 text-neutral-900 focus:bg-white focus:border-emerald-500/50"
+                                                : "bg-neutral-900/50 border-neutral-800 text-neutral-100 focus:border-emerald-500/50",
+                                            !isCTAAllowed && "opacity-50 cursor-not-allowed"
+                                        )}
+                                        placeholder="https://mysite.com"
+                                    />
+                                    {!isCTAAllowed && <LockedOverlay />}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Booking Window - Only visible for Pro plans (as Free plan has no CTA) */}
+                    {/* Booking Window - Controlled by bookingConfig feature */}
+                    <div className="mt-6 md:mt-8 grid md:grid-cols-2 gap-4 md:gap-8 relative">
+                        {/* BOOKING CONFIG - LINKED TO CTA */}
+                        {/* Lock Overlay if neither booking config nor CTA is allowed */}
+                        {!isBookingConfigAllowed && (
+                            <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 backdrop-blur-[1px] rounded-xl">
+                                <div className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-full text-xs font-bold border border-white/10 shadow-xl">
+                                    <Lock className="w-4 h-4 text-emerald-400" />
+                                    <span>Disponible con Call to Action o Plan Profesional</span>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className={cn("space-y-3", !isBookingConfigAllowed && "opacity-20 pointer-events-none")}>
+                            <label className="text-[10px] font-bold opacity-40 uppercase tracking-widest ml-1">Ventana de Reservas</label>
+                            <p className="text-xs text-neutral-500 mb-2">Cuanto tiempo hacia el futuro pueden reservar.</p>
+                            <select
+                                value={user.bookingWindow ?? 4}
+                                onChange={(e) => setUser({ ...user, bookingWindow: parseInt(e.target.value) })}
+                                disabled={!isBookingConfigAllowed}
+                                className={cn(
+                                    "w-full border rounded-xl px-5 py-4 outline-none transition-all",
+                                    isLight
+                                        ? "bg-neutral-50 border-neutral-200 text-neutral-900 focus:bg-white focus:border-emerald-500/50"
+                                        : "bg-neutral-900/50 border-neutral-800 text-neutral-100 focus:border-emerald-500/50"
+                                )}
+                            >
+                                <option value={1}>1 Semana</option>
+                                <option value={2}>2 Semanas</option>
+                                <option value={3}>3 Semanas</option>
+                                <option value={4}>4 Semanas</option>
+                                <option value={0}>Sin límite (Todo el calendario)</option>
+                            </select>
+                        </div>
+                        <div className={cn("space-y-3", !isBookingConfigAllowed && "opacity-20 pointer-events-none")}>
+                            <label className="text-[10px] font-bold opacity-40 uppercase tracking-widest ml-1">Anticipación Mínima (Días)</label>
+                            <p className="text-xs text-neutral-500 mb-2">Días de buffer antes de la primera fecha disponible.</p>
+                            <input
+                                type="number"
+                                min="0"
+                                max="30"
+                                value={user.bookingLeadTime ?? 1}
+                                onChange={(e) => setUser({ ...user, bookingLeadTime: parseInt(e.target.value) })}
+                                disabled={!isBookingConfigAllowed}
+                                className={cn(
+                                    "w-full border rounded-xl px-5 py-4 outline-none transition-all",
+                                    isLight
+                                        ? "bg-neutral-50 border-neutral-200 text-neutral-900 focus:bg-white focus:border-emerald-500/50"
+                                        : "bg-neutral-900/50 border-neutral-800 text-neutral-100 focus:border-emerald-500/50"
+                                )}
+                            />
                         </div>
                     </div>
                 </section>
 
                 {/* PUBLIC GALLERIES */}
-                <section>
+                < section >
                     <div className="flex items-center gap-2 md:gap-3 mb-5 md:mb-8 text-neutral-400 text-[10px] md:text-xs uppercase tracking-widest font-bold">
                         <Eye className="w-3 h-3 md:w-4 md:h-4 text-emerald-500" /> Galerías públicas
                     </div>
@@ -749,10 +988,10 @@ export default function SettingsPage() {
                             ))
                         )}
                     </div>
-                </section>
+                </section >
 
                 {/* ACCOUNT & PLAN */}
-                <section>
+                < section >
                     <div className="flex items-center gap-2 md:gap-3 mb-5 md:mb-8 text-neutral-400 text-[10px] md:text-xs uppercase tracking-widest font-bold">
                         <CreditCard className="w-3 h-3 md:w-4 md:h-4 text-emerald-500" /> Cuenta y Plan
                     </div>
@@ -843,13 +1082,15 @@ export default function SettingsPage() {
                             </div>
                         )}
                     </div>
-                </section>
+                </section >
 
                 {/* ACTIONS */}
-                <footer className={cn(
-                    "pt-6 md:pt-10 border-t flex flex-col md:flex-row flex-wrap items-center justify-center md:justify-between gap-4 md:gap-6 transition-colors",
-                    isLight ? "border-neutral-200" : "border-neutral-900"
-                )}>
+                < footer className={
+                    cn(
+                        "pt-6 md:pt-10 border-t flex flex-col md:flex-row flex-wrap items-center justify-center md:justify-between gap-4 md:gap-6 transition-colors",
+                        isLight ? "border-neutral-200" : "border-neutral-900"
+                    )
+                } >
                     <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 md:gap-4">
                         <button
                             type="button"
@@ -885,8 +1126,8 @@ export default function SettingsPage() {
                         {saving ? <Loader2 className="w-4 h-4 md:w-5 md:h-5 animate-spin" /> : <Save className="w-3 h-3 md:w-4 md:h-4" />}
                         Guardar
                     </button>
-                </footer>
-            </form>
+                </footer >
+            </form >
 
             <input
                 type="file"
@@ -895,6 +1136,6 @@ export default function SettingsPage() {
                 accept="image/*,.svg,image/svg+xml"
                 className="hidden"
             />
-        </div>
+        </div >
     );
 }

@@ -54,6 +54,7 @@ export async function GET(request: NextRequest) {
                     role: true,
                     planId: true,
                     planExpiresAt: true,
+                    featureOverrides: true,
                     createdAt: true,
                     updatedAt: true,
                     plan: {
@@ -125,7 +126,8 @@ export async function PUT(request: NextRequest) {
                 ...(planId !== undefined && { planId: planId || null }),
                 ...(planExpiresAt !== undefined && {
                     planExpiresAt: planExpiresAt ? new Date(planExpiresAt) : null
-                })
+                }),
+                ...(body.featureOverrides !== undefined && { featureOverrides: body.featureOverrides })
             },
             select: {
                 id: true,
@@ -133,7 +135,8 @@ export async function PUT(request: NextRequest) {
                 email: true,
                 role: true,
                 planId: true,
-                planExpiresAt: true
+                planExpiresAt: true,
+                featureOverrides: true
             }
         });
 

@@ -1,17 +1,30 @@
 import { NextResponse } from "next/server";
 import { GoogleDriveProvider } from "@/lib/cloud/google-drive-provider";
 import { getFreshGoogleAuth } from "@/lib/cloud/google-auth";
+import { prisma } from "@/lib/db";
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const cloudAccountId = searchParams.get("cloudAccountId");
     let folderId = searchParams.get("folderId");
+    const projectId = searchParams.get("projectId");
 
     if (!cloudAccountId || !folderId) {
         return NextResponse.json({ error: "Cloud Account ID and Folder ID required" }, { status: 400 });
     }
 
     try {
+        // Fetch project order if projectId is provided
+        let fileOrder: string[] | null = null;
+        if (projectId) {
+            const project = await prisma.project.findUnique({
+                where: { id: projectId },
+                select: { fileOrder: true }
+            });
+            if ((project as any)?.fileOrder) {
+                fileOrder = JSON.parse(JSON.stringify((project as any).fileOrder));
+            }
+        }
         // Use centralized auth utility to get a fresh client
         const auth = await getFreshGoogleAuth(cloudAccountId);
 
@@ -101,8 +114,21 @@ export async function GET(request: Request) {
                 }
             });
 
+            let finalFiles = enrichedFiles || mainFiles;
+
+            // Apply manual sorting if fileOrder exists
+            if (fileOrder && Array.isArray(fileOrder) && fileOrder.length > 0) {
+                const orderMap = new Map(fileOrder.map((id, index) => [id, index]));
+
+                finalFiles.sort((a, b) => {
+                    const indexA = orderMap.has(a.id) ? orderMap.get(a.id)! : 999999;
+                    const indexB = orderMap.has(b.id) ? orderMap.get(b.id)! : 999999;
+                    return indexA - indexB;
+                });
+            }
+
             return NextResponse.json({
-                files: enrichedFiles,
+                files: finalFiles,
                 activeProxy: !!(webjpgFolder || webmp4Folder),
                 foldersFound: {
                     // Photos
@@ -117,9 +143,21 @@ export async function GET(request: Request) {
             });
         }
 
-        return NextResponse.json({ files: mainFiles });
+        return NextResponse.json({
+            files: mainFiles,
+            activeProxy: false,
+            foldersFound: {
+                webjpg: !!webjpgFolder,
+                jpg: !!jpgFolder,
+                rawPhoto: !!rawPhotoFolder,
+                webmp4: !!webmp4Folder,
+                hd: !!hdFolder,
+                rawVideo: !!rawVideoFolder,
+            }
+        });
     } catch (error) {
         console.error("File List Error:", error);
         return NextResponse.json({ error: "Failed to list files", details: String(error) }, { status: 500 });
     }
 }
+

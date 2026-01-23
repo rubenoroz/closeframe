@@ -47,12 +47,16 @@ interface Plan {
     interval: string;
     features: string[];
     limits: PlanLimits;
+    config?: any;
     isActive: boolean;
     sortOrder: number;
     _count?: {
         users: number;
     };
 }
+
+import PlansMatrixTable from "@/components/plans/PlansMatrixTable";
+import { PLAN_DEFAULTS } from "@/lib/plan-defaults";
 
 const defaultLimits: PlanLimits = {
     maxProjects: 5,
@@ -90,6 +94,7 @@ const emptyPlan: Omit<Plan, "id" | "_count"> = {
 export default function PlansPage() {
     const [plans, setPlans] = useState<Plan[]>([]);
     const [loading, setLoading] = useState(true);
+    const [viewMode, setViewMode] = useState<'cards' | 'matrix'>('cards'); // New state
     const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
     const [isCreating, setIsCreating] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -102,7 +107,14 @@ export default function PlansPage() {
         try {
             const response = await fetch("/api/superadmin/plans");
             const data = await response.json();
-            setPlans(data);
+            if (data.plans) {
+                setPlans(data.plans);
+            } else if (Array.isArray(data)) {
+                // Fallback for legacy API behavior if any
+                setPlans(data);
+            } else {
+                setPlans([]);
+            }
         } catch (error) {
             console.error("Error fetching plans:", error);
         } finally {
@@ -252,121 +264,149 @@ export default function PlansPage() {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-bold">Planes</h1>
                     <p className="text-neutral-400 mt-1">
-                        Gestiona los planes de suscripción
+                        Gestiona los planes de suscripción y sus características
                     </p>
                 </div>
-                <button
-                    onClick={() => {
-                        setEditingPlan({ ...emptyPlan, id: "" } as Plan);
-                        setIsCreating(true);
-                    }}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-500 rounded-xl font-medium transition"
-                >
-                    <Plus className="w-5 h-5" />
-                    Nuevo Plan
-                </button>
-            </div>
-
-            {/* Plans Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {plans.map((plan, index) => (
-                    <div
-                        key={plan.id}
-                        draggable
-                        onDragStart={(e) => handleDragStart(e, plan.id)}
-                        onDragEnd={handleDragEnd}
-                        onDragOver={(e) => handleDragOver(e, plan.id)}
-                        onDragLeave={handleDragLeave}
-                        onDrop={(e) => handleDrop(e, plan.id)}
-                        className={cn(
-                            "bg-neutral-900/50 border rounded-2xl p-6 relative cursor-grab active:cursor-grabbing transition-all duration-200",
-                            plan.isActive ? "border-neutral-800" : "border-neutral-800/50 opacity-60",
-                            draggedPlan === plan.id && "opacity-50 scale-95",
-                            dragOverPlan === plan.id && draggedPlan !== plan.id && "border-violet-500 border-2 scale-105"
-                        )}
-                    >
-                        {/* Actions */}
-                        <div className="absolute top-4 right-4 flex gap-2">
-                            <button
-                                onClick={() => {
-                                    setEditingPlan(plan);
-                                    setIsCreating(false);
-                                }}
-                                className="p-2 hover:bg-neutral-800 rounded-lg transition"
-                            >
-                                <Edit2 className="w-4 h-4 text-neutral-400" />
-                            </button>
-                            <button
-                                onClick={() => handleDelete(plan.id)}
-                                className="p-2 hover:bg-neutral-800 rounded-lg transition"
-                            >
-                                <Trash2 className="w-4 h-4 text-red-400" />
-                            </button>
-                        </div>
-
-                        {/* Order indicator - Drag handle */}
-                        <div className="absolute top-3 left-3 cursor-grab opacity-40 hover:opacity-100 transition">
-                            <GripVertical className="w-5 h-5 text-neutral-400" />
-                        </div>
-
-                        {/* Plan Info */}
-                        <div className="mb-4 pt-2">
-                            <h3 className="text-xl font-bold">{plan.displayName}</h3>
-                            <span className="text-xs text-neutral-500 uppercase tracking-wider">
-                                {plan.name}
-                            </span>
-                            {plan.description && (
-                                <p className="text-neutral-400 text-sm mt-1">{plan.description}</p>
+                <div className="flex items-center gap-3">
+                    <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-1 flex">
+                        <button
+                            onClick={() => setViewMode('cards')}
+                            className={cn(
+                                "px-4 py-2 rounded-lg text-sm font-medium transition",
+                                viewMode === 'cards' ? "bg-neutral-800 text-white" : "text-neutral-400 hover:text-white"
                             )}
-                        </div>
-
-                        {/* Price */}
-                        <div className="flex items-baseline gap-1 mb-4">
-                            <span className="text-3xl font-bold">
-                                {plan.currency === "USD" ? "$" : plan.currency}
-                                {plan.price}
-                            </span>
-                            <span className="text-neutral-400">/{plan.interval === "month" ? "mes" : "año"}</span>
-                        </div>
-
-                        {/* Users Count */}
-                        <div className="flex items-center gap-2 text-sm text-neutral-400 mb-4">
-                            <Users className="w-4 h-4" />
-                            <span>{plan._count?.users || 0} usuarios</span>
-                        </div>
-
-                        {/* Features */}
-                        <ul className="space-y-2">
-                            {plan.features.slice(0, 5).map((feature, index) => (
-                                <li key={index} className="flex items-center gap-2 text-sm">
-                                    <Check className="w-4 h-4 text-green-400 shrink-0" />
-                                    <span className="text-neutral-300">{feature}</span>
-                                </li>
-                            ))}
-                            {plan.features.length > 5 && (
-                                <li className="text-sm text-neutral-500">
-                                    +{plan.features.length - 5} más...
-                                </li>
+                        >
+                            Tarjetas
+                        </button>
+                        <button
+                            onClick={() => setViewMode('matrix')}
+                            className={cn(
+                                "px-4 py-2 rounded-lg text-sm font-medium transition",
+                                viewMode === 'matrix' ? "bg-neutral-800 text-white" : "text-neutral-400 hover:text-white"
                             )}
-                        </ul>
-
-                        {/* Status Badge */}
-                        {!plan.isActive && (
-                            <div className="absolute top-12 left-4">
-                                <span className="px-2 py-1 bg-neutral-700 text-neutral-300 text-xs rounded-md">
-                                    Inactivo
-                                </span>
-                            </div>
-                        )}
+                        >
+                            Matriz Detallada
+                        </button>
                     </div>
-                ))}
+                    {viewMode === 'cards' && (
+                        <button
+                            onClick={() => {
+                                setEditingPlan({ ...emptyPlan, id: "" } as Plan);
+                                setIsCreating(true);
+                            }}
+                            className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-500 rounded-xl font-medium transition"
+                        >
+                            <Plus className="w-5 h-5" />
+                            Nuevo Plan
+                        </button>
+                    )}
+                </div>
             </div>
 
-            {plans.length === 0 && (
+            {viewMode === 'matrix' ? (
+                <PlansMatrixTable />
+            ) : (
+                /* Plans Grid */
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {plans.map((plan, index) => (
+                        <div
+                            key={plan.id}
+                            draggable
+                            onDragStart={(e) => handleDragStart(e, plan.id)}
+                            onDragEnd={handleDragEnd}
+                            onDragOver={(e) => handleDragOver(e, plan.id)}
+                            onDragLeave={handleDragLeave}
+                            onDrop={(e) => handleDrop(e, plan.id)}
+                            className={cn(
+                                "bg-neutral-900/50 border rounded-2xl p-6 relative cursor-grab active:cursor-grabbing transition-all duration-200",
+                                plan.isActive ? "border-neutral-800" : "border-neutral-800/50 opacity-60",
+                                draggedPlan === plan.id && "opacity-50 scale-95",
+                                dragOverPlan === plan.id && draggedPlan !== plan.id && "border-violet-500 border-2 scale-105"
+                            )}
+                        >
+                            {/* Actions */}
+                            <div className="absolute top-4 right-4 flex gap-2">
+                                <button
+                                    onClick={() => {
+                                        setEditingPlan(plan);
+                                        setIsCreating(false);
+                                    }}
+                                    className="p-2 hover:bg-neutral-800 rounded-lg transition"
+                                >
+                                    <Edit2 className="w-4 h-4 text-neutral-400" />
+                                </button>
+                                <button
+                                    onClick={() => handleDelete(plan.id)}
+                                    className="p-2 hover:bg-neutral-800 rounded-lg transition"
+                                >
+                                    <Trash2 className="w-4 h-4 text-red-400" />
+                                </button>
+                            </div>
+
+                            {/* Order indicator - Drag handle */}
+                            <div className="absolute top-3 left-3 cursor-grab opacity-40 hover:opacity-100 transition">
+                                <GripVertical className="w-5 h-5 text-neutral-400" />
+                            </div>
+
+                            {/* Plan Info */}
+                            <div className="mb-4 pt-2">
+                                <h3 className="text-xl font-bold">{plan.displayName}</h3>
+                                <span className="text-xs text-neutral-500 uppercase tracking-wider">
+                                    {plan.name}
+                                </span>
+                                {plan.description && (
+                                    <p className="text-neutral-400 text-sm mt-1">{plan.description}</p>
+                                )}
+                            </div>
+
+                            {/* Price */}
+                            <div className="flex items-baseline gap-1 mb-4">
+                                <span className="text-3xl font-bold">
+                                    {plan.currency === "USD" ? "$" : plan.currency}
+                                    {plan.price}
+                                </span>
+                                <span className="text-neutral-400">/{plan.interval === "month" ? "mes" : "año"}</span>
+                            </div>
+
+                            {/* Users Count */}
+                            <div className="flex items-center gap-2 text-sm text-neutral-400 mb-4">
+                                <Users className="w-4 h-4" />
+                                <span>{plan._count?.users || 0} usuarios</span>
+                            </div>
+
+                            {/* Features */}
+                            <ul className="space-y-2">
+                                {plan.features.slice(0, 5).map((feature, index) => (
+                                    <li key={index} className="flex items-center gap-2 text-sm">
+                                        <Check className="w-4 h-4 text-green-400 shrink-0" />
+                                        <span className="text-neutral-300">{feature}</span>
+                                    </li>
+                                ))}
+                                {plan.features.length > 5 && (
+                                    <li className="text-sm text-neutral-500">
+                                        +{plan.features.length - 5} más...
+                                    </li>
+                                )}
+                            </ul>
+
+                            {/* Status Badge */}
+                            {!plan.isActive && (
+                                <div className="absolute top-12 left-4">
+                                    <span className="px-2 py-1 bg-neutral-700 text-neutral-300 text-xs rounded-md">
+                                        Inactivo
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {viewMode === 'cards' && plans.length === 0 && (
                 <div className="text-center py-20 text-neutral-400">
                     <DollarSign className="w-12 h-12 mx-auto mb-4 opacity-50" />
                     <p>No hay planes configurados</p>
@@ -481,243 +521,55 @@ export default function PlansPage() {
                                 </div>
                             </div>
 
-                            {/* Limits */}
+                            {/* Template Comparison */}
                             <div>
-                                <h3 className="text-sm font-medium text-neutral-300 mb-3">Límites</h3>
-                                <div className="grid grid-cols-2 gap-4 mb-4">
-                                    <div>
-                                        <label className="block text-xs text-neutral-400 mb-1">Máx. Proyectos</label>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            value={editingPlan.limits.maxProjects}
-                                            onChange={(e) => setEditingPlan({
-                                                ...editingPlan,
-                                                limits: { ...editingPlan.limits, maxProjects: parseInt(e.target.value) || 0 }
-                                            })}
-                                            className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-white text-sm focus:outline-none focus:border-violet-500"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs text-neutral-400 mb-1">Máx. Nubes conectadas</label>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            value={editingPlan.limits.maxCloudAccounts}
-                                            onChange={(e) => setEditingPlan({
-                                                ...editingPlan,
-                                                limits: { ...editingPlan.limits, maxCloudAccounts: parseInt(e.target.value) || 0 }
-                                            })}
-                                            className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-white text-sm focus:outline-none focus:border-violet-500"
-                                        />
-                                    </div>
-                                </div>
-
-                                <h4 className="text-xs text-neutral-400 mb-2">Descargas ZIP</h4>
-                                <div className="grid grid-cols-2 gap-4 mb-4">
-                                    <label className="flex items-center gap-2 cursor-pointer p-3 bg-neutral-800/50 rounded-lg">
-                                        <input
-                                            type="checkbox"
-                                            checked={editingPlan.limits.zipDownloadsEnabled}
-                                            onChange={(e) => setEditingPlan({
-                                                ...editingPlan,
-                                                limits: { ...editingPlan.limits, zipDownloadsEnabled: e.target.checked }
-                                            })}
-                                            className="w-4 h-4 rounded bg-neutral-800 border-neutral-700 text-violet-600 focus:ring-violet-500"
-                                        />
-                                        <span className="text-sm text-neutral-300">Habilitadas</span>
-                                    </label>
-                                    <div>
-                                        <label className="block text-xs text-neutral-400 mb-1">Descargas/mes (0 = ilimitado)</label>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            value={editingPlan.limits.maxZipDownloadsPerMonth ?? 0}
-                                            onChange={(e) => setEditingPlan({
-                                                ...editingPlan,
-                                                limits: {
-                                                    ...editingPlan.limits,
-                                                    maxZipDownloadsPerMonth: parseInt(e.target.value) || null
-                                                }
-                                            })}
-                                            className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-white text-sm focus:outline-none focus:border-violet-500"
-                                        />
-                                    </div>
-                                </div>
-
-                                <h4 className="text-xs text-neutral-400 mb-2">Funcionalidades</h4>
+                                <h3 className="text-sm font-medium text-neutral-300 mb-3">Configuración Base</h3>
+                                <p className="text-xs text-neutral-500 mb-4">
+                                    Selecciona una plantilla para inicializar todas las características técnicas (Matriz).
+                                    Podrás editarlas individualmente después.
+                                </p>
                                 <div className="grid grid-cols-2 gap-3">
-                                    <label className="flex items-center gap-2 cursor-pointer p-3 bg-neutral-800/50 rounded-lg">
-                                        <input
-                                            type="checkbox"
-                                            checked={editingPlan.limits.watermarkRemoval}
-                                            onChange={(e) => setEditingPlan({
-                                                ...editingPlan,
-                                                limits: { ...editingPlan.limits, watermarkRemoval: e.target.checked }
-                                            })}
-                                            className="w-4 h-4 rounded bg-neutral-800 border-neutral-700 text-violet-600 focus:ring-violet-500"
-                                        />
-                                        <span className="text-sm text-neutral-300">Sin marca de agua</span>
-                                    </label>
-                                    <label className="flex items-center gap-2 cursor-pointer p-3 bg-neutral-800/50 rounded-lg">
-                                        <input
-                                            type="checkbox"
-                                            checked={editingPlan.limits.customBranding}
-                                            onChange={(e) => setEditingPlan({
-                                                ...editingPlan,
-                                                limits: { ...editingPlan.limits, customBranding: e.target.checked }
-                                            })}
-                                            className="w-4 h-4 rounded bg-neutral-800 border-neutral-700 text-violet-600 focus:ring-violet-500"
-                                        />
-                                        <span className="text-sm text-neutral-300">Logo personalizado</span>
-                                    </label>
-                                    <label className="flex items-center gap-2 cursor-pointer p-3 bg-neutral-800/50 rounded-lg">
-                                        <input
-                                            type="checkbox"
-                                            checked={editingPlan.limits.passwordProtection}
-                                            onChange={(e) => setEditingPlan({
-                                                ...editingPlan,
-                                                limits: { ...editingPlan.limits, passwordProtection: e.target.checked }
-                                            })}
-                                            className="w-4 h-4 rounded bg-neutral-800 border-neutral-700 text-violet-600 focus:ring-violet-500"
-                                        />
-                                        <span className="text-sm text-neutral-300">Protección con contraseña</span>
-                                    </label>
-                                    <label className="flex items-center gap-2 cursor-pointer p-3 bg-neutral-800/50 rounded-lg">
-                                        <input
-                                            type="checkbox"
-                                            checked={editingPlan.limits.prioritySupport}
-                                            onChange={(e) => setEditingPlan({
-                                                ...editingPlan,
-                                                limits: { ...editingPlan.limits, prioritySupport: e.target.checked }
-                                            })}
-                                            className="w-4 h-4 rounded bg-neutral-800 border-neutral-700 text-violet-600 focus:ring-violet-500"
-                                        />
-                                        <span className="text-sm text-neutral-300">Soporte prioritario</span>
-                                    </label>
+                                    {['FREE', 'PRO', 'STUDIO', 'AGENCY'].map((template) => (
+                                        <button
+                                            key={template}
+                                            onClick={() => {
+                                                // @ts-ignore
+                                                const config = PLAN_DEFAULTS[template];
+                                                setEditingPlan({ ...editingPlan, config: config });
+                                            }}
+                                            className={cn(
+                                                "p-3 border rounded-xl text-left transition",
+                                                // @ts-ignore
+                                                JSON.stringify(editingPlan.config) === JSON.stringify(PLAN_DEFAULTS[template])
+                                                    ? "bg-violet-600/20 border-violet-500 ring-1 ring-violet-500"
+                                                    : "bg-neutral-800 border-neutral-700 hover:bg-neutral-750"
+                                            )}
+                                        >
+                                            <div className="font-bold text-sm text-neutral-200">{template}</div>
+                                            <div className="text-xs text-neutral-400 mt-1">
+                                                {template === 'FREE' && 'Básico personal'}
+                                                {template === 'PRO' && 'Profesional'}
+                                                {template === 'STUDIO' && 'Negocio'}
+                                                {template === 'AGENCY' && 'Equipos'}
+                                            </div>
+                                        </button>
+                                    ))}
                                 </div>
                             </div>
 
-                            {/* Content Restrictions */}
+                            {/* Features Display (Marketing) */}
                             <div>
-                                <h3 className="text-sm font-medium text-neutral-300 mb-3">Restricciones de Contenido</h3>
-                                <div className="grid grid-cols-2 gap-4 mb-4">
-                                    <div>
-                                        <label className="block text-xs text-neutral-400 mb-1">Máx. Imágenes/Galería (0 = ilimitado)</label>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            value={editingPlan.limits.maxImagesPerProject ?? 0}
-                                            onChange={(e) => setEditingPlan({
-                                                ...editingPlan,
-                                                limits: { ...editingPlan.limits, maxImagesPerProject: parseInt(e.target.value) || null }
-                                            })}
-                                            className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-white text-sm focus:outline-none focus:border-violet-500"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs text-neutral-400 mb-1">Máx. Links Sociales (-1 = ilimitado)</label>
-                                        <input
-                                            type="number"
-                                            min="-1"
-                                            value={editingPlan.limits.maxSocialLinks}
-                                            onChange={(e) => setEditingPlan({
-                                                ...editingPlan,
-                                                limits: { ...editingPlan.limits, maxSocialLinks: parseInt(e.target.value) }
-                                            })}
-                                            className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-white text-sm focus:outline-none focus:border-violet-500"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs text-neutral-400 mb-1">Máx. Bio (0 = ilimitado)</label>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            value={editingPlan.limits.bioMaxLength ?? 0}
-                                            onChange={(e) => setEditingPlan({
-                                                ...editingPlan,
-                                                limits: { ...editingPlan.limits, bioMaxLength: parseInt(e.target.value) || null }
-                                            })}
-                                            className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-white text-sm focus:outline-none focus:border-violet-500"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs text-neutral-400 mb-1">Ancho máx. descarga (px)</label>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            value={editingPlan.limits.lowResMaxWidth}
-                                            onChange={(e) => setEditingPlan({
-                                                ...editingPlan,
-                                                limits: { ...editingPlan.limits, lowResMaxWidth: parseInt(e.target.value) || 1200 }
-                                            })}
-                                            className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-white text-sm focus:outline-none focus:border-violet-500"
-                                        />
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-3 mb-4">
-                                    <label className="flex items-center gap-2 cursor-pointer p-3 bg-neutral-800/50 rounded-lg">
-                                        <input
-                                            type="checkbox"
-                                            checked={editingPlan.limits.videoEnabled}
-                                            onChange={(e) => setEditingPlan({
-                                                ...editingPlan,
-                                                limits: { ...editingPlan.limits, videoEnabled: e.target.checked }
-                                            })}
-                                            className="w-4 h-4 rounded bg-neutral-800 border-neutral-700 text-violet-600 focus:ring-violet-500"
-                                        />
-                                        <span className="text-sm text-neutral-300">Video habilitado</span>
-                                    </label>
-                                    <label className="flex items-center gap-2 cursor-pointer p-3 bg-neutral-800/50 rounded-lg">
-                                        <input
-                                            type="checkbox"
-                                            checked={editingPlan.limits.lowResDownloads}
-                                            onChange={(e) => setEditingPlan({
-                                                ...editingPlan,
-                                                limits: { ...editingPlan.limits, lowResDownloads: e.target.checked }
-                                            })}
-                                            className="w-4 h-4 rounded bg-neutral-800 border-neutral-700 text-violet-600 focus:ring-violet-500"
-                                        />
-                                        <span className="text-sm text-neutral-300">Solo baja resolución</span>
-                                    </label>
-                                    <label className="flex items-center gap-2 cursor-pointer p-3 bg-neutral-800/50 rounded-lg">
-                                        <input
-                                            type="checkbox"
-                                            checked={editingPlan.limits.lowResThumbnails}
-                                            onChange={(e) => setEditingPlan({
-                                                ...editingPlan,
-                                                limits: { ...editingPlan.limits, lowResThumbnails: e.target.checked }
-                                            })}
-                                            className="w-4 h-4 rounded bg-neutral-800 border-neutral-700 text-violet-600 focus:ring-violet-500"
-                                        />
-                                        <span className="text-sm text-neutral-300">Thumbnails baja calidad</span>
-                                    </label>
-                                </div>
-                                <div>
-                                    <label className="block text-xs text-neutral-400 mb-1">Marca de agua (vacío = ninguna)</label>
-                                    <input
-                                        type="text"
-                                        value={editingPlan.limits.watermarkText || ""}
-                                        onChange={(e) => setEditingPlan({
-                                            ...editingPlan,
-                                            limits: { ...editingPlan.limits, watermarkText: e.target.value || null }
-                                        })}
-                                        placeholder="ej: CloserLens"
-                                        className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-white text-sm focus:outline-none focus:border-violet-500"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Features */}
-                            <div>
-                                <h3 className="text-sm font-medium text-neutral-300 mb-3">Características</h3>
+                                <h3 className="text-sm font-medium text-neutral-300 mb-3 mt-6">Características (Marketing)</h3>
+                                <p className="text-xs text-neutral-500 mb-3">
+                                    Lista de puntos clave que se mostrarán en la tarjeta de precios.
+                                </p>
                                 <div className="flex gap-2 mb-3">
                                     <input
                                         type="text"
                                         value={newFeature}
                                         onChange={(e) => setNewFeature(e.target.value)}
                                         onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addFeature())}
-                                        placeholder="Agregar característica..."
+                                        placeholder="Agregar característica (ej: 10GB Almacenamiento)..."
                                         className="flex-1 px-4 py-2 bg-neutral-800 border border-neutral-700 rounded-xl text-white text-sm focus:outline-none focus:border-violet-500"
                                     />
                                     <button
@@ -743,7 +595,7 @@ export default function PlansPage() {
                             </div>
 
                             {/* Active Toggle */}
-                            <label className="flex items-center gap-3 cursor-pointer">
+                            <label className="flex items-center gap-3 cursor-pointer mt-6">
                                 <input
                                     type="checkbox"
                                     checked={editingPlan.isActive}

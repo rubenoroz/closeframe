@@ -25,6 +25,11 @@ export async function GET() {
                 specialty: true,
                 theme: true,
                 businessLogoScale: true,
+                coverImage: true,
+
+                callToAction: true,
+                bookingWindow: true,
+                bookingLeadTime: true,
                 // Perfil expandido
                 profileType: true,
                 headline: true,
@@ -35,16 +40,17 @@ export async function GET() {
                 // Plan y suscripción
                 planId: true,
                 planExpiresAt: true,
+                featureOverrides: true, // Allow client to see exceptions
                 plan: {
                     select: {
                         id: true,
                         name: true,
                         displayName: true,
-                        price: true,
                         currency: true,
                         interval: true,
-                        features: true,
-                        limits: true
+                        // features: true, // Legacy
+                        // limits: true, // Legacy
+                        config: true // New Modular Config
                     }
                 },
                 // Cuentas de nube conectadas
@@ -70,7 +76,15 @@ export async function GET() {
             }
         });
 
-        return new NextResponse(JSON.stringify({ user }), {
+        if (!user) {
+            return NextResponse.json({ error: "User not found" }, { status: 404 });
+        }
+
+        // Calculate Effective Config server-side
+        // Check types: user.plan?.config is Json value
+        const effectiveConfig = getEffectivePlanConfig(user.plan?.config || user.plan?.name, user.featureOverrides);
+
+        return new NextResponse(JSON.stringify({ user, effectiveConfig }), {
             status: 200,
             headers: {
                 'Content-Type': 'application/json',
@@ -83,6 +97,8 @@ export async function GET() {
     }
 }
 
+import { getPlanConfig, getEffectivePlanConfig } from "@/lib/plans.config";
+
 export async function PATCH(req: NextRequest) {
     try {
         const session = await auth();
@@ -92,6 +108,22 @@ export async function PATCH(req: NextRequest) {
 
         const body = await req.json();
         console.log("PATCH Settings Body:", JSON.stringify(body, null, 2));
+
+        // Fetch current user plan to enforce limits
+        const currentUser = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: {
+                plan: { select: { name: true } },
+                featureOverrides: true
+            }
+        });
+
+        const planConfig = getEffectivePlanConfig(currentUser?.plan?.name, currentUser?.featureOverrides);
+
+        // Enforce Bio Limit
+        if (body.bio && body.bio.length > planConfig.limits.bioMaxLength) {
+            body.bio = body.bio.slice(0, planConfig.limits.bioMaxLength);
+        }
 
         const {
             name,
@@ -104,6 +136,12 @@ export async function PATCH(req: NextRequest) {
             specialty,
             theme,
             businessLogoScale,
+            coverImage,
+
+            callToAction,
+            bookingWindow,
+            bookingLeadTime,
+
             // Perfil expandido
             profileType,
             headline,
@@ -125,6 +163,12 @@ export async function PATCH(req: NextRequest) {
                 specialty,
                 theme: theme || "dark",
                 businessLogoScale: businessLogoScale !== undefined ? Number(businessLogoScale) : 100,
+                coverImage,
+
+                callToAction,
+                bookingWindow: bookingWindow !== undefined ? Number(bookingWindow) : 4,
+                bookingLeadTime: bookingLeadTime !== undefined ? Number(bookingLeadTime) : 1,
+
                 // Perfil expandido
                 profileType,
                 headline,
@@ -145,6 +189,12 @@ export async function PATCH(req: NextRequest) {
                 specialty,
                 theme: theme || "dark",
                 businessLogoScale: businessLogoScale !== undefined ? Number(businessLogoScale) : 100,
+                coverImage,
+
+                callToAction,
+                bookingWindow: bookingWindow !== undefined ? Number(bookingWindow) : 4,
+                bookingLeadTime: bookingLeadTime !== undefined ? Number(bookingLeadTime) : 1,
+
                 // Perfil expandido
                 profileType,
                 headline,

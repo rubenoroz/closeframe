@@ -10,6 +10,7 @@ import GalleryLoaderGrid from "./GalleryLoaderGrid";
 interface Props {
     cloudAccountId: string;
     folderId: string;
+    projectId?: string;
     projectName?: string;
     downloadEnabled?: boolean;
     downloadJpgEnabled?: boolean;
@@ -276,9 +277,11 @@ export default function GalleryViewer({
                             <img src={studioLogo} alt={studioName} className="h-full w-auto object-contain max-w-none" />
                         </div>
                     ) : (
-                        <Camera className={`w-5 h-5 ${theme === 'light' ? 'text-emerald-600' : 'text-emerald-500'}`} />
+                        <>
+                            <Camera className={`w-5 h-5 ${theme === 'light' ? 'text-emerald-600' : 'text-emerald-500'}`} />
+                            <span className={`tracking-tight font-medium ${theme === 'light' ? 'text-neutral-900' : 'text-white'}`}>{studioName}</span>
+                        </>
                     )}
-                    <span className={`tracking-tight font-medium ${theme === 'light' ? 'text-neutral-900' : 'text-white'}`}>{studioName}</span>
                 </div>
                 <div className="flex items-center gap-3 pointer-events-auto">
                     {anyDownloadEnabled && selectedIds.size > 0 && (
@@ -563,7 +566,7 @@ function MediaCard({
                     )}
 
                     <img
-                        src={`/api/cloud/thumbnail?c=${cloudAccountId}&f=${item.id}&s=${thumbSize}`}
+                        src={`/api/cloud/thumbnail?c=${cloudAccountId}&f=${item.id}&s=${thumbSize}&t=${encodeURIComponent(item.thumbnailLink || '')}`}
                         alt={item.name}
                         className={`absolute inset-0 w-full h-full object-cover transform group-hover:scale-105 transition duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
                         onLoad={() => setLoaded(true)}
@@ -586,21 +589,14 @@ function MediaCard({
                     {/* Watermark overlay */}
                     {enableWatermark && loaded && !isVideo && (
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            {studioLogo ? (
-                                <div className="opacity-30 max-w-[40%] max-h-[40%]">
-                                    <img
-                                        src={studioLogo}
-                                        alt=""
-                                        className="w-full h-full object-contain drop-shadow-lg"
-                                        style={{ filter: 'grayscale(100%) brightness(200%) contrast(100%)' }}
-                                    />
-                                </div>
-                            ) : watermarkText ? (
-                                <div className="text-white/40 font-bold text-lg md:text-xl tracking-widest uppercase drop-shadow-lg select-none"
-                                    style={{ textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
-                                    {watermarkText}
-                                </div>
-                            ) : null}
+                            <div className="opacity-30 max-w-[40%] max-h-[40%]">
+                                <img
+                                    src={studioLogo || "/favicon-white.svg"}
+                                    alt="Watermark"
+                                    className="w-full h-full object-contain drop-shadow-lg"
+                                    style={{ filter: 'opacity(0.6)' }}
+                                />
+                            </div>
                         </div>
                     )}
                 </div>

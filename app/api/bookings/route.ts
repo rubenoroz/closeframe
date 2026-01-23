@@ -10,12 +10,17 @@ export async function GET() {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
+        const user = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: { plan: { select: { name: true } } }
+        });
+
         const bookings = await prisma.booking.findMany({
             where: { userId: session.user.id },
             orderBy: { date: "asc" },
         });
 
-        return NextResponse.json({ bookings });
+        return NextResponse.json({ bookings, plan: user?.plan?.name });
     } catch (error) {
         console.error("GET Bookings Error:", error);
         return NextResponse.json({ error: "Failed to fetch bookings" }, { status: 500 });
@@ -41,6 +46,7 @@ export async function POST(request: Request) {
             data: {
                 customerName,
                 customerEmail,
+                customerPhone: body.customerPhone || null,
                 date: new Date(date),
                 notes: notes || null,
                 status: status || "pending",
@@ -85,5 +91,47 @@ export async function DELETE(request: Request) {
     } catch (error) {
         console.error("DELETE Booking Error:", error);
         return NextResponse.json({ error: "Failed to delete booking" }, { status: 500 });
+    }
+}
+// PATCH: Update an existing booking
+export async function PATCH(request: Request) {
+    try {
+        const session = await auth();
+        if (!session?.user?.id) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const body = await request.json();
+        const { id, customerName, customerEmail, date, notes, status, customerPhone } = body;
+
+        if (!id) {
+            return NextResponse.json({ error: "Missing booking ID" }, { status: 400 });
+        }
+
+        // Verify ownership and existence
+        const existingBooking = await prisma.booking.findFirst({
+            where: { id, userId: session.user.id },
+        });
+
+        if (!existingBooking) {
+            return NextResponse.json({ error: "Booking not found" }, { status: 404 });
+        }
+
+        const updatedBooking = await prisma.booking.update({
+            where: { id },
+            data: {
+                customerName,
+                customerEmail,
+                customerPhone: customerPhone || null,
+                date: date ? new Date(date) : undefined,
+                notes: notes || null,
+                status,
+            },
+        });
+
+        return NextResponse.json({ booking: updatedBooking });
+    } catch (error) {
+        console.error("UPDATE Booking Error:", error);
+        return NextResponse.json({ error: "Failed to update booking" }, { status: 500 });
     }
 }

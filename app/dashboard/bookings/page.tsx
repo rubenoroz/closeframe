@@ -2,14 +2,16 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import BookingCalendar, { BookingEvent } from "@/components/booking/BookingCalendar";
-import { X, Loader2, CalendarDays, UserCircle, Mail, FileText, Check, Trash2 } from "lucide-react";
+import { X, Loader2, CalendarDays, UserCircle, Mail, FileText, Check, Trash2, Phone, MessageCircle, ExternalLink } from "lucide-react";
 import { Skeleton } from "@/components/Skeleton";
+import { cn } from "@/lib/utils";
 
 interface Booking {
     id: string;
     customerName: string;
     customerEmail: string;
     date: string;
+    customerPhone?: string;
     notes?: string;
     status: string;
 }
@@ -22,10 +24,20 @@ export default function BookingsPage() {
     const [formData, setFormData] = useState({
         customerName: "",
         customerEmail: "",
+        customerPhone: "",
         date: "",
         notes: "",
+        status: "pending",
     });
     const [saving, setSaving] = useState(false);
+    const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "confirmed">("all");
+    const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
+    const [userPlan, setUserPlan] = useState<string>("free");
+
+    const openWhatsApp = (phone: string) => {
+        const cleanPhone = phone.replace(/\D/g, ''); // Remove non-numeric chars
+        window.open(`https://wa.me/${cleanPhone}`, '_blank');
+    };
 
     const fetchBookings = useCallback(async () => {
         try {
@@ -33,6 +45,9 @@ export default function BookingsPage() {
             const data = await res.json();
             if (data.bookings) {
                 setBookings(data.bookings);
+            }
+            if (data.plan) {
+                setUserPlan(data.plan);
             }
         } catch (error) {
             console.error(error);
@@ -46,16 +61,19 @@ export default function BookingsPage() {
     }, [fetchBookings]);
 
     // Convert bookings to calendar events
-    const events: BookingEvent[] = bookings.map((b) => ({
-        id: b.id,
-        title: b.customerName,
-        start: new Date(b.date),
-        end: new Date(new Date(b.date).getTime() + 60 * 60 * 1000), // 1 hour duration
-        customerName: b.customerName,
-        customerEmail: b.customerEmail,
-        notes: b.notes,
-        status: b.status,
-    }));
+    const events: BookingEvent[] = bookings
+        .filter(b => filterStatus === "all" || b.status === filterStatus)
+        .map((b) => ({
+            id: b.id,
+            title: b.customerName,
+            start: new Date(b.date),
+            end: new Date(new Date(b.date).getTime() + 60 * 60 * 1000), // 1 hour duration
+            customerName: b.customerName,
+            customerEmail: b.customerEmail,
+            customerPhone: b.customerPhone,
+            notes: b.notes,
+            status: b.status,
+        }));
 
     // Helper to format date for datetime-local input (YYYY-MM-DDTHH:mm)
     const formatToLocalISO = (date: Date) => {
@@ -69,8 +87,10 @@ export default function BookingsPage() {
         setFormData({
             customerName: "",
             customerEmail: "",
+            customerPhone: "",
             date: formatToLocalISO(start),
             notes: "",
+            status: "confirmed", // Default to confirmed if created manually by admin
         });
         setShowModal(true);
     };
@@ -80,8 +100,10 @@ export default function BookingsPage() {
         setFormData({
             customerName: event.customerName || "",
             customerEmail: event.customerEmail || "",
+            customerPhone: event.customerPhone || "",
             date: formatToLocalISO(event.start),
             notes: event.notes || "",
+            status: event.status || "pending",
         });
         setShowModal(true);
     };
@@ -94,11 +116,14 @@ export default function BookingsPage() {
             // Ensure we send a proper ISO string that includes timezone info or is converted to UTC
             const submitData = {
                 ...formData,
-                date: new Date(formData.date).toISOString()
+                date: new Date(formData.date).toISOString(),
+                id: selectedEvent?.id // Include ID if editing
             };
 
+            const method = selectedEvent ? "PATCH" : "POST";
+
             const res = await fetch("/api/bookings", {
-                method: "POST",
+                method,
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(submitData),
             });
@@ -157,21 +182,164 @@ export default function BookingsPage() {
                 </div>
             </header>
 
-            <BookingCalendar
-                events={events}
-                onEventAdd={handleSlotSelect}
-                onEventSelect={handleEventSelect}
-            />
+            {/* Status Filters / Legend */}
+            <div className="flex flex-wrap gap-4 mb-6">
+                <button
+                    onClick={() => setFilterStatus("all")}
+                    className={`px-4 py-2 rounded-full text-sm border transition ${filterStatus === "all" ? "bg-white text-black border-white" : "bg-transparent text-neutral-400 border-neutral-700 hover:border-neutral-500"}`}
+                >
+                    Todos
+                </button>
+                <button
+                    onClick={() => setFilterStatus("pending")}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm border transition ${filterStatus === "pending" ? "bg-amber-500/10 text-amber-500 border-amber-500" : "bg-transparent text-neutral-400 border-neutral-700 hover:border-amber-500/50"}`}
+                >
+                    <div className="w-2 h-2 rounded-full bg-amber-500" /> Pendientes
+                </button>
+                <button
+                    onClick={() => setFilterStatus("confirmed")}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm border transition ${filterStatus === "confirmed" ? "bg-emerald-500/10 text-emerald-500 border-emerald-500" : "bg-transparent text-neutral-400 border-neutral-700 hover:border-emerald-500/50"}`}
+                >
+                    <div className="w-2 h-2 rounded-full bg-emerald-500" /> Confirmadas
+                </button>
+            </div>
 
-            {/* Floating Add Button for Mobile (touch events don't work well with react-big-calendar) */}
+            {/* View Toggle - PRO ONLY */}
+            {(userPlan === 'pro' || userPlan === 'studio') && (
+                <div className="flex bg-neutral-900 rounded-lg p-1 w-fit mb-6 border border-neutral-800">
+                    <button
+                        onClick={() => setViewMode("calendar")}
+                        className={cn(
+                            "px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2",
+                            viewMode === "calendar" ? "bg-neutral-800 text-white shadow-sm" : "text-neutral-400 hover:text-white"
+                        )}
+                    >
+                        <CalendarDays className="w-4 h-4" /> Calendario
+                    </button>
+                    <button
+                        onClick={() => setViewMode("list")}
+                        className={cn(
+                            "px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2",
+                            viewMode === "list" ? "bg-neutral-800 text-white shadow-sm" : "text-neutral-400 hover:text-white"
+                        )}
+                    >
+                        <FileText className="w-4 h-4" /> Lista
+                    </button>
+                </div>
+            )}
+
+            {viewMode === "calendar" ? (
+                <BookingCalendar
+                    events={events}
+                    onEventAdd={handleSlotSelect}
+                    onEventSelect={handleEventSelect}
+                />
+            ) : (
+                <div className="bg-neutral-900 border border-neutral-800 rounded-2xl overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="border-b border-neutral-800 bg-neutral-800/50">
+                                    <th className="p-4 text-xs font-medium text-neutral-400 uppercase tracking-widest">Estado</th>
+                                    <th className="p-4 text-xs font-medium text-neutral-400 uppercase tracking-widest">Fecha y Hora</th>
+                                    <th className="p-4 text-xs font-medium text-neutral-400 uppercase tracking-widest">Cliente</th>
+                                    <th className="p-4 text-xs font-medium text-neutral-400 uppercase tracking-widest">Contacto</th>
+                                    <th className="p-4 text-xs font-medium text-neutral-400 uppercase tracking-widest">Notas</th>
+                                    <th className="p-4 text-xs font-medium text-neutral-400 uppercase tracking-widest text-right">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-neutral-800">
+                                {events.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={6} className="p-8 text-center text-neutral-500 text-sm">
+                                            No hay reservas para mostrar.
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    events
+                                        .sort((a, b) => a.start.getTime() - b.start.getTime())
+                                        .map((event) => (
+                                            <tr key={event.id} className="hover:bg-neutral-800/30 transition-colors group">
+                                                <td className="p-4">
+                                                    <span className={cn(
+                                                        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border",
+                                                        event.status === "confirmed"
+                                                            ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                                                            : "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                                                    )}>
+                                                        <div className={cn("w-1.5 h-1.5 rounded-full", event.status === "confirmed" ? "bg-emerald-500" : "bg-amber-500")} />
+                                                        {event.status === "confirmed" ? "Confirmada" : "Pendiente"}
+                                                    </span>
+                                                </td>
+                                                <td className="p-4">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-sm font-medium text-white">
+                                                            {event.start.toLocaleDateString("es-ES", { weekday: 'short', day: 'numeric', month: 'short' })}
+                                                        </span>
+                                                        <span className="text-xs text-neutral-400">
+                                                            {event.start.toLocaleTimeString("es-ES", { hour: '2-digit', minute: '2-digit' })}
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                                <td className="p-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center text-neutral-400 shrink-0">
+                                                            <UserCircle className="w-4 h-4" />
+                                                        </div>
+                                                        <span className="text-sm font-medium text-neutral-200">{event.customerName}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="p-4">
+                                                    <div className="space-y-1">
+                                                        {event.customerEmail && (
+                                                            <a href={`mailto:${event.customerEmail}`} className="flex items-center gap-1.5 text-xs text-neutral-400 hover:text-white transition-colors">
+                                                                <Mail className="w-3 h-3" /> {event.customerEmail}
+                                                            </a>
+                                                        )}
+                                                        {event.customerPhone && (
+                                                            <a href={`https://wa.me/${event.customerPhone.replace(/\D/g, '')}`} target="_blank" className="flex items-center gap-1.5 text-xs text-neutral-400 hover:text-green-500 transition-colors">
+                                                                <MessageCircle className="w-3 h-3" /> {event.customerPhone}
+                                                            </a>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="p-4 max-w-[200px]">
+                                                    {event.notes ? (
+                                                        <p className="text-xs text-neutral-400 truncate" title={event.notes}>
+                                                            {event.notes}
+                                                        </p>
+                                                    ) : (
+                                                        <span className="text-xs text-neutral-600 italic">Sin notas</span>
+                                                    )}
+                                                </td>
+                                                <td className="p-4 text-right">
+                                                    <button
+                                                        onClick={() => handleEventSelect(event)}
+                                                        className="px-3 py-1.5 rounded-lg text-xs font-medium bg-neutral-800 hover:bg-neutral-700 text-white transition-colors border border-neutral-700"
+                                                    >
+                                                        Gestionar
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+
+            {/* Floating Add Button for Mobile */}
             <button
                 onClick={() => {
                     setSelectedEvent(null);
                     setFormData({
                         customerName: "",
                         customerEmail: "",
+                        customerPhone: "",
                         date: formatToLocalISO(new Date()),
                         notes: "",
+                        status: "confirmed",
                     });
                     setShowModal(true);
                 }}
@@ -214,13 +382,50 @@ export default function BookingsPage() {
                                 <label className="text-sm text-neutral-400 flex items-center gap-2 mb-2">
                                     <Mail className="w-4 h-4" /> Email
                                 </label>
-                                <input
-                                    type="email"
-                                    value={formData.customerEmail}
-                                    onChange={(e) => setFormData({ ...formData, customerEmail: e.target.value })}
-                                    className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition"
-                                    required
-                                />
+                                <div className="flex gap-2">
+                                    <input
+                                        type="email"
+                                        value={formData.customerEmail}
+                                        onChange={(e) => setFormData({ ...formData, customerEmail: e.target.value })}
+                                        className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition"
+                                        required
+                                    />
+                                    {selectedEvent && (
+                                        <a
+                                            href={`mailto:${formData.customerEmail}`}
+                                            target="_blank"
+                                            className="px-3 flex items-center justify-center bg-neutral-800 border border-neutral-700 rounded-xl hover:bg-neutral-700 text-white transition"
+                                            title="Enviar correo"
+                                        >
+                                            <ExternalLink className="w-4 h-4" />
+                                        </a>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="text-sm text-neutral-400 flex items-center gap-2 mb-2">
+                                    <Phone className="w-4 h-4" /> Teléfono
+                                </label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="tel"
+                                        value={formData.customerPhone}
+                                        onChange={(e) => setFormData({ ...formData, customerPhone: e.target.value })}
+                                        className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition"
+                                        placeholder="+52..."
+                                    />
+                                    {selectedEvent && formData.customerPhone && (
+                                        <button
+                                            type="button"
+                                            onClick={() => openWhatsApp(formData.customerPhone)}
+                                            className="px-3 flex items-center justify-center bg-green-600 rounded-xl hover:bg-green-500 text-white transition"
+                                            title="Abrir WhatsApp"
+                                        >
+                                            <MessageCircle className="w-4 h-4" />
+                                        </button>
+                                    )}
+                                </div>
                             </div>
 
                             <div>
@@ -234,6 +439,34 @@ export default function BookingsPage() {
                                     className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition"
                                     required
                                 />
+                            </div>
+
+                            <div>
+                                <label className="text-sm text-neutral-400 flex items-center gap-2 mb-2">
+                                    Estado
+                                </label>
+                                <div className="flex gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, status: "pending" })}
+                                        className={`flex-1 py-2 px-4 rounded-xl border text-sm transition ${formData.status === "pending"
+                                            ? "bg-amber-500/10 border-amber-500 text-amber-500"
+                                            : "border-neutral-700 text-neutral-400 hover:border-neutral-600"
+                                            }`}
+                                    >
+                                        Pendiente
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, status: "confirmed" })}
+                                        className={`flex-1 py-2 px-4 rounded-xl border text-sm transition ${formData.status === "confirmed"
+                                            ? "bg-emerald-500/10 border-emerald-500 text-emerald-500"
+                                            : "border-neutral-700 text-neutral-400 hover:border-neutral-600"
+                                            }`}
+                                    >
+                                        Confirmada
+                                    </button>
+                                </div>
                             </div>
 
                             <div>

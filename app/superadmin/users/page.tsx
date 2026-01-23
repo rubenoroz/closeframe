@@ -15,6 +15,7 @@ import {
     X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import FeatureDragManager from "./FeatureDragManager";
 
 interface User {
     id: string;
@@ -29,6 +30,7 @@ interface User {
         id: string;
         displayName: string;
     } | null;
+    featureOverrides?: any; // Add this
     _count: {
         projects: number;
         bookings: number;
@@ -154,8 +156,10 @@ export default function UsersPage() {
             const response = await fetch(`/api/superadmin/users?${params}`);
             const data = await response.json();
 
-            setUsers(data.users);
-            setPagination(data.pagination);
+            if (data.pagination) {
+                setUsers(data.users);
+                setPagination(data.pagination);
+            }
         } catch (error) {
             console.error("Error fetching users:", error);
         } finally {
@@ -167,7 +171,13 @@ export default function UsersPage() {
         try {
             const response = await fetch("/api/superadmin/plans");
             const data = await response.json();
-            setPlans(data);
+            if (data.plans) {
+                setPlans(data.plans);
+            } else if (Array.isArray(data)) {
+                setPlans(data);
+            } else {
+                setPlans([]);
+            }
         } catch (error) {
             console.error("Error fetching plans:", error);
         }
@@ -187,7 +197,7 @@ export default function UsersPage() {
         fetchUsers();
     };
 
-    const handleUpdateUser = async (updates: { role?: string; planId?: string | null }) => {
+    const handleUpdateUser = async (updates: { role?: string; planId?: string | null, featureOverrides?: any }) => {
         if (!editingUser) return;
 
         setSaving(true);
@@ -499,6 +509,15 @@ export default function UsersPage() {
                             </div>
                         </div>
 
+                        {/* Feature Overrides Drag & Drop */}
+                        <div className="p-6 border-t border-neutral-800">
+                            <FeatureDragManager
+                                userPlanId={editingUser.planId}
+                                currentOverrides={editingUser.featureOverrides || {}}
+                                onChange={(newOverrides) => setEditingUser({ ...editingUser, featureOverrides: newOverrides })}
+                            />
+                        </div>
+
                         <div className="flex justify-end gap-3 p-6 border-t border-neutral-800">
                             <button
                                 onClick={() => setEditingUser(null)}
@@ -509,7 +528,8 @@ export default function UsersPage() {
                             <button
                                 onClick={() => handleUpdateUser({
                                     role: editingUser.role,
-                                    planId: editingUser.planId
+                                    planId: editingUser.planId,
+                                    featureOverrides: editingUser.featureOverrides
                                 })}
                                 disabled={saving}
                                 className="px-4 py-2 bg-violet-600 hover:bg-violet-500 rounded-xl font-medium transition disabled:opacity-50 flex items-center gap-2"

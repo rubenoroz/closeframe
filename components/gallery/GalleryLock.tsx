@@ -8,9 +8,11 @@ interface GalleryLockProps {
     slug: string;
     projectName: string;
     onUnlock: () => void;
+    logo?: string | null;
+    studioName?: string;
 }
 
-export default function GalleryLock({ slug, projectName, onUnlock }: GalleryLockProps) {
+export default function GalleryLock({ slug, projectName, onUnlock, logo, studioName = "CloserLens Gallery" }: GalleryLockProps) {
     const [password, setPassword] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
@@ -94,10 +96,14 @@ export default function GalleryLock({ slug, projectName, onUnlock }: GalleryLock
                 </form>
 
                 <div className="mt-16 flex justify-center opacity-30">
-                    <div className="flex items-center gap-2 text-xs">
-                        <Camera className="w-4 h-4" />
-                        <span className="tracking-widest uppercase">Closeframe Gallery</span>
-                    </div>
+                    {logo ? (
+                        <img src={logo} alt={studioName} className="h-8 w-auto object-contain grayscale" />
+                    ) : (
+                        <div className="flex items-center gap-2 text-xs">
+                            <Camera className="w-4 h-4" />
+                            <span className="tracking-widest uppercase">{studioName}</span>
+                        </div>
+                    )}
                 </div>
             </motion.div>
         </div>
