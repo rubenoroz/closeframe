@@ -88,7 +88,7 @@ export default async function PublicGalleryPage({ params }: Props) {
             videoEnabled: effectiveConfig.features?.videoGallery ?? false,
             lowResDownloads: effectiveConfig.features?.lowResDownloads ?? false,
             lowResThumbnails: effectiveConfig.features?.lowResThumbnails ?? false,
-            zipDownloadsEnabled: effectiveConfig.features?.zipDownloadsEnabled ?? false,
+            zipDownloadsEnabled: effectiveConfig.features?.zipDownloadsEnabled ?? true,
             lowResMaxWidth: effectiveConfig.limits?.lowResMaxWidth ?? 0,
             watermarkText: effectiveConfig.limits?.watermarkText ?? null,
             hideBranding: effectiveConfig.features?.hideBranding ?? false,

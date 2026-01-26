@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { google } from "googleapis";
 import { prisma } from "@/lib/db";
+import sharp from "sharp";
 
 /**
  * Thumbnail Proxy for Google Drive
  * Fetches thumbnails server-side to avoid CORS/auth issues
+ * Falls back to Sharp-based resizing if Google thumbnail fails
  * 
  * Query params:
  *   - c: cloudAccountId
@@ -51,11 +53,10 @@ export async function GET(req: NextRequest) {
             });
         }
 
+        const drive = google.drive({ version: "v3", auth });
         let thumbnailUrl = providedThumbnail;
 
         if (!thumbnailUrl) {
-            const drive = google.drive({ version: "v3", auth });
-
             // Get file metadata with thumbnail
             const fileMeta = await drive.files.get({
                 fileId: fileId,
@@ -82,17 +83,44 @@ export async function GET(req: NextRequest) {
         if (!response.ok) {
             // Fallback: try direct fetch without auth (some thumbnails are public)
             const fallbackResponse = await fetch(thumbnailUrl);
-            if (!fallbackResponse.ok) {
-                return NextResponse.json({ error: "Thumbnail not available" }, { status: 404 });
+            if (fallbackResponse.ok) {
+                const buffer = await fallbackResponse.arrayBuffer();
+                return new NextResponse(buffer, {
+                    headers: {
+                        "Content-Type": fallbackResponse.headers.get("Content-Type") || "image/jpeg",
+                        "Cache-Control": "public, max-age=86400", // Cache 24h
+                    }
+                });
             }
 
-            const buffer = await fallbackResponse.arrayBuffer();
-            return new NextResponse(buffer, {
-                headers: {
-                    "Content-Type": fallbackResponse.headers.get("Content-Type") || "image/jpeg",
-                    "Cache-Control": "public, max-age=86400", // Cache 24h
-                }
-            });
+            // Final fallback: Download original and resize with Sharp
+            console.log(`[Thumbnail] Google thumbnail failed for ${fileId}, using Sharp fallback`);
+            try {
+                const originalFile = await drive.files.get(
+                    { fileId: fileId, alt: "media" },
+                    { responseType: "arraybuffer" }
+                );
+
+                const resized = await sharp(Buffer.from(originalFile.data as ArrayBuffer))
+                    .resize({
+                        width: parseInt(size),
+                        height: parseInt(size),
+                        fit: 'inside',
+                        withoutEnlargement: true
+                    })
+                    .toFormat('webp', { quality: 80 })
+                    .toBuffer();
+
+                return new NextResponse(new Uint8Array(resized), {
+                    headers: {
+                        "Content-Type": "image/webp",
+                        "Cache-Control": "public, max-age=86400",
+                    }
+                });
+            } catch (sharpError) {
+                console.error("Sharp fallback failed:", sharpError);
+                return NextResponse.json({ error: "Thumbnail not available" }, { status: 404 });
+            }
         }
 
         const buffer = await response.arrayBuffer();

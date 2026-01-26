@@ -528,6 +528,11 @@ function MediaCard({
     // Use eager loading for first 8 items (likely in viewport)
     const loadingStrategy = index < 8 ? "eager" : "lazy";
 
+    // Debug logging for selection visibility
+    // useEffect(() => {
+    //    if (index === 0) console.log("MediaCard[0] props:", { downloadEnabled, selectionEnabled, isSelected });
+    // }, [downloadEnabled, selectionEnabled, isSelected, index]);
+
     return (
         <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -601,23 +606,7 @@ function MediaCard({
                     )}
                 </div>
 
-                {/* Selection Checkbox */}
-                {downloadEnabled && selectionEnabled && (
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onSelect();
-                        }}
-                        className={cn(
-                            "absolute top-3 right-3 p-1.5 rounded-full backdrop-blur-md transition-all duration-300 z-10 shadow-lg border",
-                            isSelected
-                                ? "bg-emerald-500 text-white border-emerald-400"
-                                : "bg-black/40 text-white/60 border-white/10 opacity-0 group-hover:opacity-100"
-                        )}
-                    >
-                        {isSelected ? <CheckCircle2 className="w-4 h-4" /> : <Circle className="w-4 h-4" />}
-                    </button>
-                )}
+
 
                 {/* Overlay Actions (Hover) */}
                 <div
@@ -632,6 +621,25 @@ function MediaCard({
                 <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition duration-300 pointer-events-none">
                     <span className="text-xs text-neutral-200 truncate block">{item.name}</span>
                 </div>
+
+                {/* Selection Checkbox - Moved to end for stacking context safe-guard */}
+                {downloadEnabled && selectionEnabled && (
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onSelect();
+                        }}
+                        className={cn(
+                            "absolute top-3 right-3 p-1.5 rounded-full backdrop-blur-md transition-all duration-300 z-50 shadow-lg border",
+                            isSelected
+                                ? "bg-emerald-500 text-white border-emerald-400 opacity-100 scale-100"
+                                : "bg-black/40 text-white/80 border-white/20 opacity-100 scale-100 hover:bg-black/60"
+                        )}
+                        style={{ opacity: 1 }} // Always force visibility
+                    >
+                        {isSelected ? <CheckCircle2 className="w-4 h-4" /> : <Circle className="w-4 h-4" />}
+                    </button>
+                )}
             </div>
         </motion.div>
     );
