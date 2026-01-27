@@ -16,6 +16,8 @@ export interface CloudFile {
         height: number;
         durationMillis: number;
     };
+    width?: number;
+    height?: number;
     formats?: {
         web: string;
         jpg?: string | null;
