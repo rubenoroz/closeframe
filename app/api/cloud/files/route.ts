@@ -60,7 +60,7 @@ export async function GET(request: Request) {
         console.log(`[DEBUG] Subfolders found: ${subfolders.length}`, subfolders.map((f: any) => f.name));
 
         // Check if there's a "Fotografias" subfolder - if so, use it as the actual source
-        const fotografiasFolder = subfolders.find(f => f.name.toLowerCase() === "fotografias");
+        const fotografiasFolder = subfolders.find((f: any) => f.name.toLowerCase() === "fotografias");
         if (fotografiasFolder) {
             folderId = fotografiasFolder.id;
             // @ts-ignore
@@ -68,22 +68,22 @@ export async function GET(request: Request) {
         }
 
         // Photo proxies
-        const webjpgFolder = subfolders.find(f => f.name.toLowerCase() === "webjpg");
-        const jpgFolder = subfolders.find(f => f.name.toLowerCase() === "jpg");
-        const rawPhotoFolder = subfolders.find(f => f.name.toLowerCase() === "raw");
+        const webjpgFolder = subfolders.find((f: any) => f.name.toLowerCase() === "webjpg");
+        const jpgFolder = subfolders.find((f: any) => f.name.toLowerCase() === "jpg");
+        const rawPhotoFolder = subfolders.find((f: any) => f.name.toLowerCase() === "raw");
 
         console.log("[DEBUG] WebJPG folder detected:", webjpgFolder ? webjpgFolder.id : "NO");
 
         // Video proxies (support both old and new naming: webmp4/preview, hd/baja, raw/alta)
-        const webmp4Folder = subfolders.find(f =>
+        const webmp4Folder = subfolders.find((f: any) =>
             f.name.toLowerCase() === "webmp4" || f.name.toLowerCase() === "preview"
         );
-        const hdFolder = subfolders.find(f =>
+        const hdFolder = subfolders.find((f: any) =>
             f.name.toLowerCase() === "hd" || f.name.toLowerCase() === "baja"
         );
-        const rawVideoFolder = subfolders.find(f =>
+        const rawVideoFolder = subfolders.find((f: any) =>
             f.name.toLowerCase() === "alta"
-        ) || subfolders.find(f => f.name.toLowerCase() === "raw");
+        ) || subfolders.find((f: any) => f.name.toLowerCase() === "raw");
 
         // 2. Decide where to pull main files from
         // For photos: prefer webjpg, fallback to root
@@ -119,14 +119,14 @@ export async function GET(request: Request) {
             const rawVideoFiles = rawVideoFolder ? await provider.listFiles(rawVideoFolder.id, authClient) : [];
 
             // Create maps for photos
-            const jpgMap = new Map(fullJpgFiles.map(f => [f.name.split('.').slice(0, -1).join('.').toLowerCase(), f.id]));
-            const rawPhotoMap = new Map(rawPhotoFiles.map(f => [f.name.split('.').slice(0, -1).join('.').toLowerCase(), { id: f.id, name: f.name }]));
+            const jpgMap = new Map(fullJpgFiles.map((f: any) => [f.name.split('.').slice(0, -1).join('.').toLowerCase(), f.id]));
+            const rawPhotoMap = new Map(rawPhotoFiles.map((f: any) => [f.name.split('.').slice(0, -1).join('.').toLowerCase(), { id: f.id, name: f.name }]));
 
             // Create maps for videos
-            const hdVideoMap = new Map(hdVideoFiles.map(f => [f.name.split('.').slice(0, -1).join('.').toLowerCase(), f.id]));
-            const rawVideoMap = new Map(rawVideoFiles.map(f => [f.name.split('.').slice(0, -1).join('.').toLowerCase(), { id: f.id, name: f.name }]));
+            const hdVideoMap = new Map(hdVideoFiles.map((f: any) => [f.name.split('.').slice(0, -1).join('.').toLowerCase(), f.id]));
+            const rawVideoMap = new Map(rawVideoFiles.map((f: any) => [f.name.split('.').slice(0, -1).join('.').toLowerCase(), { id: f.id, name: f.name }]));
 
-            const enrichedFiles = mainFiles.map(file => {
+            const enrichedFiles = mainFiles.map((file: any) => {
                 const baseKey = file.name.split('.').slice(0, -1).join('.').toLowerCase();
                 const isVideo = file.mimeType?.startsWith('video/');
 
@@ -161,7 +161,7 @@ export async function GET(request: Request) {
             if (fileOrder && Array.isArray(fileOrder) && fileOrder.length > 0) {
                 const orderMap = new Map(fileOrder.map((id, index) => [id, index]));
 
-                finalFiles.sort((a, b) => {
+                finalFiles.sort((a: any, b: any) => {
                     const indexA = orderMap.has(a.id) ? orderMap.get(a.id)! : 999999;
                     const indexB = orderMap.has(b.id) ? orderMap.get(b.id)! : 999999;
                     return indexA - indexB;
