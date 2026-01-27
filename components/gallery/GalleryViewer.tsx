@@ -27,6 +27,13 @@ interface CloudFile {
         height: number;
         durationMillis: number;
     };
+    formats?: {
+        raw?: {
+            id: string;
+            name: string;
+        };
+        [key: string]: any;
+    };
 }
 
 interface Props {
