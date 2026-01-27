@@ -9,6 +9,26 @@ import GalleryLoaderGrid from "./GalleryLoaderGrid";
 
 // ... imports ...
 
+// CloudFile type definition
+interface CloudFile {
+    id: string;
+    name: string;
+    mimeType: string;
+    thumbnailLink?: string;
+    webContentLink?: string;
+    size?: string;
+    modifiedTime?: string;
+    imageMediaMetadata?: {
+        width: number;
+        height: number;
+    };
+    videoMediaMetadata?: {
+        width: number;
+        height: number;
+        durationMillis: number;
+    };
+}
+
 interface Props {
     cloudAccountId: string;
     folderId: string;
