@@ -147,8 +147,33 @@ export async function PATCH(req: NextRequest) {
             headline,
             location,
             socialLinks,
-            username
+            username: rawUsername
         } = body;
+
+        // Normalizar username: vacío => null
+        const username = rawUsername && rawUsername.trim() !== '' ? rawUsername.trim() : null;
+
+        // Validar que el username no esté en uso por otro usuario
+        if (username) {
+            console.log("Validando username:", username, "para usuario:", session.user.id);
+
+            const existingUser = await prisma.user.findFirst({
+                where: {
+                    username: username,
+                    NOT: { id: session.user.id }
+                },
+                select: { id: true }
+            });
+
+            console.log("Usuario existente con ese username:", existingUser);
+
+            if (existingUser) {
+                return NextResponse.json({
+                    error: "Este nombre de usuario ya está en uso",
+                    field: "username"
+                }, { status: 409 });
+            }
+        }
 
         const updatedUser = await prisma.user.upsert({
             where: { id: session.user.id },

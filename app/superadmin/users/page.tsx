@@ -202,21 +202,30 @@ export default function UsersPage() {
 
         setSaving(true);
         try {
+            const payload = {
+                userId: editingUser.id,
+                ...updates
+            };
+            console.log("[SuperAdmin] Updating user with payload:", payload);
+
             const response = await fetch("/api/superadmin/users", {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    userId: editingUser.id,
-                    ...updates
-                })
+                body: JSON.stringify(payload)
             });
+
+            const data = await response.json();
+            console.log("[SuperAdmin] Response:", response.status, data);
 
             if (response.ok) {
                 await fetchUsers();
                 setEditingUser(null);
+            } else {
+                alert(`Error al actualizar: ${data.error || 'Error desconocido'}`);
             }
         } catch (error) {
             console.error("Error updating user:", error);
+            alert("Error de conexión al actualizar usuario");
         } finally {
             setSaving(false);
         }

@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { Skeleton } from "@/components/Skeleton";
 import DriveFilePicker from "@/components/DriveFilePicker";
+import FocalPointPicker from "@/components/FocalPointPicker";
 
 interface Project {
     id: string;
@@ -29,9 +30,13 @@ interface Project {
     headerFontFamily?: string;
     headerColor?: string;
     headerBackground?: string;
+    headerImage?: string;
+    headerImageFocus?: string;
     public: boolean;
     layoutType: string;
     coverImage?: string;
+    coverImageFocus?: string;
+    rootFolderId: string;
     cloudAccountId: string;
     cloudAccount: {
         email: string;
@@ -63,6 +68,7 @@ export default function DashboardPage() {
         galleryCover?: boolean;
     } | null>(null);
     const [showCoverPicker, setShowCoverPicker] = useState(false);
+    const [showHeaderImagePicker, setShowHeaderImagePicker] = useState(false);
     const isLight = theme === "light";
     const router = useRouter();
 
@@ -82,6 +88,9 @@ export default function DashboardPage() {
         headerFontFamily: "Inter",
         headerColor: "#FFFFFF",
         headerBackground: "dark",
+        headerImage: "",
+        headerImageFocus: "50,50",
+        coverImageFocus: "50,50",
         public: true,
     });
 
@@ -102,19 +111,27 @@ export default function DashboardPage() {
                     setProfileViews(settingsData.user.profileViews || 0);
                     setUsername(settingsData.user.username || null);
                     // Use Effective Config from Server (Modular System)
-                    if (settingsData.effectiveConfig) {
+                    if (settingsData.effectiveConfig?.features) {
+                        const features = settingsData.effectiveConfig.features;
                         setPlanLimits({
-                            videoEnabled: settingsData.effectiveConfig.features?.videoGallery,
-                            lowResDownloads: settingsData.effectiveConfig.features?.lowResDownloads,
-                            passwordProtection: settingsData.effectiveConfig.features?.passwordProtection,
-                            galleryCover: settingsData.effectiveConfig.features?.galleryCover
+                            // New names OR legacy names from DB
+                            videoEnabled: features.videoGallery ?? features.videoEnabled ?? false,
+                            lowResDownloads: features.lowResDownloads ?? false,
+                            passwordProtection: features.passwordProtection ?? true,
+                            galleryCover: features.galleryCover ?? features.coverImage ?? false
                         });
                     } else if (settingsData.user.plan?.limits) {
                         try {
                             const limits = typeof settingsData.user.plan.limits === 'string'
                                 ? JSON.parse(settingsData.user.plan.limits)
                                 : settingsData.user.plan.limits;
-                            setPlanLimits(limits);
+                            // Map legacy field names from DB to what dashboard expects
+                            setPlanLimits({
+                                videoEnabled: limits.videoEnabled ?? false,
+                                lowResDownloads: limits.lowResDownloads ?? false,
+                                passwordProtection: limits.passwordProtection ?? true,
+                                galleryCover: limits.coverImage ?? limits.galleryCover ?? false
+                            });
                         } catch { }
                     }
                 }
@@ -150,7 +167,10 @@ export default function DashboardPage() {
             headerFontFamily: project.headerFontFamily || "Inter",
             headerColor: project.headerColor || "#FFFFFF",
             headerBackground: project.headerBackground || "dark",
+            headerImage: project.headerImage || "",
+            headerImageFocus: project.headerImageFocus || "50,50",
             coverImage: project.coverImage || "",
+            coverImageFocus: project.coverImageFocus || "50,50",
             public: project.public !== false,
         });
         setActiveMenu(null);
@@ -181,6 +201,10 @@ export default function DashboardPage() {
                     headerFontFamily: planLimits?.lowResDownloads ? "Inter" : editData.headerFontFamily,
                     headerColor: editData.headerColor,
                     headerBackground: editData.headerBackground,
+                    headerImage: editData.headerImage,
+                    headerImageFocus: editData.headerImageFocus,
+                    coverImage: editData.coverImage,
+                    coverImageFocus: editData.coverImageFocus,
                     public: editData.public,
                 })
             });
@@ -690,21 +714,19 @@ export default function DashboardPage() {
                                             </div>
 
                                             {editData.coverImage ? (
-                                                <div className="relative aspect-video rounded-xl overflow-hidden border border-neutral-800 group">
-                                                    <img
-                                                        src={`/api/cloud/thumbnail?fileId=${editData.coverImage}&cloudId=${selectedProject?.cloudAccountId}`}
-                                                        alt="Cover"
-                                                        className="w-full h-full object-cover"
+                                                <div className="space-y-3">
+                                                    <FocalPointPicker
+                                                        imageUrl={`/api/cloud/thumbnail?c=${selectedProject?.cloudAccountId}&f=${editData.coverImage}&s=800`}
+                                                        value={editData.coverImageFocus || "50,50"}
+                                                        onChange={(value) => setEditData({ ...editData, coverImageFocus: value })}
                                                     />
-                                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setShowCoverPicker(true)}
-                                                            className="px-3 py-1.5 bg-white text-black text-xs font-medium rounded-lg"
-                                                        >
-                                                            Cambiar Imagen
-                                                        </button>
-                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowCoverPicker(true)}
+                                                        className="text-xs text-neutral-400 hover:text-white transition"
+                                                    >
+                                                        Cambiar imagen
+                                                    </button>
                                                 </div>
                                             ) : (
                                                 <button
@@ -745,6 +767,53 @@ export default function DashboardPage() {
                                                 ☀️ Claro
                                             </button>
                                         </div>
+                                    </div>
+
+                                    {/* Imagen de fondo del header */}
+                                    <div className="mt-4">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider block">
+                                                Imagen de Fondo del Header
+                                            </label>
+                                            {editData.headerImage && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setEditData({ ...editData, headerImage: "" })}
+                                                    className="text-[10px] text-red-500 hover:text-red-400 font-medium"
+                                                >
+                                                    Eliminar
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {editData.headerImage ? (
+                                            <div className="space-y-3">
+                                                <FocalPointPicker
+                                                    imageUrl={`/api/cloud/thumbnail?c=${selectedProject?.cloudAccountId}&f=${editData.headerImage}&s=800`}
+                                                    value={editData.headerImageFocus || "50,50"}
+                                                    onChange={(value) => setEditData({ ...editData, headerImageFocus: value })}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowHeaderImagePicker(true)}
+                                                    className="text-xs text-neutral-400 hover:text-white transition"
+                                                >
+                                                    Cambiar imagen
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowHeaderImagePicker(true)}
+                                                className="w-full h-20 border border-dashed border-neutral-700 hover:border-neutral-500 rounded-xl flex flex-col items-center justify-center gap-2 text-neutral-500 hover:text-neutral-300 transition-colors"
+                                            >
+                                                <div className="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center">
+                                                    <ImageIcon className="w-4 h-4" />
+                                                </div>
+                                                <span className="text-xs">Seleccionar imagen de Drive</span>
+                                            </button>
+                                        )}
+                                        <p className="text-[9px] text-neutral-500 mt-1">Se mostrará como fondo del header de la galería</p>
                                     </div>
                                 </div>
 
@@ -977,6 +1046,34 @@ export default function DashboardPage() {
                 )
                 }
             </div >
+
+            {/* Cover Image Picker Modal */}
+            {showCoverPicker && selectedProject && (
+                <DriveFilePicker
+                    cloudAccountId={selectedProject.cloudAccountId}
+                    folderId={selectedProject.rootFolderId}
+                    selectedFileId={editData.coverImage || null}
+                    onSelect={(fileId) => {
+                        setEditData({ ...editData, coverImage: fileId });
+                        setShowCoverPicker(false);
+                    }}
+                    onCancel={() => setShowCoverPicker(false)}
+                />
+            )}
+
+            {/* Header Image Picker Modal */}
+            {showHeaderImagePicker && selectedProject && (
+                <DriveFilePicker
+                    cloudAccountId={selectedProject.cloudAccountId}
+                    folderId={selectedProject.rootFolderId}
+                    selectedFileId={editData.headerImage || null}
+                    onSelect={(fileId) => {
+                        setEditData({ ...editData, headerImage: fileId });
+                        setShowHeaderImagePicker(false);
+                    }}
+                    onCancel={() => setShowHeaderImagePicker(false)}
+                />
+            )}
         </div >
     );
 }

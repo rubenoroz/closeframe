@@ -191,7 +191,8 @@ export async function PATCH(request: NextRequest) {
             downloadEnabled, downloadJpgEnabled, downloadRawEnabled,
             downloadVideoHdEnabled, downloadVideoRawEnabled,
             enableVideoTab, showInProfile, enableWatermark,
-            headerTitle, headerFontFamily, headerColor, headerBackground,
+            headerTitle, headerFontFamily, headerColor, headerBackground, headerImage, headerImageFocus,
+            coverImage, coverImageFocus,
             layoutType, public: isPublic
         } = body;
 
@@ -223,6 +224,10 @@ export async function PATCH(request: NextRequest) {
         if (headerFontFamily !== undefined) updateData.headerFontFamily = headerFontFamily;
         if (headerColor !== undefined) updateData.headerColor = headerColor;
         if (headerBackground !== undefined) updateData.headerBackground = headerBackground;
+        if (headerImage !== undefined) updateData.headerImage = headerImage;
+        if (headerImageFocus !== undefined) updateData.headerImageFocus = headerImageFocus;
+        if (coverImage !== undefined) updateData.coverImage = coverImage;
+        if (coverImageFocus !== undefined) updateData.coverImageFocus = coverImageFocus;
         if (layoutType !== undefined) updateData.layoutType = layoutType;
 
         // Handle public status based on password

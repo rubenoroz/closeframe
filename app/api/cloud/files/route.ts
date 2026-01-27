@@ -155,9 +155,19 @@ export async function GET(request: Request) {
                 rawVideo: !!rawVideoFolder,
             }
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error("File List Error:", error);
-        return NextResponse.json({ error: "Failed to list files", details: String(error) }, { status: 500 });
+        console.error("Error details:", {
+            message: error?.message,
+            code: error?.code,
+            status: error?.status,
+            errors: error?.errors
+        });
+        return NextResponse.json({
+            error: "Failed to list files",
+            details: error?.message || String(error),
+            code: error?.code
+        }, { status: 500 });
     }
 }
 

@@ -25,7 +25,10 @@ interface PublicGalleryClientProps {
         headerFontFamily?: string | null;
         headerColor?: string | null;
         headerBackground?: string | null;
+        headerImage?: string | null;
+        headerImageFocus?: string | null;
         coverImage?: string | null;
+        coverImageFocus?: string | null;
         videoFolderId?: string | null;
         enableVideoTab?: boolean | null;
         enableWatermark?: boolean;
@@ -92,6 +95,7 @@ export default function PublicGalleryClient({ project }: PublicGalleryClientProp
         return (
             <GalleryCover
                 coverImage={project.coverImage}
+                coverImageFocus={project.coverImageFocus}
                 logo={project.user?.businessLogo}
                 studioName={project.user?.businessName || "CloserLens Gallery"}
                 projectName={project.name}
@@ -135,6 +139,9 @@ export default function PublicGalleryClient({ project }: PublicGalleryClientProp
                 color={headerColor}
                 background={headerBackground}
                 logo={project.user?.businessLogo}
+                coverImage={project.headerImage}
+                coverImageFocus={project.headerImageFocus}
+                cloudAccountId={project.cloudAccountId}
             />
 
             {/* Media Tabs (Photos/Videos) - hidden until mounted to avoid flash */}

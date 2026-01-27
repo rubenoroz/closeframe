@@ -130,6 +130,7 @@ model Project {
   slug              String       @unique
   description       String?
   coverImage        String?
+  coverImageFocus   String?      @default("50,50") // Focal point "x,y" as percentage
   cloudAccountId    String
   rootFolderId      String
   passwordProtected Boolean      @default(false)
@@ -150,6 +151,8 @@ model Project {
   headerFontFamily  String       @default("Inter")
   headerColor       String       @default("#FFFFFF")
   headerBackground  String       @default("dark") // "dark" | "light"
+  headerImage       String?      // Image ID for header background
+  headerImageFocus  String?      @default("50,50") // Focal point "x,y" as percentage
   
   // Video Tab
   videoFolderId     String?      // Drive folder ID for videos

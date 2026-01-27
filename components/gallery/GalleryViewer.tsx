@@ -292,12 +292,6 @@ export default function GalleryViewer({
                             <X className="w-3 h-3" /> Limpiar ({selectedIds.size})
                         </button>
                     )}
-                    <span className={`text-sm tracking-tight backdrop-blur-md px-3 py-1 rounded-full border transition-colors ${theme === 'light'
-                        ? 'bg-neutral-100 text-neutral-600 border-neutral-200'
-                        : 'bg-black/30 text-neutral-400 border-white/10'
-                        }`}>
-                        {projectName}
-                    </span>
                 </div>
             </header>
 
@@ -369,11 +363,12 @@ export default function GalleryViewer({
                             ))}
                         </div>
                     </>
-                )}
-            </main>
+                )
+                }
+            </main >
 
             {/* Lightbox - Pass permitted download types */}
-            <Lightbox
+            < Lightbox
                 isOpen={lightboxOpen}
                 onClose={() => setLightboxOpen(false)}
                 files={files}
@@ -389,99 +384,101 @@ export default function GalleryViewer({
             />
 
             {/* Bottom Bar for Batch Download */}
-            {anyDownloadEnabled && zipDownloadsEnabled && (
-                <footer className={`fixed bottom-0 left-0 right-0 transition-all border-t px-4 md:px-8 py-3 md:py-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 md:gap-0 z-40 ${theme === 'light'
-                    ? 'bg-white/90 backdrop-blur-xl border-neutral-100 shadow-[0_-10px_40px_rgba(0,0,0,0.02)]'
-                    : 'bg-neutral-900/90 backdrop-blur-xl border-neutral-800'
-                    }`}>
-                    <div className="flex items-center justify-between md:justify-start gap-4 text-sm">
-                        <div className={`hidden md:flex items-center gap-2 ${theme === 'light' ? 'text-neutral-500' : 'text-neutral-400'}`}>
-                            <Folder className="w-4 h-4" />
-                            <span>{files.length} {mediaType === "videos" ? "videos" : "fotos"}</span>
-                        </div>
-                        {selectedIds.size > 0 && (
-                            <span className="text-emerald-500 font-bold text-xs md:text-sm">
-                                {selectedIds.size} seleccionadas
-                            </span>
-                        )}
-                        {/* Mobile selection buttons */}
-                        <div className="md:hidden">
-                            {selectedIds.size === 0 ? (
-                                <button
-                                    onClick={selectAll}
-                                    className={`text-xs transition font-medium ${theme === 'light' ? 'text-neutral-500' : 'text-neutral-400'}`}
-                                >
-                                    Seleccionar todas
-                                </button>
-                            ) : (
-                                <button
-                                    onClick={clearSelection}
-                                    className={`text-xs transition font-medium ${theme === 'light' ? 'text-neutral-400' : 'text-neutral-400'}`}
-                                >
-                                    Desmarcar
-                                </button>
+            {
+                anyDownloadEnabled && zipDownloadsEnabled && (
+                    <footer className={`fixed bottom-0 left-0 right-0 transition-all border-t px-4 md:px-8 py-3 md:py-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 md:gap-0 z-40 ${theme === 'light'
+                        ? 'bg-white/90 backdrop-blur-xl border-neutral-100 shadow-[0_-10px_40px_rgba(0,0,0,0.02)]'
+                        : 'bg-neutral-900/90 backdrop-blur-xl border-neutral-800'
+                        }`}>
+                        <div className="flex items-center justify-between md:justify-start gap-4 text-sm">
+                            <div className={`hidden md:flex items-center gap-2 ${theme === 'light' ? 'text-neutral-500' : 'text-neutral-400'}`}>
+                                <Folder className="w-4 h-4" />
+                                <span>{files.length} {mediaType === "videos" ? "videos" : "fotos"}</span>
+                            </div>
+                            {selectedIds.size > 0 && (
+                                <span className="text-emerald-500 font-bold text-xs md:text-sm">
+                                    {selectedIds.size} seleccionadas
+                                </span>
                             )}
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-3 md:gap-6">
-                        {/* Desktop selection buttons */}
-                        <div className="hidden md:block">
-                            {zipDownloadsEnabled && (
-                                selectedIds.size === 0 ? (
+                            {/* Mobile selection buttons */}
+                            <div className="md:hidden">
+                                {selectedIds.size === 0 ? (
                                     <button
                                         onClick={selectAll}
-                                        className={`text-sm transition font-medium ${theme === 'light' ? 'text-neutral-500 hover:text-black' : 'text-neutral-400 hover:text-white'}`}
+                                        className={`text-xs transition font-medium ${theme === 'light' ? 'text-neutral-500' : 'text-neutral-400'}`}
                                     >
                                         Seleccionar todas
                                     </button>
                                 ) : (
                                     <button
                                         onClick={clearSelection}
-                                        className={`text-sm transition font-medium ${theme === 'light' ? 'text-neutral-400 hover:text-red-500' : 'text-neutral-400 hover:text-white'}`}
+                                        className={`text-xs transition font-medium ${theme === 'light' ? 'text-neutral-400' : 'text-neutral-400'}`}
                                     >
-                                        Desmarcar todas
+                                        Desmarcar
                                     </button>
-                                )
-                            )}
+                                )}
+                            </div>
                         </div>
-                        <div className="flex items-center gap-2 flex-1 md:flex-none">
-                            {downloadJpgEnabled && (
-                                <div className="relative group flex-1 md:flex-none">
+                        <div className="flex items-center gap-3 md:gap-6">
+                            {/* Desktop selection buttons */}
+                            <div className="hidden md:block">
+                                {zipDownloadsEnabled && (
+                                    selectedIds.size === 0 ? (
+                                        <button
+                                            onClick={selectAll}
+                                            className={`text-sm transition font-medium ${theme === 'light' ? 'text-neutral-500 hover:text-black' : 'text-neutral-400 hover:text-white'}`}
+                                        >
+                                            Seleccionar todas
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={clearSelection}
+                                            className={`text-sm transition font-medium ${theme === 'light' ? 'text-neutral-400 hover:text-red-500' : 'text-neutral-400 hover:text-white'}`}
+                                        >
+                                            Desmarcar todas
+                                        </button>
+                                    )
+                                )}
+                            </div>
+                            <div className="flex items-center gap-2 flex-1 md:flex-none">
+                                {downloadJpgEnabled && (
+                                    <div className="relative group flex-1 md:flex-none">
+                                        <button
+                                            disabled={selectedIds.size === 0 || isDownloading}
+                                            className={`w-full md:w-auto px-4 md:px-6 py-2.5 md:py-3 rounded-l-xl md:rounded-l-2xl border-r text-xs md:text-sm transition-all font-bold disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg ${!downloadRawEnabled ? "rounded-r-xl md:rounded-r-2xl border-r-0" : ""
+                                                } ${theme === 'light'
+                                                    ? 'bg-emerald-600 text-white hover:bg-emerald-500 shadow-emerald-200 border-emerald-700'
+                                                    : 'bg-white text-black hover:bg-neutral-200 border-neutral-200'
+                                                }`}
+                                            onClick={() => handleDownloadZip("jpg")}
+                                        >
+                                            {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                                            <span className="hidden sm:inline">{mediaType === "videos" ? "Descargar HD" : "Descargar JPG"}</span>
+                                            <span className="sm:hidden">{mediaType === "videos" ? "HD" : "JPG"}</span>
+                                        </button>
+                                    </div>
+                                )}
+
+                                {downloadRawEnabled && (
                                     <button
                                         disabled={selectedIds.size === 0 || isDownloading}
-                                        className={`w-full md:w-auto px-4 md:px-6 py-2.5 md:py-3 rounded-l-xl md:rounded-l-2xl border-r text-xs md:text-sm transition-all font-bold disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg ${!downloadRawEnabled ? "rounded-r-xl md:rounded-r-2xl border-r-0" : ""
+                                        onClick={() => handleDownloadZip("raw")}
+                                        className={`px-3 md:px-4 py-2.5 md:py-3 rounded-r-xl md:rounded-r-2xl text-xs md:text-sm transition-all font-bold disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg ${!downloadJpgEnabled ? "rounded-l-xl md:rounded-l-2xl" : ""
                                             } ${theme === 'light'
-                                                ? 'bg-emerald-600 text-white hover:bg-emerald-500 shadow-emerald-200 border-emerald-700'
-                                                : 'bg-white text-black hover:bg-neutral-200 border-neutral-200'
+                                                ? 'bg-emerald-600 text-white hover:bg-emerald-500 shadow-emerald-200'
+                                                : 'bg-white text-black hover:bg-neutral-200'
                                             }`}
-                                        onClick={() => handleDownloadZip("jpg")}
+                                        title={mediaType === "videos" ? "Descargar Alta Calidad" : "Descargar RAW"}
                                     >
-                                        {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                                        <span className="hidden sm:inline">{mediaType === "videos" ? "Descargar HD" : "Descargar JPG"}</span>
-                                        <span className="sm:hidden">{mediaType === "videos" ? "HD" : "JPG"}</span>
+                                        <span className="text-xs font-black tracking-wider">{mediaType === "videos" ? "ALTA" : "RAW"}</span>
                                     </button>
-                                </div>
-                            )}
-
-                            {downloadRawEnabled && (
-                                <button
-                                    disabled={selectedIds.size === 0 || isDownloading}
-                                    onClick={() => handleDownloadZip("raw")}
-                                    className={`px-3 md:px-4 py-2.5 md:py-3 rounded-r-xl md:rounded-r-2xl text-xs md:text-sm transition-all font-bold disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg ${!downloadJpgEnabled ? "rounded-l-xl md:rounded-l-2xl" : ""
-                                        } ${theme === 'light'
-                                            ? 'bg-emerald-600 text-white hover:bg-emerald-500 shadow-emerald-200'
-                                            : 'bg-white text-black hover:bg-neutral-200'
-                                        }`}
-                                    title={mediaType === "videos" ? "Descargar Alta Calidad" : "Descargar RAW"}
-                                >
-                                    <span className="text-xs font-black tracking-wider">{mediaType === "videos" ? "ALTA" : "RAW"}</span>
-                                </button>
-                            )}
+                                )}
+                            </div>
                         </div>
-                    </div>
-                </footer>
-            )}
-        </div>
+                    </footer>
+                )
+            }
+        </div >
     );
 }
 

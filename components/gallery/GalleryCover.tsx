@@ -3,6 +3,7 @@ import { ChevronRight } from 'lucide-react';
 
 interface GalleryCoverProps {
     coverImage: string;
+    coverImageFocus?: string | null; // "x,y" format (0-100)
     logo?: string | null;
     studioName: string;
     projectName: string;
@@ -12,6 +13,7 @@ interface GalleryCoverProps {
 
 export default function GalleryCover({
     coverImage,
+    coverImageFocus,
     logo,
     studioName,
     projectName,
@@ -19,7 +21,10 @@ export default function GalleryCover({
     cloudAccountId
 }: GalleryCoverProps) {
     // Generate high-quality thumbnail URL for cover
-    const coverUrl = `/api/cloud/thumbnail?fileId=${coverImage}&cloudId=${cloudAccountId}&size=1200`;
+    const coverUrl = `/api/cloud/thumbnail?c=${cloudAccountId}&f=${coverImage}&s=1200`;
+
+    // Parse focal point for object-position
+    const [focusX, focusY] = (coverImageFocus || "50,50").split(",").map(Number);
 
     return (
         <div className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center">
@@ -29,6 +34,7 @@ export default function GalleryCover({
                     src={coverUrl}
                     alt="Cover"
                     className="w-full h-full object-cover opacity-60 animate-in fade-in duration-1000"
+                    style={{ objectPosition: `${focusX}% ${focusY}%` }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/20" />
             </div>
