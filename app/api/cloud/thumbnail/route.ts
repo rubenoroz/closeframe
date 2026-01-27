@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
         const { getFreshAuth } = await import("@/lib/cloud/auth-factory");
         const authClient = await getFreshAuth(cloudAccountId);
 
-        let buffer: ArrayBuffer | null = null;
+        let buffer: any = null;
         let contentType = "image/jpeg";
         let cacheControl = "public, max-age=86400";
 
@@ -79,7 +79,8 @@ export async function GET(req: NextRequest) {
                     if (res.ok) {
                         const originalBuffer = await res.arrayBuffer();
                         try {
-                            buffer = await sharp(Buffer.from(originalBuffer))
+                            // Convert Node Buffer to Uint8Array (compatible with ArrayBuffer type)
+                            const sharpBuffer = await sharp(Buffer.from(originalBuffer))
                                 .resize({
                                     width: parseInt(size),
                                     height: parseInt(size),
@@ -88,6 +89,7 @@ export async function GET(req: NextRequest) {
                                 })
                                 .toFormat('webp', { quality: 80 })
                                 .toBuffer();
+                            buffer = new Uint8Array(sharpBuffer);
                             contentType = "image/webp";
                         } catch (err) {
                             console.error("Sharp resize failed:", err);
