@@ -47,8 +47,17 @@ export async function GET(request: Request) {
             // @ts-ignore
             provider = new MicrosoftGraphProvider(authClient);
             console.log("[DEBUG] Using Microsoft Provider");
+        } else if (account.provider === "dropbox") {
+            const { DropboxProvider } = await import("@/lib/cloud/dropbox-provider");
+            // @ts-ignore
+            provider = new DropboxProvider(authClient);
+            console.log("[DEBUG] Using Dropbox Provider");
+        } else if (account.provider === "koofr") {
+            const { KoofrProvider } = await import("@/lib/cloud/koofr-provider");
+            // @ts-ignore
+            provider = new KoofrProvider(authClient.email, authClient.password);
         } else {
-            // GOOGLE Logic (Default)
+            // Default Google Logic (Default)
             provider = new GoogleDriveProvider();
             console.log("[DEBUG] Using Google Provider");
         }

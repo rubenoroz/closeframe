@@ -238,7 +238,10 @@ export default function Lightbox({
                                 controls
                                 autoPlay
                                 playsInline
-                                poster={currentFile.thumbnailLink?.replace("=s220", `=s${lowResDownloads ? 1200 : 1600}`)}
+                                poster={currentFile.thumbnailLink
+                                    ? currentFile.thumbnailLink.replace("=s220", `=s${lowResDownloads ? 1200 : 1600}`)
+                                    : `/api/cloud/thumbnail?c=${cloudAccountId}&f=${currentFile.id}&s=${lowResDownloads ? 1200 : 1600}`
+                                }
                                 className="max-w-full max-h-full object-contain shadow-2xl rounded-lg border border-white/5"
                                 src={`/api/cloud/video-stream?c=${cloudAccountId}&f=${currentFile.formats?.web || currentFile.id}`}
                             >
@@ -247,7 +250,10 @@ export default function Lightbox({
                         ) : (
                             <div className="relative max-w-full max-h-full flex items-center justify-center group">
                                 <img
-                                    src={currentFile.thumbnailLink?.replace("=s220", `=s${lowResDownloads ? 1200 : 1600}`)}
+                                    src={currentFile.thumbnailLink
+                                        ? currentFile.thumbnailLink.replace("=s220", `=s${lowResDownloads ? 1200 : 1600}`)
+                                        : `/api/cloud/thumbnail?c=${cloudAccountId}&f=${currentFile.id}&s=${lowResDownloads ? 1200 : 1600}`
+                                    }
                                     alt={currentFile.name}
                                     className="max-w-full max-h-[80vh] object-contain shadow-2xl rounded-lg border border-white/5"
                                     referrerPolicy="no-referrer"

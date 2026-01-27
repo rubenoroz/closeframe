@@ -9,13 +9,16 @@ export async function getFreshAuth(cloudAccountId: string) {
 
     if (!account) {
         throw new Error("Cuenta de nube no encontrada");
-    }
-
-    if (account.provider === "google") {
+    } else if (account.provider === "google") {
         return getGoogleAuth(account);
     } else if (account.provider === "microsoft") {
         return getMicrosoftAuth(account);
+    } else if (account.provider === "dropbox") {
+        return getDropboxAuth(account);
+    } else if (account.provider === "koofr") {
+        return getKoofrAuth(account);
     }
+
 
     throw new Error(`Proveedor ${account.provider} no soportado`);
 }
@@ -110,4 +113,63 @@ async function getMicrosoftAuth(account: any) {
     }
 
     return account.accessToken;
+}
+
+// Dropbox Auth Logic
+async function getDropboxAuth(account: any) {
+    // Dropbox short-lived tokens last 4 hours.
+    // Check if expired or about to expire (5 min buffer)
+    if (account.expiresAt && new Date(account.expiresAt) < new Date(Date.now() + 5 * 60 * 1000)) {
+        console.log("Refreshing Dropbox Token for account:", account.id);
+
+        if (!account.refreshToken) throw new Error("No refresh token available for Dropbox account");
+
+        const clientId = process.env.DROPBOX_CLIENT_ID;
+        const clientSecret = process.env.DROPBOX_CLIENT_SECRET;
+
+        const tokenUrl = "https://api.dropboxapi.com/oauth2/token";
+
+        const params = new URLSearchParams();
+        params.append("grant_type", "refresh_token");
+        params.append("refresh_token", account.refreshToken);
+        params.append("client_id", clientId!);
+        params.append("client_secret", clientSecret!);
+
+        const response = await fetch(tokenUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: params
+        });
+
+        const tokens = await response.json();
+
+        if (!response.ok) {
+            console.error("Dropbox Refresh Failed:", tokens);
+            throw new Error("Failed to refresh Dropbox token");
+        }
+
+        // Calculate new expiry (tokens.expires_in seconds)
+        const newExpiry = new Date(Date.now() + tokens.expires_in * 1000);
+
+        // Update DB
+        const updated = await prisma.cloudAccount.update({
+            where: { id: account.id },
+            data: {
+                accessToken: tokens.access_token,
+                expiresAt: newExpiry
+            }
+        });
+
+        return updated.accessToken;
+    }
+
+    return account.accessToken;
+}
+
+// Koofr Auth Logic
+function getKoofrAuth(account: any) {
+    return {
+        email: account.email || account.providerId,
+        password: account.accessToken
+    };
 }

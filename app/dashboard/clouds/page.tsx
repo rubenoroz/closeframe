@@ -26,6 +26,42 @@ function CloudManagerContent() {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [tempName, setTempName] = useState("");
 
+    // Koofr State
+    const [showKoofrModal, setShowKoofrModal] = useState(false);
+    const [koofrCreds, setKoofrCreds] = useState({ email: "", password: "" });
+    const [isConnectingKoofr, setIsConnectingKoofr] = useState(false);
+    const [koofrError, setKoofrError] = useState<string | null>(null);
+
+    const handleConnectKoofr = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsConnectingKoofr(true);
+        setKoofrError(null);
+
+        try {
+            const res = await fetch("/api/connect/koofr", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(koofrCreds)
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.error || "Error al conectar");
+            }
+
+            // Success
+            setShowKoofrModal(false);
+            setKoofrCreds({ email: "", password: "" });
+            fetchAccounts(); // Refresh list
+
+        } catch (err: any) {
+            setKoofrError(err.message);
+        } finally {
+            setIsConnectingKoofr(false);
+        }
+    };
+
     // Check for error params from OAuth redirect
     const errorType = searchParams.get("error");
     const errorMessage = searchParams.get("message");
@@ -139,7 +175,15 @@ function CloudManagerContent() {
                                             <div className="flex items-center gap-2">
                                                 <HardDrive className="w-4 h-4 text-neutral-500 shrink-0" />
                                                 <span className="text-sm font-medium truncate text-white">
-                                                    {account.name || `Drive - ${account.email}`}
+                                                    {account.name || (() => {
+                                                        const providerName = {
+                                                            microsoft: "OneDrive",
+                                                            google: "Drive",
+                                                            dropbox: "Dropbox",
+                                                            koofr: "Koofr"
+                                                        }[account.provider] || account.provider;
+                                                        return `${providerName} - ${account.email}`;
+                                                    })()}
                                                 </span>
                                                 <button
                                                     onClick={() => {
@@ -228,8 +272,8 @@ function CloudManagerContent() {
                             className="h-32 rounded-2xl border border-neutral-700/50 bg-neutral-900 flex flex-col items-center justify-center gap-3 transition-all hover:bg-neutral-800 hover:border-emerald-500/20 shadow-xl"
                             onClick={() => window.location.href = "/api/connect/google"}
                         >
-                            <div className="w-12 h-12 flex items-center justify-center">
-                                <svg width="32" height="30" viewBox="0 0 112 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <div className="w-16 h-16 flex items-center justify-center p-2">
+                                <svg className="w-full h-full" viewBox="0 0 112 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <g clipPath="url(#clip0_drive)">
                                         <path d="M8.46154 85.7051L13.3974 94.2308C14.4231 96.0256 15.8974 97.4359 17.6282 98.4615L35.2564 67.9487H0C0 69.9359 0.512821 71.9231 1.53846 73.7179L8.46154 85.7051Z" fill="#0066DA" />
                                         <path d="M55.9615 32.0513L38.3333 1.53846C36.6026 2.5641 35.1282 3.97436 34.1026 5.76923L1.53846 62.1795C0.531683 63.9357 0.00134047 65.9244 0 67.9487H35.2564L55.9615 32.0513Z" fill="#00AC47" />
@@ -251,21 +295,123 @@ function CloudManagerContent() {
                         {/* Microsoft OneDrive Button */}
                         <motion.button
                             whileHover={{ y: -5 }}
-                            className="h-32 rounded-2xl border border-neutral-700/50 bg-neutral-900 flex flex-col items-center justify-center gap-3 transition-all hover:bg-neutral-800 hover:border-blue-500/20 shadow-xl"
+                            className="h-32 rounded-2xl border border-neutral-700/50 bg-neutral-900 flex flex-col items-center justify-center gap-3 transition-all hover:bg-neutral-800 hover:border-blue-500/20 shadow-xl overflow-hidden group"
                             onClick={() => window.location.href = "/api/connect/microsoft"}
                         >
-                            <div className="w-12 h-12 flex items-center justify-center bg-white rounded-lg p-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 23 23" className="w-full h-full">
-                                    <path fill="#f25022" d="M1 1h10v10H1z" />
-                                    <path fill="#00a4ef" d="M1 12h10v10H1z" />
-                                    <path fill="#7fba00" d="M12 1h10v10H12z" />
-                                    <path fill="#ffb900" d="M12 12h10v10H12z" />
-                                </svg>
+                            <div className="w-16 h-16 flex items-center justify-center p-2 relative">
+                                <img
+                                    src="/assets/logos/onedrive.png"
+                                    alt="OneDrive"
+                                    className="w-full h-full object-contain filter drop-shadow-lg group-hover:scale-110 transition-transform duration-300"
+                                />
                             </div>
                             <span className="text-xs font-bold text-white">Microsoft OneDrive</span>
                         </motion.button>
 
-                        {["Dropbox", "Box"].map((provider) => (
+                        {/* Dropbox Connection Button */}
+                        <motion.button
+                            whileHover={{ y: -5 }}
+                            className="h-32 rounded-2xl border border-neutral-700/50 bg-neutral-900 flex flex-col items-center justify-center gap-3 transition-all hover:bg-neutral-800 hover:border-blue-500/20 shadow-xl overflow-hidden group"
+                            onClick={() => window.location.href = "/api/connect/dropbox"}
+                        >
+                            <div className="w-16 h-16 flex items-center justify-center p-2 relative">
+                                <img
+                                    src="/assets/logos/dropbox.png"
+                                    alt="Dropbox"
+                                    className="w-full h-full object-contain filter drop-shadow-lg group-hover:scale-110 transition-transform duration-300"
+                                />
+                            </div>
+                            <span className="text-xs font-bold text-white">Dropbox</span>
+                        </motion.button>
+
+                        {/* Koofr Connection Button */}
+                        <motion.button
+                            whileHover={{ y: -5 }}
+                            className="h-32 rounded-2xl border border-neutral-700/50 bg-neutral-900 flex flex-col items-center justify-center gap-3 transition-all hover:bg-neutral-800 hover:border-blue-500/20 shadow-xl overflow-hidden group"
+                            onClick={() => setShowKoofrModal(true)}
+                        >
+                            <div className="w-16 h-16 flex items-center justify-center p-2 relative">
+                                <img
+                                    src="/koofr-logo.png"
+                                    alt="Koofr"
+                                    className="w-full h-full object-contain filter drop-shadow-lg group-hover:scale-110 transition-transform duration-300"
+                                />
+                            </div>
+                            <span className="text-xs font-bold text-white">Koofr</span>
+                        </motion.button>
+
+                        {/* Koofr Modal */}
+                        {showKoofrModal && (
+                            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                                <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 md:p-8 w-full max-w-md shadow-2xl relative">
+                                    <button
+                                        onClick={() => setShowKoofrModal(false)}
+                                        className="absolute top-4 right-4 text-neutral-500 hover:text-white"
+                                    >
+                                        <X className="w-5 h-5" />
+                                    </button>
+
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <div className="w-10 h-10 flex items-center justify-center relative">
+                                            <img
+                                                src="/koofr-logo.png"
+                                                alt="Koofr"
+                                                className="w-full h-full object-contain"
+                                            />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-xl font-bold text-white">Conectar Koofr</h3>
+                                            <p className="text-sm text-neutral-400">Introduce tus credenciales de Koofr.</p>
+                                        </div>
+                                    </div>
+
+                                    <form onSubmit={handleConnectKoofr} className="space-y-4">
+                                        <div className="space-y-1">
+                                            <label className="text-xs font-bold uppercase text-neutral-500 tracking-wider">Email</label>
+                                            <input
+                                                type="email"
+                                                required
+                                                value={koofrCreds.email}
+                                                onChange={e => setKoofrCreds({ ...koofrCreds, email: e.target.value })}
+                                                className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-4 py-3 text-white outline-none focus:border-blue-500 transition"
+                                                placeholder="tu@email.com"
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-xs font-bold uppercase text-neutral-500 tracking-wider">Contraseña de Aplicación</label>
+                                            <input
+                                                type="password"
+                                                required
+                                                value={koofrCreds.password}
+                                                onChange={e => setKoofrCreds({ ...koofrCreds, password: e.target.value })}
+                                                className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-4 py-3 text-white outline-none focus:border-blue-500 transition"
+                                                placeholder="Generada en Preferencias > Password"
+                                            />
+                                            <p className="text-[10px] text-neutral-500">
+                                                No uses tu contraseña de inicio de sesión. <a href="#" className="underline hover:text-white">Ver ayuda</a>
+                                            </p>
+                                        </div>
+
+                                        {koofrError && (
+                                            <div className="bg-red-500/10 border border-red-500/20 text-red-500 text-xs p-3 rounded-lg flex items-center gap-2">
+                                                <AlertCircle className="w-4 h-4" />
+                                                {koofrError}
+                                            </div>
+                                        )}
+
+                                        <button
+                                            type="submit"
+                                            disabled={isConnectingKoofr}
+                                            className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            {isConnectingKoofr ? <Loader2 className="w-4 h-4 animate-spin" /> : "Conectar Cuenta"}
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        )}
+
+                        {["Box"].map((provider) => (
                             <div
                                 key={provider}
                                 className="h-32 rounded-2xl border border-neutral-800 bg-neutral-900/20 flex flex-col items-center justify-center gap-3 grayscale opacity-30 cursor-not-allowed"

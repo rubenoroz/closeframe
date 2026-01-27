@@ -44,6 +44,29 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ file
                 if (!res.ok) throw new Error("Failed to download content");
                 return await res.arrayBuffer();
             }
+        } else if (account.provider === "dropbox") {
+            const { DropboxProvider } = await import("@/lib/cloud/dropbox-provider");
+            const provider = new DropboxProvider(authClient as string);
+
+            downloadFileBuffer = async (fileId: string) => {
+                const downloadUrl = await provider.getFileContent(fileId);
+                if (!downloadUrl) throw new Error("No download URL found for Dropbox file");
+                const res = await fetch(downloadUrl);
+                if (!res.ok) throw new Error("Failed to download content from Dropbox");
+                return await res.arrayBuffer();
+            }
+        } else if (account.provider === "koofr") {
+            const { KoofrProvider } = await import("@/lib/cloud/koofr-provider");
+            // @ts-ignore
+            const provider = new KoofrProvider(authClient.email, authClient.password);
+
+            downloadFileBuffer = async (fileId: string) => {
+                const downloadUrl = await provider.getFileContent(fileId);
+                if (!downloadUrl) throw new Error("No download URL found for Koofr file");
+                const res = await provider.fetchWithAuth(downloadUrl);
+                if (!res.ok) throw new Error("Failed to download content from Koofr");
+                return await res.arrayBuffer();
+            }
         } else {
             // Google
             const { google } = await import("googleapis");
@@ -78,6 +101,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ file
                     try {
                         // Detectar si es imagen soportada por sharp antes de intentar
                         fileBuffer = await sharp(fileBuffer)
+                            .rotate() // Auto-rotate based on EXIF
                             .resize({
                                 width: resizeWidth,
                                 height: resizeWidth, // Set both to force 'long edge' behavior

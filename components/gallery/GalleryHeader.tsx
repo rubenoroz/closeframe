@@ -45,7 +45,7 @@ export default function GalleryHeader({
 
     // Build cover image URL if available
     const coverImageUrl = coverImage && cloudAccountId
-        ? `/api/cloud/thumbnail?c=${cloudAccountId}&f=${coverImage}&s=1200`
+        ? `/api/cloud/thumbnail?c=${cloudAccountId}&f=${encodeURIComponent(coverImage)}&s=1200`
         : null;
 
     // Parse focal point for object-position

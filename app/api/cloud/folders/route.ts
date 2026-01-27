@@ -31,6 +31,13 @@ export async function GET(request: Request) {
         } else if (account.provider === "microsoft") {
             const { MicrosoftGraphProvider } = await import("@/lib/cloud/microsoft-provider");
             provider = new MicrosoftGraphProvider(authClient as string); // Microsoft auth returns token string
+        } else if (account.provider === "dropbox") {
+            const { DropboxProvider } = await import("@/lib/cloud/dropbox-provider");
+            provider = new DropboxProvider(authClient as string);
+        } else if (account.provider === "koofr") {
+            const { KoofrProvider } = await import("@/lib/cloud/koofr-provider");
+            // @ts-ignore
+            provider = new KoofrProvider(authClient.email, authClient.password);
         } else {
             return NextResponse.json({ error: "Provider not supported" }, { status: 400 });
         }

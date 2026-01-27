@@ -53,6 +53,36 @@ export async function GET(req: NextRequest) {
             fileBuffer = await res.arrayBuffer();
             mimeType = res.headers.get("content-type") || mimeType;
 
+        } else if (account.provider === "dropbox") {
+            const { DropboxProvider } = await import("@/lib/cloud/dropbox-provider");
+            const provider = new DropboxProvider(authClient as string);
+
+            // Get download URL
+            const downloadUrl = await provider.getFileContent(fileId);
+            if (!downloadUrl) throw new Error("No download URL found for Dropbox");
+
+            const res = await fetch(downloadUrl);
+            if (!res.ok) throw new Error("Failed to fetch file content from Dropbox");
+
+            fileBuffer = await res.arrayBuffer();
+            mimeType = res.headers.get("content-type") || mimeType;
+
+        } else if (account.provider === "koofr") {
+            const { KoofrProvider } = await import("@/lib/cloud/koofr-provider");
+            // @ts-ignore
+            const provider = new KoofrProvider(authClient.email, authClient.password);
+
+            // Get download URL (API URL)
+            const downloadUrl = await provider.getFileContent(fileId);
+            if (!downloadUrl) throw new Error("No download URL found for Koofr");
+
+            // Fetch with basic auth
+            const res = await provider.fetchWithAuth(downloadUrl);
+            if (!res.ok) throw new Error("Failed to fetch file content from Koofr");
+
+            fileBuffer = await res.arrayBuffer();
+            mimeType = res.headers.get("content-type") || mimeType;
+
         } else {
             // Google Logic
             const { google } = await import("googleapis");

@@ -130,4 +130,27 @@ export class MicrosoftGraphProvider {
         // @microsoft.graph.downloadUrl contains a short-lived URL for content
         return data["@microsoft.graph.downloadUrl"];
     }
+
+    async getQuota() {
+        try {
+            const response = await fetch("https://graph.microsoft.com/v1.0/me/drive", {
+                headers: { Authorization: `Bearer ${this.accessToken}` }
+            });
+
+            if (!response.ok) return null;
+
+            const data = await response.json();
+
+            if (data.quota) {
+                return {
+                    usage: data.quota.used,
+                    limit: data.quota.total
+                };
+            }
+            return null;
+        } catch (e) {
+            console.error("Microsoft Quota Error:", e);
+            return null;
+        }
+    }
 }

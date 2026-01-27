@@ -81,6 +81,7 @@ export async function GET(req: NextRequest) {
                         try {
                             // Convert Node Buffer to Uint8Array (compatible with ArrayBuffer type)
                             const sharpBuffer = await sharp(Buffer.from(originalBuffer))
+                                .rotate() // Auto-rotate for Microsoft
                                 .resize({
                                     width: parseInt(size),
                                     height: parseInt(size),
@@ -93,6 +94,76 @@ export async function GET(req: NextRequest) {
                             contentType = "image/webp";
                         } catch (err) {
                             console.error("Sharp resize failed:", err);
+                        }
+                    }
+                }
+            }
+
+        } else if (account.provider === "dropbox") {
+            const { DropboxProvider } = await import("@/lib/cloud/dropbox-provider");
+            const provider = new DropboxProvider(authClient as string);
+
+            // Dropbox Logic (Mirroring Microsoft)
+            if (!buffer) {
+                // Try getting a thumbnail link (or full file link acting as source)
+                const thumbUrl = await provider.getThumbnail(fileId);
+                if (thumbUrl) {
+                    const res = await fetch(thumbUrl);
+                    if (res.ok) {
+                        // Dropbox returns full image via temp link currently, so we usually need to resize
+                        // unless we implement usage of 'filesGetThumbnail' returning blob directly.
+                        // For now we assume high-res link and let Sharp resize below or here.
+
+                        // NOTE: If getThumbnail returns a small image, we can use it directly.
+                        // Currently our provider returns full temp link. So we treat it as download.
+                        const originalBuffer = await res.arrayBuffer();
+
+                        // Always resize for performance since we download full res
+                        try {
+                            const sharpBuffer = await sharp(Buffer.from(originalBuffer))
+                                .rotate() // Auto-rotate for Dropbox
+                                .resize({
+                                    width: parseInt(size),
+                                    height: parseInt(size),
+                                    fit: 'inside',
+                                    withoutEnlargement: true
+                                })
+                                .toFormat('webp', { quality: 80 })
+                                .toBuffer();
+                            buffer = new Uint8Array(sharpBuffer);
+                            contentType = "image/webp";
+                        } catch (err) {
+                            console.error("Dropbox Sharp resize failed:", err);
+                        }
+                    }
+                }
+            }
+        } else if (account.provider === "koofr") {
+            const { KoofrProvider } = await import("@/lib/cloud/koofr-provider");
+            // @ts-ignore
+            const provider = new KoofrProvider(authClient.email, authClient.password);
+
+            if (!buffer) {
+                const downloadUrl = await provider.getFileContent(fileId);
+                if (downloadUrl) {
+                    const res = await provider.fetchWithAuth(downloadUrl);
+                    if (res.ok) {
+                        const originalBuffer = await res.arrayBuffer();
+                        try {
+                            const sharpBuffer = await sharp(Buffer.from(originalBuffer))
+                                .rotate() // Auto-rotate for Koofr
+                                .resize({
+                                    width: parseInt(size),
+                                    height: parseInt(size),
+                                    fit: 'inside',
+                                    withoutEnlargement: true
+                                })
+                                .toFormat('webp', { quality: 80 })
+                                .toBuffer();
+                            buffer = new Uint8Array(sharpBuffer);
+                            contentType = "image/webp";
+                        } catch (err) {
+                            console.error("Koofr Sharp resize failed:", err);
                         }
                     }
                 }
