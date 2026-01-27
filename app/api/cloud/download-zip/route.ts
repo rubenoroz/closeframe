@@ -6,6 +6,7 @@ import JSZip from "jszip";
 export async function POST(req: NextRequest) {
     try {
         const { cloudAccountId, files } = await req.json();
+        console.log(`[DOWNLOAD] Request received for ${files?.length} files. Account: ${cloudAccountId}`);
 
         if (!cloudAccountId || !files || !Array.isArray(files)) {
             return NextResponse.json({ error: "Parámetros inválidos" }, { status: 400 });
@@ -15,50 +16,67 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "No se seleccionaron archivos" }, { status: 400 });
         }
 
-        // 1. Get Cloud Account and tokens
+        // 1. Get Cloud Account info
         const account = await prisma.cloudAccount.findUnique({
             where: { id: cloudAccountId },
         });
 
-        if (!account || !account.accessToken) {
+        if (!account) {
+            console.error("[DOWNLOAD] Cloud account not found");
             return NextResponse.json({ error: "Cuenta de nube no encontrada" }, { status: 404 });
         }
 
-        // 2. Setup Google Auth
-        const auth = new google.auth.OAuth2(
-            process.env.GOOGLE_CLIENT_ID,
-            process.env.GOOGLE_CLIENT_SECRET
-        );
-        auth.setCredentials({
-            access_token: account.accessToken,
-            refresh_token: account.refreshToken,
-        });
+        // 2. Get Fresh Auth Client
+        const { getFreshAuth } = await import("@/lib/cloud/auth-factory");
+        const authClient = await getFreshAuth(cloudAccountId);
+        console.log(`[DOWNLOAD] Auth client obtained for provider: ${account.provider}`);
 
-        const tokenInfo = await auth.getAccessToken();
-        const currentToken = tokenInfo.token;
+        // Helper to download a single file buffer
+        const downloadFileBuffer = async (fileId: string): Promise<ArrayBuffer | null> => {
+            try {
+                if (account.provider === "google") {
+                    const { google } = await import("googleapis");
+                    const drive = google.drive({ version: "v3", auth: authClient as any });
+                    const response = await drive.files.get(
+                        { fileId: fileId, alt: "media" },
+                        { responseType: "arraybuffer" }
+                    );
+                    return response.data as ArrayBuffer;
 
-        if (!currentToken) throw new Error("Could not get access token");
+                } else if (account.provider === "microsoft") {
+                    console.log(`[DOWNLOAD] Downloading Microsoft file: ${fileId}`);
+                    const { MicrosoftGraphProvider } = await import("@/lib/cloud/microsoft-provider");
+                    const provider = new MicrosoftGraphProvider(authClient as string);
+                    // Get short-lived download URL
+                    const downloadUrl = await provider.getFileContent(fileId);
+                    if (!downloadUrl) throw new Error("No download URL found");
 
-        if (currentToken !== account.accessToken) {
-            await prisma.cloudAccount.update({
-                where: { id: account.id },
-                data: { accessToken: currentToken }
-            });
-        }
+                    // Fetch content
+                    const response = await fetch(downloadUrl);
+                    if (!response.ok) throw new Error("Failed to download file content");
+                    return await response.arrayBuffer();
+                }
+            } catch (error) {
+                console.error(`Error downloading file ${fileId}:`, error);
+                return null;
+            }
+            return null;
+        };
 
-        const drive = google.drive({ version: "v3", auth });
 
         // CASE 1: Single file download (Skip ZIP for better UX)
         if (files.length === 1) {
             const file = files[0];
-            const response = await drive.files.get(
-                { fileId: file.id, alt: "media" },
-                { responseType: "arraybuffer" }
-            );
+            const buffer = await downloadFileBuffer(file.id);
 
-            const mimeType = response.headers["content-type"] || "application/octet-stream";
+            if (!buffer) {
+                return NextResponse.json({ error: "Error al descargar el archivo" }, { status: 500 });
+            }
 
-            return new NextResponse(new Uint8Array(response.data as ArrayBuffer), {
+            // Simple mime detection or default
+            const mimeType = file.name.endsWith(".jpg") ? "image/jpeg" : "application/octet-stream";
+
+            return new NextResponse(new Uint8Array(buffer), {
                 headers: {
                     "Content-Type": mimeType,
                     "Content-Disposition": `attachment; filename="${encodeURIComponent(file.name)}"`,
@@ -68,19 +86,25 @@ export async function POST(req: NextRequest) {
 
         // CASE 2: Batch download (ZIP)
         const zip = new JSZip();
-        const downloadPromises = files.map(async (file: { id: string; name: string }) => {
-            try {
-                const response = await drive.files.get(
-                    { fileId: file.id, alt: "media" },
-                    { responseType: "arraybuffer" }
-                );
-                zip.file(file.name, response.data as ArrayBuffer);
-            } catch (err) {
-                console.error(`Error downloading file ${file.name}:`, err);
-            }
-        });
-
-        await Promise.all(downloadPromises);
+        // Limit concurrency to avoid timeouts or rate limits
+        // Processing in chunks of 5
+        const chunkSize = 5;
+        for (let i = 0; i < files.length; i += chunkSize) {
+            const chunk = files.slice(i, i + chunkSize);
+            const promises = chunk.map(async (file: { id: string; name: string }) => {
+                try {
+                    const buffer = await downloadFileBuffer(file.id);
+                    if (buffer) {
+                        zip.file(file.name, buffer);
+                    } else {
+                        zip.file(file.name + "_ERROR.txt", "Error: Could not download file. Check permissions or try again.");
+                    }
+                } catch (e: any) {
+                    zip.file(file.name + "_ERROR.txt", `Error: ${e.message}`);
+                }
+            });
+            await Promise.all(promises);
+        }
 
         const zipContent = await zip.generateAsync({ type: "nodebuffer" });
 

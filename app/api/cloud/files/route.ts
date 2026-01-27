@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { GoogleDriveProvider } from "@/lib/cloud/google-drive-provider";
-import { getFreshGoogleAuth } from "@/lib/cloud/google-auth";
+import { getFreshAuth } from "@/lib/cloud/auth-factory";
 import { prisma } from "@/lib/db";
 
 export async function GET(request: Request) {
@@ -25,25 +25,54 @@ export async function GET(request: Request) {
                 fileOrder = JSON.parse(JSON.stringify((project as any).fileOrder));
             }
         }
-        // Use centralized auth utility to get a fresh client
-        const auth = await getFreshGoogleAuth(cloudAccountId);
+        // Use generalized auth factory
+        const account = await prisma.cloudAccount.findUnique({
+            where: { id: cloudAccountId }
+        });
 
-        const provider = new GoogleDriveProvider();
+        if (!account) return NextResponse.json({ error: "Account not found" }, { status: 404 });
+
+        const authClient = await getFreshAuth(cloudAccountId);
+
+        let provider;
+        let mainFiles = [];
+        let activeProxy = false;
+        let foldersFound = {
+            webjpg: false, jpg: false, rawPhoto: false,
+            webmp4: false, hd: false, rawVideo: false
+        };
+
+        if (account.provider === "microsoft") {
+            const { MicrosoftGraphProvider } = await import("@/lib/cloud/microsoft-provider");
+            // @ts-ignore
+            provider = new MicrosoftGraphProvider(authClient);
+            console.log("[DEBUG] Using Microsoft Provider");
+        } else {
+            // GOOGLE Logic (Default)
+            provider = new GoogleDriveProvider();
+            console.log("[DEBUG] Using Google Provider");
+        }
 
         // 1. Check for special subfolders (photos AND videos)
-        let subfolders = await provider.listFolders(folderId, auth);
+        console.log(`[DEBUG] Listing folders for parent: ${folderId}`);
+        // @ts-ignore
+        let subfolders = await provider.listFolders(folderId, authClient);
+        console.log(`[DEBUG] Subfolders found: ${subfolders.length}`, subfolders.map((f: any) => f.name));
 
         // Check if there's a "Fotografias" subfolder - if so, use it as the actual source
         const fotografiasFolder = subfolders.find(f => f.name.toLowerCase() === "fotografias");
         if (fotografiasFolder) {
             folderId = fotografiasFolder.id;
-            subfolders = await provider.listFolders(folderId, auth);
+            // @ts-ignore
+            subfolders = await provider.listFolders(folderId, authClient);
         }
 
         // Photo proxies
         const webjpgFolder = subfolders.find(f => f.name.toLowerCase() === "webjpg");
         const jpgFolder = subfolders.find(f => f.name.toLowerCase() === "jpg");
         const rawPhotoFolder = subfolders.find(f => f.name.toLowerCase() === "raw");
+
+        console.log("[DEBUG] WebJPG folder detected:", webjpgFolder ? webjpgFolder.id : "NO");
 
         // Video proxies (support both old and new naming: webmp4/preview, hd/baja, raw/alta)
         const webmp4Folder = subfolders.find(f =>
@@ -60,7 +89,15 @@ export async function GET(request: Request) {
         // For photos: prefer webjpg, fallback to root
         // For videos: prefer webmp4, fallback to root
         const sourceFolderId = webjpgFolder ? webjpgFolder.id : (webmp4Folder ? webmp4Folder.id : folderId);
-        const mainFiles = await provider.listFiles(sourceFolderId, auth);
+        console.log(`[DEBUG] Listing files from source: ${sourceFolderId} (Is WebJPG: ${sourceFolderId === webjpgFolder?.id})`);
+        // @ts-ignore
+        mainFiles = await provider.listFiles(sourceFolderId, authClient);
+        console.log(`[DEBUG] Main files found: ${mainFiles.length}`);
+
+        // Filter out system files (.keep, .DS_Store, etc)
+        mainFiles = mainFiles.filter((f: any) =>
+            !f.name.startsWith('.') && !f.name.endsWith('.keep')
+        );
 
         // 3. If we have multiple formats, we need to map them
         const hasPhotoProxies = webjpgFolder || jpgFolder || rawPhotoFolder;
@@ -70,12 +107,16 @@ export async function GET(request: Request) {
             // OPTIMIZED VERSION: List all relevant folders once
 
             // Photo formats
-            const fullJpgFiles = jpgFolder ? await provider.listFiles(jpgFolder.id, auth) : [];
-            const rawPhotoFiles = rawPhotoFolder ? await provider.listFiles(rawPhotoFolder.id, auth) : [];
+            // @ts-ignore
+            const fullJpgFiles = jpgFolder ? await provider.listFiles(jpgFolder.id, authClient) : [];
+            // @ts-ignore
+            const rawPhotoFiles = rawPhotoFolder ? await provider.listFiles(rawPhotoFolder.id, authClient) : [];
 
             // Video formats
-            const hdVideoFiles = hdFolder ? await provider.listFiles(hdFolder.id, auth) : [];
-            const rawVideoFiles = rawVideoFolder ? await provider.listFiles(rawVideoFolder.id, auth) : [];
+            // @ts-ignore
+            const hdVideoFiles = hdFolder ? await provider.listFiles(hdFolder.id, authClient) : [];
+            // @ts-ignore
+            const rawVideoFiles = rawVideoFolder ? await provider.listFiles(rawVideoFolder.id, authClient) : [];
 
             // Create maps for photos
             const jpgMap = new Map(fullJpgFiles.map(f => [f.name.split('.').slice(0, -1).join('.').toLowerCase(), f.id]));

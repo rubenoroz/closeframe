@@ -248,7 +248,24 @@ function CloudManagerContent() {
                             <span className="text-xs font-medium text-neutral-400">Google Drive</span>
                         </motion.button>
 
-                        {["Dropbox", "OneDrive", "Box"].map((provider) => (
+                        {/* Microsoft OneDrive Button */}
+                        <motion.button
+                            whileHover={{ y: -5 }}
+                            className="h-32 rounded-2xl border border-neutral-700/50 bg-neutral-900 flex flex-col items-center justify-center gap-3 transition-all hover:bg-neutral-800 hover:border-blue-500/20 shadow-xl"
+                            onClick={() => window.location.href = "/api/connect/microsoft"}
+                        >
+                            <div className="w-12 h-12 flex items-center justify-center bg-white rounded-lg p-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 23 23" className="w-full h-full">
+                                    <path fill="#f25022" d="M1 1h10v10H1z" />
+                                    <path fill="#00a4ef" d="M1 12h10v10H1z" />
+                                    <path fill="#7fba00" d="M12 1h10v10H12z" />
+                                    <path fill="#ffb900" d="M12 12h10v10H12z" />
+                                </svg>
+                            </div>
+                            <span className="text-xs font-bold text-white">Microsoft OneDrive</span>
+                        </motion.button>
+
+                        {["Dropbox", "Box"].map((provider) => (
                             <div
                                 key={provider}
                                 className="h-32 rounded-2xl border border-neutral-800 bg-neutral-900/20 flex flex-col items-center justify-center gap-3 grayscale opacity-30 cursor-not-allowed"

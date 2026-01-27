@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { GoogleDriveProvider } from "@/lib/cloud/google-drive-provider";
-import { getFreshGoogleAuth } from "@/lib/cloud/google-auth";
-import { google } from "googleapis";
+import { getFreshAuth } from "@/lib/cloud/auth-factory";
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
@@ -14,15 +13,29 @@ export async function GET(request: Request) {
     }
 
     try {
-        // 1. Fetch Credentials from DB
-        // Use centralized auth utility
-        const authClient = await getFreshGoogleAuth(cloudAccountId);
+        // 1. Fetch Cloud Account info to determine provider
+        const account = await prisma.cloudAccount.findUnique({
+            where: { id: cloudAccountId }
+        });
 
-        // 3. Use Provider
-        const provider = new GoogleDriveProvider();
+        if (!account) return NextResponse.json({ error: "Account not found" }, { status: 404 });
+
+        // 2. Get Fresh Auth
+        // Use generalized auth factory
+        const authClient = await getFreshAuth(cloudAccountId);
+
+        // 3. Select Provider
+        let provider;
+        if (account.provider === "google") {
+            provider = new GoogleDriveProvider();
+        } else if (account.provider === "microsoft") {
+            const { MicrosoftGraphProvider } = await import("@/lib/cloud/microsoft-provider");
+            provider = new MicrosoftGraphProvider(authClient as string); // Microsoft auth returns token string
+        } else {
+            return NextResponse.json({ error: "Provider not supported" }, { status: 400 });
+        }
 
         // 4. List Folders
-        // getFreshGoogleAuth returns an OAuth2 client, which the provider handles
         const folders = await provider.listFolders(folderId, authClient);
 
         return NextResponse.json({ folders });

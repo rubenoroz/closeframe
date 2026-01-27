@@ -22,28 +22,42 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ file
             where: { id: cloudAccountId },
         });
 
-        if (!account || !account.accessToken) {
+        if (!account) {
             return NextResponse.json({ error: "Cuenta no encontrada" }, { status: 404 });
         }
 
-        const auth = new google.auth.OAuth2(
-            process.env.GOOGLE_CLIENT_ID,
-            process.env.GOOGLE_CLIENT_SECRET
-        );
-        auth.setCredentials({
-            access_token: account.accessToken,
-            refresh_token: account.refreshToken,
-        });
+        // 2. Get Fresh Auth Client
+        const { getFreshAuth } = await import("@/lib/cloud/auth-factory");
+        const authClient = await getFreshAuth(cloudAccountId);
 
-        const tokenInfo = await auth.getAccessToken();
-        if (tokenInfo.token && tokenInfo.token !== account.accessToken) {
-            await prisma.cloudAccount.update({
-                where: { id: account.id },
-                data: { accessToken: tokenInfo.token }
-            });
+        // Prepare provider logic
+        let downloadFileBuffer: (fileId: string) => Promise<ArrayBuffer | null>;
+
+        if (account.provider === "microsoft") {
+            const { MicrosoftGraphProvider } = await import("@/lib/cloud/microsoft-provider");
+            const provider = new MicrosoftGraphProvider(authClient as string);
+
+            downloadFileBuffer = async (fileId: string) => {
+                const downloadUrl = await provider.getFileContent(fileId);
+                if (!downloadUrl) throw new Error("No download URL found");
+                const res = await fetch(downloadUrl);
+                if (!res.ok) throw new Error("Failed to download content");
+                return await res.arrayBuffer();
+            }
+        } else {
+            // Google
+            const { google } = await import("googleapis");
+            const drive = google.drive({ version: "v3", auth: authClient as any });
+
+            downloadFileBuffer = async (fileId: string) => {
+                const response = await drive.files.get(
+                    { fileId: fileId, alt: "media" },
+                    { responseType: "arraybuffer" }
+                );
+                return response.data as ArrayBuffer;
+            }
         }
 
-        const drive = google.drive({ version: "v3", auth });
         const filesData = JSON.parse(filesJson);
         const zip = new JSZip();
 
@@ -53,14 +67,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ file
         // Procesar archivos
         await Promise.all(filesData.map(async (file: any) => {
             try {
-                // 1. Siempre descargar el ORIGINAL (fiable)
-                // Usamos byte array para poder procesarlo en memoria
-                const response = await drive.files.get(
-                    { fileId: file.id, alt: "media" },
-                    { responseType: "arraybuffer" }
-                );
+                // 1. Descargar archivo
+                const buffer = await downloadFileBuffer(file.id);
+                if (!buffer) throw new Error("Empty buffer");
 
-                let fileBuffer: any = Buffer.from(response.data as ArrayBuffer);
+                let fileBuffer: any = Buffer.from(buffer);
 
                 // 2. Si se pide resize, procesar con SHARP
                 if (resizeWidth) {

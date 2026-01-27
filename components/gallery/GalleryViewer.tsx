@@ -306,7 +306,9 @@ export default function GalleryViewer({
                     </div>
                 ) : files.length === 0 ? (
                     <div className="flex justify-center items-center py-40 text-neutral-500">
-                        Esta carpeta no contiene imágenes ni videos.
+                        {mediaType === "videos"
+                            ? "Esta carpeta no contiene videos."
+                            : "Esta carpeta no contiene imágenes."}
                     </div>
                 ) : (
                     <>

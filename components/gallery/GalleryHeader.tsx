@@ -5,6 +5,7 @@ import React, { useEffect } from "react";
 interface GalleryHeaderProps {
     title: string;
     fontFamily: string;
+    fontSize?: number; // Percentage (50-150), default 100
     color: string;
     background: "dark" | "light";
     logo?: string | null;
@@ -16,6 +17,7 @@ interface GalleryHeaderProps {
 export default function GalleryHeader({
     title,
     fontFamily,
+    fontSize = 100,
     color,
     background,
     logo,
@@ -48,6 +50,9 @@ export default function GalleryHeader({
 
     // Parse focal point for object-position
     const [focusX, focusY] = (coverImageFocus || "50,50").split(",").map(Number);
+
+    // Calculate font size scale
+    const fontScale = fontSize / 100;
 
     return (
         <div
@@ -100,7 +105,8 @@ export default function GalleryHeader({
                         }`}
                     style={{
                         fontFamily: fontFamily !== "Inter" ? `'${fontFamily}', sans-serif` : "inherit",
-                        color: color !== "#FFFFFF" ? color : undefined
+                        color: color !== "#FFFFFF" ? color : undefined,
+                        fontSize: `${fontScale}em`
                     }}
                 >
                     {title}

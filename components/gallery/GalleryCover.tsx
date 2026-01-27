@@ -4,6 +4,7 @@ import { ChevronRight } from 'lucide-react';
 interface GalleryCoverProps {
     coverImage: string;
     coverImageFocus?: string | null; // "x,y" format (0-100)
+    fontSize?: number; // Percentage (50-150), default 100
     logo?: string | null;
     studioName: string;
     projectName: string;
@@ -14,6 +15,7 @@ interface GalleryCoverProps {
 export default function GalleryCover({
     coverImage,
     coverImageFocus,
+    fontSize = 100,
     logo,
     studioName,
     projectName,
@@ -51,7 +53,10 @@ export default function GalleryCover({
                 </div>
 
                 {/* Title */}
-                <h1 className="text-4xl md:text-6xl lg:text-7xl font-sans font-extralight text-white tracking-tight text-balance drop-shadow-lg">
+                <h1
+                    className="text-4xl md:text-6xl lg:text-7xl font-sans font-extralight text-white tracking-tight text-balance drop-shadow-lg"
+                    style={{ fontSize: `${fontSize / 100}em` }}
+                >
                     {projectName}
                 </h1>
 

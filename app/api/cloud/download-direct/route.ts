@@ -3,7 +3,7 @@ import { google } from "googleapis";
 import { prisma } from "@/lib/db";
 
 /**
- * Direct file download from Google Drive (no ZIP)
+ * Direct file download from Google Drive / OneDrive (no ZIP)
  * For single file downloads
  * 
  * Query params:
@@ -27,71 +27,64 @@ export async function GET(req: NextRequest) {
             where: { id: cloudAccountId },
         });
 
-        if (!account || !account.accessToken) {
+        if (!account) {
             return NextResponse.json({ error: "Account not found" }, { status: 404 });
         }
 
-        // Setup Google Auth
-        const auth = new google.auth.OAuth2(
-            process.env.GOOGLE_CLIENT_ID,
-            process.env.GOOGLE_CLIENT_SECRET
-        );
-        auth.setCredentials({
-            access_token: account.accessToken,
-            refresh_token: account.refreshToken,
-        });
+        // 2. Get Fresh Auth Client
+        const { getFreshAuth } = await import("@/lib/cloud/auth-factory");
+        const authClient = await getFreshAuth(cloudAccountId);
 
-        // Refresh token if needed
-        const tokenInfo = await auth.getAccessToken();
-        if (tokenInfo.token && tokenInfo.token !== account.accessToken) {
-            await prisma.cloudAccount.update({
-                where: { id: account.id },
-                data: { accessToken: tokenInfo.token }
+        let fileBuffer: ArrayBuffer | null = null;
+        let mimeType = "application/octet-stream";
+        let safeFileName = fileName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\x00-\x7F]/g, "_");
+
+        if (account.provider === "microsoft") {
+            const { MicrosoftGraphProvider } = await import("@/lib/cloud/microsoft-provider");
+            const provider = new MicrosoftGraphProvider(authClient as string);
+
+            // Get download URL
+            const downloadUrl = await provider.getFileContent(fileId);
+            if (!downloadUrl) throw new Error("No download URL found");
+
+            const res = await fetch(downloadUrl);
+            if (!res.ok) throw new Error("Failed to fetch file content from Microsoft");
+
+            fileBuffer = await res.arrayBuffer();
+            mimeType = res.headers.get("content-type") || mimeType;
+
+        } else {
+            // Google Logic
+            const { google } = await import("googleapis");
+            const drive = google.drive({ version: "v3", auth: authClient as any });
+
+            // Get file metadata first
+            const fileMeta = await drive.files.get({
+                fileId: fileId,
+                fields: "name,mimeType,size"
             });
+
+            const actualFileName = fileMeta.data.name || fileName;
+            mimeType = fileMeta.data.mimeType || "application/octet-stream";
+
+            // Sanitize filename
+            safeFileName = actualFileName
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^\x00-\x7F]/g, "_");
+
+            // Download as buffer (reliable)
+            const response = await drive.files.get(
+                { fileId: fileId, alt: "media" },
+                { responseType: "arraybuffer" }
+            );
+
+            fileBuffer = response.data as ArrayBuffer;
         }
 
-        const drive = google.drive({ version: "v3", auth });
+        if (!fileBuffer) throw new Error("Failed to create download buffer");
 
-        // Get file metadata first
-        const fileMeta = await drive.files.get({
-            fileId: fileId,
-            fields: "name,mimeType,size"
-        });
-
-        const actualFileName = fileMeta.data.name || fileName;
-        const mimeType = fileMeta.data.mimeType || "application/octet-stream";
-
-        // Stream the file
-        const response = await drive.files.get(
-            { fileId: fileId, alt: "media" },
-            { responseType: "stream" }
-        );
-
-        // Sanitize filename for Content-Disposition header
-        const safeFileName = actualFileName
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "")
-            .replace(/[^\x00-\x7F]/g, "_");
-
-        // Create a ReadableStream from the Google Drive response
-        const stream = response.data as NodeJS.ReadableStream;
-
-        // Convert Node stream to Web ReadableStream
-        const webStream = new ReadableStream({
-            start(controller) {
-                stream.on("data", (chunk) => {
-                    controller.enqueue(chunk);
-                });
-                stream.on("end", () => {
-                    controller.close();
-                });
-                stream.on("error", (err) => {
-                    controller.error(err);
-                });
-            },
-        });
-
-        return new NextResponse(webStream, {
+        return new NextResponse(new Uint8Array(fileBuffer), {
             headers: {
                 "Content-Type": mimeType,
                 "Content-Disposition": `attachment; filename="${safeFileName}"`,

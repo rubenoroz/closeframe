@@ -23,6 +23,7 @@ interface PublicGalleryClientProps {
         downloadRawEnabled: boolean;
         headerTitle?: string | null;
         headerFontFamily?: string | null;
+        headerFontSize?: number | null;
         headerColor?: string | null;
         headerBackground?: string | null;
         headerImage?: string | null;
@@ -55,11 +56,21 @@ interface PublicGalleryClientProps {
 
 export default function PublicGalleryClient({ project }: PublicGalleryClientProps) {
 
-
     const [isLocked, setIsLocked] = useState(project.passwordProtected);
-    const [showCover, setShowCover] = useState(!!project.coverImage && !!project.planLimits?.galleryCover && !sessionStorage.getItem(`gallery_covered_${project.slug}`));
+    // Hydration Fix: Initialize based on props only, effect update later
+    const [showCover, setShowCover] = useState(!!project.coverImage && !!project.planLimits?.galleryCover);
     const [activeTab, setActiveTab] = useState<"photos" | "videos">("photos");
     const [tabMounted, setTabMounted] = useState(false);
+
+    // Initial Cover Check (Client Only)
+    useEffect(() => {
+        if (project.coverImage && project.planLimits?.galleryCover) {
+            const sessionCovered = sessionStorage.getItem(`gallery_covered_${project.slug}`);
+            if (sessionCovered) {
+                setShowCover(false);
+            }
+        }
+    }, [project.coverImage, project.planLimits?.galleryCover, project.slug]);
 
     // Read from localStorage after mount to avoid SSR hydration flash
     useEffect(() => {
@@ -96,6 +107,7 @@ export default function PublicGalleryClient({ project }: PublicGalleryClientProp
             <GalleryCover
                 coverImage={project.coverImage}
                 coverImageFocus={project.coverImageFocus}
+                fontSize={project.headerFontSize || 100}
                 logo={project.user?.businessLogo}
                 studioName={project.user?.businessName || "CloserLens Gallery"}
                 projectName={project.name}
@@ -118,9 +130,11 @@ export default function PublicGalleryClient({ project }: PublicGalleryClientProp
     }
 
     // Determine which folder to load based on active tab
+    // FIX: If videos tab is active but no video folder is set, do NOT fallback to rootFolderId (photos)
+    // Return empty string to trigger empty state in viewer
     const currentFolderId =
-        activeTab === "videos" && project.videoFolderId
-            ? project.videoFolderId
+        activeTab === "videos"
+            ? (project.videoFolderId || "")
             : project.rootFolderId;
 
     // Get header configuration with fallbacks
@@ -136,6 +150,7 @@ export default function PublicGalleryClient({ project }: PublicGalleryClientProp
             <GalleryHeader
                 title={headerTitle}
                 fontFamily={headerFontFamily}
+                fontSize={project.headerFontSize || 100}
                 color={headerColor}
                 background={headerBackground}
                 logo={project.user?.businessLogo}

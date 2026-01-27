@@ -70,6 +70,7 @@ export async function GET() {
                         public: true,
                         showInProfile: true,
                         coverImage: true,
+                        cloudAccountId: true,
                         createdAt: true
                     }
                 }

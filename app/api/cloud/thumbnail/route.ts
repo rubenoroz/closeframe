@@ -34,103 +34,145 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: "Account not found" }, { status: 404 });
         }
 
-        // Setup Google Auth
-        const auth = new google.auth.OAuth2(
-            process.env.GOOGLE_CLIENT_ID,
-            process.env.GOOGLE_CLIENT_SECRET
-        );
-        auth.setCredentials({
-            access_token: account.accessToken,
-            refresh_token: account.refreshToken,
-        });
+        // 2. Get Fresh Auth Client
+        const { getFreshAuth } = await import("@/lib/cloud/auth-factory");
+        const authClient = await getFreshAuth(cloudAccountId);
 
-        // Refresh token if needed
-        const tokenInfo = await auth.getAccessToken();
-        if (tokenInfo.token && tokenInfo.token !== account.accessToken) {
-            await prisma.cloudAccount.update({
-                where: { id: account.id },
-                data: { accessToken: tokenInfo.token }
-            });
-        }
+        let buffer: ArrayBuffer | null = null;
+        let contentType = "image/jpeg";
+        let cacheControl = "public, max-age=86400";
 
-        const drive = google.drive({ version: "v3", auth });
-        let thumbnailUrl = providedThumbnail;
+        if (account.provider === "microsoft") {
+            const { MicrosoftGraphProvider } = await import("@/lib/cloud/microsoft-provider");
+            const provider = new MicrosoftGraphProvider(authClient as string);
 
-        if (!thumbnailUrl) {
-            // Get file metadata with thumbnail
-            const fileMeta = await drive.files.get({
-                fileId: fileId,
-                fields: "thumbnailLink,mimeType"
-            });
-            thumbnailUrl = fileMeta.data.thumbnailLink || null;
-        }
+            // 1. Try to get provided thumbnail or fetch new one
+            if (providedThumbnail) {
+                try {
+                    const res = await fetch(providedThumbnail);
+                    if (res.ok) {
+                        buffer = await res.arrayBuffer();
+                        contentType = res.headers.get("Content-Type") || contentType;
+                    }
+                } catch (e) {
+                    console.warn("Microsoft provided thumbnail failed, trying fresh link");
+                }
+            }
 
-        // If no thumbnail link, construct one
-        if (!thumbnailUrl) {
-            thumbnailUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w${size}`;
+            if (!buffer) {
+                const newThumbUrl = await provider.getThumbnail(fileId);
+                if (newThumbUrl) {
+                    const res = await fetch(newThumbUrl);
+                    if (res.ok) {
+                        buffer = await res.arrayBuffer();
+                        contentType = res.headers.get("Content-Type") || contentType;
+                    }
+                }
+            }
+
+            // Fallback: Download content and resize
+            if (!buffer) {
+                console.log(`[Thumbnail] Microsoft thumbnail not found for ${fileId}, using Sharp fallback`);
+                const downloadUrl = await provider.getFileContent(fileId);
+                if (downloadUrl) {
+                    const res = await fetch(downloadUrl);
+                    if (res.ok) {
+                        const originalBuffer = await res.arrayBuffer();
+                        try {
+                            buffer = await sharp(Buffer.from(originalBuffer))
+                                .resize({
+                                    width: parseInt(size),
+                                    height: parseInt(size),
+                                    fit: 'inside',
+                                    withoutEnlargement: true
+                                })
+                                .toFormat('webp', { quality: 80 })
+                                .toBuffer();
+                            contentType = "image/webp";
+                        } catch (err) {
+                            console.error("Sharp resize failed:", err);
+                        }
+                    }
+                }
+            }
+
         } else {
-            // Adjust size in the thumbnail URL
-            thumbnailUrl = thumbnailUrl.replace(/=s\d+/, `=s${size}`);
+            // Google Logic
+            const { google } = await import("googleapis");
+            const drive = google.drive({ version: "v3", auth: authClient as any });
+
+            let thumbnailUrl = providedThumbnail;
+
+            // ... (Existing Google Logic adapted)
+            if (!thumbnailUrl) {
+                const fileMeta = await drive.files.get({
+                    fileId: fileId,
+                    fields: "thumbnailLink,mimeType"
+                });
+                thumbnailUrl = fileMeta.data.thumbnailLink || null;
+            }
+
+            if (!thumbnailUrl) {
+                thumbnailUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w${size}`;
+            } else {
+                thumbnailUrl = thumbnailUrl.replace(/=s\d+/, `=s${size}`);
+            }
+
+            // Fetch the thumbnail with auth
+            // NOTE: for Google we pass the token from authClient (which is an OAuth2Client)
+            const token = await authClient.getAccessToken();
+            const response = await fetch(thumbnailUrl, {
+                headers: {
+                    'Authorization': `Bearer ${token.token}`
+                }
+            });
+
+            if (response.ok) {
+                buffer = await response.arrayBuffer();
+                contentType = response.headers.get("Content-Type") || contentType;
+            } else {
+                // Fallback 1: No auth
+                const fallbackResponse = await fetch(thumbnailUrl);
+                if (fallbackResponse.ok) {
+                    buffer = await fallbackResponse.arrayBuffer();
+                    contentType = fallbackResponse.headers.get("Content-Type") || contentType;
+                } else {
+                    // Fallback 2: Sharp
+                    console.log(`[Thumbnail] Google thumbnail failed for ${fileId}, using Sharp fallback`);
+                    try {
+                        const originalFile = await drive.files.get(
+                            { fileId: fileId, alt: "media" },
+                            { responseType: "arraybuffer" }
+                        );
+
+                        buffer = await sharp(Buffer.from(originalFile.data as ArrayBuffer))
+                            .resize({
+                                width: parseInt(size),
+                                height: parseInt(size),
+                                fit: 'inside',
+                                withoutEnlargement: true
+                            })
+                            .toFormat('webp', { quality: 80 })
+                            .toBuffer();
+                        contentType = "image/webp";
+                    } catch (sharpError) {
+                        console.error("Sharp fallback failed:", sharpError);
+                    }
+                }
+            }
         }
 
-        // Fetch the thumbnail with auth
-        const response = await fetch(thumbnailUrl, {
-            headers: {
-                'Authorization': `Bearer ${tokenInfo.token || account.accessToken}`
-            }
-        });
-
-        if (!response.ok) {
-            // Fallback: try direct fetch without auth (some thumbnails are public)
-            const fallbackResponse = await fetch(thumbnailUrl);
-            if (fallbackResponse.ok) {
-                const buffer = await fallbackResponse.arrayBuffer();
-                return new NextResponse(buffer, {
-                    headers: {
-                        "Content-Type": fallbackResponse.headers.get("Content-Type") || "image/jpeg",
-                        "Cache-Control": "public, max-age=86400", // Cache 24h
-                    }
-                });
-            }
-
-            // Final fallback: Download original and resize with Sharp
-            console.log(`[Thumbnail] Google thumbnail failed for ${fileId}, using Sharp fallback`);
-            try {
-                const originalFile = await drive.files.get(
-                    { fileId: fileId, alt: "media" },
-                    { responseType: "arraybuffer" }
-                );
-
-                const resized = await sharp(Buffer.from(originalFile.data as ArrayBuffer))
-                    .resize({
-                        width: parseInt(size),
-                        height: parseInt(size),
-                        fit: 'inside',
-                        withoutEnlargement: true
-                    })
-                    .toFormat('webp', { quality: 80 })
-                    .toBuffer();
-
-                return new NextResponse(new Uint8Array(resized), {
-                    headers: {
-                        "Content-Type": "image/webp",
-                        "Cache-Control": "public, max-age=86400",
-                    }
-                });
-            } catch (sharpError) {
-                console.error("Sharp fallback failed:", sharpError);
-                return NextResponse.json({ error: "Thumbnail not available" }, { status: 404 });
-            }
+        if (!buffer) {
+            return NextResponse.json({ error: "Failed to load image" }, { status: 500 });
         }
-
-        const buffer = await response.arrayBuffer();
 
         return new NextResponse(buffer, {
             headers: {
-                "Content-Type": response.headers.get("Content-Type") || "image/jpeg",
-                "Cache-Control": "public, max-age=86400", // Cache 24h
+                "Content-Type": contentType,
+                "Cache-Control": cacheControl,
             }
         });
+
 
     } catch (error) {
         console.error("Thumbnail Proxy Error:", error);

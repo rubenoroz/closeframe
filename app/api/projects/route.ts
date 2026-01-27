@@ -191,7 +191,7 @@ export async function PATCH(request: NextRequest) {
             downloadEnabled, downloadJpgEnabled, downloadRawEnabled,
             downloadVideoHdEnabled, downloadVideoRawEnabled,
             enableVideoTab, showInProfile, enableWatermark,
-            headerTitle, headerFontFamily, headerColor, headerBackground, headerImage, headerImageFocus,
+            headerTitle, headerFontFamily, headerFontSize, headerColor, headerBackground, headerImage, headerImageFocus,
             coverImage, coverImageFocus,
             layoutType, public: isPublic
         } = body;
@@ -222,6 +222,7 @@ export async function PATCH(request: NextRequest) {
         if (category !== undefined) updateData.category = category;
         if (headerTitle !== undefined) updateData.headerTitle = headerTitle;
         if (headerFontFamily !== undefined) updateData.headerFontFamily = headerFontFamily;
+        if (headerFontSize !== undefined) updateData.headerFontSize = headerFontSize;
         if (headerColor !== undefined) updateData.headerColor = headerColor;
         if (headerBackground !== undefined) updateData.headerBackground = headerBackground;
         if (headerImage !== undefined) updateData.headerImage = headerImage;

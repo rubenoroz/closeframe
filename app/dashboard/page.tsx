@@ -28,6 +28,7 @@ interface Project {
     category?: string;
     headerTitle?: string;
     headerFontFamily?: string;
+    headerFontSize?: number;
     headerColor?: string;
     headerBackground?: string;
     headerImage?: string;
@@ -86,6 +87,7 @@ export default function DashboardPage() {
         category: "",
         headerTitle: "",
         headerFontFamily: "Inter",
+        headerFontSize: 100,
         headerColor: "#FFFFFF",
         headerBackground: "dark",
         headerImage: "",
@@ -165,6 +167,7 @@ export default function DashboardPage() {
             category: project.category || "",
             headerTitle: project.headerTitle || project.name,
             headerFontFamily: project.headerFontFamily || "Inter",
+            headerFontSize: project.headerFontSize || 100,
             headerColor: project.headerColor || "#FFFFFF",
             headerBackground: project.headerBackground || "dark",
             headerImage: project.headerImage || "",
@@ -199,6 +202,7 @@ export default function DashboardPage() {
                     category: planLimits?.lowResDownloads ? "personal" : editData.category,
                     headerTitle: editData.headerTitle,
                     headerFontFamily: planLimits?.lowResDownloads ? "Inter" : editData.headerFontFamily,
+                    headerFontSize: editData.headerFontSize,
                     headerColor: editData.headerColor,
                     headerBackground: editData.headerBackground,
                     headerImage: editData.headerImage,
@@ -384,14 +388,25 @@ export default function DashboardPage() {
                                     </div>
                                 )}
 
-                                {/* Header */}
+                                {/* Header with Preview */}
                                 <div className="flex justify-between items-start mb-4">
                                     <Link
                                         href={`/g/${project.slug}`}
                                         target="_blank"
-                                        className={`${isLight ? 'bg-neutral-100' : 'bg-neutral-800'} p-3 rounded-lg hover:bg-emerald-500 hover:text-white transition group/folder`}
+                                        className={`relative overflow-hidden rounded-lg hover:ring-2 hover:ring-emerald-500 transition group/folder ${project.coverImage
+                                            ? 'w-16 h-16'
+                                            : `${isLight ? 'bg-neutral-100' : 'bg-neutral-800'} p-3`
+                                            }`}
                                     >
-                                        <Folder className={`w-6 h-6 ${isLight ? 'text-neutral-400' : 'text-neutral-300'} group-hover/folder:text-white`} />
+                                        {project.coverImage ? (
+                                            <img
+                                                src={`/api/cloud/thumbnail?c=${project.cloudAccountId}&f=${project.coverImage}&s=200`}
+                                                alt={project.name}
+                                                className="w-full h-full object-cover rounded-lg group-hover/folder:scale-110 transition-transform duration-300"
+                                            />
+                                        ) : (
+                                            <Folder className={`w-6 h-6 ${isLight ? 'text-neutral-400' : 'text-neutral-300'} group-hover/folder:text-emerald-500`} />
+                                        )}
                                     </Link>
 
                                     <div className="flex items-center gap-1">
@@ -675,6 +690,26 @@ export default function DashboardPage() {
                                                 {planLimits?.lowResDownloads && (
                                                     <p className="text-[9px] text-neutral-500 mt-1">Solo 'Inter' disponible. Actualiza plan para más fuentes.</p>
                                                 )}
+                                            </div>
+
+                                            {/* Font Size Slider */}
+                                            <div>
+                                                <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-2 flex items-center justify-between">
+                                                    <span>Tamaño del Texto</span>
+                                                    <span className="text-neutral-400">{editData.headerFontSize}%</span>
+                                                </label>
+                                                <input
+                                                    type="range"
+                                                    min="100"
+                                                    max="500"
+                                                    value={editData.headerFontSize}
+                                                    onChange={(e) => setEditData({ ...editData, headerFontSize: parseInt(e.target.value) })}
+                                                    className={`w-full h-2 rounded-lg appearance-none cursor-pointer ${isLight ? 'bg-neutral-200 accent-neutral-900' : 'bg-neutral-700 accent-white'}`}
+                                                />
+                                                <div className="flex justify-between text-[9px] text-neutral-500 mt-1">
+                                                    <span>Normal</span>
+                                                    <span>Gigante</span>
+                                                </div>
                                             </div>
                                             <div>
                                                 <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-2 block">Color del Texto</label>

@@ -28,8 +28,10 @@ export default function NewProjectPage() {
     // Header customization
     const [headerTitle, setHeaderTitle] = useState("");
     const [headerFontFamily, setHeaderFontFamily] = useState("Inter");
+    const [headerFontSize, setHeaderFontSize] = useState(100);
     const [headerColor, setHeaderColor] = useState("#FFFFFF");
     const [headerBackground, setHeaderBackground] = useState<"dark" | "light">("dark");
+    const [enableWatermark, setEnableWatermark] = useState(false);
 
     // Photo download options
     const [downloadJpgEnabled, setDownloadJpgEnabled] = useState(true);
@@ -108,8 +110,10 @@ export default function NewProjectPage() {
                     rootFolderId: selectedFolder.id,
                     headerTitle: headerTitle || selectedFolder.name,
                     headerFontFamily,
+                    headerFontSize,
                     headerColor,
                     headerBackground,
+                    enableWatermark,
                     downloadJpgEnabled,
                     downloadRawEnabled,
                     enableVideoTab,
@@ -374,6 +378,29 @@ export default function NewProjectPage() {
                             {planLimits?.lowResDownloads && (
                                 <p className="text-xs text-neutral-500 mt-1">Personalización de fuentes disponible en planes Pro.</p>
                             )}
+                            {planLimits?.lowResDownloads && (
+                                <p className="text-xs text-neutral-500 mt-1">Personalización de fuentes disponible en planes Pro.</p>
+                            )}
+                        </div>
+
+                        {/* Tamaño de Fuente (Slider) */}
+                        <div>
+                            <div className="flex justify-between mb-2">
+                                <label className="text-sm font-medium text-neutral-300">Tamaño del Título</label>
+                                <span className="text-xs text-neutral-500">{headerFontSize}%</span>
+                            </div>
+                            <input
+                                type="range"
+                                min="100"
+                                max="500"
+                                value={headerFontSize}
+                                onChange={(e) => setHeaderFontSize(parseInt(e.target.value))}
+                                className="w-full h-2 rounded-lg appearance-none cursor-pointer bg-neutral-700 accent-emerald-500"
+                            />
+                            <div className="flex justify-between text-[9px] text-neutral-500 mt-1">
+                                <span>Normal</span>
+                                <span>Gigante</span>
+                            </div>
                         </div>
 
                         {/* Color Picker */}
@@ -420,196 +447,216 @@ export default function NewProjectPage() {
                                 </button>
                             </div>
                         </div>
+                    </div>
 
-                        {/* Photo Download Options */}
-                        <div className="border-t border-neutral-800 pt-6 space-y-3">
-                            <p className="text-sm font-medium text-neutral-300">Opciones de descarga de fotos</p>
-                            <label className="flex items-center gap-3 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    checked={downloadJpgEnabled}
-                                    onChange={(e) => {
-                                        // Always allow toggling, but if lowResDownloads is true, it means low res
-                                        setDownloadJpgEnabled(e.target.checked);
-                                    }}
-                                    className="w-5 h-5 rounded accent-emerald-500"
-                                />
-                                <span className="text-sm text-neutral-300">
-                                    {planLimits?.lowResDownloads ? 'Permitir descargas JPG (Resolución Web)' : 'Permitir descargas JPG (Alta Resolución)'}
-                                </span>
-                                {planLimits?.lowResDownloads && (
-                                    <span className="text-[10px] text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded ml-2">Plan Free</span>
-                                )}
-                            </label>
-                            <label className={`flex items-center gap-3 ${planLimits?.lowResDownloads ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
-                                <input
-                                    type="checkbox"
-                                    checked={planLimits?.lowResDownloads ? false : downloadRawEnabled}
-                                    onChange={(e) => {
-                                        if (planLimits?.lowResDownloads) return;
-                                        setDownloadRawEnabled(e.target.checked);
-                                    }}
-                                    disabled={!!planLimits?.lowResDownloads}
-                                    className="w-5 h-5 rounded accent-emerald-500 disabled:opacity-50"
-                                />
-                                <span className="text-sm text-neutral-300">Permitir descargas RAW</span>
-                                {planLimits?.lowResDownloads && (
-                                    <span className="text-[10px] text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded ml-2">Pro req.</span>
-                                )}
-                            </label>
+                    {/* Watermark Toggle */}
+                    <div>
+                        <label className="flex items-center gap-3 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={enableWatermark}
+                                onChange={(e) => setEnableWatermark(e.target.checked)}
+                                className="w-5 h-5 rounded accent-emerald-500"
+                            />
+                            <span className="text-sm font-medium text-neutral-300">Habilitar Marca de Agua</span>
+                        </label>
+                        <p className="text-xs text-neutral-500 mt-1 ml-8">Muestra tu logo superpuesto en las fotos para protección.</p>
+                    </div>
+
+                    {/* Photo Download Options */}
+                    <div className="border-t border-neutral-800 pt-6 space-y-3">
+                        <p className="text-sm font-medium text-neutral-300">Opciones de descarga de fotos</p>
+                        <label className="flex items-center gap-3 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={downloadJpgEnabled}
+                                onChange={(e) => {
+                                    // Always allow toggling, but if lowResDownloads is true, it means low res
+                                    setDownloadJpgEnabled(e.target.checked);
+                                }}
+                                className="w-5 h-5 rounded accent-emerald-500"
+                            />
+                            <span className="text-sm text-neutral-300">
+                                {planLimits?.lowResDownloads ? 'Permitir descargas JPG (Resolución Web)' : 'Permitir descargas JPG (Alta Resolución)'}
+                            </span>
                             {planLimits?.lowResDownloads && (
-                                <p className="text-xs text-amber-400">Tu plan solo permite descargas en resolución web (1200px).</p>
+                                <span className="text-[10px] text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded ml-2">Plan Free</span>
                             )}
-                            <p className="text-xs text-neutral-500">Los clientes podrán descargar fotos en diferentes calidades según tu configuración</p>
-                        </div>
-
-                        {/* Habilitar Videos */}
-                        <div className="border-t border-neutral-800 pt-6">
-                            <label className={`flex items-center gap-3 ${planLimits?.videoEnabled === false ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
-                                <input
-                                    type="checkbox"
-                                    checked={enableVideoTab}
-                                    onChange={(e) => {
-                                        if (planLimits?.videoEnabled === false) {
-                                            alert('\u26a0\ufe0f Tu plan no incluye video\n\nActualiza tu plan para habilitar galer\u00edas de video.');
-                                            return;
-                                        }
-                                        setEnableVideoTab(e.target.checked);
-                                    }}
-                                    disabled={planLimits?.videoEnabled === false}
-                                    className="w-5 h-5 rounded accent-emerald-500 disabled:opacity-50"
-                                />
-                                <span className="font-medium text-neutral-300">Habilitar tab de Videos</span>
-                                {planLimits?.videoEnabled === false && (
-                                    <span className="text-xs text-amber-400 bg-amber-500/10 px-2 py-1 rounded">Plan Free</span>
-                                )}
-                            </label>
-                            {planLimits?.videoEnabled === false ? (
-                                <p className="text-xs text-amber-400 mt-1 ml-8">Tu plan actual no incluye galer\u00edas de video. <a href="/pricing" className="underline">Actualizar plan</a></p>
-                            ) : (
-                                <p className="text-xs text-neutral-500 mt-1 ml-8">Agrega una pesta\u00f1a separada para videos</p>
+                        </label>
+                        <label className={`flex items-center gap-3 ${planLimits?.lowResDownloads ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
+                            <input
+                                type="checkbox"
+                                checked={planLimits?.lowResDownloads ? false : downloadRawEnabled}
+                                onChange={(e) => {
+                                    if (planLimits?.lowResDownloads) return;
+                                    setDownloadRawEnabled(e.target.checked);
+                                }}
+                                disabled={!!planLimits?.lowResDownloads}
+                                className="w-5 h-5 rounded accent-emerald-500 disabled:opacity-50"
+                            />
+                            <span className="text-sm text-neutral-300">Permitir descargas RAW</span>
+                            {planLimits?.lowResDownloads && (
+                                <span className="text-[10px] text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded ml-2">Pro req.</span>
                             )}
-                        </div>
-
-                        {/* Selector de Carpeta de Videos (condicional) */}
-                        {enableVideoTab && (
-                            <>
-                                <div>
-                                    <label className="block text-sm font-medium mb-2 text-neutral-300">
-                                        Carpeta de Videos
-                                    </label>
-                                    <button
-                                        onClick={() => setShowVideoBrowser(true)}
-                                        className="w-full py-4 border-2 border-dashed border-neutral-800 hover:border-emerald-500/40 hover:bg-emerald-500/5 rounded-xl flex items-center justify-center gap-2 transition text-neutral-400 hover:text-emerald-400"
-                                    >
-                                        <Folder className="w-5 h-5" />
-                                        {videoFolder ? videoFolder.name : "Seleccionar carpeta"}
-                                    </button>
-                                </div>
-
-                                {/* Video Download Options */}
-                                <div className="space-y-3">
-                                    <p className="text-sm font-medium text-neutral-300">Opciones de descarga de videos</p>
-                                    <label className="flex items-center gap-3 cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            checked={downloadVideoHdEnabled}
-                                            onChange={(e) => setDownloadVideoHdEnabled(e.target.checked)}
-                                            className="w-5 h-5 rounded accent-emerald-500"
-                                        />
-                                        <span className="text-sm text-neutral-300">Permitir descargas HD</span>
-                                    </label>
-                                    <label className="flex items-center gap-3 cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            checked={downloadVideoRawEnabled}
-                                            onChange={(e) => setDownloadVideoRawEnabled(e.target.checked)}
-                                            className="w-5 h-5 rounded accent-emerald-500"
-                                        />
-                                        <span className="text-sm text-neutral-300">Permitir descargas RAW</span>
-                                    </label>
-                                    <p className="text-xs text-neutral-500">Los clientes podrán descargar videos en diferentes calidades según tu configuración</p>
-                                </div>
-
-                                {/* Video Proxy Structure Tip */}
-                                <div className="bg-blue-500/5 border border-blue-500/10 rounded-2xl p-6">
-                                    <div className="flex items-center gap-2 mb-4 text-blue-400">
-                                        <Zap className="w-4 h-4" />
-                                        <span className="text-xs font-bold uppercase tracking-widest">Tip: Estructura de Videos</span>
-                                    </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <div className="space-y-1">
-                                            <div className="flex items-center gap-2 text-xs font-medium text-neutral-300">
-                                                <Folder className="w-3.5 h-3.5 text-blue-400" /> /webmp4
-                                            </div>
-                                            <p className="text-[10px] text-neutral-500 italic">Streaming rápido</p>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <div className="flex items-center gap-2 text-xs font-medium text-neutral-300">
-                                                <Folder className="w-3.5 h-3.5 text-emerald-400" /> /hd
-                                            </div>
-                                            <p className="text-[10px] text-neutral-500 italic">Descargas alta calidad</p>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <div className="flex items-center gap-2 text-xs font-medium text-neutral-300">
-                                                <Folder className="w-3.5 h-3.5 text-orange-400" /> /raw
-                                            </div>
-                                            <p className="text-[10px] text-neutral-500 italic">Originales sin comprimir</p>
-                                        </div>
-                                    </div>
-                                    <div className="mt-4 pt-4 border-t border-blue-500/10 flex gap-3 text-[11px] text-neutral-400 leading-relaxed">
-                                        <Info className="w-4 h-4 text-blue-400 flex-shrink-0" />
-                                        <span>Crea estas carpetas <b>dentro</b> de tu carpeta de videos. Los archivos deben tener el <b>mismo nombre</b> en todas las carpetas.</span>
-                                    </div>
-                                </div>
-                            </>
+                        </label>
+                        {planLimits?.lowResDownloads && (
+                            <p className="text-xs text-amber-400">Tu plan solo permite descargas en resolución web (1200px).</p>
                         )}
+                        <p className="text-xs text-neutral-500">Los clientes podrán descargar fotos en diferentes calidades según tu configuración</p>
+                    </div>
 
-                        {/* Botón Crear */}
-                        <div className="pt-4">
-                            <button
-                                onClick={handleCreateProject}
-                                disabled={enableVideoTab && !videoFolder}
-                                className="w-full py-4 bg-emerald-500 text-black rounded-2xl font-bold hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                            >
-                                Crear Galería <ChevronRight className="w-4 h-4" />
-                            </button>
-                            {enableVideoTab && !videoFolder && (
-                                <p className="text-xs text-orange-400 mt-2 text-center">Selecciona una carpeta de videos para continuar</p>
+                    {/* Habilitar Videos */}
+                    <div className="border-t border-neutral-800 pt-6">
+                        <label className={`flex items-center gap-3 ${planLimits?.videoEnabled === false ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
+                            <input
+                                type="checkbox"
+                                checked={enableVideoTab}
+                                onChange={(e) => {
+                                    if (planLimits?.videoEnabled === false) {
+                                        alert('\u26a0\ufe0f Tu plan no incluye video\n\nActualiza tu plan para habilitar galer\u00edas de video.');
+                                        return;
+                                    }
+                                    setEnableVideoTab(e.target.checked);
+                                }}
+                                disabled={planLimits?.videoEnabled === false}
+                                className="w-5 h-5 rounded accent-emerald-500 disabled:opacity-50"
+                            />
+                            <span className="font-medium text-neutral-300">Habilitar tab de Videos</span>
+                            {planLimits?.videoEnabled === false && (
+                                <span className="text-xs text-amber-400 bg-amber-500/10 px-2 py-1 rounded">Plan Free</span>
                             )}
-                        </div>
+                        </label>
+                        {planLimits?.videoEnabled === false ? (
+                            <p className="text-xs text-amber-400 mt-1 ml-8">Tu plan actual no incluye galer\u00edas de video. <a href="/pricing" className="underline">Actualizar plan</a></p>
+                        ) : (
+                            <p className="text-xs text-neutral-500 mt-1 ml-8">Agrega una pesta\u00f1a separada para videos</p>
+                        )}
+                    </div>
+
+                    {/* Selector de Carpeta de Videos (condicional) */}
+                    {enableVideoTab && (
+                        <>
+                            <div>
+                                <label className="block text-sm font-medium mb-2 text-neutral-300">
+                                    Carpeta de Videos
+                                </label>
+                                <button
+                                    onClick={() => setShowVideoBrowser(true)}
+                                    className="w-full py-4 border-2 border-dashed border-neutral-800 hover:border-emerald-500/40 hover:bg-emerald-500/5 rounded-xl flex items-center justify-center gap-2 transition text-neutral-400 hover:text-emerald-400"
+                                >
+                                    <Folder className="w-5 h-5" />
+                                    {videoFolder ? videoFolder.name : "Seleccionar carpeta"}
+                                </button>
+                            </div>
+
+                            {/* Video Download Options */}
+                            <div className="space-y-3">
+                                <p className="text-sm font-medium text-neutral-300">Opciones de descarga de videos</p>
+                                <label className="flex items-center gap-3 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={downloadVideoHdEnabled}
+                                        onChange={(e) => setDownloadVideoHdEnabled(e.target.checked)}
+                                        className="w-5 h-5 rounded accent-emerald-500"
+                                    />
+                                    <span className="text-sm text-neutral-300">Permitir descargas HD</span>
+                                </label>
+                                <label className="flex items-center gap-3 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={downloadVideoRawEnabled}
+                                        onChange={(e) => setDownloadVideoRawEnabled(e.target.checked)}
+                                        className="w-5 h-5 rounded accent-emerald-500"
+                                    />
+                                    <span className="text-sm text-neutral-300">Permitir descargas RAW</span>
+                                </label>
+                                <p className="text-xs text-neutral-500">Los clientes podrán descargar videos en diferentes calidades según tu configuración</p>
+                            </div>
+
+                            {/* Video Proxy Structure Tip */}
+                            <div className="bg-blue-500/5 border border-blue-500/10 rounded-2xl p-6">
+                                <div className="flex items-center gap-2 mb-4 text-blue-400">
+                                    <Zap className="w-4 h-4" />
+                                    <span className="text-xs font-bold uppercase tracking-widest">Tip: Estructura de Videos</span>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="space-y-1">
+                                        <div className="flex items-center gap-2 text-xs font-medium text-neutral-300">
+                                            <Folder className="w-3.5 h-3.5 text-blue-400" /> /webmp4
+                                        </div>
+                                        <p className="text-[10px] text-neutral-500 italic">Streaming rápido</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <div className="flex items-center gap-2 text-xs font-medium text-neutral-300">
+                                            <Folder className="w-3.5 h-3.5 text-emerald-400" /> /hd
+                                        </div>
+                                        <p className="text-[10px] text-neutral-500 italic">Descargas alta calidad</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <div className="flex items-center gap-2 text-xs font-medium text-neutral-300">
+                                            <Folder className="w-3.5 h-3.5 text-orange-400" /> /raw
+                                        </div>
+                                        <p className="text-[10px] text-neutral-500 italic">Originales sin comprimir</p>
+                                    </div>
+                                </div>
+                                <div className="mt-4 pt-4 border-t border-blue-500/10 flex gap-3 text-[11px] text-neutral-400 leading-relaxed">
+                                    <Info className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                                    <span>Crea estas carpetas <b>dentro</b> de tu carpeta de videos. Los archivos deben tener el <b>mismo nombre</b> en todas las carpetas.</span>
+                                </div>
+                            </div>
+                        </>
+                    )}
+
+                    {/* Botón Crear */}
+                    <div className="pt-4">
+                        <button
+                            onClick={handleCreateProject}
+                            disabled={enableVideoTab && !videoFolder}
+                            className="w-full py-4 bg-emerald-500 text-black rounded-2xl font-bold hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                            Crear Galería <ChevronRight className="w-4 h-4" />
+                        </button>
+                        {enableVideoTab && !videoFolder && (
+                            <p className="text-xs text-orange-400 mt-2 text-center">Selecciona una carpeta de videos para continuar</p>
+                        )}
                     </div>
                 </div>
             )}
 
             {/* Saving State */}
-            {step === "saving" && (
-                <div className="flex items-center gap-3 text-emerald-500 bg-emerald-950/20 border border-emerald-500/20 p-5 rounded-2xl">
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    <span className="font-medium">Creando galería profesional...</span>
-                </div>
-            )}
+            {
+                step === "saving" && (
+                    <div className="flex items-center gap-3 text-emerald-500 bg-emerald-950/20 border border-emerald-500/20 p-5 rounded-2xl">
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <span className="font-medium">Creando galería profesional...</span>
+                    </div>
+                )
+            }
 
             {/* Folder Browser Modal */}
-            {showBrowser && selectedAccount && (
-                <FolderBrowser
-                    cloudAccountId={selectedAccount.id}
-                    onSelect={handleFolderSelect}
-                    onCancel={() => setShowBrowser(false)}
-                />
-            )}
+            {
+                showBrowser && selectedAccount && (
+                    <FolderBrowser
+                        cloudAccountId={selectedAccount.id}
+                        onSelect={handleFolderSelect}
+                        onCancel={() => setShowBrowser(false)}
+                    />
+                )
+            }
 
             {/* Video Folder Browser Modal */}
-            {showVideoBrowser && selectedAccount && (
-                <FolderBrowser
-                    cloudAccountId={selectedAccount.id}
-                    onSelect={(folder) => {
-                        setVideoFolder(folder);
-                        setShowVideoBrowser(false);
-                    }}
-                    onCancel={() => setShowVideoBrowser(false)}
-                />
-            )}
-        </div>
+            {
+                showVideoBrowser && selectedAccount && (
+                    <FolderBrowser
+                        cloudAccountId={selectedAccount.id}
+                        onSelect={(folder) => {
+                            setVideoFolder(folder);
+                            setShowVideoBrowser(false);
+                        }}
+                        onCancel={() => setShowVideoBrowser(false)}
+                    />
+                )
+            }
+        </div >
     );
 }

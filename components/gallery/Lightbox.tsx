@@ -67,9 +67,9 @@ export default function Lightbox({
 
         // Handle case where specific format proxy is missing
         if (!formatData) {
-            // If Low Res restriction is ON and we want JPG, we can use the main file ID as source
-            // logic downstream will use /api/cloud/thumbnail which works with Main ID too.
-            if (lowResDownloads && format === 'jpg') {
+            // Fallback to main ID for JPG downloads if format data is missing
+            // This ensures download works for OneDrive/Generic files where formats might be empty
+            if (format === 'jpg') {
                 fileId = currentFile.id;
             } else {
                 return;
@@ -195,8 +195,8 @@ export default function Lightbox({
 
                     {/* Top Actions: Proxy/Format Downloads */}
                     <div className="absolute top-6 left-6 flex items-center gap-3 z-[110]">
-                        {/* For photos: JPG button, For videos: Baja (hd) button */}
-                        {downloadJpgEnabled && (currentFile.formats?.jpg || currentFile.formats?.hd) && (
+                        {/* Always show Download button if enabled, falling back to main ID if needed */}
+                        {downloadJpgEnabled && (
                             <button
                                 onClick={() => handleDownloadFormat(currentFile.mimeType?.startsWith('video/') ? "hd" : "jpg")}
                                 disabled={!!isDownloading}
@@ -252,24 +252,7 @@ export default function Lightbox({
                                     className="max-w-full max-h-[80vh] object-contain shadow-2xl rounded-lg border border-white/5"
                                     referrerPolicy="no-referrer"
                                 />
-                                {/* Download overlay for images */}
-                                {downloadJpgEnabled && (
-                                    <div className="absolute bottom-4 right-4 flex bg-neutral-900/40 opacity-0 group-hover:opacity-100 transition duration-300 rounded-full border border-white/20 overflow-hidden backdrop-blur-md">
-                                        <button
-                                            onClick={() => handleDownloadFormat("jpg")}
-                                            disabled={isDownloading !== null}
-                                            className="px-5 py-2 hover:bg-white hover:text-black transition flex items-center gap-2 border-r border-white/20 last:border-0"
-                                        >
-                                            {isDownloading === "jpg" ? (
-                                                <Loader2 className="w-4 h-4 animate-spin" />
-                                            ) : (
-                                                <Download className="w-4 h-4" />
-                                            )}
-                                            <span className="text-sm font-medium">{lowResDownloads ? 'Baja (Web)' : 'Alta'}</span>
-                                        </button>
-                                    </div>
-                                )}
-                                {/* Watermark overlay */}
+                                {/* Download overlay removed per user request */}
                                 {enableWatermark && (
                                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                         {studioLogo ? (

@@ -157,10 +157,10 @@ export default function GalleryPreviewCard({ project, isLight }: GalleryPreviewC
                 />
             );
         } else if (project.coverImage) {
-            // Fallback to cover image
+            // Fallback to cover image - construct proper thumbnail URL
             return (
                 <img
-                    src={project.coverImage}
+                    src={`/api/cloud/thumbnail?c=${project.cloudAccountId}&f=${project.coverImage}&s=400`}
                     alt={project.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                 />

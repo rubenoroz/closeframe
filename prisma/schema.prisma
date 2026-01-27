@@ -149,6 +149,7 @@ model Project {
   // Gallery Header Customization
   headerTitle       String?      // Custom title (e.g., "Boda de Ana & Carlos")
   headerFontFamily  String       @default("Inter")
+  headerFontSize    Int          @default(100)     // Font size as percentage (50-200)
   headerColor       String       @default("#FFFFFF")
   headerBackground  String       @default("dark") // "dark" | "light"
   headerImage       String?      // Image ID for header background

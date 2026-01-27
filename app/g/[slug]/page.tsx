@@ -61,15 +61,32 @@ export default async function PublicGalleryPage({ params }: Props) {
     // Only auto-detect Videos folder if user explicitly enabled video tab but didn't configure a folder
     if (enableVideoTab && !videoFolderId) {
         try {
-            const auth = await getFreshGoogleAuth(project.cloudAccountId);
-            const provider = new GoogleDriveProvider();
-            const subfolders = await provider.listFolders(project.rootFolderId, auth);
+            // Get cloud account to know provider
+            const cloudAccount = await prisma.cloudAccount.findUnique({
+                where: { id: project.cloudAccountId }
+            });
 
-            // Look for "Videos" folder (case-insensitive)
-            const videosFolder = subfolders.find(f => f.name.toLowerCase() === "videos");
+            if (cloudAccount) {
+                const { getFreshAuth } = await import("@/lib/cloud/auth-factory");
+                const authClient = await getFreshAuth(project.cloudAccountId);
+                let provider;
 
-            if (videosFolder) {
-                videoFolderId = videosFolder.id;
+                if (cloudAccount.provider === "microsoft") {
+                    const { MicrosoftGraphProvider } = await import("@/lib/cloud/microsoft-provider");
+                    provider = new MicrosoftGraphProvider(authClient as string);
+                } else {
+                    provider = new GoogleDriveProvider();
+                }
+
+                // @ts-ignore
+                const subfolders = await provider.listFolders(project.rootFolderId, authClient);
+
+                // Look for "Videos" folder (case-insensitive)
+                const videosFolder = subfolders.find((f: any) => f.name.toLowerCase() === "videos");
+
+                if (videosFolder) {
+                    videoFolderId = videosFolder.id;
+                }
             }
         } catch (error) {
             console.error("Error detecting Videos folder:", error);

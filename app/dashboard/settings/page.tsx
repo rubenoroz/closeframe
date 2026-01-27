@@ -970,8 +970,12 @@ export default function SettingsPage() {
                                             "w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center transition-colors",
                                             isLight ? "bg-neutral-100 border border-neutral-100" : "bg-neutral-800 border border-neutral-700"
                                         )}>
-                                            {project.coverImage ? (
-                                                <img src={project.coverImage} className="w-full h-full object-cover" alt="" />
+                                            {project.coverImage && project.cloudAccountId ? (
+                                                <img
+                                                    src={`/api/cloud/thumbnail?c=${project.cloudAccountId}&f=${project.coverImage}&s=100`}
+                                                    className="w-full h-full object-cover"
+                                                    alt=""
+                                                />
                                             ) : (
                                                 <Folder className={cn("w-4 h-4", isLight ? "text-neutral-300" : "text-neutral-600")} />
                                             )}
