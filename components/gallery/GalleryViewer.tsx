@@ -7,6 +7,8 @@ import Lightbox from "./Lightbox";
 import { Skeleton } from "@/components/Skeleton";
 import GalleryLoaderGrid from "./GalleryLoaderGrid";
 
+// ... imports ...
+
 interface Props {
     cloudAccountId: string;
     folderId: string;
@@ -23,27 +25,13 @@ interface Props {
     mediaType?: "photos" | "videos";
     enableWatermark?: boolean;
     maxImages?: number | null;
-    watermarkText?: string | null; // Text watermark from plan limits
+    watermarkText?: string | null;
     lowResDownloads?: boolean;
     lowResThumbnails?: boolean;
-    zipDownloadsEnabled?: boolean;
+    zipDownloadsEnabled?: boolean | "static_only"; // [UPDATED]
 }
 
-
-interface CloudFile {
-    id: string;
-    name: string;
-    mimeType?: string;
-    thumbnailLink?: string;
-    width?: number;
-    height?: number;
-    formats?: {
-        web: string;
-        jpg?: string | null;
-        hd?: string | null;
-        raw?: string | { id: string; name: string } | null;
-    };
-}
+// ... CloudFile interface ...
 
 export default function GalleryViewer({
     cloudAccountId,
@@ -73,7 +61,23 @@ export default function GalleryViewer({
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [isDownloading, setIsDownloading] = useState(false);
 
+    // [NEW] Separate media content from static ZIP resources
+    const mediaFiles = useMemo(() => {
+        return files.filter(f => !f.mimeType?.includes('zip') && !f.name.endsWith('.zip'));
+    }, [files]);
+
+    // [NEW] Find static gallery ZIP
+    const staticZipFile = useMemo(() => {
+        return files.find(f =>
+            (f.mimeType?.includes('zip') || f.name.endsWith('.zip')) &&
+            (f.name.toLowerCase().includes('full') || f.name.toLowerCase().includes('gallery') || f.name.toLowerCase().includes('todo'))
+        );
+    }, [files]);
+
     const toggleSelect = useCallback((id: string) => {
+        // [NEW] Prevent selection if ZIP downloads are disabled or static only
+        if (zipDownloadsEnabled === false || zipDownloadsEnabled === 'static_only') return;
+
         setSelectedIds((prev) => {
             const next = new Set(prev);
             if (next.has(id)) {
@@ -83,31 +87,41 @@ export default function GalleryViewer({
             }
             return next;
         });
-    }, []);
+    }, [zipDownloadsEnabled]);
 
     const clearSelection = () => setSelectedIds(new Set());
-    const selectAll = () => setSelectedIds(new Set(files.map(f => f.id)));
+    // [Updated] Only select from VISIBLE media files
+    const selectAll = () => setSelectedIds(new Set(mediaFiles.map(f => f.id)));
 
-    // Distribution logic for masonry
+    // Distribution logic for masonry using mediaFiles
     const columns = useMemo(() => {
         const cols: CloudFile[][] = [[], [], [], []];
-        files.forEach((file, index) => {
+        mediaFiles.forEach((file, index) => {
             cols[index % 4].push(file);
         });
         return cols;
-    }, [files]);
+    }, [mediaFiles]);
 
     const mobileColumns = useMemo(() => {
         const cols: CloudFile[][] = [[], []];
-        files.forEach((file, index) => {
+        mediaFiles.forEach((file, index) => {
             cols[index % 2].push(file);
         });
         return cols;
-    }, [files]);
+    }, [mediaFiles]);
 
     const openLightbox = (index: number) => {
         setCurrentIndex(index);
         setLightboxOpen(true);
+    };
+
+    const handleDownloadStaticZip = () => {
+        if (!staticZipFile) return;
+        // Direct download using the direct download route (which now redirects properly)
+        // We use download-direct for individual files, but we can use it for the ZIP too.
+        // Or simply redirect to the webContentLink if available.
+        // Actually, our download-direct route handles redirects now.
+        window.location.href = `/api/cloud/download-direct?c=${cloudAccountId}&f=${staticZipFile.id}&n=${encodeURIComponent(staticZipFile.name)}`;
     };
 
     const handleDownloadZip = async (format: "jpg" | "raw" = "jpg") => {
@@ -116,7 +130,7 @@ export default function GalleryViewer({
         setIsDownloading(true);
 
         try {
-            const selectedFiles = files.filter(f => selectedIds.has(f.id));
+            const selectedFiles = mediaFiles.filter(f => selectedIds.has(f.id));
 
             // Preparar datos
             const filesData = selectedFiles.map(f => {
@@ -260,6 +274,10 @@ export default function GalleryViewer({
 
     // Derived download state
     const anyDownloadEnabled = downloadEnabled && (downloadJpgEnabled || downloadRawEnabled);
+    // [NEW] Logic for dynamic ZIPs availability
+    const dynamicZipEnabled = anyDownloadEnabled && zipDownloadsEnabled === true;
+    // [NEW] Logic for static ZIP availability
+    const staticZipAvailable = anyDownloadEnabled && zipDownloadsEnabled === 'static_only' && !!staticZipFile;
 
     return (
         <div className={`min-h-screen transition-colors duration-700 ${theme === 'light' ? 'bg-neutral-50 text-neutral-900' : 'bg-neutral-900 text-neutral-100'} font-sans relative ${className}`}>
@@ -269,6 +287,7 @@ export default function GalleryViewer({
                 : 'bg-gradient-to-b from-black/80 to-transparent'
                 } pointer-events-none`}>
                 <div className="flex items-center gap-3 text-lg font-light pointer-events-auto">
+                    {/* ... Logo/Name ... */}
                     {studioLogo ? (
                         <div
                             className="h-8 flex items-center justify-center overflow-hidden transition-transform duration-300 origin-left"
@@ -284,12 +303,26 @@ export default function GalleryViewer({
                     )}
                 </div>
                 <div className="flex items-center gap-3 pointer-events-auto">
-                    {anyDownloadEnabled && selectedIds.size > 0 && (
+                    {/* Clear selection only if dynamic zip enabled */}
+                    {dynamicZipEnabled && selectedIds.size > 0 && (
                         <button
                             onClick={clearSelection}
                             className="text-xs text-neutral-400 hover:text-white transition flex items-center gap-1"
                         >
                             <X className="w-3 h-3" /> Limpiar ({selectedIds.size})
+                        </button>
+                    )}
+                    {/* [NEW] Strategic Download All Button for Pro users in Header */}
+                    {staticZipAvailable && (
+                        <button
+                            onClick={handleDownloadStaticZip}
+                            className={`px-4 py-2 rounded-full text-xs font-bold transition flex items-center gap-2 shadow-lg ${theme === 'light'
+                                ? 'bg-emerald-600 text-white hover:bg-emerald-500 shadow-emerald-200'
+                                : 'bg-white text-black hover:bg-neutral-200'
+                                }`}
+                        >
+                            <Download className="w-3 h-3" />
+                            <span>Descargar Todo</span>
                         </button>
                     )}
                 </div>
@@ -304,7 +337,7 @@ export default function GalleryViewer({
                         <p>⚠️ {error}</p>
                         <p className="text-sm text-neutral-500">Verifica que el archivo exista en la nube.</p>
                     </div>
-                ) : files.length === 0 ? (
+                ) : mediaFiles.length === 0 ? (
                     <div className="flex justify-center items-center py-40 text-neutral-500">
                         {mediaType === "videos"
                             ? "Esta carpeta no contiene videos."
@@ -312,11 +345,12 @@ export default function GalleryViewer({
                     </div>
                 ) : (
                     <>
+                        {/* Desktop Grid */}
                         <div className="hidden md:grid grid-cols-4 gap-1 items-start">
                             {columns.map((col, colIdx) => (
                                 <div key={colIdx} className="flex flex-col gap-1">
                                     {col.map((item) => {
-                                        const originalIndex = files.findIndex((f) => f.id === item.id);
+                                        const originalIndex = mediaFiles.findIndex((f) => f.id === item.id);
                                         return (
                                             <MediaCard
                                                 key={item.id}
@@ -324,13 +358,14 @@ export default function GalleryViewer({
                                                 index={originalIndex}
                                                 cloudAccountId={cloudAccountId}
                                                 downloadEnabled={anyDownloadEnabled}
+                                                // Disable selection if not dynamic zip enabled
+                                                selectionEnabled={dynamicZipEnabled}
                                                 enableWatermark={enableWatermark}
                                                 watermarkText={watermarkText}
                                                 studioLogo={studioLogo}
                                                 isSelected={selectedIds.has(item.id)}
-                                                onSelect={() => zipDownloadsEnabled && toggleSelect(item.id)}
+                                                onSelect={() => toggleSelect(item.id)}
                                                 onView={() => openLightbox(originalIndex)}
-                                                selectionEnabled={zipDownloadsEnabled}
                                                 lowResThumbnails={lowResThumbnails}
                                             />
                                         );
@@ -338,12 +373,12 @@ export default function GalleryViewer({
                                 </div>
                             ))}
                         </div>
-
+                        {/* Mobile Grid */}
                         <div className="grid md:hidden grid-cols-2 gap-1 items-start">
                             {mobileColumns.map((col, colIdx) => (
                                 <div key={colIdx} className="flex flex-col gap-1">
                                     {col.map((item) => {
-                                        const originalIndex = files.findIndex((f) => f.id === item.id);
+                                        const originalIndex = mediaFiles.findIndex((f) => f.id === item.id);
                                         return (
                                             <MediaCard
                                                 key={item.id}
@@ -351,6 +386,7 @@ export default function GalleryViewer({
                                                 index={originalIndex}
                                                 cloudAccountId={cloudAccountId}
                                                 downloadEnabled={anyDownloadEnabled}
+                                                selectionEnabled={dynamicZipEnabled}
                                                 enableWatermark={enableWatermark}
                                                 watermarkText={watermarkText}
                                                 studioLogo={studioLogo}
@@ -369,11 +405,11 @@ export default function GalleryViewer({
                 }
             </main >
 
-            {/* Lightbox - Pass permitted download types */}
+            {/* Lightbox */}
             < Lightbox
                 isOpen={lightboxOpen}
                 onClose={() => setLightboxOpen(false)}
-                files={files}
+                files={mediaFiles} // Only show media files
                 currentIndex={currentIndex}
                 onNavigate={(index) => setCurrentIndex(index)}
                 cloudAccountId={cloudAccountId}
@@ -385,9 +421,9 @@ export default function GalleryViewer({
                 lowResDownloads={lowResDownloads}
             />
 
-            {/* Bottom Bar for Batch Download */}
+            {/* Bottom Bar for Batch Download (Only if Dynamic ZIP is Enabled) */}
             {
-                anyDownloadEnabled && zipDownloadsEnabled && (
+                dynamicZipEnabled && (
                     <footer className={`fixed bottom-0 left-0 right-0 transition-all border-t px-4 md:px-8 py-3 md:py-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 md:gap-0 z-40 ${theme === 'light'
                         ? 'bg-white/90 backdrop-blur-xl border-neutral-100 shadow-[0_-10px_40px_rgba(0,0,0,0.02)]'
                         : 'bg-neutral-900/90 backdrop-blur-xl border-neutral-800'
@@ -395,7 +431,7 @@ export default function GalleryViewer({
                         <div className="flex items-center justify-between md:justify-start gap-4 text-sm">
                             <div className={`hidden md:flex items-center gap-2 ${theme === 'light' ? 'text-neutral-500' : 'text-neutral-400'}`}>
                                 <Folder className="w-4 h-4" />
-                                <span>{files.length} {mediaType === "videos" ? "videos" : "fotos"}</span>
+                                <span>{mediaFiles.length} {mediaType === "videos" ? "videos" : "fotos"}</span>
                             </div>
                             {selectedIds.size > 0 && (
                                 <span className="text-emerald-500 font-bold text-xs md:text-sm">
@@ -424,22 +460,20 @@ export default function GalleryViewer({
                         <div className="flex items-center gap-3 md:gap-6">
                             {/* Desktop selection buttons */}
                             <div className="hidden md:block">
-                                {zipDownloadsEnabled && (
-                                    selectedIds.size === 0 ? (
-                                        <button
-                                            onClick={selectAll}
-                                            className={`text-sm transition font-medium ${theme === 'light' ? 'text-neutral-500 hover:text-black' : 'text-neutral-400 hover:text-white'}`}
-                                        >
-                                            Seleccionar todas
-                                        </button>
-                                    ) : (
-                                        <button
-                                            onClick={clearSelection}
-                                            className={`text-sm transition font-medium ${theme === 'light' ? 'text-neutral-400 hover:text-red-500' : 'text-neutral-400 hover:text-white'}`}
-                                        >
-                                            Desmarcar todas
-                                        </button>
-                                    )
+                                {selectedIds.size === 0 ? (
+                                    <button
+                                        onClick={selectAll}
+                                        className={`text-sm transition font-medium ${theme === 'light' ? 'text-neutral-500 hover:text-black' : 'text-neutral-400 hover:text-white'}`}
+                                    >
+                                        Seleccionar todas
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={clearSelection}
+                                        className={`text-sm transition font-medium ${theme === 'light' ? 'text-neutral-400 hover:text-red-500' : 'text-neutral-400 hover:text-white'}`}
+                                    >
+                                        Desmarcar todas
+                                    </button>
                                 )}
                             </div>
                             <div className="flex items-center gap-2 flex-1 md:flex-none">

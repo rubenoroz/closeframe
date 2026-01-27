@@ -139,6 +139,8 @@ export async function GET(request: Request) {
                 const baseKey = file.name.split('.').slice(0, -1).join('.').toLowerCase();
                 const isVideo = file.mimeType?.startsWith('video/');
 
+                const isZip = file.mimeType === 'application/zip' || file.mimeType === 'application/x-zip-compressed';
+
                 if (isVideo) {
                     // Video file - use video proxy maps
                     const rawData = rawVideoMap.get(baseKey);
@@ -150,8 +152,11 @@ export async function GET(request: Request) {
                             raw: rawData || null,
                         }
                     };
+                } else if (isZip) {
+                    // ZIP file - pass through without proxy mapping
+                    return file;
                 } else {
-                    // Photo file - use photo proxy maps
+                    // Photo file (default for others) - use photo proxy maps
                     const rawData = rawPhotoMap.get(baseKey);
                     return {
                         ...file,

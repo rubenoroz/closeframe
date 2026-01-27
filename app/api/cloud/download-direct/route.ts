@@ -16,7 +16,6 @@ export async function GET(req: NextRequest) {
         const { searchParams } = new URL(req.url);
         const cloudAccountId = searchParams.get("c");
         const fileId = searchParams.get("f");
-        const fileName = searchParams.get("n") || "download";
 
         if (!cloudAccountId || !fileId) {
             return NextResponse.json({ error: "Missing parameters" }, { status: 400 });
@@ -35,92 +34,43 @@ export async function GET(req: NextRequest) {
         const { getFreshAuth } = await import("@/lib/cloud/auth-factory");
         const authClient = await getFreshAuth(cloudAccountId);
 
-        let fileBuffer: ArrayBuffer | null = null;
-        let mimeType = "application/octet-stream";
-        let safeFileName = fileName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\x00-\x7F]/g, "_");
+        let downloadUrl: string | null = null;
 
         if (account.provider === "microsoft") {
             const { MicrosoftGraphProvider } = await import("@/lib/cloud/microsoft-provider");
             const provider = new MicrosoftGraphProvider(authClient as string);
-
-            // Get download URL
-            const downloadUrl = await provider.getFileContent(fileId);
-            if (!downloadUrl) throw new Error("No download URL found");
-
-            const res = await fetch(downloadUrl);
-            if (!res.ok) throw new Error("Failed to fetch file content from Microsoft");
-
-            fileBuffer = await res.arrayBuffer();
-            mimeType = res.headers.get("content-type") || mimeType;
+            downloadUrl = await provider.getFileContent(fileId);
 
         } else if (account.provider === "dropbox") {
             const { DropboxProvider } = await import("@/lib/cloud/dropbox-provider");
             const provider = new DropboxProvider(authClient as string);
-
-            // Get download URL
-            const downloadUrl = await provider.getFileContent(fileId);
-            if (!downloadUrl) throw new Error("No download URL found for Dropbox");
-
-            const res = await fetch(downloadUrl);
-            if (!res.ok) throw new Error("Failed to fetch file content from Dropbox");
-
-            fileBuffer = await res.arrayBuffer();
-            mimeType = res.headers.get("content-type") || mimeType;
+            downloadUrl = await provider.getFileContent(fileId);
 
         } else if (account.provider === "koofr") {
             const { KoofrProvider } = await import("@/lib/cloud/koofr-provider");
             // @ts-ignore
             const provider = new KoofrProvider(authClient.email, authClient.password);
-
-            // Get download URL (API URL)
-            const downloadUrl = await provider.getFileContent(fileId);
-            if (!downloadUrl) throw new Error("No download URL found for Koofr");
-
-            // Fetch with basic auth
-            const res = await provider.fetchWithAuth(downloadUrl);
-            if (!res.ok) throw new Error("Failed to fetch file content from Koofr");
-
-            fileBuffer = await res.arrayBuffer();
-            mimeType = res.headers.get("content-type") || mimeType;
+            downloadUrl = await provider.getFileContent(fileId);
 
         } else {
             // Google Logic
             const { google } = await import("googleapis");
             const drive = google.drive({ version: "v3", auth: authClient as any });
 
-            // Get file metadata first
+            // Request webContentLink for direct download
             const fileMeta = await drive.files.get({
                 fileId: fileId,
-                fields: "name,mimeType,size"
+                fields: "webContentLink"
             });
-
-            const actualFileName = fileMeta.data.name || fileName;
-            mimeType = fileMeta.data.mimeType || "application/octet-stream";
-
-            // Sanitize filename
-            safeFileName = actualFileName
-                .normalize("NFD")
-                .replace(/[\u0300-\u036f]/g, "")
-                .replace(/[^\x00-\x7F]/g, "_");
-
-            // Download as buffer (reliable)
-            const response = await drive.files.get(
-                { fileId: fileId, alt: "media" },
-                { responseType: "arraybuffer" }
-            );
-
-            fileBuffer = response.data as ArrayBuffer;
+            downloadUrl = fileMeta.data.webContentLink || null;
         }
 
-        if (!fileBuffer) throw new Error("Failed to create download buffer");
+        if (!downloadUrl) {
+            throw new Error("Could not generate download link");
+        }
 
-        return new NextResponse(new Uint8Array(fileBuffer), {
-            headers: {
-                "Content-Type": mimeType,
-                "Content-Disposition": `attachment; filename="${safeFileName}"`,
-                "Cache-Control": "no-cache",
-            },
-        });
+        // Redirect to the direct cloud URL (Saves 100% Bandwidth)
+        return NextResponse.redirect(downloadUrl);
 
     } catch (error: any) {
         console.error("Direct Download Error:", error?.message || error);

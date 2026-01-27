@@ -18,7 +18,7 @@ export class GoogleDriveProvider implements CloudProvider {
         const drive = this.getDriveClient(authSource);
 
         const res = await drive.files.list({
-            q: `'${folderId}' in parents and (mimeType contains 'image/' or mimeType contains 'video/') and trashed = false`,
+            q: `'${folderId}' in parents and (mimeType contains 'image/' or mimeType contains 'video/' or mimeType = 'application/zip' or mimeType = 'application/x-zip-compressed') and trashed = false`,
             fields: "files(id, name, mimeType, thumbnailLink, webContentLink, imageMediaMetadata, videoMediaMetadata, size, modifiedTime)",
             pageSize: 100,
         });

@@ -18,7 +18,7 @@ interface PlanLimits {
     maxProjects: number;
     maxCloudAccounts: number;
     // Descargas ZIP
-    zipDownloadsEnabled: boolean;
+    zipDownloadsEnabled: boolean | string;
     maxZipDownloadsPerMonth: number | null;
     // Funcionalidades
     watermarkRemoval: boolean;

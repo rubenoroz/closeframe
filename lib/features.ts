@@ -33,10 +33,14 @@ export interface FeatureDefinition {
     label: string;
     description: string;
     category: 'profile' | 'gallery' | 'booking' | 'system' | 'analytics' | 'collaboration' | 'monetization';
-    type: 'boolean' | 'number';
+    type: 'boolean' | 'number' | 'select';
     icon?: any;
     defaultValue?: any;
+    options?: { label: string; value: any }[];
 }
+
+// ...
+
 
 export const FEATURE_POOL: FeatureDefinition[] = [
     // --- PROFILE ---
@@ -282,9 +286,14 @@ export const FEATURE_POOL: FeatureDefinition[] = [
         label: "Descarga ZIP Completa",
         description: "Bajar todo el proyecto en un click",
         category: "gallery",
-        type: "boolean",
+        type: "select",
         defaultValue: false,
-        icon: Folder
+        icon: Folder,
+        options: [
+            { label: "Desactivado", value: false },
+            { label: "Solo Estático (ZIP Upload)", value: "static_only" },
+            { label: "Dinámico (Stream)", value: true }
+        ]
     },
     {
         id: "simulatedWatermark",

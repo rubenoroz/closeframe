@@ -40,7 +40,7 @@ interface PublicGalleryClientProps {
             lowResDownloads: boolean;
             lowResMaxWidth: number;
             watermarkText: string | null;
-            zipDownloadsEnabled: boolean;
+            zipDownloadsEnabled: boolean | "static_only";
             hideBranding: boolean;
             galleryCover: boolean;
         } | null;

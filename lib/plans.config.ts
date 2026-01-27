@@ -16,6 +16,7 @@ export const PLANS = {
             manualOrdering: false,
             listView: false,
             bookingConfig: false,
+            zipDownloadsEnabled: false, // [NEW] Free users cannot download ZIPs
         }
     },
     PRO: {
@@ -35,6 +36,7 @@ export const PLANS = {
             manualOrdering: true,
             listView: true,
             bookingConfig: true,
+            zipDownloadsEnabled: 'static_only', // [NEW] Pro users use efficient static ZIPs
         }
     },
     STUDIO: {
@@ -54,6 +56,7 @@ export const PLANS = {
             manualOrdering: true,
             listView: true,
             bookingConfig: true,
+            zipDownloadsEnabled: true, // [NEW] Studio users get full dynamic ZIPs
         }
     }
 } as const;

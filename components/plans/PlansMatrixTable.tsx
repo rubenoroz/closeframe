@@ -166,6 +166,25 @@ export default function PlansMatrixTable() {
                                                                 displayVal ? "left-7" : "left-1"
                                                             )} />
                                                         </button>
+                                                    ) : feature.type === 'select' ? (
+                                                        <div className="relative">
+                                                            <select
+                                                                value={String(displayVal)}
+                                                                onChange={(e) => {
+                                                                    let val: any = e.target.value;
+                                                                    if (val === 'true') val = true;
+                                                                    if (val === 'false') val = false;
+                                                                    updateLocalValue(plan.id, feature.id, 'features', val);
+                                                                }}
+                                                                className="w-full min-w-[140px] px-3 py-1.5 bg-neutral-800 border border-neutral-700 rounded-lg text-xs text-white focus:outline-none focus:border-violet-500 appearance-none cursor-pointer text-center"
+                                                            >
+                                                                {feature.options?.map(opt => (
+                                                                    <option key={String(opt.value)} value={String(opt.value)} className="bg-neutral-900">
+                                                                        {opt.label}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
                                                     ) : (
                                                         <div className="flex flex-col items-center justify-center gap-1">
                                                             <div className="relative">
