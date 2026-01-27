@@ -44,7 +44,7 @@ async function getGoogleAuth(account: any) {
         await prisma.cloudAccount.update({
             where: { id: account.id },
             data: {
-                accessToken: credentials.access_token,
+                accessToken: credentials.access_token || "",
                 expiresAt: credentials.expiry_date ? new Date(credentials.expiry_date) : null,
                 // Only update refresh_token if new one provided
                 refreshToken: credentials.refresh_token || undefined
