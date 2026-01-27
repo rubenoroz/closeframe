@@ -4,18 +4,7 @@ import React, { useEffect, useCallback, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronLeft, ChevronRight, Download, Share2, Loader2 } from "lucide-react";
 
-interface CloudFile {
-    id: string;
-    name: string;
-    mimeType?: string;
-    thumbnailLink?: string;
-    formats?: {
-        web: string;
-        jpg?: string | null;
-        hd?: string | null;
-        raw?: string | { id: string; name: string } | null;
-    };
-}
+import { CloudFile } from "@/types/cloud";
 
 interface LightboxProps {
     isOpen: boolean;

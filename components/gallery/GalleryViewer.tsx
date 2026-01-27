@@ -7,34 +7,7 @@ import Lightbox from "./Lightbox";
 import { Skeleton } from "@/components/Skeleton";
 import GalleryLoaderGrid from "./GalleryLoaderGrid";
 
-// ... imports ...
-
-// CloudFile type definition
-interface CloudFile {
-    id: string;
-    name: string;
-    mimeType: string;
-    thumbnailLink?: string;
-    webContentLink?: string;
-    size?: string;
-    modifiedTime?: string;
-    imageMediaMetadata?: {
-        width: number;
-        height: number;
-    };
-    videoMediaMetadata?: {
-        width: number;
-        height: number;
-        durationMillis: number;
-    };
-    formats?: {
-        raw?: {
-            id: string;
-            name: string;
-        };
-        [key: string]: any;
-    };
-}
+import { CloudFile } from "@/types/cloud";
 
 interface Props {
     cloudAccountId: string;
