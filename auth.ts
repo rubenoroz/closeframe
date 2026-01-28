@@ -3,10 +3,19 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/db";
 import { authConfig } from "./auth.config";
 
+import Resend from "next-auth/providers/resend";
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
     adapter: PrismaAdapter(prisma),
     session: { strategy: "jwt" },
     ...authConfig,
+    providers: [
+        ...authConfig.providers,
+        Resend({
+            apiKey: process.env.RESEND_API_KEY,
+            from: process.env.EMAIL_FROM || "onboarding@resend.dev"
+        })
+    ],
     callbacks: {
         ...authConfig.callbacks,
         // Override JWT to add DB role check (Node.js only)
