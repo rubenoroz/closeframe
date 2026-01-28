@@ -63,7 +63,6 @@ export default function PublicGalleryClient({ project }: PublicGalleryClientProp
     const [showCover, setShowCover] = useState(!!project.coverImage && !!project.planLimits?.galleryCover);
     const [activeTab, setActiveTab] = useState<"photos" | "videos">("photos");
     const [tabMounted, setTabMounted] = useState(false);
-    const [isDownloadingZip, setIsDownloadingZip] = useState(false);
 
     // Initial Cover Check (Client Only)
     useEffect(() => {
@@ -95,37 +94,7 @@ export default function PublicGalleryClient({ project }: PublicGalleryClientProp
         sessionStorage.setItem(`gallery_covered_${project.slug}`, "true");
     };
 
-    // Download ZIP using fetch + blob (same approach that works for individual images)
-    const handleDownloadZip = async () => {
-        if (!project.zipFileId || isDownloadingZip) return;
 
-        setIsDownloadingZip(true);
-        const fileName = project.name + '.zip';
-        const directUrl = `/api/cloud/download-direct?c=${project.cloudAccountId}&f=${project.zipFileId}&n=${encodeURIComponent(fileName)}`;
-
-        try {
-            const res = await fetch(directUrl);
-            if (!res.ok) throw new Error("Error en descarga: " + res.status);
-
-            const blob = await res.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = fileName;
-            a.style.display = "none";
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(() => {
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
-            }, 2000);
-        } catch (err: any) {
-            console.error("Error descargando ZIP:", err);
-            alert("Error al descargar: " + err.message);
-        } finally {
-            setIsDownloadingZip(false);
-        }
-    };
 
     useEffect(() => {
         // Check if it was already unlocked in this session
@@ -228,36 +197,7 @@ export default function PublicGalleryClient({ project }: PublicGalleryClientProp
                 zipFileId={project.zipFileId || null}
             />
 
-            {/* Floating Download Button - Only shows when ZIP is available */}
-            {project.zipFileId && project.downloadEnabled && (
-                <button
-                    onClick={handleDownloadZip}
-                    disabled={isDownloadingZip}
-                    className="fixed bottom-4 right-4 z-40 group disabled:opacity-70"
-                >
-                    <div className="relative flex items-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 backdrop-blur-lg shadow-lg shadow-emerald-500/25 border border-emerald-400/30 hover:shadow-emerald-500/40 hover:scale-105 transition-all duration-300 cursor-pointer">
-                        {/* Glow effect */}
-                        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-emerald-400 to-teal-400 opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-500" />
 
-                        {/* Icon */}
-                        {isDownloadingZip ? (
-                            <Loader2 className="w-5 h-5 text-white animate-spin" />
-                        ) : (
-                            <Download className="w-5 h-5 text-white" />
-                        )}
-
-                        {/* Text */}
-                        <span className="text-white font-semibold text-sm tracking-wide">
-                            {isDownloadingZip ? 'Descargando...' : 'Descargar Galería'}
-                        </span>
-
-                        {/* Subtle shine effect on hover */}
-                        <div className="absolute inset-0 rounded-2xl overflow-hidden">
-                            <div className="absolute -inset-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:translate-x-[200%] transition-transform duration-1000" />
-                        </div>
-                    </div>
-                </button>
-            )}
 
             {/* Minimal branding */}
             {!project.planLimits?.hideBranding && (

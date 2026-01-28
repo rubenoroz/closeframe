@@ -30,6 +30,7 @@ interface Props {
     lowResThumbnails?: boolean;
     zipDownloadsEnabled?: boolean | "static_only"; // [UPDATED]
     zipFileId?: string | null; // [NEW] Explicit ZIP file ID from project settings
+    onSelectionChange?: (count: number) => void;
 }
 
 // ... CloudFile interface ...
@@ -53,7 +54,8 @@ export default function GalleryViewer({
     lowResDownloads = false,
     lowResThumbnails = false,
     zipDownloadsEnabled = true,
-    zipFileId = null
+    zipFileId = null,
+    onSelectionChange
 }: Props) {
     const [files, setFiles] = useState<CloudFile[]>([]);
     const [loading, setLoading] = useState(true);
@@ -128,6 +130,11 @@ export default function GalleryViewer({
         setCurrentIndex(index);
         setLightboxOpen(true);
     };
+
+    // Report selection changes
+    useEffect(() => {
+        onSelectionChange?.(selectedIds.size);
+    }, [selectedIds, onSelectionChange]);
 
     const handleDownloadStaticZip = () => {
         if (!staticZipFile) return;
@@ -289,9 +296,9 @@ export default function GalleryViewer({
     const dynamicZipEnabled = anyDownloadEnabled && zipDownloadsEnabled === true;
     // [UPDATED] Logic for static ZIP availability - show button if:
     // 1. Downloads are enabled
-    // 2. zipDownloadsEnabled is NOT false (can be true or 'static_only')
-    // 3. There's a staticZipFile (either from explicit zipFileId OR auto-detected)
-    const staticZipAvailable = anyDownloadEnabled && zipDownloadsEnabled !== false && !!staticZipFile;
+    // 2. There's a staticZipFile (either from explicit zipFileId OR auto-detected)
+    // REMOVED restriction: zipDownloadsEnabled !== false (now Pro plans can also see this button)
+    const staticZipAvailable = anyDownloadEnabled && !!staticZipFile;
 
     return (
         <div className={`min-h-screen transition-colors duration-700 ${theme === 'light' ? 'bg-neutral-50 text-neutral-900' : 'bg-neutral-900 text-neutral-100'} font-sans relative ${className}`}>
