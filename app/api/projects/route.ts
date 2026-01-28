@@ -193,6 +193,7 @@ export async function PATCH(request: NextRequest) {
             enableVideoTab, showInProfile, enableWatermark,
             headerTitle, headerFontFamily, headerFontSize, headerColor, headerBackground, headerImage, headerImageFocus,
             coverImage, coverImageFocus,
+            zipFileId, zipFileName,
             layoutType, public: isPublic
         } = body;
 
@@ -229,6 +230,8 @@ export async function PATCH(request: NextRequest) {
         if (headerImageFocus !== undefined) updateData.headerImageFocus = headerImageFocus;
         if (coverImage !== undefined) updateData.coverImage = coverImage;
         if (coverImageFocus !== undefined) updateData.coverImageFocus = coverImageFocus;
+        if (zipFileId !== undefined) updateData.zipFileId = zipFileId || null;
+        if (zipFileName !== undefined) updateData.zipFileName = zipFileName || null;
         if (layoutType !== undefined) updateData.layoutType = layoutType;
 
         // Handle public status based on password

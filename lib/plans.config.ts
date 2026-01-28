@@ -67,8 +67,11 @@ export function getPlanConfig(planName?: string | null) {
     if (!planName) return PLANS.FREE;
 
     const normalizedName = planName.toUpperCase();
-    if (normalizedName === 'PRO') return PLANS.PRO;
-    if (normalizedName === 'STUDIO') return PLANS.STUDIO;
+
+    // Handle specific plan codes from DB (e.g. 'plan-pro')
+    if (normalizedName === 'PRO' || normalizedName === 'PLAN-PRO') return PLANS.PRO;
+    if (normalizedName === 'STUDIO' || normalizedName === 'PLAN-STUDIO') return PLANS.STUDIO;
+    if (normalizedName === 'AGENCY' || normalizedName === 'PLAN-AGENCY') return PLANS.STUDIO; // Map Agency to Studio features
 
     return PLANS.FREE;
 }

@@ -177,7 +177,7 @@ function CloudManagerContent() {
                                                 <span className="text-sm font-medium truncate text-white">
                                                     {account.name || (() => {
                                                         const providerName = {
-                                                            microsoft: "OneDrive",
+                                                            microsoft: "Onedrive",
                                                             google: "Drive",
                                                             dropbox: "Dropbox",
                                                             koofr: "Koofr"
@@ -251,6 +251,10 @@ function CloudManagerContent() {
                                     <Check className="w-3 h-3 md:w-4 md:h-4 text-emerald-500 shrink-0" />
                                     <span>Videos: <code className="bg-black/30 px-1 rounded text-[10px] md:text-xs">webmp4</code>, <code className="bg-black/30 px-1 rounded text-[10px] md:text-xs">hd</code>, <code className="bg-black/30 px-1 rounded text-[10px] md:text-xs">alta</code></span>
                                 </li>
+                                <li className="flex items-center gap-2">
+                                    <Check className="w-3 h-3 md:w-4 md:h-4 text-emerald-500 shrink-0" />
+                                    <span>ZIP: <code className="bg-black/30 px-1 rounded text-[10px] md:text-xs">full_gallery.zip</code> (Opcional para descarga rápida)</span>
+                                </li>
                             </ul>
                         </div>
 
@@ -273,23 +277,13 @@ function CloudManagerContent() {
                             onClick={() => window.location.href = "/api/connect/google"}
                         >
                             <div className="w-16 h-16 flex items-center justify-center p-2">
-                                <svg className="w-full h-full" viewBox="0 0 112 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <g clipPath="url(#clip0_drive)">
-                                        <path d="M8.46154 85.7051L13.3974 94.2308C14.4231 96.0256 15.8974 97.4359 17.6282 98.4615L35.2564 67.9487H0C0 69.9359 0.512821 71.9231 1.53846 73.7179L8.46154 85.7051Z" fill="#0066DA" />
-                                        <path d="M55.9615 32.0513L38.3333 1.53846C36.6026 2.5641 35.1282 3.97436 34.1026 5.76923L1.53846 62.1795C0.531683 63.9357 0.00134047 65.9244 0 67.9487H35.2564L55.9615 32.0513Z" fill="#00AC47" />
-                                        <path d="M94.2949 98.4615C96.0256 97.4359 97.5 96.0256 98.5256 94.2308L100.577 90.7051L110.385 73.7179C111.41 71.9231 111.923 69.9359 111.923 67.9487H76.6641L84.1667 82.6923L94.2949 98.4615Z" fill="#EA4335" />
-                                        <path d="M55.9615 32.0513L73.5898 1.53846C71.859 0.512821 69.8718 0 67.8205 0H44.1026C42.0513 0 40.0641 0.576923 38.3333 1.53846L55.9615 32.0513Z" fill="#00832D" />
-                                        <path d="M76.6667 67.9487H35.2564L17.6282 98.4615C19.359 99.4872 21.3462 100 23.3974 100H88.5256C90.5769 100 92.5641 99.4231 94.2949 98.4615L76.6667 67.9487Z" fill="#2684FC" />
-                                        <path d="M94.1026 33.9744L77.8205 5.76923C76.7949 3.97436 75.3205 2.5641 73.5897 1.53846L55.9615 32.0513L76.6667 67.9487H111.859C111.859 65.9615 111.346 63.9744 110.321 62.1795L94.1026 33.9744Z" fill="#FFBA00" />
-                                    </g>
-                                    <defs>
-                                        <clipPath id="clip0_drive">
-                                            <rect width="111.923" height="100" fill="white" />
-                                        </clipPath>
-                                    </defs>
-                                </svg>
+                                <img
+                                    src="/assets/logos/drive.svg"
+                                    alt="Drive"
+                                    className="w-full h-full object-contain filter drop-shadow-lg group-hover:scale-110 transition-transform duration-300"
+                                />
                             </div>
-                            <span className="text-xs font-medium text-neutral-400">Google Drive</span>
+                            <span className="text-xs font-bold text-white">Drive</span>
                         </motion.button>
 
                         {/* Microsoft OneDrive Button */}
@@ -300,12 +294,12 @@ function CloudManagerContent() {
                         >
                             <div className="w-16 h-16 flex items-center justify-center p-2 relative">
                                 <img
-                                    src="/assets/logos/onedrive.png"
+                                    src="/assets/logos/onedrive.svg"
                                     alt="OneDrive"
                                     className="w-full h-full object-contain filter drop-shadow-lg group-hover:scale-110 transition-transform duration-300"
                                 />
                             </div>
-                            <span className="text-xs font-bold text-white">Microsoft OneDrive</span>
+                            <span className="text-xs font-bold text-white">Onedrive</span>
                         </motion.button>
 
                         {/* Dropbox Connection Button */}
@@ -316,7 +310,7 @@ function CloudManagerContent() {
                         >
                             <div className="w-16 h-16 flex items-center justify-center p-2 relative">
                                 <img
-                                    src="/assets/logos/dropbox.png"
+                                    src="/assets/logos/dropbox.svg"
                                     alt="Dropbox"
                                     className="w-full h-full object-contain filter drop-shadow-lg group-hover:scale-110 transition-transform duration-300"
                                 />
@@ -332,7 +326,7 @@ function CloudManagerContent() {
                         >
                             <div className="w-16 h-16 flex items-center justify-center p-2 relative">
                                 <img
-                                    src="/koofr-logo.png"
+                                    src="/assets/logos/koofr.svg"
                                     alt="Koofr"
                                     className="w-full h-full object-contain filter drop-shadow-lg group-hover:scale-110 transition-transform duration-300"
                                 />
@@ -411,18 +405,7 @@ function CloudManagerContent() {
                             </div>
                         )}
 
-                        {["Box"].map((provider) => (
-                            <div
-                                key={provider}
-                                className="h-32 rounded-2xl border border-neutral-800 bg-neutral-900/20 flex flex-col items-center justify-center gap-3 grayscale opacity-30 cursor-not-allowed"
-                            >
-                                <div className="w-12 h-12 rounded-xl bg-neutral-800 flex items-center justify-center">
-                                    <Cloud className="w-6 h-6 text-neutral-600" />
-                                </div>
-                                <span className="text-xs font-medium text-neutral-600">{provider}</span>
-                                <span className="text-[8px] font-bold uppercase tracking-widest text-neutral-700">Próximamente</span>
-                            </div>
-                        ))}
+
                     </div>
                 </section>
             </main>

@@ -53,16 +53,37 @@ export async function GET(req: NextRequest) {
             downloadUrl = await provider.getFileContent(fileId);
 
         } else {
-            // Google Logic
+            // Google Logic - Stream the file directly instead of redirect
+            // This works for private files that don't have public webContentLink
             const { google } = await import("googleapis");
             const drive = google.drive({ version: "v3", auth: authClient as any });
 
-            // Request webContentLink for direct download
+            // Get file metadata for content type and name
             const fileMeta = await drive.files.get({
                 fileId: fileId,
-                fields: "webContentLink"
+                fields: "name, mimeType, size"
             });
-            downloadUrl = fileMeta.data.webContentLink || null;
+
+            const fileName = searchParams.get("n") || fileMeta.data.name || "download";
+            const mimeType = fileMeta.data.mimeType || "application/octet-stream";
+            const fileSize = fileMeta.data.size;
+
+            // Stream the file content directly from Google Drive
+            const response = await drive.files.get(
+                { fileId: fileId, alt: "media" },
+                { responseType: "stream" }
+            );
+
+            // Build response headers
+            const headers = new Headers();
+            headers.set("Content-Type", mimeType);
+            headers.set("Content-Disposition", `attachment; filename="${encodeURIComponent(fileName)}"`);
+            if (fileSize) {
+                headers.set("Content-Length", fileSize);
+            }
+
+            // Return streaming response
+            return new Response(response.data as any, { headers });
         }
 
         if (!downloadUrl) {

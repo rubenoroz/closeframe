@@ -26,6 +26,31 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ file
             return NextResponse.json({ error: "Cuenta no encontrada" }, { status: 404 });
         }
 
+        // [SECURE] Validate Plan Limits
+        const { getEffectivePlanConfig } = await import("@/lib/plans.config");
+
+        // Fetch full user plan details
+        const user = await prisma.user.findUnique({
+            where: { id: account.userId },
+            include: {
+                plan: true
+            }
+        });
+
+        const effectiveConfig = getEffectivePlanConfig(
+            user?.plan?.config || user?.plan?.name,
+            user?.featureOverrides
+        );
+
+        // Only allow if explicitly enabled (true). 'static_only' or false should be blocked here.
+        if (effectiveConfig.features?.zipDownloadsEnabled !== true) {
+            console.warn(`[Security] Blocked dynamic ZIP generation for user ${user?.email} (Plan: ${user?.plan?.name}, Feature: ${effectiveConfig.features?.zipDownloadsEnabled})`);
+            return NextResponse.json({
+                error: "Tu plan actual no soporta la generación de ZIPs dinámicos.",
+                code: "UPGRADE_REQUIRED"
+            }, { status: 403 });
+        }
+
         // 2. Get Fresh Auth Client
         const { getFreshAuth } = await import("@/lib/cloud/auth-factory");
         const authClient = await getFreshAuth(cloudAccountId);

@@ -166,6 +166,10 @@ model Project {
   // Watermark
   enableWatermark   Boolean      @default(false) // Overlay con logo del fotógrafo
   
+  // ZIP Download File (Explicit selection by user)
+  zipFileId         String?      // Google Drive file ID of the ZIP archive
+  zipFileName       String?      // Display name of the ZIP file
+  
   // Pro Features
   fileOrder         Json?        // Array of file IDs describing custom order
   isTemplate        Boolean      @default(false) // If true, can be duplicated

@@ -2,6 +2,7 @@ import React from "react";
 import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
 import PublicGalleryClient from "@/components/gallery/PublicGalleryClient";
+import GalleryBlocked from "@/components/gallery/GalleryBlocked";
 import { GoogleDriveProvider } from "@/lib/cloud/google-drive-provider";
 import { getFreshGoogleAuth } from "@/lib/cloud/google-auth";
 import { getEffectivePlanConfig } from "@/lib/plans.config";
@@ -49,6 +50,29 @@ export default async function PublicGalleryPage({ params }: Props) {
         project.user?.plan?.config || project.user?.plan?.name,
         project.user?.featureOverrides
     );
+
+    // Check if this project exceeds the user's plan limit
+    const maxProjects = effectiveConfig.limits?.maxProjects ?? -1;
+    if (maxProjects > 0) {
+        // Get the oldest N projects that are allowed (by creation date)
+        const allowedProjects = await prisma.project.findMany({
+            where: { userId: project.userId },
+            orderBy: { createdAt: 'asc' },
+            take: maxProjects,
+            select: { id: true }
+        });
+
+        const isAllowed = allowedProjects.some(p => p.id === project.id);
+        if (!isAllowed) {
+            // This project exceeds the plan limit - show blocked page
+            return (
+                <GalleryBlocked
+                    studioName={project.user?.businessName || undefined}
+                    studioLogo={project.user?.businessLogo || undefined}
+                />
+            );
+        }
+    }
 
     // Check if video is enabled by plan
     const planAllowsVideo = effectiveConfig.features?.videoGallery ?? false;

@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { Skeleton } from "@/components/Skeleton";
 import DriveFilePicker from "@/components/DriveFilePicker";
+import ZipFilePicker from "@/components/ZipFilePicker";
 import FocalPointPicker from "@/components/FocalPointPicker";
 
 interface Project {
@@ -48,6 +49,8 @@ interface Project {
         jpg: boolean;
         raw: boolean;
     };
+    zipFileId?: string;
+    zipFileName?: string;
 }
 
 export default function DashboardPage() {
@@ -70,6 +73,7 @@ export default function DashboardPage() {
     } | null>(null);
     const [showCoverPicker, setShowCoverPicker] = useState(false);
     const [showHeaderImagePicker, setShowHeaderImagePicker] = useState(false);
+    const [showZipFilePicker, setShowZipFilePicker] = useState(false);
     const isLight = theme === "light";
     const router = useRouter();
 
@@ -93,6 +97,8 @@ export default function DashboardPage() {
         headerImage: "",
         headerImageFocus: "50,50",
         coverImageFocus: "50,50",
+        zipFileId: "",
+        zipFileName: "",
         public: true,
     });
 
@@ -174,6 +180,8 @@ export default function DashboardPage() {
             headerImageFocus: project.headerImageFocus || "50,50",
             coverImage: project.coverImage || "",
             coverImageFocus: project.coverImageFocus || "50,50",
+            zipFileId: project.zipFileId || "",
+            zipFileName: project.zipFileName || "",
             public: project.public !== false,
         });
         setActiveMenu(null);
@@ -209,6 +217,8 @@ export default function DashboardPage() {
                     headerImageFocus: editData.headerImageFocus,
                     coverImage: editData.coverImage,
                     coverImageFocus: editData.coverImageFocus,
+                    zipFileId: editData.zipFileId,
+                    zipFileName: editData.zipFileName,
                     public: editData.public,
                 })
             });
@@ -974,6 +984,57 @@ export default function DashboardPage() {
                                         </div>
                                     </div>
 
+                                    {/* ZIP File Download Selector */}
+                                    <div className={`${isLight ? 'bg-neutral-50 border-neutral-100' : 'bg-neutral-800/50 border-neutral-800'} p-4 rounded-2xl border md:col-span-2`}>
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <Download className="w-4 h-4 text-blue-500" />
+                                            <span className="text-sm font-medium">Archivo ZIP de Descarga</span>
+                                        </div>
+                                        <div className="space-y-3 pl-0 md:pl-7">
+                                            <p className={`text-xs ${isLight ? 'text-neutral-500' : 'text-neutral-400'}`}>
+                                                Vincula un archivo ZIP de tu Google Drive para que los clientes puedan descargarlo con un solo clic.
+                                            </p>
+                                            {editData.zipFileId ? (
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`flex-1 flex items-center gap-2 px-3 py-2 rounded-xl ${isLight ? 'bg-white border border-neutral-200' : 'bg-neutral-900 border border-neutral-700'}`}>
+                                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                            <path d="M21 8v13H3V8" />
+                                                            <path d="M1 3h22v5H1z" />
+                                                            <path d="M10 12h4" />
+                                                        </svg>
+                                                        <span className="text-sm truncate">{editData.zipFileName || 'Archivo seleccionado'}</span>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowZipFilePicker(true)}
+                                                        className="text-xs text-neutral-400 hover:text-white transition"
+                                                    >
+                                                        Cambiar
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setEditData({ ...editData, zipFileId: '', zipFileName: '' })}
+                                                        className="text-xs text-red-400 hover:text-red-300 transition"
+                                                    >
+                                                        Quitar
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowZipFilePicker(true)}
+                                                    className={`w-full py-3 px-4 border border-dashed rounded-xl flex items-center justify-center gap-2 transition-colors ${isLight
+                                                        ? 'border-neutral-300 hover:border-blue-400 text-neutral-500 hover:text-blue-600 hover:bg-blue-50'
+                                                        : 'border-neutral-700 hover:border-blue-500 text-neutral-400 hover:text-blue-400 hover:bg-blue-500/5'
+                                                        }`}
+                                                >
+                                                    <Download className="w-4 h-4" />
+                                                    <span className="text-sm">Seleccionar archivo ZIP de Drive</span>
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+
                                     {/* Settings Grid - 2 columns on desktop */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className={`${isLight ? 'bg-neutral-50 border-neutral-100' : 'bg-neutral-800/50 border-neutral-800'} p-4 rounded-2xl border`}>
@@ -1083,32 +1144,52 @@ export default function DashboardPage() {
             </div >
 
             {/* Cover Image Picker Modal */}
-            {showCoverPicker && selectedProject && (
-                <DriveFilePicker
-                    cloudAccountId={selectedProject.cloudAccountId}
-                    folderId={selectedProject.rootFolderId}
-                    selectedFileId={editData.coverImage || null}
-                    onSelect={(fileId) => {
-                        setEditData({ ...editData, coverImage: fileId });
-                        setShowCoverPicker(false);
-                    }}
-                    onCancel={() => setShowCoverPicker(false)}
-                />
-            )}
+            {
+                showCoverPicker && selectedProject && (
+                    <DriveFilePicker
+                        cloudAccountId={selectedProject.cloudAccountId}
+                        folderId={selectedProject.rootFolderId}
+                        selectedFileId={editData.coverImage || null}
+                        onSelect={(fileId) => {
+                            setEditData({ ...editData, coverImage: fileId });
+                            setShowCoverPicker(false);
+                        }}
+                        onCancel={() => setShowCoverPicker(false)}
+                    />
+                )
+            }
 
             {/* Header Image Picker Modal */}
-            {showHeaderImagePicker && selectedProject && (
-                <DriveFilePicker
-                    cloudAccountId={selectedProject.cloudAccountId}
-                    folderId={selectedProject.rootFolderId}
-                    selectedFileId={editData.headerImage || null}
-                    onSelect={(fileId) => {
-                        setEditData({ ...editData, headerImage: fileId });
-                        setShowHeaderImagePicker(false);
-                    }}
-                    onCancel={() => setShowHeaderImagePicker(false)}
-                />
-            )}
+            {
+                showHeaderImagePicker && selectedProject && (
+                    <DriveFilePicker
+                        cloudAccountId={selectedProject.cloudAccountId}
+                        folderId={selectedProject.rootFolderId}
+                        selectedFileId={editData.headerImage || null}
+                        onSelect={(fileId) => {
+                            setEditData({ ...editData, headerImage: fileId });
+                            setShowHeaderImagePicker(false);
+                        }}
+                        onCancel={() => setShowHeaderImagePicker(false)}
+                    />
+                )
+            }
+
+            {/* ZIP File Picker Modal */}
+            {
+                showZipFilePicker && selectedProject && (
+                    <ZipFilePicker
+                        cloudAccountId={selectedProject.cloudAccountId}
+                        folderId={selectedProject.rootFolderId}
+                        selectedFileId={editData.zipFileId || null}
+                        onSelect={(fileId, fileName) => {
+                            setEditData({ ...editData, zipFileId: fileId, zipFileName: fileName });
+                            setShowZipFilePicker(false);
+                        }}
+                        onCancel={() => setShowZipFilePicker(false)}
+                    />
+                )
+            }
         </div >
     );
 }

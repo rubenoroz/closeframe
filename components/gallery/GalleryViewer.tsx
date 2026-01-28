@@ -29,6 +29,7 @@ interface Props {
     lowResDownloads?: boolean;
     lowResThumbnails?: boolean;
     zipDownloadsEnabled?: boolean | "static_only"; // [UPDATED]
+    zipFileId?: string | null; // [NEW] Explicit ZIP file ID from project settings
 }
 
 // ... CloudFile interface ...
@@ -51,7 +52,8 @@ export default function GalleryViewer({
     watermarkText = null,
     lowResDownloads = false,
     lowResThumbnails = false,
-    zipDownloadsEnabled = true
+    zipDownloadsEnabled = true,
+    zipFileId = null
 }: Props) {
     const [files, setFiles] = useState<CloudFile[]>([]);
     const [loading, setLoading] = useState(true);
@@ -62,17 +64,29 @@ export default function GalleryViewer({
     const [isDownloading, setIsDownloading] = useState(false);
 
     // [NEW] Separate media content from static ZIP resources
+    // [FIX] Apply maxImages limit here, not during file loading
     const mediaFiles = useMemo(() => {
-        return files.filter(f => !f.mimeType?.includes('zip') && !f.name.endsWith('.zip'));
-    }, [files]);
+        const media = files.filter(f => !f.mimeType?.includes('zip') && !f.name.endsWith('.zip'));
+        // Apply maxImages limit only to displayable media
+        if (maxImages && maxImages > 0) {
+            console.log("[GalleryViewer] Applying maxImages limit:", maxImages, "to", media.length, "media files");
+            return media.slice(0, maxImages);
+        }
+        return media;
+    }, [files, maxImages]);
 
-    // [NEW] Find static gallery ZIP
+    // [UPDATED] Use explicit zipFileId from project settings instead of auto-detecting
+    // Falls back to auto-detect if zipFileId is not set (for backwards compatibility)
     const staticZipFile = useMemo(() => {
+        // If explicit zipFileId is provided, create a virtual file object
+        if (zipFileId) {
+            return { id: zipFileId, name: 'Galería.zip' };
+        }
+        // Fallback: auto-detect any .zip file in the folder
         return files.find(f =>
-            (f.mimeType?.includes('zip') || f.name.endsWith('.zip')) &&
-            (f.name.toLowerCase().includes('full') || f.name.toLowerCase().includes('gallery') || f.name.toLowerCase().includes('todo'))
+            f.mimeType?.includes('zip') || f.name.toLowerCase().endsWith('.zip')
         );
-    }, [files]);
+    }, [files, zipFileId]);
 
     const toggleSelect = useCallback((id: string) => {
         // [NEW] Prevent selection if ZIP downloads are disabled or static only
@@ -255,12 +269,9 @@ export default function GalleryViewer({
             .then((data) => {
                 if (data.files) {
                     console.log("[GalleryViewer] Received files:", data.files.length);
-                    // Apply max images limit if set
-                    const limitedFiles = maxImages && maxImages > 0
-                        ? data.files.slice(0, maxImages)
-                        : data.files;
-                    console.log("[GalleryViewer] After limit applied:", limitedFiles.length);
-                    setFiles(limitedFiles);
+                    // [FIX] Store ALL files including ZIP resources
+                    // maxImages limit is now applied only to mediaFiles in the useMemo below
+                    setFiles(data.files);
                 } else {
                     setError(data.error || "Error al cargar imágenes");
                 }
@@ -270,14 +281,17 @@ export default function GalleryViewer({
                 setError("Error de conexión");
                 setLoading(false);
             });
-    }, [cloudAccountId, folderId, maxImages]);
+    }, [cloudAccountId, folderId]);
 
     // Derived download state
     const anyDownloadEnabled = downloadEnabled && (downloadJpgEnabled || downloadRawEnabled);
     // [NEW] Logic for dynamic ZIPs availability
     const dynamicZipEnabled = anyDownloadEnabled && zipDownloadsEnabled === true;
-    // [NEW] Logic for static ZIP availability
-    const staticZipAvailable = anyDownloadEnabled && zipDownloadsEnabled === 'static_only' && !!staticZipFile;
+    // [UPDATED] Logic for static ZIP availability - show button if:
+    // 1. Downloads are enabled
+    // 2. zipDownloadsEnabled is NOT false (can be true or 'static_only')
+    // 3. There's a staticZipFile (either from explicit zipFileId OR auto-detected)
+    const staticZipAvailable = anyDownloadEnabled && zipDownloadsEnabled !== false && !!staticZipFile;
 
     return (
         <div className={`min-h-screen transition-colors duration-700 ${theme === 'light' ? 'bg-neutral-50 text-neutral-900' : 'bg-neutral-900 text-neutral-100'} font-sans relative ${className}`}>
@@ -550,7 +564,7 @@ function MediaCard({
     const isVideo = item.mimeType?.startsWith('video/');
 
     // Determine thumbnail size based on plan limits
-    const thumbSize = lowResThumbnails ? 200 : 800;
+    const thumbSize = lowResThumbnails ? 600 : 800;
 
     // Calculate aspect ratio for placeholder sizing (avoids layout shift)
     // Default to 4:3 if dimensions unknown

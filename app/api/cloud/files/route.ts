@@ -7,6 +7,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const cloudAccountId = searchParams.get("cloudAccountId");
     let folderId = searchParams.get("folderId");
+    const originalRootId = folderId; // [FIX] Preserve original root for ZIP scanning
     const projectId = searchParams.get("projectId");
 
     if (!cloudAccountId || !folderId) {
@@ -107,6 +108,22 @@ export async function GET(request: Request) {
         mainFiles = mainFiles.filter((f: any) =>
             !f.name.startsWith('.') && !f.name.endsWith('.keep')
         );
+
+        // [NEW] If using a proxy folder (webjpg/webmp4), also check the Root Folder for ZIPs
+        if (sourceFolderId !== folderId) {
+            console.log(`[DEBUG] Proxy active. Checking Root Folder (${folderId}) for ZIP files...`);
+            // @ts-ignore
+            const rootFiles = await provider.listFiles(folderId, authClient);
+            const rootZips = rootFiles.filter((f: any) =>
+                f.mimeType?.includes('zip') || f.name.toLowerCase().endsWith('.zip')
+            );
+
+            if (rootZips.length > 0) {
+                console.log(`[DEBUG] Found ${rootZips.length} ZIPs in root. Appending...`);
+                // Append root ZIPs to the main list
+                mainFiles = [...mainFiles, ...rootZips];
+            }
+        }
 
         // 3. If we have multiple formats, we need to map them
         const hasPhotoProxies = webjpgFolder || jpgFolder || rawPhotoFolder;

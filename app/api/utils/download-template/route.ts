@@ -2,27 +2,25 @@ import { NextResponse } from "next/server";
 import JSZip from "jszip";
 
 export async function GET() {
-    try {
-        const zip = new JSZip();
+   try {
+      const zip = new JSZip();
 
-        // Crear estructura de carpetas completa
-        // Carpeta raíz de ejemplo
-        const root = zip.folder("MiGaleria");
+      // Crear estructura de carpetas completa
+      // Carpeta raíz de ejemplo
+      const root = zip.folder("MiGaleria");
 
-        // ====== FOTOGRAFÍAS ======
-        const fotografias = root?.folder("Fotografias");
-        fotografias?.folder("webjpg")?.file(".keep", "");
-        fotografias?.folder("jpg")?.file(".keep", "");
-        fotografias?.folder("raw")?.file(".keep", "");
+      // ====== FOTOGRAFÍAS ======
+      const fotografias = root?.folder("Fotografias");
+      fotografias?.folder("webjpg")?.file(".keep", "");
+      fotografias?.folder("jpg")?.file(".keep", "");
+      fotografias?.folder("raw")?.file(".keep", "");
 
-        // ====== VIDEOS ======
-        const videos = root?.folder("Videos");
-        videos?.folder("webmp4")?.file(".keep", "");
-        videos?.folder("hd")?.file(".keep", "");
-        videos?.folder("alta")?.file(".keep", "");
+      // ====== ZIP DE DESCARGA RÁPIDA ======
+      // Archivo placeholder dentro de Fotografias para máxima compatibilidad
+      fotografias?.file("full_gallery.zip", "Reemplaza este archivo con el ZIP real de tu galería completa.");
 
-        // Crear LEEME.txt con instrucciones claras
-        const readmeContent = `GUÍA DE ORGANIZACIÓN DE ARCHIVOS - TUSET
+      // Crear LEEME.txt con instrucciones claras
+      const readmeContent = `GUÍA DE ORGANIZACIÓN DE ARCHIVOS - CLOSERLENS
 =========================================================================
 
 Esta estructura te permite organizar tus galerías de forma profesional,
@@ -32,39 +30,32 @@ separando fotografías y videos con sus diferentes calidades.
 ESTRUCTURA DE CARPETAS
 =========================================================================
 
-📁 MiGaleria/                    ← Carpeta raíz (renómbrala con el nombre del evento)
+📁 MiGaleria/                    ← Carpeta raíz
 │
 ├── 📁 Fotografias/              ← Selecciona esta carpeta como "Carpeta de Fotos"
-│   ├── 📁 webjpg/               ← Versiones web optimizadas (1600-2000px)
+│   ├── 📁 webjpg/               ← Versiones web optimizadas
 │   ├── 📁 jpg/                  ← Alta resolución para descarga
-│   └── 📁 raw/                  ← Archivos RAW originales (opcional)
+│   ├── 📁 raw/                  ← Archivos RAW (opcional)
+│   └── 📄 full_gallery.zip      ← ¡NUEVO! Pon tu ZIP aquí adentro.
 │
 └── 📁 Videos/                   ← Selecciona esta carpeta como "Carpeta de Videos"
-    ├── 📁 webmp4/               ← Videos comprimidos para web (720p)
-    ├── 📁 hd/                   ← Videos HD para descarga (1080p)
-    └── 📁 alta/                 ← Videos máxima calidad (4K, ProRes, etc.)
+    ├── 📁 webmp4/
+    ├── 📁 hd/
+    └── 📁 alta/
 
 =========================================================================
 INSTRUCCIONES PARA FOTOGRAFÍAS
 =========================================================================
 
-1. CARPETA 'webjpg'
-   - Qué poner: Versiones ligeras/optimizadas para web (ej. 1600px o 2000px lado largo)
-   - Formato: .jpg
-   - Uso: Son las que el cliente verá en la galería online (cargan rápido)
-   - Ejemplo: Boda_Ana_Juan_001.jpg
+1. CARPETA 'webjpg' ... (Igual que antes)
 
-2. CARPETA 'jpg'
-   - Qué poner: Versiones finales en ALTA resolución
-   - Formato: .jpg
-   - Uso: Son las que el cliente descargará cuando pida "Alta Resolución"
-   - Ejemplo: Boda_Ana_Juan_001.jpg  <-- ¡MISMO NOMBRE!
+...
 
-3. CARPETA 'raw' (Opcional)
-   - Qué poner: Archivos originales de cámara (RAW)
-   - Formato: .CR2, .NEF, .ARW, .DNG, etc.
-   - Uso: Para respaldo o entrega de crudos
-   - Ejemplo: Boda_Ana_Juan_001.CR2  <-- ¡MISMO NOMBRE BASE!
+4. ARCHIVO 'full_gallery.zip' (Opcional pero Recomendado)
+   - Qué poner: Un archivo .zip que contenga TODAS las fotos en alta resolución.
+   - Dónde: ADENTRO de la carpeta 'Fotografias' (junto a las carpetas webjpg, jpg, etc).
+   - Uso: Habilita el botón "Descargar Todo".
+   - Nombre: "full_gallery.zip" (o cualquiera que contenga "full", "gallery", "todo").
 
 =========================================================================
 INSTRUCCIONES PARA VIDEOS
@@ -104,7 +95,7 @@ El sistema usa el nombre del archivo para vincular las diferentes calidades.
 Tip: Usa Lightroom para exportar renombrando tus archivos en secuencia.
 
 =========================================================================
-CONFIGURACIÓN EN TUSET
+CONFIGURACIÓN EN CLOSERLENS
 =========================================================================
 
 Al crear tu galería:
@@ -115,23 +106,23 @@ Al crear tu galería:
 ¡La pestaña de Videos solo aparecerá si detectamos la carpeta Videos!
 `;
 
-        zip.file("LEEME_ORGANIZACION.txt", readmeContent);
+      zip.file("LEEME_ORGANIZACION.txt", readmeContent);
 
-        const content = await zip.generateAsync({ type: "nodebuffer" });
+      const content = await zip.generateAsync({ type: "nodebuffer" });
 
-        const filename = "Plantilla_Estructura_TuSet.zip";
+      const filename = "Plantilla_Estructura_Closerlens.zip";
 
-        return new NextResponse(new Uint8Array(content), {
-            headers: {
-                "Content-Type": "application/zip",
-                "Content-Disposition": `attachment; filename="${filename}"`,
-                "Content-Length": String(content.byteLength),
-            },
-        });
+      return new NextResponse(new Uint8Array(content), {
+         headers: {
+            "Content-Type": "application/zip",
+            "Content-Disposition": `attachment; filename="${filename}"`,
+            "Content-Length": String(content.byteLength),
+         },
+      });
 
-    } catch (error) {
-        console.error("Template Gen Error:", error);
-        return NextResponse.json({ error: "Error generando plantilla" }, { status: 500 });
-    }
+   } catch (error) {
+      console.error("Template Gen Error:", error);
+      return NextResponse.json({ error: "Error generando plantilla" }, { status: 500 });
+   }
 }
 
