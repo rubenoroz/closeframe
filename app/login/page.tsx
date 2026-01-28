@@ -18,10 +18,17 @@ export default function LoginPage() {
         setIsLoading(true);
         try {
             // "resend" matches the provider ID in auth.config.ts
-            await signIn("resend", { email, callbackUrl: "/dashboard", redirect: false });
-            setEmailSent(true);
+            const result = await signIn("resend", { email, callbackUrl: "/dashboard", redirect: false });
+
+            if (result?.error) {
+                console.error("Login error result:", result.error);
+                alert("Error al enviar correo: " + result.error);
+            } else if (result?.ok) {
+                setEmailSent(true);
+            }
         } catch (error) {
-            console.error("Login error:", error);
+            console.error("Login exception:", error);
+            alert("Error inesperado intentando ingresar.");
         } finally {
             setIsLoading(false);
         }
