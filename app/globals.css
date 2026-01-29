@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -12,12 +14,14 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* CSS based Dark Mode */
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
 }
+
+/* Optional: If we want system preference to NOT interfere, we remove the media query. 
+   But the ThemeProvider will handle adding the class. */
 
 body {
   background: var(--background);

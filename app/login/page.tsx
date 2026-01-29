@@ -56,7 +56,7 @@ export default function LoginPage() {
                 <div className="flex flex-col items-center mb-8 md:mb-10">
                     <div className="flex items-center gap-2 text-xl md:text-2xl font-light mb-2 text-white">
                         <Camera className="w-6 h-6 md:w-7 md:h-7" />
-                        <span className="tracking-tight">Closeframe</span>
+                        <span className="tracking-tight">Closerlens</span>
                     </div>
                     <p className="text-neutral-500 text-xs md:text-sm text-center">Plataforma de Galerías Profesionales</p>
                 </div>

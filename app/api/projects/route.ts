@@ -194,7 +194,8 @@ export async function PATCH(request: NextRequest) {
             headerTitle, headerFontFamily, headerFontSize, headerColor, headerBackground, headerImage, headerImageFocus,
             coverImage, coverImageFocus,
             zipFileId, zipFileName,
-            layoutType, public: isPublic
+            layoutType, public: isPublic,
+            isCloserGallery, musicTrackId, musicEnabled // [NEW]
         } = body;
 
         if (!id) {
@@ -233,6 +234,9 @@ export async function PATCH(request: NextRequest) {
         if (zipFileId !== undefined) updateData.zipFileId = zipFileId || null;
         if (zipFileName !== undefined) updateData.zipFileName = zipFileName || null;
         if (layoutType !== undefined) updateData.layoutType = layoutType;
+        if (isCloserGallery !== undefined) updateData.isCloserGallery = isCloserGallery;
+        if (musicTrackId !== undefined) updateData.musicTrackId = musicTrackId;
+        if (musicEnabled !== undefined) updateData.musicEnabled = musicEnabled; // [NEW]
 
         // Handle public status based on password
         if (password !== undefined && password.trim() !== "") {

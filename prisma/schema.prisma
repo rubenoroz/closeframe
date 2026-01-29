@@ -175,6 +175,12 @@ model Project {
   isTemplate        Boolean      @default(false) // If true, can be duplicated
   callToAction      Json?        // Project-specific CTA
   
+  // Galería Closer (Premium Studio/Agency)
+  isCloserGallery   Boolean      @default(false)
+  musicTrackId      String?
+  musicEnabled      Boolean      @default(false)
+  momentsOrder      Json?        // Array of strings (folder names) to define order
+  
   user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   cloudAccount      CloudAccount @relation(fields: [cloudAccountId], references: [id])
 }

@@ -6,12 +6,14 @@ import Link from "next/link";
 import {
     Folder, MoreVertical, Plus, ExternalLink, Calendar, X,
     Shield, Download, Layout, Save, Loader2, Settings, Trash2,
-    Link as LinkIcon, Check, Copy, AlertCircle, Image as ImageIcon
+    Link as LinkIcon, Check, Copy, AlertCircle, Image as ImageIcon, Sparkles
 } from "lucide-react";
 import { Skeleton } from "@/components/Skeleton";
 import DriveFilePicker from "@/components/DriveFilePicker";
 import ZipFilePicker from "@/components/ZipFilePicker";
 import FocalPointPicker from "@/components/FocalPointPicker";
+import MusicPicker from "@/components/MusicPicker";
+import MomentsManager from "@/components/MomentsManager";
 
 interface Project {
     id: string;
@@ -51,6 +53,9 @@ interface Project {
     };
     zipFileId?: string;
     zipFileName?: string;
+    isCloserGallery?: boolean;
+    musicTrackId?: string;
+    musicEnabled?: boolean;
 }
 
 export default function DashboardPage() {
@@ -70,6 +75,7 @@ export default function DashboardPage() {
         lowResDownloads?: boolean;
         passwordProtection?: boolean;
         galleryCover?: boolean;
+        closerGalleries?: boolean; // [NEW] Feature flag
     } | null>(null);
     const [showCoverPicker, setShowCoverPicker] = useState(false);
     const [showHeaderImagePicker, setShowHeaderImagePicker] = useState(false);
@@ -100,6 +106,9 @@ export default function DashboardPage() {
         zipFileId: "",
         zipFileName: "",
         public: true,
+        isCloserGallery: false,
+        musicTrackId: "",
+        musicEnabled: false,    // [NEW]
     });
 
 
@@ -126,7 +135,8 @@ export default function DashboardPage() {
                             videoEnabled: features.videoGallery ?? features.videoEnabled ?? false,
                             lowResDownloads: features.lowResDownloads ?? false,
                             passwordProtection: features.passwordProtection ?? true,
-                            galleryCover: features.galleryCover ?? features.coverImage ?? false
+                            galleryCover: features.galleryCover ?? features.coverImage ?? false,
+                            closerGalleries: features.closerGalleries ?? features.zipDownloadsEnabled === true // Proxy for Studio
                         });
                     } else if (settingsData.user.plan?.limits) {
                         try {
@@ -138,7 +148,8 @@ export default function DashboardPage() {
                                 videoEnabled: limits.videoEnabled ?? false,
                                 lowResDownloads: limits.lowResDownloads ?? false,
                                 passwordProtection: limits.passwordProtection ?? true,
-                                galleryCover: limits.coverImage ?? limits.galleryCover ?? false
+                                galleryCover: limits.coverImage ?? limits.galleryCover ?? false,
+                                closerGalleries: limits.closerGalleries ?? limits.zipDownloadsEnabled === true
                             });
                         } catch { }
                     }
@@ -183,6 +194,9 @@ export default function DashboardPage() {
             zipFileId: project.zipFileId || "",
             zipFileName: project.zipFileName || "",
             public: project.public !== false,
+            isCloserGallery: project.isCloserGallery || false,
+            musicTrackId: project.musicTrackId || "",
+            musicEnabled: project.musicEnabled || false, // [NEW]
         });
         setActiveMenu(null);
     };
@@ -220,6 +234,9 @@ export default function DashboardPage() {
                     zipFileId: editData.zipFileId,
                     zipFileName: editData.zipFileName,
                     public: editData.public,
+                    isCloserGallery: editData.isCloserGallery,
+                    musicTrackId: editData.musicTrackId,
+                    musicEnabled: editData.musicEnabled, // [NEW] Autoplay
                 })
             });
 
@@ -398,28 +415,39 @@ export default function DashboardPage() {
                                     </div>
                                 )}
 
+
+
                                 {/* Header with Preview */}
                                 <div className="flex justify-between items-start mb-4">
-                                    <Link
-                                        href={`/g/${project.slug}`}
-                                        target="_blank"
-                                        className={`relative overflow-hidden rounded-lg hover:ring-2 hover:ring-emerald-500 transition group/folder ${project.coverImage
-                                            ? 'w-16 h-16'
-                                            : `${isLight ? 'bg-neutral-100' : 'bg-neutral-800'} p-3`
-                                            }`}
-                                    >
-                                        {project.coverImage ? (
-                                            <img
-                                                src={`/api/cloud/thumbnail?c=${project.cloudAccountId}&f=${project.coverImage}&s=200`}
-                                                alt={project.name}
-                                                className="w-full h-full object-cover rounded-lg group-hover/folder:scale-110 transition-transform duration-300"
-                                            />
-                                        ) : (
-                                            <Folder className={`w-6 h-6 ${isLight ? 'text-neutral-400' : 'text-neutral-300'} group-hover/folder:text-emerald-500`} />
-                                        )}
-                                    </Link>
+                                    <div className="flex items-center gap-3">
+                                        <Link
+                                            href={`/g/${project.slug}`}
+                                            target="_blank"
+                                            className={`relative overflow-hidden rounded-lg hover:ring-2 hover:ring-emerald-500 transition group/folder ${project.coverImage
+                                                ? 'w-16 h-16'
+                                                : `${isLight ? 'bg-neutral-100' : 'bg-neutral-800'} p-3`
+                                                }`}
+                                        >
+                                            {project.coverImage ? (
+                                                <img
+                                                    src={`/api/cloud/thumbnail?c=${project.cloudAccountId}&f=${project.coverImage}&s=200`}
+                                                    alt={project.name}
+                                                    className="w-full h-full object-cover rounded-lg group-hover/folder:scale-110 transition-transform duration-300"
+                                                />
+                                            ) : (
+                                                <Folder className={`w-6 h-6 ${isLight ? 'text-neutral-400' : 'text-neutral-300'} group-hover/folder:text-emerald-500`} />
+                                            )}
+                                        </Link>
 
-                                    <div className="flex items-center gap-1">
+                                        {(project as any).isCloserGallery && (
+                                            <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-neutral-800/50 border border-neutral-700/50 rounded-lg backdrop-blur-sm">
+                                                <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                                                <span className="text-[10px] font-bold text-emerald-400 monitoring-tighter">[CLOSER]</span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="flex items-center gap-1 mt-8">
                                         {/* Visit gallery button */}
                                         <Link
                                             href={`/g/${project.slug}`}
@@ -617,6 +645,82 @@ export default function DashboardPage() {
                             </h2>
 
                             <form onSubmit={handleUpdateProject} className="space-y-8">
+
+                                {/* A - CLOSER GALLERY PREMIUM SECTION */}
+                                {true && (
+                                    <div className={`p-5 rounded-2xl border-2 transition-all ${editData.isCloserGallery
+                                        ? "bg-neutral-900 border-emerald-500 shadow-xl shadow-emerald-900/10"
+                                        : isLight ? "bg-neutral-50 border-neutral-100" : "bg-neutral-800/20 border-neutral-800"
+                                        }`}>
+                                        <div className="flex items-start justify-between mb-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${editData.isCloserGallery ? "bg-emerald-500 text-white" : "bg-neutral-700 text-neutral-400"
+                                                    }`}>
+                                                    <Sparkles className="w-5 h-5" />
+                                                </div>
+                                                <div>
+                                                    <h3 className={`font-medium ${editData.isCloserGallery ? (isLight ? "text-neutral-900" : "text-white") : "text-neutral-500"}`}>
+                                                        Experiencia Closer
+                                                    </h3>
+                                                    <p className="text-[10px] text-neutral-500 uppercase tracking-widest">Premium Gallery</p>
+                                                </div>
+                                            </div>
+
+                                            <label className="relative inline-flex items-center cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    className="sr-only peer"
+                                                    checked={editData.isCloserGallery}
+                                                    onChange={(e) => setEditData({ ...editData, isCloserGallery: e.target.checked })}
+                                                />
+                                                <div className="w-11 h-6 bg-neutral-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                                            </label>
+                                        </div>
+
+                                        {editData.isCloserGallery && (
+                                            <div className="mt-6 space-y-6 animate-in slide-in-from-top-2 fade-in duration-300">
+                                                {/* Music Picker */}
+                                                <div>
+                                                    <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-3 block">Música de Fondo</label>
+                                                    <MusicPicker
+                                                        selectedTrackId={editData.musicTrackId || null}
+                                                        onSelect={(id) => setEditData({ ...editData, musicTrackId: id })}
+                                                    />
+                                                </div>
+
+                                                {/* Autoplay Toggle */}
+                                                <div className="flex items-center gap-3 pl-1">
+                                                    <label className="relative inline-flex items-center cursor-pointer">
+                                                        <input
+                                                            type="checkbox"
+                                                            className="sr-only peer"
+                                                            checked={editData.musicEnabled}
+                                                            onChange={(e) => setEditData({ ...editData, musicEnabled: e.target.checked })}
+                                                        />
+                                                        <div className="w-9 h-5 bg-neutral-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                                                    </label>
+                                                    <span className="text-xs text-neutral-400 font-medium">Reproducción automática (Autoplay)</span>
+                                                </div>
+
+                                                {/* Moments Order */}
+                                                <div>
+                                                    <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-3 block">Orden de Momentos</label>
+                                                    <MomentsManager
+                                                        cloudAccountId={selectedProject.cloudAccountId}
+                                                        rootFolderId={selectedProject.rootFolderId}
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {!editData.isCloserGallery && (
+                                            <p className="text-xs text-neutral-500 mt-2 pl-14">
+                                                Activa para habilitar navegación por momentos, música y diseño inmersivo.
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label className="text-[10px] font-bold uppercase tracking-widest mb-3 block opacity-40">Nombre de Galería</label>

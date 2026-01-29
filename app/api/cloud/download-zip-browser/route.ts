@@ -85,7 +85,7 @@ export async function GET(req: NextRequest) {
         const { searchParams } = new URL(req.url);
         const cloudAccountId = searchParams.get("c");
         const filesJson = searchParams.get("f"); // IDs y nombres encoded
-        const projectName = searchParams.get("p") || "Closeframe";
+        const projectName = searchParams.get("p") || "Closerlens";
         const format = searchParams.get("fmt") || "JPG";
 
         if (!filesJson) return NextResponse.json({ error: "No files" }, { status: 400 });
@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
         const formData = await req.formData();
         const cloudAccountId = formData.get("cloudAccountId") as string;
         const filesJson = formData.get("files") as string;
-        const projectName = formData.get("projectName") as string || "TuSet_Gallery";
+        const projectName = formData.get("projectName") as string || "Closerlens_Gallery";
         const format = formData.get("format") as string || "JPG";
 
         const filesData = JSON.parse(filesJson);

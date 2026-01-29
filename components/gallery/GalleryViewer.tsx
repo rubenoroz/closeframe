@@ -31,6 +31,9 @@ interface Props {
     zipDownloadsEnabled?: boolean | "static_only"; // [UPDATED]
     zipFileId?: string | null; // [NEW] Explicit ZIP file ID from project settings
     onSelectionChange?: (count: number) => void;
+    preloadedFiles?: CloudFile[];
+    onVideoPlay?: () => void;
+    onVideoPause?: () => void;
 }
 
 // ... CloudFile interface ...
@@ -42,7 +45,7 @@ export default function GalleryViewer({
     downloadEnabled = true,
     downloadJpgEnabled = true,
     downloadRawEnabled = false,
-    studioName = "Closeframe",
+    studioName = "Closerlens",
     studioLogo = "",
     studioLogoScale = 100,
     theme = "dark",
@@ -55,9 +58,12 @@ export default function GalleryViewer({
     lowResThumbnails = false,
     zipDownloadsEnabled = true,
     zipFileId = null,
-    onSelectionChange
+    onSelectionChange,
+    preloadedFiles,
+    onVideoPlay,
+    onVideoPause
 }: Props) {
-    const [files, setFiles] = useState<CloudFile[]>([]);
+    const [files, setFiles] = useState<CloudFile[]>(preloadedFiles || []);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -68,7 +74,11 @@ export default function GalleryViewer({
     // [NEW] Separate media content from static ZIP resources
     // [FIX] Apply maxImages limit here, not during file loading
     const mediaFiles = useMemo(() => {
-        const media = files.filter(f => !f.mimeType?.includes('zip') && !f.name.endsWith('.zip'));
+        const media = files.filter(f =>
+            !f.mimeType?.includes('zip') &&
+            !f.mimeType?.includes('compressed') &&
+            !f.name.toLowerCase().endsWith('.zip')
+        );
         // Apply maxImages limit only to displayable media
         if (maxImages && maxImages > 0) {
             console.log("[GalleryViewer] Applying maxImages limit:", maxImages, "to", media.length, "media files");
@@ -267,6 +277,12 @@ export default function GalleryViewer({
     };
 
     useEffect(() => {
+        if (preloadedFiles) {
+            setFiles(preloadedFiles);
+            setLoading(false);
+            return;
+        }
+
         if (!cloudAccountId || !folderId) return;
 
         setLoading(true);
@@ -426,11 +442,13 @@ export default function GalleryViewer({
                 }
             </main >
 
-            {/* Lightbox */}
-            < Lightbox
+            <Lightbox
                 isOpen={lightboxOpen}
-                onClose={() => setLightboxOpen(false)}
-                files={mediaFiles} // Only show media files
+                onClose={() => {
+                    setLightboxOpen(false);
+                    onVideoPause?.();
+                }}
+                files={mediaFiles}
                 currentIndex={currentIndex}
                 onNavigate={(index) => setCurrentIndex(index)}
                 cloudAccountId={cloudAccountId}
@@ -440,6 +458,8 @@ export default function GalleryViewer({
                 studioLogo={studioLogo}
                 watermarkText={watermarkText}
                 lowResDownloads={lowResDownloads}
+                onVideoPlay={onVideoPlay}
+                onVideoPause={onVideoPause}
             />
 
             {/* Bottom Bar for Batch Download (Only if Dynamic ZIP is Enabled) */}

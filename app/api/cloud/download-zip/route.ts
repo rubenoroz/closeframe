@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
         return new NextResponse(new Uint8Array(zipContent), {
             headers: {
                 "Content-Type": "application/zip",
-                "Content-Disposition": `attachment; filename="Closeframe_Batch.zip"`,
+                "Content-Disposition": `attachment; filename="Closerlens_Batch.zip"`,
             },
         });
 

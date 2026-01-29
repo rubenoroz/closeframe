@@ -89,11 +89,11 @@ export default function GalleryHeader({
                         />
                     </div>
                 ) : (
-                    // Default Closeframe Logo (Fallback)
+                    // Default Closerlens Logo (Fallback)
                     <div className="relative h-8 w-auto opacity-80">
                         <img
                             src={background === "light" ? "/scenai-icon.svg" : "/logo-white.svg"}
-                            alt="Closeframe"
+                            alt="Closerlens"
                             className="h-full w-auto object-contain"
                         />
                     </div>

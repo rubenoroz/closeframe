@@ -20,6 +20,8 @@ interface LightboxProps {
     watermarkText?: string | null;
     lowResDownloads?: boolean;
     lowResMaxWidth?: number;
+    onVideoPlay?: () => void;
+    onVideoPause?: () => void;
 }
 
 export default function Lightbox({
@@ -35,7 +37,9 @@ export default function Lightbox({
     studioLogo = "",
     watermarkText = null,
     lowResDownloads = false,
-    lowResMaxWidth = 1200
+    lowResMaxWidth = 1200,
+    onVideoPlay,
+    onVideoPause
 }: LightboxProps) {
     const [isDownloading, setIsDownloading] = useState<string | null>(null);
     const currentFile = files[currentIndex];
@@ -233,6 +237,9 @@ export default function Lightbox({
                                 }
                                 className="max-w-full max-h-full object-contain shadow-2xl rounded-lg border border-white/5"
                                 src={`/api/cloud/video-stream?c=${cloudAccountId}&f=${currentFile.formats?.web || currentFile.id}`}
+                                onPlay={() => onVideoPlay?.()}
+                                onPause={() => onVideoPause?.()}
+                                onEnded={() => onVideoPause?.()}
                             >
                                 Tu navegador no soporta la reproducción de video.
                             </video>

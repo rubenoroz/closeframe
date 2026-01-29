@@ -188,8 +188,22 @@ export default function GalleryPreviewCard({ project, isLight }: GalleryPreviewC
             </div>
 
             {/* Gallery Info */}
-            <h3 className="text-base md:text-lg font-light mb-1">{project.name}</h3>
-            <p className={`text-xs md:text-sm ${isLight ? 'text-neutral-500' : 'text-neutral-400'}`}>Galería pública</p>
+            <div className="flex items-center justify-between">
+                <div>
+                    <h3 className="text-base md:text-lg font-light mb-1">{project.name}</h3>
+                    <p className={`text-xs md:text-sm ${isLight ? 'text-neutral-500' : 'text-neutral-400'}`}>Galería pública</p>
+                </div>
+                {/* @ts-ignore */}
+                {project.isCloserGallery && (
+                    <div className={isLight
+                        ? "flex items-center gap-1 px-2 py-0.5 rounded text-[9px] bg-gradient-to-r from-neutral-900 to-neutral-800 text-amber-200 font-bold tracking-widest border border-neutral-700 shadow-sm"
+                        : "flex items-center gap-1 px-2 py-0.5 rounded text-[9px] bg-gradient-to-r from-amber-200 to-amber-100 text-neutral-900 font-bold tracking-widest shadow-[0_0_10px_rgba(253,230,138,0.3)]"
+                    }>
+                        <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse"></span>
+                        CLOSER
+                    </div>
+                )}
+            </div>
         </Link>
     );
 }

@@ -1,19 +1,19 @@
-# Guía de Puesta en Producción - Closeframe
+# Guía de Puesta en Producción - Closerlens
 
-Esta guía detalla los pasos necesarios para desplegar Closeframe en un entorno de producción (ej. Vercel) y asegurar que todas las integraciones funcionen correctamente.
+Esta guía detalla los pasos necesarios para desplegar Closerlens en un entorno de producción (ej. Vercel) y asegurar que todas las integraciones funcionen correctamente.
 
 ## 1. Configuración de Google Cloud (OAuth)
 
 Para que la autenticación de Google Drive funcione en tu dominio `.com` (no solo en localhost), debes actualizar la consola de Google Cloud.
 
 1.  Ve a [Google Cloud Console](https://console.cloud.google.com/).
-2.  Selecciona tu proyecto "Closeframe" (antes TuSet).
+2.  Selecciona tu proyecto "Closerlens".
 3.  Ve a **Credenciales** > Selecciona tu **ID de cliente de OAuth 2.0**.
 4.  **Orígenes autorizados de JavaScript**:
-    *   Añade tu dominio de producción: `https://closeframe.com` (o el dominio que uses).
+    *   Añade tu dominio de producción: `https://closerlens.com` (o el dominio que uses).
     *   Mantén `http://localhost:3000` para desarrollo.
 5.  **URI de redireccionamiento autorizados**:
-    *   Añade: `https://closeframe.com/api/connect/google/callback`
+    *   Añade: `https://closerlens.com/api/connect/google/callback`
     *   Mantén: `http://localhost:3000/api/connect/google/callback`
 6.  Guarda los cambios.
 
@@ -23,7 +23,7 @@ En tu panel de Vercel (Settings > Environment Variables), asegúrate de tener la
 
 | Variable | Descripción | Ejemplo |
 | :--- | :--- | :--- |
-| `NEXT_PUBLIC_APP_URL` | **CRÍTICO**: La URL base de tu sitio. | `https://closeframe.com` (Sin barra al final) |
+| `NEXT_PUBLIC_APP_URL` | **CRÍTICO**: La URL base de tu sitio. | `https://closerlens.com` (Sin barra al final) |
 | `AUTH_SECRET` | Secreto para firmar sesiones (genera uno largo). | `openssl rand -base64 32` |
 | `AUTH_TRUST_HOST` | Confiar en el host (necesario para Auth.js). | `true` |
 | `GOOGLE_CLIENT_ID` | Copiado de Google Cloud Console. | `...apps.googleusercontent.com` |
@@ -66,7 +66,7 @@ Actualmente la app usa **SQLite** (`dev.db`). Para producción, **DEBES** usar u
 
 ## 4. Despliegue en Vercel
 
-1.  Conecta tu repositorio de GitHub (`rubenoroz/closeframe`).
+1.  Conecta tu repositorio de GitHub (`rubenoroz/closerlens`).
 2.  En "Build & Development Settings", el comando por defecto suele estar bien (`next build`).
 3.  Añade todas las variables de entorno del paso 2.
 4.  Despliega.

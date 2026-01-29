@@ -15,7 +15,7 @@ const PLANS = [
             { text: "Hasta 12 galerías", included: true },
             { text: "1 cuenta de nube conectada", included: true },
             { text: "Perfil público básico", included: true },
-            { text: "Marca de agua 'Closeframe'", included: true },
+            { text: "Marca de agua 'Closerlens'", included: true },
             { text: "Descargas estándar", included: true },
             { text: "Videos en galerías", included: false },
             { text: "Organización manual", included: false },

@@ -6,6 +6,7 @@ import GalleryLock from "@/components/gallery/GalleryLock";
 import GalleryCover from "@/components/gallery/GalleryCover";
 import GalleryHeader from "@/components/gallery/GalleryHeader";
 import MediaTabs from "@/components/gallery/MediaTabs";
+import CloserGalleryClient from "@/components/gallery/CloserGalleryClient";
 import Link from "next/link";
 import { Camera, Download, Loader2 } from "lucide-react";
 
@@ -34,6 +35,12 @@ interface PublicGalleryClientProps {
         enableVideoTab?: boolean | null;
         enableWatermark?: boolean;
         zipFileId?: string | null;
+
+        // Closer Gallery Props
+        isCloserGallery?: boolean;
+        musicTrackId?: string | null;
+        musicEnabled?: boolean;
+
         planLimits?: {
             maxImagesPerProject: number | null;
             videoEnabled: boolean;
@@ -57,6 +64,22 @@ interface PublicGalleryClientProps {
 }
 
 export default function PublicGalleryClient({ project }: PublicGalleryClientProps) {
+
+    // [NEW] Redirect to Closer Gallery experience if active
+    if (project.isCloserGallery) {
+        return (
+            <CloserGalleryClient
+                project={project}
+                businessName={project.user?.businessName}
+                businessLogo={project.user?.businessLogo}
+                businessWebsite={project.user?.businessWebsite}
+                theme={project.user?.theme}
+                businessLogoScale={project.user?.businessLogoScale}
+                plan={project.user?.plan}
+            />
+        );
+    }
+
 
     const [isLocked, setIsLocked] = useState(project.passwordProtected);
     // Hydration Fix: Initialize based on props only, effect update later

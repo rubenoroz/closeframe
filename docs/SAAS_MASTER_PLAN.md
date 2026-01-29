@@ -1,4 +1,4 @@
-# TuSet SaaS Master Plan: "Evolución sin Destruir"
+# Closerlens SaaS Master Plan: "Evolución sin Destruir"
 
 Este documento consolida la estrategia técnica para transformar el prototipo de galería local en una plataforma SaaS escalable, cumpliendo con los requisitos de arquitectura visual y lógica.
 
@@ -50,7 +50,7 @@ Aunque la estructura base está lista, estos son los pasos para cerrar las "cabo
 ### Fase 2: Autenticación Real (🚧 PRIORIDAD ACTUAL)
 *Estado actual: Usamos un usuario "Admin Dev" por defecto.*
 - [ ] **Integrar Auth.js (NextAuth)** o **Clerk**.
-- [ ] Reemplazar el usuario mock (`admin@tuset.dev`) por sesiones reales.
+- [ ] Reemplazar el usuario mock (`admin@closerlens.dev`) por sesiones reales.
 - [ ] Proteger rutas `/dashboard` con middleware.
 - [ ] Lógica: Un usuario solo ve SUS proyectos y SUS cuentas.
 

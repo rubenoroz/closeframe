@@ -22,7 +22,7 @@ interface SystemSettings {
 }
 
 const defaultSettings: SystemSettings = {
-    siteName: "Closeframe",
+    siteName: "Closerlens",
     siteDescription: "Plataforma para fotógrafos profesionales",
     maintenanceMode: false,
     allowRegistration: true,

@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { Camera, LayoutGrid, Plus, Settings, LogOut, CalendarDays, ChevronDown, User, Monitor, CreditCard, Menu, X } from "lucide-react";
+import { Camera, LayoutGrid, Plus, Settings, LogOut, CalendarDays, ChevronDown, User, Monitor, CreditCard, Menu, X, Sun, Moon } from "lucide-react";
 import Image from "next/image";
 import { ScenaIcon } from "@/components/icons/ScenaIcon";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { useTheme } from "@/components/ThemeProvider";
 
 export default function DashboardLayout({
     children,
@@ -16,6 +17,7 @@ export default function DashboardLayout({
 }) {
     const pathname = usePathname();
     const { data: session } = useSession();
+    const { theme, toggleTheme } = useTheme();
     const [showUserMenu, setShowUserMenu] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -36,12 +38,12 @@ export default function DashboardLayout({
     ];
 
     return (
-        <div className="flex min-h-screen bg-neutral-950 text-neutral-100 font-sans">
+        <div className="flex min-h-screen bg-neutral-50 dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 font-sans transition-colors duration-300">
             {/* Mobile Header */}
             <header className="fixed top-0 left-0 right-0 h-14 bg-neutral-900/95 backdrop-blur-xl border-b border-neutral-800 flex items-center justify-between px-4 z-30 md:hidden">
                 <button
                     onClick={() => setSidebarOpen(!sidebarOpen)}
-                    className="p-2 rounded-lg hover:bg-neutral-800 transition"
+                    className="p-2 rounded-lg hover:bg-neutral-800 transition text-white"
                 >
                     {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
                 </button>
@@ -110,7 +112,7 @@ export default function DashboardLayout({
                     <div className="relative">
                         <button
                             onClick={() => setShowUserMenu(!showUserMenu)}
-                            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-neutral-800 transition group"
+                            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-neutral-800 transition group text-white"
                         >
                             {session?.user?.image ? (
                                 <img
@@ -140,7 +142,15 @@ export default function DashboardLayout({
 
                         {/* Dropdown Menu */}
                         {showUserMenu && (
-                            <div className="absolute bottom-full left-0 right-0 mb-2 bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden shadow-xl">
+                            <div className="absolute bottom-full left-0 right-0 mb-2 bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden shadow-xl z-50">
+                                <button
+                                    onClick={toggleTheme}
+                                    className="w-full flex items-center gap-3 px-4 py-3 text-neutral-300 hover:text-white hover:bg-neutral-800 transition border-b border-neutral-800"
+                                >
+                                    {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                                    <span className="text-sm">{theme === 'dark' ? 'Modo Claro' : 'Modo Oscuro'}</span>
+                                </button>
+
                                 <button
                                     onClick={() => signOut({ callbackUrl: "/" })}
                                     className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-neutral-800 transition"

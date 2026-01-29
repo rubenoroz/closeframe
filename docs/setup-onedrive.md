@@ -5,7 +5,7 @@
 1. Ve a [Azure Portal - App Registrations](https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade)
 2. Click en **"+ New registration"** (arriba a la izquierda)
 3. Llena el formulario:
-   - **Name**: `Closeframe OneDrive` (o el nombre que quieras)
+   - **Name**: `Closerlens OneDrive` (o el nombre que quieras)
    - **Supported account types**: Selecciona **"Accounts in any organizational directory and personal Microsoft accounts"** (la tercera opción)
    - **Redirect URI**: 
      - Tipo: **Web**
@@ -21,7 +21,7 @@ Después de crear la app, estarás en la página "Overview":
 1. **Application (client) ID**: Copia este valor → será tu `MICROSOFT_CLIENT_ID`
 2. Ve al menú izquierdo → **"Certificates & secrets"**
 3. En la sección "Client secrets", click **"+ New client secret"**
-   - Description: `Closeframe Secret`
+   - Description: `Closerlens Secret`
    - Expires: Selecciona `24 months` o lo que prefieras
 4. Click **"Add"**
 5. **IMPORTANTE**: Copia inmediatamente el **Value** (no el Secret ID) → será tu `MICROSOFT_CLIENT_SECRET`

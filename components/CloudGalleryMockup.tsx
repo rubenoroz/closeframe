@@ -78,7 +78,7 @@ export default function CloudGalleryMockup({ googleConfigured }: Props) {
             {/* Small Header for Context */}
             <div className="absolute top-0 left-0 p-6 flex items-center gap-2 opacity-50">
                 <Camera className="w-5 h-5" />
-                <span className="text-sm font-light">Closeframe / Demo Mode</span>
+                <span className="text-sm font-light">Closerlens / Demo Mode</span>
             </div>
 
             {/* Folder Browser Modal */}
@@ -97,7 +97,7 @@ export default function CloudGalleryMockup({ googleConfigured }: Props) {
                 </div>
                 <h2 className="text-2xl font-light mb-2">Constructor de Galerías</h2>
                 <p className="text-neutral-400 mb-8 leading-relaxed max-w-sm mx-auto">
-                    Conecta tu nube para previsualizar cómo se verían tus carpetas en TuSet.
+                    Conecta tu nube para previsualizar cómo se verían tus carpetas en Closerlens.
                 </p>
 
                 {error && (

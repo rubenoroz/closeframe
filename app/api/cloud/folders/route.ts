@@ -6,7 +6,8 @@ import { getFreshAuth } from "@/lib/cloud/auth-factory";
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const cloudAccountId = searchParams.get("cloudAccountId");
-    const folderId = searchParams.get("folderId") || "root"; // Default to root
+    // Support both folderId and parentId (legacy)
+    const folderId = searchParams.get("folderId") || searchParams.get("parentId") || "root";
 
     if (!cloudAccountId) {
         return NextResponse.json({ error: "Cloud Account ID required" }, { status: 400 });

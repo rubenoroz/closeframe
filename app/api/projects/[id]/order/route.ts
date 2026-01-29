@@ -10,10 +10,14 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
-        const { fileOrder } = await req.json();
+        const { fileOrder, momentsOrder } = await req.json();
 
-        if (!Array.isArray(fileOrder)) {
+        if (fileOrder && !Array.isArray(fileOrder)) {
             return new NextResponse("Invalid fileOrder format", { status: 400 });
+        }
+
+        if (momentsOrder && !Array.isArray(momentsOrder)) {
+            return new NextResponse("Invalid momentsOrder format", { status: 400 });
         }
 
         const project = await prisma.project.findUnique({
@@ -30,15 +34,21 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
             return new NextResponse("Forbidden", { status: 403 });
         }
 
-        // Check if plan allows manual ordering
+        // Check if plan allows manual ordering OR if it is a Closer Gallery (Premium)
         const planLimits = project.user.plan?.limits ? JSON.parse(project.user.plan.limits) : null;
-        if (!planLimits?.manualOrdering) {
+        const isCloser = project.isCloserGallery;
+
+        if (!planLimits?.manualOrdering && !isCloser) {
             return new NextResponse("Upgrade plan to use manual ordering", { status: 403 });
         }
 
+        const updateData: any = {};
+        if (fileOrder) updateData.fileOrder = fileOrder;
+        if (momentsOrder) updateData.momentsOrder = momentsOrder;
+
         await prisma.project.update({
             where: { id: params.id },
-            data: { fileOrder },
+            data: updateData,
         });
 
         return NextResponse.json({ success: true });
