@@ -35,14 +35,18 @@ export default function DriveFilePicker({
         if (!cloudAccountId || !folderId) return;
 
         setLoading(true);
-        fetch(`/api/cloud/files?cloudAccountId=${cloudAccountId}&folderId=${folderId}`)
+        fetch(`/api/cloud/files?cloudAccountId=${cloudAccountId}&folderId=${folderId}`, { cache: 'no-store' })
             .then((res) => res.json())
             .then((data) => {
                 if (data.files) {
+                    console.log("DrivePicker Files:", data.files.length);
                     // Filter for images only
-                    const images = data.files.filter((f: CloudFile) =>
-                        f.mimeType?.startsWith("image/") || !f.mimeType // generic fallback
-                    );
+                    const images = data.files.filter((f: CloudFile) => {
+                        const isImageMime = f.mimeType?.startsWith("image/");
+                        // Fallback: check extension if mime is missing or generic
+                        const isImageExt = /\.(jpg|jpeg|png|webp|gif|bmp|tiff)$/i.test(f.name);
+                        return isImageMime || isImageExt;
+                    });
                     setFiles(images);
                 } else {
                     setError(data.error || "Error al cargar archivos");
@@ -55,9 +59,24 @@ export default function DriveFilePicker({
             });
     }, [cloudAccountId, folderId]);
 
+    // Handle ESC key
+    useEffect(() => {
+        const handleEsc = (e: KeyboardEvent) => {
+            if (e.key === "Escape") onCancel();
+        };
+        window.addEventListener("keydown", handleEsc);
+        return () => window.removeEventListener("keydown", handleEsc);
+    }, [onCancel]);
+
     return (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-            <div className="bg-neutral-900 border border-neutral-800 rounded-2xl w-full max-w-4xl max-h-[80vh] flex flex-col shadow-2xl">
+        <div
+            className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm cursor-pointer"
+            onClick={onCancel}
+        >
+            <div
+                className="bg-neutral-900 border border-neutral-800 rounded-2xl w-full max-w-4xl max-h-[80vh] flex flex-col shadow-2xl cursor-default"
+                onClick={(e) => e.stopPropagation()}
+            >
                 {/* Header */}
                 <div className="p-6 border-b border-neutral-800 flex items-center justify-between">
                     <div>
@@ -95,8 +114,8 @@ export default function DriveFilePicker({
                                     key={file.id}
                                     onClick={() => onSelect(file.id, `/api/cloud/thumbnail?c=${cloudAccountId}&f=${file.id}&s=400`)}
                                     className={`relative aspect-[4/3] group cursor-pointer rounded-xl overflow-hidden border-2 transition-all ${selectedFileId === file.id
-                                            ? "border-emerald-500 ring-2 ring-emerald-500/20"
-                                            : "border-transparent hover:border-neutral-700"
+                                        ? "border-emerald-500 ring-2 ring-emerald-500/20"
+                                        : "border-transparent hover:border-neutral-700"
                                         }`}
                                 >
                                     <div className="absolute inset-0 bg-neutral-800 animate-pulse" />

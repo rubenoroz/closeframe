@@ -55,7 +55,7 @@ export default function LoginPage() {
             >
                 {/* Logo */}
                 <div className="flex flex-col items-center mb-8 md:mb-10">
-                    <div className="-mb-2 relative w-72 h-32 md:w-96 md:h-40">
+                    <div className="mb-2 md:mb-4 relative w-72 h-32 md:w-96 md:h-40">
                         <Image
                             src="/logo-white.svg"
                             alt="Closerlens"

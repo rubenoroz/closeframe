@@ -204,29 +204,27 @@ export default function BookingsPage() {
                 </button>
             </div>
 
-            {/* View Toggle - PRO ONLY */}
-            {(userPlan === 'pro' || userPlan === 'studio') && (
-                <div className="flex bg-neutral-900 rounded-lg p-1 w-fit mb-6 border border-neutral-800">
-                    <button
-                        onClick={() => setViewMode("calendar")}
-                        className={cn(
-                            "px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2",
-                            viewMode === "calendar" ? "bg-neutral-800 text-white shadow-sm" : "text-neutral-400 hover:text-white"
-                        )}
-                    >
-                        <CalendarDays className="w-4 h-4" /> Calendario
-                    </button>
-                    <button
-                        onClick={() => setViewMode("list")}
-                        className={cn(
-                            "px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2",
-                            viewMode === "list" ? "bg-neutral-800 text-white shadow-sm" : "text-neutral-400 hover:text-white"
-                        )}
-                    >
-                        <FileText className="w-4 h-4" /> Lista
-                    </button>
-                </div>
-            )}
+            {/* View Toggle */}
+            <div className="flex bg-neutral-900 rounded-lg p-1 w-fit mb-6 border border-neutral-800">
+                <button
+                    onClick={() => setViewMode("calendar")}
+                    className={cn(
+                        "px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2",
+                        viewMode === "calendar" ? "bg-neutral-800 text-white shadow-sm" : "text-neutral-400 hover:text-white"
+                    )}
+                >
+                    <CalendarDays className="w-4 h-4" /> Calendario
+                </button>
+                <button
+                    onClick={() => setViewMode("list")}
+                    className={cn(
+                        "px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2",
+                        viewMode === "list" ? "bg-neutral-800 text-white shadow-sm" : "text-neutral-400 hover:text-white"
+                    )}
+                >
+                    <FileText className="w-4 h-4" /> Lista
+                </button>
+            </div>
 
             {viewMode === "calendar" ? (
                 <BookingCalendar

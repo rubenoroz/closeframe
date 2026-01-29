@@ -169,6 +169,18 @@ export default function DashboardPage() {
         return () => window.removeEventListener("click", handleClickOutside);
     }, []);
 
+    // Handle ESC key for Modals
+    useEffect(() => {
+        const handleEsc = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                if (deleteConfirm) setDeleteConfirm(null);
+                if (selectedProject) setSelectedProject(null);
+            }
+        };
+        window.addEventListener("keydown", handleEsc);
+        return () => window.removeEventListener("keydown", handleEsc);
+    }, [deleteConfirm, selectedProject]);
+
     const openSettings = (project: Project) => {
         setSelectedProject(project);
         setEditData({
@@ -313,6 +325,8 @@ export default function DashboardPage() {
             </div>
         );
     }
+
+
 
     return (
         <div className={`min-h-screen transition-colors duration-700 pb-20 selection:bg-emerald-500/30 -mx-6 -mt-10 px-6 pt-10 ${isLight ? 'bg-neutral-50 text-neutral-900' : 'bg-black text-white'
@@ -601,8 +615,14 @@ export default function DashboardPage() {
 
                 {/* Delete Confirmation Modal */}
                 {deleteConfirm && (
-                    <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[100] p-4">
-                        <div className="bg-neutral-900 border border-neutral-800 rounded-3xl w-full max-w-sm p-8 shadow-2xl text-center">
+                    <div
+                        className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[100] p-4 cursor-pointer"
+                        onClick={() => setDeleteConfirm(null)}
+                    >
+                        <div
+                            className="bg-neutral-900 border border-neutral-800 rounded-3xl w-full max-w-sm p-8 shadow-2xl text-center cursor-default"
+                            onClick={(e) => e.stopPropagation()}
+                        >
                             <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
                                 <Trash2 className="w-8 h-8 text-red-500" />
                             </div>
@@ -630,8 +650,14 @@ export default function DashboardPage() {
 
                 {/* Settings Modal */}
                 {selectedProject && (
-                    <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-end md:items-center justify-center z-[110] p-0 md:p-4">
-                        <div className={`${isLight ? 'bg-white text-neutral-900 border-neutral-200' : 'bg-neutral-900 text-white border-neutral-800'} border rounded-t-3xl md:rounded-[2rem] w-full max-w-lg md:max-w-3xl p-6 md:p-8 relative shadow-2xl animate-in slide-in-from-bottom md:zoom-in-95 duration-300 max-h-[95vh] md:max-h-[90vh] overflow-y-auto`}>
+                    <div
+                        className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-end md:items-center justify-center z-[110] p-0 md:p-4 cursor-pointer"
+                        onClick={() => setSelectedProject(null)}
+                    >
+                        <div
+                            className={`${isLight ? 'bg-white text-neutral-900 border-neutral-200' : 'bg-neutral-900 text-white border-neutral-800'} border rounded-t-3xl md:rounded-[2rem] w-full max-w-lg md:max-w-3xl p-6 md:p-8 relative shadow-2xl animate-in slide-in-from-bottom md:zoom-in-95 duration-300 max-h-[95vh] md:max-h-[90vh] overflow-y-auto cursor-default`}
+                            onClick={(e) => e.stopPropagation()}
+                        >
                             <button
                                 onClick={() => setSelectedProject(null)}
                                 className="absolute top-4 right-4 md:top-8 md:right-8 text-neutral-500 hover:text-emerald-500 transition"

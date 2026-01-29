@@ -109,19 +109,73 @@ export async function GET(request: Request) {
             !f.name.startsWith('.') && !f.name.endsWith('.keep')
         );
 
-        // [NEW] If using a proxy folder (webjpg/webmp4), also check the Root Folder for ZIPs
+        // [NEW] If using a proxy folder (webjpg/webmp4), also check the Root Folder for additional files (ZIPs + Orphaned Images)
         if (sourceFolderId !== folderId) {
-            console.log(`[DEBUG] Proxy active. Checking Root Folder (${folderId}) for ZIP files...`);
+            console.log(`[DEBUG] Proxy active. Checking Root Folder (${folderId}) for ZIPs and extra images...`);
             // @ts-ignore
             const rootFiles = await provider.listFiles(folderId, authClient);
+
+            // 1. ZIPs
             const rootZips = rootFiles.filter((f: any) =>
                 f.mimeType?.includes('zip') || f.name.toLowerCase().endsWith('.zip')
             );
 
+            // 2. Orphaned Images (Images in Root that are NOT in the Proxy)
+            // Useful for Cover Images uploaded manually to Root
+            const existingNames = new Set(mainFiles.map((f: any) => f.name.toLowerCase()));
+            const rootImages = rootFiles.filter((f: any) =>
+                f.mimeType?.startsWith('image/') &&
+                !existingNames.has(f.name.toLowerCase())
+            );
+
             if (rootZips.length > 0) {
                 console.log(`[DEBUG] Found ${rootZips.length} ZIPs in root. Appending...`);
-                // Append root ZIPs to the main list
                 mainFiles = [...mainFiles, ...rootZips];
+            }
+
+            if (rootImages.length > 0) {
+                console.log(`[DEBUG] Found ${rootImages.length} extra images in root. Appending...`);
+                // Mark them as from root if needed, or just append
+                mainFiles = [...mainFiles, ...rootImages];
+            }
+        } else {
+            // [NEW] FALLBACK FLEXIBILITY:
+            // If we are using the Root Folder (no recognized proxy structure found),
+            // Look into ALL subfolders to find images. "Flatten" the gallery.
+            console.log("[DEBUG] No proxy folder found. Scanning subfolders for content (Flatten Mode)...");
+
+            // Filter out system folders or previously checked/irrelevant ones if needed
+            // But usually, if no webjpg/webmp4 was found, all subfolders are fair game.
+            // Exclude "Fotografias" if we already entered it? No, logic above handles that by changing folderId.
+            // Just filter typical system or hidden folders if any.
+            const candidateFolders = subfolders.filter((f: any) =>
+                !['webjpg', 'webmp4', 'hd', 'raw', 'preview', 'fotografias', 'alta', 'baja', 'jpg'].includes(f.name.toLowerCase()) &&
+                !f.name.startsWith('.')
+            );
+
+            if (candidateFolders.length > 0) {
+                console.log(`[DEBUG] Found ${candidateFolders.length} subfolders to scan:`, candidateFolders.map((f: any) => f.name));
+
+                // Fetch in parallel
+                const subfolderPromises = candidateFolders.map(async (sub: any) => {
+                    try {
+                        // @ts-ignore
+                        const subFiles = await provider.listFiles(sub.id, authClient);
+                        // Tag them? Not strictly necessary for "que se vea", just show them.
+                        return subFiles;
+                    } catch (err) {
+                        console.error(`[DEBUG] Failed to scan subfolder ${sub.name}:`, err);
+                        return [];
+                    }
+                });
+
+                const results = await Promise.all(subfolderPromises);
+                const flattenedFiles = results.flat();
+
+                if (flattenedFiles.length > 0) {
+                    console.log(`[DEBUG] Found ${flattenedFiles.length} files in subfolders. Merging...`);
+                    mainFiles = [...mainFiles, ...flattenedFiles];
+                }
             }
         }
 
