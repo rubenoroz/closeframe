@@ -4,6 +4,7 @@ import { signIn } from "next-auth/react";
 import { Camera, Mail, ArrowRight, CheckCircle2, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
+import Image from "next/image";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
@@ -54,9 +55,14 @@ export default function LoginPage() {
             >
                 {/* Logo */}
                 <div className="flex flex-col items-center mb-8 md:mb-10">
-                    <div className="flex items-center gap-2 text-xl md:text-2xl font-light mb-2 text-white">
-                        <Camera className="w-6 h-6 md:w-7 md:h-7" />
-                        <span className="tracking-tight">Closerlens</span>
+                    <div className="-mb-2 relative w-72 h-32 md:w-96 md:h-40">
+                        <Image
+                            src="/logo-white.svg"
+                            alt="Closerlens"
+                            fill
+                            className="object-contain object-bottom"
+                            priority
+                        />
                     </div>
                     <p className="text-neutral-500 text-xs md:text-sm text-center">Plataforma de Galerías Profesionales</p>
                 </div>
