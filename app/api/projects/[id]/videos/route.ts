@@ -30,7 +30,29 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
         const body = await request.json();
         const { provider, externalId, title, thumbnail, duration, momentName } = body;
 
-        console.log(`[POST /api/projects/${id}/videos] adding video:`, { provider, externalId, title });
+        console.log(`[POST /api/projects/${id}/videos] adding/moving video:`, { provider, externalId, title });
+
+        // [NEW] Deduplication Logic: Check if video already exists in this project
+        const existingVideo = await prisma.externalVideo.findFirst({
+            where: {
+                projectId: id,
+                provider,
+                externalId
+            }
+        });
+
+        if (existingVideo) {
+            console.log(`[DEBUG] Video already exists (ID: ${existingVideo.id}). Moving to moment: ${momentName}`);
+            const updated = await prisma.externalVideo.update({
+                where: { id: existingVideo.id },
+                data: {
+                    momentName: momentName || "Videos",
+                    // We don't change order here to avoid jumping around, 
+                    // or we could move it to the end? Let's move to end of new moment.
+                }
+            });
+            return NextResponse.json(updated);
+        }
 
         // Get max order
         const lastVideo = await prisma.externalVideo.findFirst({
@@ -44,10 +66,10 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
                 projectId: id,
                 provider,
                 externalId,
-                title, // Can be null, allow user to rename? For now use provider title
+                title,
                 thumbnail,
                 duration,
-                momentName: momentName || "Videos", // Default folder/tab name
+                momentName: momentName || "Videos",
                 order: newOrder
             }
         });

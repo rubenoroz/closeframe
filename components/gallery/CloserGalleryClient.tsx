@@ -319,6 +319,7 @@ export default function CloserGalleryClient({
                     watermarkText={businessName}
                     zipDownloadsEnabled={effectiveZipEnabled}
                     zipFileId={project.zipFileId}
+                    layoutType={project.layoutType}
 
                     theme="dark"
                     mediaType={isVideoTabActive ? "videos" : "photos"}

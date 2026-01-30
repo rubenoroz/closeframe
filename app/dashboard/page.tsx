@@ -4,9 +4,11 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-    Folder, MoreVertical, Plus, ExternalLink, Calendar, X,
-    Shield, Download, Layout, Save, Loader2, Settings, Trash2,
-    Link as LinkIcon, Check, Copy, AlertCircle, Image as ImageIcon, Sparkles
+    Plus, Search, Settings, ExternalLink, Calendar,
+    MoreHorizontal, Trash2, Layout, Copy, AlertCircle,
+    ChevronRight, Check, Image as ImageIcon, Video,
+    Folder, Download, Type, X, Shield, Sparkles,
+    Link as LinkIcon, MoreVertical, Loader2, Save
 } from "lucide-react";
 import { Skeleton } from "@/components/Skeleton";
 import DriveFilePicker from "@/components/DriveFilePicker";
@@ -82,6 +84,21 @@ export default function DashboardPage() {
     const isLight = theme === "light";
     const router = useRouter();
 
+    // [NEW] Dynamically load fonts for preview
+    useEffect(() => {
+        if (selectedProject) {
+            const fonts = ["DM Sans", "Fraunces", "Playfair Display", "Cormorant", "Allura"];
+            const linkId = "preview-fonts";
+            if (!document.getElementById(linkId)) {
+                const link = document.createElement("link");
+                link.id = linkId;
+                link.rel = "stylesheet";
+                link.href = `https://fonts.googleapis.com/css2?family=${fonts.map(f => f.replace(/ /g, "+")).join("&family=")}:wght@400;700&display=swap`;
+                document.head.appendChild(link);
+            }
+        }
+    }, [selectedProject]);
+
     const [editData, setEditData] = useState({
         name: "",
         coverImage: "",
@@ -105,6 +122,7 @@ export default function DashboardPage() {
         zipFileId: "",
         zipFileName: "",
         public: true,
+        layoutType: "mosaic",
         isCloserGallery: false,
         musicTrackId: "",
         musicEnabled: false,    // [NEW]
@@ -205,6 +223,7 @@ export default function DashboardPage() {
             zipFileId: project.zipFileId || "",
             zipFileName: project.zipFileName || "",
             public: project.public !== false,
+            layoutType: (project as any).layoutType || "mosaic",
             isCloserGallery: project.isCloserGallery || false,
             musicTrackId: project.musicTrackId || "",
             musicEnabled: project.musicEnabled || false, // [NEW]
@@ -245,6 +264,7 @@ export default function DashboardPage() {
                     zipFileId: editData.zipFileId,
                     zipFileName: editData.zipFileName,
                     public: editData.public,
+                    layoutType: editData.layoutType,
                     isCloserGallery: editData.isCloserGallery,
                     musicTrackId: editData.musicTrackId,
                     musicEnabled: editData.musicEnabled, // [NEW] Autoplay
@@ -877,22 +897,73 @@ export default function DashboardPage() {
                                                         <span className="text-[9px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">Plan Free</span>
                                                     )}
                                                 </label>
-                                                <select
-                                                    value={planLimits?.lowResDownloads ? "Inter" : editData.headerFontFamily}
-                                                    disabled={!!planLimits?.lowResDownloads}
-                                                    onChange={(e) => setEditData({ ...editData, headerFontFamily: e.target.value })}
-                                                    className={`w-full border rounded-xl px-4 py-2.5 text-sm outline-none transition-all ${isLight ? 'bg-white border-neutral-200 focus:border-emerald-500' : 'bg-neutral-900 border-neutral-700 focus:border-emerald-500'} ${planLimits?.lowResDownloads ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                >
-                                                    <option value="Inter">Inter (Profesional)</option>
-                                                    <option value="DM Sans">DM Sans (Moderno)</option>
-                                                    <option value="Fraunces">Fraunces (Editorial)</option>
-                                                    <option value="Playfair Display">Playfair (Bodas)</option>
-                                                    <option value="Cormorant">Cormorant (Artístico)</option>
-                                                    <option value="Allura">Allura (Romance)</option>
-                                                </select>
+                                                {/* Custom Font Selector */}
+                                                <div className="relative group/font">
+                                                    <button
+                                                        type="button"
+                                                        disabled={!!planLimits?.lowResDownloads}
+                                                        className={`w-full text-left border rounded-xl px-4 py-2.5 text-sm transition-all flex items-center justify-between ${isLight ? 'bg-white border-neutral-200 hover:border-emerald-500' : 'bg-neutral-900 border-neutral-700 hover:border-emerald-500'
+                                                            } ${planLimits?.lowResDownloads ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                                        style={{
+                                                            fontFamily: editData.headerFontFamily !== "Inter" ? `'${editData.headerFontFamily}', sans-serif` : "inherit"
+                                                        }}
+                                                    >
+                                                        <span>
+                                                            {editData.headerFontFamily === "Inter" && "Inter (Profesional)"}
+                                                            {editData.headerFontFamily === "DM Sans" && "DM Sans (Moderno)"}
+                                                            {editData.headerFontFamily === "Fraunces" && "Fraunces (Editorial)"}
+                                                            {editData.headerFontFamily === "Playfair Display" && "Playfair (Bodas)"}
+                                                            {editData.headerFontFamily === "Cormorant" && "Cormorant (Artístico)"}
+                                                            {editData.headerFontFamily === "Allura" && "Allura (Romance)"}
+                                                        </span>
+                                                        <ChevronRight className="w-4 h-4 rotate-90 opacity-50" />
+                                                    </button>
+
+                                                    {/* Custom Dropdown Menu */}
+                                                    {!planLimits?.lowResDownloads && (
+                                                        <div className={`absolute left-0 right-0 top-full mt-1 rounded-xl border shadow-xl overflow-hidden z-[60] p-1 transition-all opacity-0 invisible group-hover/font:opacity-100 group-hover/font:visible ${isLight ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'
+                                                            }`}>
+                                                            {[
+                                                                { val: "Inter", label: "Inter (Profesional)", font: "Inter, sans-serif" },
+                                                                { val: "DM Sans", label: "DM Sans (Moderno)", font: "DM Sans, sans-serif" },
+                                                                { val: "Fraunces", label: "Fraunces (Editorial)", font: "Fraunces, serif" },
+                                                                { val: "Playfair Display", label: "Playfair (Bodas)", font: "Playfair Display, serif" },
+                                                                { val: "Cormorant", label: "Cormorant (Artístico)", font: "Cormorant, serif" },
+                                                                { val: "Allura", label: "Allura (Romance)", font: "Allura, cursive" }
+                                                            ].map((opt) => (
+                                                                <button
+                                                                    key={opt.val}
+                                                                    type="button"
+                                                                    onClick={() => setEditData({ ...editData, headerFontFamily: opt.val })}
+                                                                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between ${editData.headerFontFamily === opt.val
+                                                                            ? (isLight ? 'bg-emerald-50 text-emerald-600' : 'bg-emerald-500/10 text-emerald-400')
+                                                                            : (isLight ? 'hover:bg-neutral-50' : 'hover:bg-white/5')
+                                                                        }`}
+                                                                    style={{ fontFamily: opt.font }}
+                                                                >
+                                                                    <span className="text-base">{opt.label.split('(')[0]}</span>
+                                                                    <span className="text-xs opacity-50 relative top-[1px]">{opt.label.split('(')[1]?.replace(')', '')}</span>
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
                                                 {planLimits?.lowResDownloads && (
                                                     <p className="text-[9px] text-neutral-500 mt-1">Solo 'Inter' disponible. Actualiza plan para más fuentes.</p>
                                                 )}
+
+                                                {/* [NEW] Font Preview Block */}
+                                                <div
+                                                    className={`mt-3 p-4 rounded-xl border text-center transition-all ${isLight ? 'bg-neutral-50 border-neutral-100' : 'bg-white/5 border-white/5'}`}
+                                                    style={{
+                                                        fontFamily: editData.headerFontFamily !== "Inter" ? `'${editData.headerFontFamily}', sans-serif` : "inherit",
+                                                        color: editData.headerColor,
+                                                        fontSize: `${Math.max(14, 1.2 * (editData.headerFontSize / 100) * 16)}px`,
+                                                        lineHeight: '1.2'
+                                                    }}
+                                                >
+                                                    {editData.headerTitle || "Vista Previa del Texto"}
+                                                </div>
                                             </div>
 
                                             {/* Font Size Slider */}
@@ -1004,6 +1075,42 @@ export default function DashboardPage() {
                                             >
                                                 ☀️ Claro
                                             </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Layout Selection */}
+                                    <div className="mt-6">
+                                        <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-2 block">Diseño de la Galería</label>
+                                        <div className="flex gap-3">
+                                            <button
+                                                type="button"
+                                                onClick={() => setEditData({ ...editData, layoutType: "mosaic" })}
+                                                className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all ${editData.layoutType === "mosaic"
+                                                    ? "bg-emerald-600 text-white shadow-lg shadow-emerald-500/20"
+                                                    : isLight ? "bg-white text-neutral-600 border border-neutral-200 hover:border-neutral-300" : "bg-neutral-800 text-neutral-400 border border-neutral-700 hover:border-neutral-600"
+                                                    }`}
+                                            >
+                                                🧩 Mosaico
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setEditData({ ...editData, layoutType: "grid" })}
+                                                className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all ${editData.layoutType === "grid"
+                                                    ? "bg-emerald-600 text-white shadow-lg shadow-emerald-500/20"
+                                                    : isLight ? "bg-white text-neutral-600 border border-neutral-200 hover:border-neutral-300" : "bg-neutral-800 text-neutral-400 border border-neutral-700 hover:border-neutral-600"
+                                                    }`}
+                                            >
+                                                🔳 Cuadrícula
+                                            </button>
+                                        </div>
+                                        <div className="mt-2 flex items-center gap-2 group cursor-help">
+                                            <div className="flex-1 h-px bg-neutral-800"></div>
+                                            <p className="text-[9px] text-neutral-500 italic">
+                                                {editData.layoutType === "mosaic"
+                                                    ? "🧩 Estilo dinámico: las fotos encajan como rompecabezas."
+                                                    : "🔳 Estilo uniforme: todas las fotos en formato 3:2."}
+                                            </p>
+                                            <div className="flex-1 h-px bg-neutral-800"></div>
                                         </div>
                                     </div>
 

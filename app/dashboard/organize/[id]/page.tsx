@@ -553,7 +553,7 @@ export default function OrganizePage() {
                                         }`}
                                 >
                                     <Video className="w-3.5 h-3.5" />
-                                    Videos
+                                    YouTube / Vimeo
                                 </button>
                             </>
                         )}

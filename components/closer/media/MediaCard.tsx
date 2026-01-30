@@ -5,9 +5,10 @@ import { motion } from "framer-motion";
 
 interface MediaCardProps {
     item: MediaItem;
+    layoutType?: "mosaic" | "grid";
 }
 
-export function MediaCard({ item }: MediaCardProps) {
+export function MediaCard({ item, layoutType = "mosaic" }: MediaCardProps) {
     const isVideo = item.isVideo;
 
     // Construct image URL. 
@@ -20,14 +21,21 @@ export function MediaCard({ item }: MediaCardProps) {
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="group relative bg-[#111] overflow-hidden rounded-sm cursor-pointer"
+            className={`group relative bg-[#111] overflow-hidden rounded-sm cursor-pointer ${layoutType === "grid" ? "w-full" : ""
+                }`}
         >
-            <div className="aspect-auto">
+            <div
+                className={layoutType === "grid"
+                    ? (isVideo ? "aspect-video" : "aspect-[3/2]")
+                    : "aspect-auto"
+                }
+            >
                 <img
                     src={imgSrc}
                     alt={item.name}
                     loading="lazy"
-                    className="w-full h-auto object-cover transition-transform duration-700 ease-out group-hover:scale-105 group-hover:opacity-90"
+                    className={`w-full transition-transform duration-700 ease-out group-hover:scale-105 group-hover:opacity-90 ${layoutType === "grid" ? "h-full object-cover" : "h-auto object-cover"
+                        }`}
                 />
             </div>
 

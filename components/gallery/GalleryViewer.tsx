@@ -34,6 +34,7 @@ interface Props {
     preloadedFiles?: CloudFile[];
     onVideoPlay?: () => void;
     onVideoPause?: () => void;
+    layoutType?: "mosaic" | "grid";
 }
 
 // ... CloudFile interface ...
@@ -59,6 +60,7 @@ export default function GalleryViewer({
     lowResThumbnails = false,
     zipDownloadsEnabled = true,
     zipFileId = null,
+    layoutType = "mosaic",
     onSelectionChange,
     preloadedFiles,
     onVideoPlay,
@@ -426,63 +428,110 @@ export default function GalleryViewer({
                 ) : (
                     <>
                         {/* Desktop Grid */}
-                        <div className="hidden md:grid grid-cols-4 gap-1 items-start">
-                            {columns.map((col, colIdx) => (
-                                <div key={colIdx} className="flex flex-col gap-1">
-                                    {col.map((item) => {
-                                        const originalIndex = mediaFiles.findIndex((f) => f.id === item.id);
-                                        return (
-                                            <MediaCard
-                                                key={item.id}
-                                                item={item}
-                                                index={originalIndex}
-                                                cloudAccountId={cloudAccountId}
-                                                downloadEnabled={anyDownloadEnabled}
-                                                // Disable selection if not dynamic zip enabled
-                                                selectionEnabled={dynamicZipEnabled}
-                                                enableWatermark={enableWatermark}
-                                                watermarkText={watermarkText}
-                                                studioLogo={studioLogo}
-                                                isSelected={selectedIds.has(item.id)}
-                                                onSelect={() => toggleSelect(item.id)}
-                                                onView={() => openLightbox(originalIndex)}
-                                                lowResThumbnails={lowResThumbnails}
-                                            />
-                                        );
-                                    })}
-                                </div>
-                            ))}
-                        </div>
+                        {layoutType === "mosaic" ? (
+                            <div className="hidden md:grid grid-cols-4 gap-1 items-start">
+                                {columns.map((col, colIdx) => (
+                                    <div key={colIdx} className="flex flex-col gap-1">
+                                        {col.map((item) => {
+                                            const originalIndex = mediaFiles.findIndex((f) => f.id === item.id);
+                                            return (
+                                                <MediaCard
+                                                    key={item.id}
+                                                    item={item}
+                                                    index={originalIndex}
+                                                    cloudAccountId={cloudAccountId}
+                                                    downloadEnabled={anyDownloadEnabled}
+                                                    selectionEnabled={dynamicZipEnabled}
+                                                    enableWatermark={enableWatermark}
+                                                    watermarkText={watermarkText}
+                                                    studioLogo={studioLogo}
+                                                    isSelected={selectedIds.has(item.id)}
+                                                    onSelect={() => toggleSelect(item.id)}
+                                                    onView={() => openLightbox(originalIndex)}
+                                                    lowResThumbnails={lowResThumbnails}
+                                                    layoutType={layoutType}
+                                                />
+                                            );
+                                        })}
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="hidden md:grid grid-cols-4 gap-1">
+                                {mediaFiles.map((item, index) => (
+                                    <MediaCard
+                                        key={item.id}
+                                        item={item}
+                                        index={index}
+                                        cloudAccountId={cloudAccountId}
+                                        downloadEnabled={anyDownloadEnabled}
+                                        selectionEnabled={dynamicZipEnabled}
+                                        enableWatermark={enableWatermark}
+                                        watermarkText={watermarkText}
+                                        studioLogo={studioLogo}
+                                        isSelected={selectedIds.has(item.id)}
+                                        onSelect={() => toggleSelect(item.id)}
+                                        onView={() => openLightbox(index)}
+                                        lowResThumbnails={lowResThumbnails}
+                                        layoutType={layoutType}
+                                    />
+                                ))}
+                            </div>
+                        )}
+
                         {/* Mobile Grid */}
-                        <div className="grid md:hidden grid-cols-2 gap-1 items-start">
-                            {mobileColumns.map((col, colIdx) => (
-                                <div key={colIdx} className="flex flex-col gap-1">
-                                    {col.map((item) => {
-                                        const originalIndex = mediaFiles.findIndex((f) => f.id === item.id);
-                                        return (
-                                            <MediaCard
-                                                key={item.id}
-                                                item={item}
-                                                index={originalIndex}
-                                                cloudAccountId={cloudAccountId}
-                                                downloadEnabled={anyDownloadEnabled}
-                                                selectionEnabled={dynamicZipEnabled}
-                                                enableWatermark={enableWatermark}
-                                                watermarkText={watermarkText}
-                                                studioLogo={studioLogo}
-                                                isSelected={selectedIds.has(item.id)}
-                                                onSelect={() => toggleSelect(item.id)}
-                                                onView={() => openLightbox(originalIndex)}
-                                                lowResThumbnails={lowResThumbnails}
-                                            />
-                                        );
-                                    })}
-                                </div>
-                            ))}
-                        </div>
+                        {layoutType === "mosaic" ? (
+                            <div className="grid md:hidden grid-cols-2 gap-1 items-start">
+                                {mobileColumns.map((col, colIdx) => (
+                                    <div key={colIdx} className="flex flex-col gap-1">
+                                        {col.map((item) => {
+                                            const originalIndex = mediaFiles.findIndex((f) => f.id === item.id);
+                                            return (
+                                                <MediaCard
+                                                    key={item.id}
+                                                    item={item}
+                                                    index={originalIndex}
+                                                    cloudAccountId={cloudAccountId}
+                                                    downloadEnabled={anyDownloadEnabled}
+                                                    selectionEnabled={dynamicZipEnabled}
+                                                    enableWatermark={enableWatermark}
+                                                    watermarkText={watermarkText}
+                                                    studioLogo={studioLogo}
+                                                    isSelected={selectedIds.has(item.id)}
+                                                    onSelect={() => toggleSelect(item.id)}
+                                                    onView={() => openLightbox(originalIndex)}
+                                                    lowResThumbnails={lowResThumbnails}
+                                                    layoutType={layoutType}
+                                                />
+                                            );
+                                        })}
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="grid md:hidden grid-cols-2 gap-1">
+                                {mediaFiles.map((item, index) => (
+                                    <MediaCard
+                                        key={item.id}
+                                        item={item}
+                                        index={index}
+                                        cloudAccountId={cloudAccountId}
+                                        downloadEnabled={anyDownloadEnabled}
+                                        selectionEnabled={dynamicZipEnabled}
+                                        enableWatermark={enableWatermark}
+                                        watermarkText={watermarkText}
+                                        studioLogo={studioLogo}
+                                        isSelected={selectedIds.has(item.id)}
+                                        onSelect={() => toggleSelect(item.id)}
+                                        onView={() => openLightbox(index)}
+                                        lowResThumbnails={lowResThumbnails}
+                                        layoutType={layoutType}
+                                    />
+                                ))}
+                            </div>
+                        )}
                     </>
-                )
-                }
+                )}
             </main >
 
             <Lightbox
@@ -614,6 +663,7 @@ function MediaCard({
     onSelect,
     onView,
     selectionEnabled = true,
+    layoutType = "mosaic",
     lowResThumbnails = false
 }: {
     item: CloudFile;
@@ -627,6 +677,7 @@ function MediaCard({
     onSelect: () => void;
     onView: () => void;
     selectionEnabled?: boolean;
+    layoutType?: "mosaic" | "grid";
     lowResThumbnails?: boolean;
 }) {
     const [loaded, setLoaded] = useState(false);
@@ -647,6 +698,11 @@ function MediaCard({
         ? item.width / item.height
         : 4 / 3;
 
+    // [DEBUG] Log layout state
+    // useEffect(() => {
+    //     if (index === 0) console.log("MediaCard[0]:", { layoutType, width: item.width, height: item.height, aspectRatio });
+    // }, [layoutType, item, index]);
+
     // Use eager loading for first 8 items (likely in viewport)
     const loadingStrategy = index < 8 ? "eager" : "lazy";
 
@@ -666,7 +722,11 @@ function MediaCard({
         >
             <div
                 className="relative"
-                style={{ aspectRatio: aspectRatio }}
+                style={{
+                    aspectRatio: layoutType === "grid"
+                        ? (isVideo ? 1.77 : 1.5)
+                        : aspectRatio
+                }}
             >
                 <div onClick={onView} className="absolute inset-0">
                     {/* Skeleton placeholder with shimmer effect */}
@@ -766,7 +826,7 @@ function MediaCard({
                     </button>
                 )}
             </div>
-        </motion.div>
+        </motion.div >
     );
 }
 

@@ -85,7 +85,7 @@ export default function CloserGalleryClient({ project, structure, studioProfile 
                             <p className="text-white/40 text-sm mt-2 font-light">Colección de momentos en movimiento</p>
                         </div>
                         {allVideos.length > 0 ? (
-                            <HybridGrid items={allVideos} />
+                            <HybridGrid items={allVideos} layoutType={project.layoutType} />
                         ) : (
                             <div className="py-24 text-center text-white/20 uppercase tracking-widest text-xs">
                                 No hay videos disponibles en esta galería
@@ -97,7 +97,7 @@ export default function CloserGalleryClient({ project, structure, studioProfile 
                         {/* Intro / Highlights */}
                         {structure.highlights.length > 0 && (
                             <section className="px-4 md:px-8 max-w-[1800px] mx-auto mb-24">
-                                <HybridGrid items={structure.highlights} />
+                                <HybridGrid items={structure.highlights} layoutType={project.layoutType} />
                             </section>
                         )}
 
@@ -120,7 +120,7 @@ export default function CloserGalleryClient({ project, structure, studioProfile 
                                     </div>
                                 </div>
 
-                                <HybridGrid items={moment.items} />
+                                <HybridGrid items={moment.items} layoutType={project.layoutType} />
                             </section>
                         ))}
                     </>

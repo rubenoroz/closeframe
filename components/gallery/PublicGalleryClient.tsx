@@ -35,6 +35,7 @@ interface PublicGalleryClientProps {
         enableVideoTab?: boolean | null;
         enableWatermark?: boolean;
         zipFileId?: string | null;
+        layoutType?: "mosaic" | "grid";
 
         // Closer Gallery Props
         isCloserGallery?: boolean;
@@ -218,6 +219,7 @@ export default function PublicGalleryClient({ project }: PublicGalleryClientProp
                 lowResThumbnails={!!project.planLimits?.lowResThumbnails}
                 zipDownloadsEnabled={project.planLimits?.zipDownloadsEnabled ?? true}
                 zipFileId={project.zipFileId || null}
+                layoutType={project.layoutType}
             />
 
 
