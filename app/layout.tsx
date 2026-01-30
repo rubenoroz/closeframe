@@ -14,6 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://www.closerlens.com"),
   title: "Closerlens - Galerías Profesionales",
   description: "Plataforma de galerías fotográficas profesionales sin almacenamiento",
   icons: {

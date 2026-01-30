@@ -152,11 +152,11 @@ export default function OrganizePage() {
                 // Filter junk
                 merged = merged.filter(f => {
                     const low = f.name.toLowerCase();
-                    const isSystem = f.name.startsWith('.') || low === 'thumbs.db' || low === 'desktop.ini' || f.name.includes('Icon\r');
-                    const isMedia = f.mimeType?.startsWith('image/') || f.mimeType?.startsWith('video/') || low.endsWith('.zip') || f.mimeType?.includes('zip');
+                    const isSystem = f.name.startsWith('.') || low === 'thumbs.db' || low === 'desktop.ini' || f.name.includes('Icon\r') || low === '__macosx' || f.name.startsWith('._');
+                    const isMedia = f.mimeType?.startsWith('image/') || f.mimeType?.startsWith('video/') || low.endsWith('.zip') || f.mimeType?.includes('zip') || /\.(jpg|jpeg|png|webp|gif|heic|heif|tiff|tif|mp4|mov|avi|mkv|zip|cr2|nef|arw|dng)$/i.test(low);
                     const isStructure = ['webjpg', 'jpg', 'raw', 'print', 'highres', 'icon'].includes(low);
 
-                    return !isSystem && isMedia && !isStructure;
+                    return !isSystem && (isMedia || (f.mimeType && f.mimeType !== "application/vnd.google-apps.folder")) && !isStructure;
                 });
                 // Deduplicate
                 const uniqueMap = new Map();

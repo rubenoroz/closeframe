@@ -19,18 +19,16 @@ const isSystemFile = (name: string) => {
 const isValidMediaFile = (f: any) => {
     const name = f.name?.toLowerCase() || "";
     const mime = f.mimeType?.toLowerCase() || "";
-    return (
+    // Broaden significantly to allow common photo/video/raw formats
+    const isKnownMedia =
         mime.startsWith('image/') ||
         mime.startsWith('video/') ||
         mime.includes('zip') ||
-        name.endsWith('.zip') ||
-        name.endsWith('.jpg') ||
-        name.endsWith('.jpeg') ||
-        name.endsWith('.png') ||
-        name.endsWith('.webp') ||
-        name.endsWith('.mp4') ||
-        name.endsWith('.mov')
-    );
+        /\.(jpg|jpeg|png|webp|gif|heic|heif|tiff|tif|mp4|mov|avi|mkv|zip|cr2|nef|arw|dng)$/i.test(name);
+
+    // If it has a mimeType that looks like a file and it's not explicitly a folder, 
+    // we'll assume it's media unless it's a known system file
+    return isKnownMedia || (mime !== "" && mime !== "application/vnd.google-apps.folder");
 };
 
 export async function GET(request: Request) {
