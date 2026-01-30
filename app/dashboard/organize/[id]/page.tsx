@@ -53,16 +53,18 @@ export default function OrganizePage() {
     const router = useRouter();
     const projectId = params.id as string;
 
-    const [allFiles, setAllFiles] = useState<FileItem[]>([]); // Global source of truth
+    const [allFiles, setAllFiles] = useState<FileItem[]>([]);
     const [folders, setFolders] = useState<FolderItem[]>([]);
     const [projectVideos, setProjectVideos] = useState<VideoItem[]>([]);
 
-    const [activeTabId, setActiveTabId] = useState<string>('root'); // 'root' | folderId | 'videos'
+    const [activeTabId, setActiveTabId] = useState<string>('root');
     const [enableVideoTab, setEnableVideoTab] = useState(false);
     const [fileOrder, setFileOrder] = useState<string[]>([]);
 
     // UI Loading state
     const [loading, setLoading] = useState(true);
+    const [loadingTab, setLoadingTab] = useState(false); // [NEW] Loading state for items within a tab
+    const [loadedFolders, setLoadedFolders] = useState<Set<string>>(new Set()); // [NEW] Track loaded folders
     const [saving, setSaving] = useState(false);
     const [showVideoPicker, setShowVideoPicker] = useState(false);
 
@@ -71,23 +73,84 @@ export default function OrganizePage() {
     const [isDraggingFolder, setIsDraggingFolder] = useState(false);
 
     const [cloudAccountId, setCloudAccountId] = useState<string | null>(null);
-    const [rootFolderId, setRootFolderId] = useState<string | null>(null); // For referencing 'root'
+    const [rootFolderId, setRootFolderId] = useState<string | null>(null);
     const [projectName, setProjectName] = useState("");
 
     const sensors = useSensors(
-        useSensor(PointerSensor, { activationConstraint: { distance: 5 } }), // Prevent accidental drags on clicks
+        useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
         useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
     );
 
+    // [NEW] Individual folder fetcher
+    const fetchFolderFiles = async (folderId: string, currentCloudAccountId: string, currentRootFolderId: string) => {
+        if (loadedFolders.has(folderId)) return;
+
+        console.log(`[LazyLoad] Fetching files for folder: ${folderId}`);
+        try {
+            const res = await fetch(`/api/cloud/files?cloudAccountId=${currentCloudAccountId}&folderId=${folderId === 'root' ? currentRootFolderId : folderId}&projectId=${projectId}`);
+            if (!res.ok) return;
+
+            const data = await res.json();
+            let newFiles = (data.files || []).map((f: any) => ({ ...f, folderId }));
+
+            // Filter junk (Same logic as before)
+            newFiles = newFiles.filter((f: any) => {
+                const low = f.name.toLowerCase();
+                const isSystem = f.name.startsWith('.') || low === 'thumbs.db' || low === 'desktop.ini' || f.name.includes('Icon\r') || low === '__macosx' || f.name.startsWith('._');
+                const isMedia = f.mimeType?.startsWith('image/') || f.mimeType?.startsWith('video/') || low.endsWith('.zip') || f.mimeType?.includes('zip') || /\.(jpg|jpeg|png|webp|gif|heic|heif|tiff|tif|mp4|mov|avi|mkv|zip|cr2|nef|arw|dng)$/i.test(low);
+                const isStructure = ['webjpg', 'jpg', 'raw', 'print', 'highres', 'icon'].includes(low);
+                return !isSystem && (isMedia || (f.mimeType && f.mimeType !== "application/vnd.google-apps.folder")) && !isStructure;
+            });
+
+            setAllFiles(prev => {
+                const combined = [...prev, ...newFiles];
+                const uniqueMap = new Map();
+                combined.forEach(f => uniqueMap.set(f.id, f));
+                return Array.from(uniqueMap.values());
+            });
+
+            setLoadedFolders(prev => new Set([...prev, folderId]));
+        } catch (e) {
+            console.error(`Error fetching folder ${folderId}:`, e);
+        }
+    };
+
+    // [NEW] Effect to fetch active tab content if missing
     useEffect(() => {
-        const fetchAllContent = async () => {
+        if (!loading && activeTabId !== 'videos' && !loadedFolders.has(activeTabId) && cloudAccountId && rootFolderId) {
+            const loadTab = async () => {
+                setLoadingTab(true);
+                await fetchFolderFiles(activeTabId, cloudAccountId, rootFolderId);
+                setLoadingTab(false);
+            };
+            loadTab();
+        }
+    }, [activeTabId, loading, cloudAccountId, rootFolderId]);
+
+    // [NEW] Background queue effect
+    useEffect(() => {
+        if (!loading && folders.length > 0 && cloudAccountId && rootFolderId) {
+            const pending = folders.filter(f => !loadedFolders.has(f.id));
+            if (pending.length === 0) return;
+
+            // Fetch pending folders one by one with a delay to not saturate
+            const timer = setTimeout(async () => {
+                const next = pending[0];
+                await fetchFolderFiles(next.id, cloudAccountId, rootFolderId);
+            }, 1500); // 1.5s delay between background fetches
+
+            return () => clearTimeout(timer);
+        }
+    }, [loadedFolders, folders, loading, cloudAccountId, rootFolderId]);
+
+    useEffect(() => {
+        const fetchInitialStructure = async () => {
+            setLoading(true);
             try {
                 // 1. Fetch Project
                 const pRes = await fetch(`/api/projects/${projectId}`, { cache: 'no-store' });
                 const pData = await pRes.json();
                 const project = pData.project;
-
-                console.log("OrganizePage: loaded project", project); // Debug log
 
                 if (!project) { router.push("/dashboard"); return; }
 
@@ -95,8 +158,10 @@ export default function OrganizePage() {
                 setCloudAccountId(project.cloudAccountId);
                 setRootFolderId(project.rootFolderId);
                 setEnableVideoTab(!!project.enableVideoTab);
+                setFileOrder(project.fileOrder || []);
 
-                // 2, 3 (Root), 4 Start in parallel
+                // 2. Fetch Folders & Root Files in parallel (Only what's immediately needed)
+                // [NEW] Added root files to initial fetch to reduce a 3s delay
                 const [fRes, rootFilesRes, vRes] = await Promise.all([
                     fetch(`/api/cloud/folders?cloudAccountId=${project.cloudAccountId}&folderId=${project.rootFolderId}`),
                     fetch(`/api/cloud/files?cloudAccountId=${project.cloudAccountId}&folderId=${project.rootFolderId}&projectId=${projectId}`),
@@ -108,7 +173,26 @@ export default function OrganizePage() {
                 if (fRes.ok) {
                     const fData = await fRes.json();
                     if (fData.folders) {
-                        validFolders = fData.folders.filter((f: any) =>
+                        // [NEW] DEEP SCAN: If we found no many moments but we see system folders like "Fotografias" or "webjpg", 
+                        // maybe the Moments are INSIDE them.
+                        const specialFolders = fData.folders.filter((f: any) =>
+                            ['webjpg', 'fotografias', 'jpg'].includes(f.name.toLowerCase())
+                        );
+
+                        let currentFolders = fData.folders;
+                        // If root only has "Fotografias" or "webjpg", enter it to find the real moments
+                        if (currentFolders.length <= 3 && specialFolders.length > 0) {
+                            const target = specialFolders.find((f: any) => f.name.toLowerCase() === 'fotografias') || specialFolders[0];
+                            const deepRes = await fetch(`/api/cloud/folders?cloudAccountId=${project.cloudAccountId}&folderId=${target.id}`);
+                            if (deepRes.ok) {
+                                const deepData = await deepRes.json();
+                                if (deepData.folders && deepData.folders.length > 0) {
+                                    currentFolders = deepData.folders;
+                                }
+                            }
+                        }
+
+                        validFolders = currentFolders.filter((f: { name: string; id: string }) =>
                             !['webjpg', 'jpg', 'raw', 'print', 'highres'].includes(f.name.toLowerCase())
                         );
 
@@ -134,56 +218,31 @@ export default function OrganizePage() {
                     setProjectVideos(vData.videos || []);
                 }
 
-                // Handle Files
-                const rootFiles = rootFilesRes.ok
-                    ? (await rootFilesRes.json()).files.map((f: any) => ({ ...f, folderId: 'root' }))
-                    : [];
+                // [NEW] Handle Root Files Immediately
+                let initialFiles: FileItem[] = [];
+                if (rootFilesRes.ok) {
+                    const rfData = await rootFilesRes.json();
+                    initialFiles = (rfData.files || []).map((f: any) => ({ ...f, folderId: 'root' }));
 
-                // Subfolder files in parallel
-                const subFilesPromises = validFolders.map(folder =>
-                    fetch(`/api/cloud/files?cloudAccountId=${project.cloudAccountId}&folderId=${folder.id}&projectId=${projectId}`)
-                        .then(r => r.ok ? r.json() : { files: [] })
-                        .then(d => (d.files || []).map((f: any) => ({ ...f, folderId: folder.id })))
-                );
-                const subFilesLists = await Promise.all(subFilesPromises);
-
-                // Merge
-                let merged = [...rootFiles, ...subFilesLists.flat()];
-                // Filter junk
-                merged = merged.filter(f => {
-                    const low = f.name.toLowerCase();
-                    const isSystem = f.name.startsWith('.') || low === 'thumbs.db' || low === 'desktop.ini' || f.name.includes('Icon\r') || low === '__macosx' || f.name.startsWith('._');
-                    const isMedia = f.mimeType?.startsWith('image/') || f.mimeType?.startsWith('video/') || low.endsWith('.zip') || f.mimeType?.includes('zip') || /\.(jpg|jpeg|png|webp|gif|heic|heif|tiff|tif|mp4|mov|avi|mkv|zip|cr2|nef|arw|dng)$/i.test(low);
-                    const isStructure = ['webjpg', 'jpg', 'raw', 'print', 'highres', 'icon'].includes(low);
-
-                    return !isSystem && (isMedia || (f.mimeType && f.mimeType !== "application/vnd.google-apps.folder")) && !isStructure;
-                });
-                // Deduplicate
-                const uniqueMap = new Map();
-                merged.forEach(f => uniqueMap.set(f.id, f));
-                merged = Array.from(uniqueMap.values());
-
-                // Apply Manual File Order
-                if (project.fileOrder && Array.isArray(project.fileOrder)) {
-                    const fOrder = new Map();
-                    project.fileOrder.forEach((id: string, idx: number) => fOrder.set(id, idx));
-                    merged.sort((a, b) => {
-                        const idxA = fOrder.has(a.id) ? fOrder.get(a.id) : 999999;
-                        const idxB = fOrder.has(b.id) ? fOrder.get(b.id) : 999999;
-                        return idxA - idxB;
+                    // Filter junk (Same logic as fetchFolderFiles)
+                    initialFiles = initialFiles.filter((f: any) => {
+                        const low = f.name.toLowerCase();
+                        const isSystem = f.name.startsWith('.') || low === 'thumbs.db' || low === 'desktop.ini' || f.name.includes('Icon\r') || low === '__macosx' || f.name.startsWith('._');
+                        const isMedia = f.mimeType?.startsWith('image/') || f.mimeType?.startsWith('video/') || low.endsWith('.zip') || f.mimeType?.includes('zip') || /\.(jpg|jpeg|png|webp|gif|heic|heif|tiff|tif|mp4|mov|avi|mkv|zip|cr2|nef|arw|dng|orf|raf|rw2|peif|srw)$/i.test(low);
+                        const isStructure = ['webjpg', 'jpg', 'raw', 'print', 'highres', 'icon'].includes(low);
+                        return !isSystem && (isMedia || (f.mimeType && f.mimeType !== "application/vnd.google-apps.folder" && !f.mimeType.includes('shortcut'))) && !isStructure;
                     });
-                } else {
-                    merged.sort((a, b) => a.name.localeCompare(b.name));
+
+                    setAllFiles(initialFiles);
+                    setLoadedFolders(new Set(['root']));
                 }
 
-                setAllFiles(merged);
-                setFileOrder(project.fileOrder || []);
-
-                // Tab Selection
-                const rootHasFiles = merged.some(f => f.folderId === 'root');
+                // [NEW] Smart Tab Selection
+                const rootHasFiles = initialFiles.length > 0;
                 if (!rootHasFiles && validFolders.length > 0) {
                     setActiveTabId(validFolders[0].id);
                 }
+
                 setLoading(false);
 
             } catch (e) {
@@ -191,7 +250,7 @@ export default function OrganizePage() {
                 setLoading(false);
             }
         };
-        fetchAllContent();
+        fetchInitialStructure();
     }, [projectId, router]);
 
 
@@ -361,6 +420,32 @@ export default function OrganizePage() {
         }
     };
 
+    // [NEW] UseMemo for stable and efficient displayed items
+    const displayedItems = React.useMemo(() => {
+        const currentFiles = allFiles.filter(f => activeTabId === 'root' ? f.folderId === 'root' : f.folderId === activeTabId);
+        const activeMomento = folders.find(f => f.id === activeTabId);
+        const currentMomentName = activeTabId === 'root' ? "Principal" : (activeMomento?.name || "");
+        const currentVideos = activeTabId === 'videos' ? [] : projectVideos.filter(v => v.momentName === currentMomentName);
+
+        return [...currentFiles, ...currentVideos].sort((a, b) => {
+            const idxA = fileOrder.indexOf(a.id);
+            const idxB = fileOrder.indexOf(b.id);
+            if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+            if (idxA !== -1) return -1;
+            if (idxB !== -1) return 1;
+
+            const nameA = 'title' in a ? (a as any).title : (a as any).name;
+            const nameB = 'title' in b ? (b as any).title : (b as any).name;
+            return (nameA || "").localeCompare(nameB || "");
+        });
+    }, [allFiles, folders, activeTabId, projectVideos, fileOrder]);
+
+    const activeMomento = folders.find(f => f.id === activeTabId);
+    const currentMomentName = activeTabId === 'root' ? "Principal" : (activeMomento?.name || "");
+
+    // Determine if we show 'Principal' tab
+    const showPrincipalTab = allFiles.some(f => f.folderId === 'root') || folders.length === 0 || loadedFolders.has('root');
+
     if (loading) {
         return (
             <div className="min-h-screen bg-neutral-950 text-white flex flex-col items-center justify-center">
@@ -371,27 +456,6 @@ export default function OrganizePage() {
             </div>
         );
     }
-
-    // View Filters
-    const currentFiles = allFiles.filter(f => activeTabId === 'root' ? f.folderId === 'root' : f.folderId === activeTabId);
-    const activeMomento = folders.find(f => f.id === activeTabId);
-    const currentMomentName = activeTabId === 'root' ? "Principal" : (activeMomento?.name || "");
-    const currentVideos = activeTabId === 'videos' ? [] : projectVideos.filter(v => v.momentName === currentMomentName);
-
-    const displayedItems = [...currentFiles, ...currentVideos].sort((a, b) => {
-        const idxA = fileOrder.indexOf(a.id);
-        const idxB = fileOrder.indexOf(b.id);
-        if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-        if (idxA !== -1) return -1;
-        if (idxB !== -1) return 1;
-
-        const nameA = 'title' in a ? (a as any).title : a.name;
-        const nameB = 'title' in b ? (b as any).title : (b as any).name;
-        return (nameA || "").localeCompare(nameB || "");
-    });
-
-    // Determine if we show 'Principal' tab
-    const showPrincipalTab = allFiles.some(f => f.folderId === 'root') || folders.length === 0;
 
     return (
         <div className="min-h-screen bg-neutral-950 text-white flex flex-col">
@@ -505,7 +569,13 @@ export default function OrganizePage() {
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
                 >
-                    {activeTabId === 'videos' ? (
+                    {loadingTab ? (
+                        /* LOADING TAB STATE */
+                        <div className="col-span-full py-32 flex flex-col items-center justify-center">
+                            <GalleryLoaderGrid />
+                            <p className="mt-4 text-neutral-500 text-xs tracking-widest uppercase animate-pulse">Cargando momento...</p>
+                        </div>
+                    ) : activeTabId === 'videos' ? (
                         /* VIDEO GRID */
                         <SortableContext items={projectVideos.map(v => v.id)} strategy={rectSortingStrategy}>
                             {projectVideos.length === 0 ? (

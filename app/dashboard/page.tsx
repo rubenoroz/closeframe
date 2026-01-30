@@ -267,6 +267,57 @@ export default function DashboardPage() {
         }
     };
 
+    const handleSaveAndOrganize = async () => {
+        if (!selectedProject) return;
+        setIsSaving(true);
+        try {
+            const res = await fetch("/api/projects", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    id: selectedProject.id,
+                    name: editData.name,
+                    password: editData.password,
+                    downloadEnabled: editData.downloadEnabled,
+                    downloadJpgEnabled: editData.downloadJpgEnabled,
+                    downloadRawEnabled: editData.downloadRawEnabled,
+                    downloadVideoHdEnabled: editData.downloadVideoHdEnabled,
+                    downloadVideoRawEnabled: editData.downloadVideoRawEnabled,
+                    enableVideoTab: editData.enableVideoTab,
+                    enableWatermark: editData.enableWatermark,
+                    category: planLimits?.lowResDownloads ? "personal" : editData.category,
+                    headerTitle: editData.headerTitle,
+                    headerFontFamily: planLimits?.lowResDownloads ? "Inter" : editData.headerFontFamily,
+                    headerFontSize: editData.headerFontSize,
+                    headerColor: editData.headerColor,
+                    headerBackground: editData.headerBackground,
+                    headerImage: editData.headerImage,
+                    headerImageFocus: editData.headerImageFocus,
+                    coverImage: editData.coverImage,
+                    coverImageFocus: editData.coverImageFocus,
+                    zipFileId: editData.zipFileId,
+                    zipFileName: editData.zipFileName,
+                    public: editData.public,
+                    isCloserGallery: editData.isCloserGallery,
+                    musicTrackId: editData.musicTrackId,
+                    musicEnabled: editData.musicEnabled,
+                })
+            });
+
+            if (res.ok) {
+                router.push(`/dashboard/organize/${selectedProject.id}`);
+            } else {
+                const errorData = await res.json();
+                alert("Error al guardar antes de organizar: " + (errorData.error || "Error desconocido"));
+            }
+        } catch (error) {
+            console.error("Save & Organize error:", error);
+            alert("Error de conexión al intentar guardar");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     const handleDeleteProject = async (id: string) => {
         try {
             const res = await fetch(`/api/projects?id=${id}`, {
@@ -732,19 +783,20 @@ export default function DashboardPage() {
                                                     <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-3 block">Gestión de Contenido</label>
                                                     <button
                                                         type="button"
-                                                        onClick={() => router.push(`/dashboard/organize/${selectedProject.id}`)}
+                                                        onClick={handleSaveAndOrganize}
                                                         className={`w-full p-4 rounded-xl border border-neutral-800 bg-neutral-800/20 hover:bg-neutral-800/40 hover:border-emerald-500/50 transition-all flex items-center justify-between group`}
+                                                        disabled={isSaving}
                                                     >
                                                         <div className="flex items-center gap-3 text-left">
                                                             <div className="w-10 h-10 bg-neutral-800 rounded-lg flex items-center justify-center group-hover:bg-emerald-500/10 group-hover:text-emerald-400 transition">
-                                                                <Layout className="w-5 h-5" />
+                                                                {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Layout className="w-5 h-5" />}
                                                             </div>
                                                             <div>
                                                                 <p className="text-sm font-medium">Personalizar Orden y Momentos</p>
-                                                                <p className="text-[10px] text-neutral-500">Reorganiza fotos, videos y carpetas a tu gusto.</p>
+                                                                <p className="text-[10px] text-neutral-500">{isSaving ? 'Guardando ajustes...' : 'Reorganiza fotos, videos y carpetas a tu gusto.'}</p>
                                                             </div>
                                                         </div>
-                                                        <Plus className="w-4 h-4 text-neutral-600 group-hover:text-emerald-400" />
+                                                        {!isSaving && <Plus className="w-4 h-4 text-neutral-600 group-hover:text-emerald-400" />}
                                                     </button>
                                                 </div>
                                             </div>

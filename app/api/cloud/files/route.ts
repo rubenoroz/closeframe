@@ -24,11 +24,11 @@ const isValidMediaFile = (f: any) => {
         mime.startsWith('image/') ||
         mime.startsWith('video/') ||
         mime.includes('zip') ||
-        /\.(jpg|jpeg|png|webp|gif|heic|heif|tiff|tif|mp4|mov|avi|mkv|zip|cr2|nef|arw|dng)$/i.test(name);
+        /\.(jpg|jpeg|png|webp|gif|heic|heif|tiff|tif|mp4|mov|avi|mkv|zip|cr2|nef|arw|dng|orf|raf|rw2|peif|srw)$/i.test(name);
 
     // If it has a mimeType that looks like a file and it's not explicitly a folder, 
     // we'll assume it's media unless it's a known system file
-    return isKnownMedia || (mime !== "" && mime !== "application/vnd.google-apps.folder");
+    return isKnownMedia || (mime !== "" && mime !== "application/vnd.google-apps.folder" && !mime.includes('shortcut'));
 };
 
 export async function GET(request: Request) {
@@ -145,11 +145,11 @@ export async function GET(request: Request) {
                 f.mimeType?.includes('zip') || f.name.toLowerCase().endsWith('.zip')
             );
 
-            // 2. Orphaned Images (Images in Root that are NOT in the Proxy)
-            // Useful for Cover Images uploaded manually to Root
+            // 2. Orphaned Media (Files in Root that are NOT in the Proxy)
             const existingNames = new Set(mainFiles.map((f: any) => f.name.toLowerCase()));
-            const rootImages = rootFiles.filter((f: any) =>
-                f.mimeType?.startsWith('image/') &&
+            const orphanedMedia = rootFiles.filter((f: any) =>
+                isValidMediaFile(f) &&
+                !f.mimeType?.includes('folder') &&
                 !existingNames.has(f.name.toLowerCase())
             );
 
@@ -158,10 +158,9 @@ export async function GET(request: Request) {
                 mainFiles = [...mainFiles, ...rootZips];
             }
 
-            if (rootImages.length > 0) {
-                console.log(`[DEBUG] Found ${rootImages.length} extra images in root. Appending...`);
-                // Mark them as from root if needed, or just append
-                mainFiles = [...mainFiles, ...rootImages.filter((f: any) => !isSystemFile(f.name))];
+            if (orphanedMedia.length > 0) {
+                console.log(`[DEBUG] Found ${orphanedMedia.length} orphaned media files in root. Appending...`);
+                mainFiles = [...mainFiles, ...orphanedMedia.filter((f: any) => !isSystemFile(f.name))];
             }
         } else {
             // [NEW] FALLBACK FLEXIBILITY:
