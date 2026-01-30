@@ -120,7 +120,7 @@ export default function DriveFilePicker({
                                 >
                                     <div className="absolute inset-0 bg-neutral-800 animate-pulse" />
                                     <img
-                                        src={`/api/cloud/thumbnail?c=${cloudAccountId}&f=${file.id}&s=400`}
+                                        src={`/api/cloud/thumbnail?c=${cloudAccountId}&f=${file.id}&s=200${file.thumbnailLink ? `&t=${encodeURIComponent(file.thumbnailLink)}` : ""}`}
                                         alt={file.name}
                                         className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                                         loading="lazy"

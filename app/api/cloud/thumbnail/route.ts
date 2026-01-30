@@ -40,7 +40,8 @@ export async function GET(req: NextRequest) {
 
         let buffer: any = null;
         let contentType = "image/jpeg";
-        let cacheControl = "public, max-age=86400";
+        // Optimized Cache-Control: 1 day browser, 30 days Edge, background revalidation
+        let cacheControl = "public, max-age=86400, s-maxage=2592000, stale-while-revalidate=86400";
 
         if (account.provider === "microsoft") {
             const { MicrosoftGraphProvider } = await import("@/lib/cloud/microsoft-provider");
@@ -204,13 +205,13 @@ export async function GET(req: NextRequest) {
                 buffer = await response.arrayBuffer();
                 contentType = response.headers.get("Content-Type") || contentType;
             } else {
-                // Fallback 1: No auth
+                // Fallback 1: Try without auth (many Google thumbnails work directly)
                 const fallbackResponse = await fetch(thumbnailUrl);
                 if (fallbackResponse.ok) {
                     buffer = await fallbackResponse.arrayBuffer();
                     contentType = fallbackResponse.headers.get("Content-Type") || contentType;
                 } else {
-                    // Fallback 2: Sharp
+                    // Fallback 2: Sharp (expensive, but reliable)
                     console.log(`[Thumbnail] Google thumbnail failed for ${fileId}, using Sharp fallback`);
                     try {
                         const originalFile = await drive.files.get(

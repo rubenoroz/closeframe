@@ -3,6 +3,36 @@ import { GoogleDriveProvider } from "@/lib/cloud/google-drive-provider";
 import { getFreshAuth } from "@/lib/cloud/auth-factory";
 import { prisma } from "@/lib/db";
 
+const isSystemFile = (name: string) => {
+    const low = name.toLowerCase();
+    return (
+        name.startsWith('.') ||
+        name.endsWith('.keep') ||
+        low === 'thumbs.db' ||
+        low === 'desktop.ini' ||
+        name.includes('Icon\r') ||
+        low === '__macosx' ||
+        name.startsWith('._')
+    );
+};
+
+const isValidMediaFile = (f: any) => {
+    const name = f.name?.toLowerCase() || "";
+    const mime = f.mimeType?.toLowerCase() || "";
+    return (
+        mime.startsWith('image/') ||
+        mime.startsWith('video/') ||
+        mime.includes('zip') ||
+        name.endsWith('.zip') ||
+        name.endsWith('.jpg') ||
+        name.endsWith('.jpeg') ||
+        name.endsWith('.png') ||
+        name.endsWith('.webp') ||
+        name.endsWith('.mp4') ||
+        name.endsWith('.mov')
+    );
+};
+
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const cloudAccountId = searchParams.get("cloudAccountId");
@@ -104,11 +134,8 @@ export async function GET(request: Request) {
         mainFiles = await provider.listFiles(sourceFolderId, authClient);
         console.log(`[DEBUG] Main files found: ${mainFiles.length}`);
 
-        // Filter out system files (.keep, .DS_Store, etc)
-        mainFiles = mainFiles.filter((f: any) =>
-            !f.name.startsWith('.') && !f.name.endsWith('.keep')
-        );
-
+        // Filter out system files AND ensure it's a media file (unless it's a proxy folder where we assume they are images)
+        mainFiles = mainFiles.filter((f: any) => !isSystemFile(f.name) && isValidMediaFile(f));
         // [NEW] If using a proxy folder (webjpg/webmp4), also check the Root Folder for additional files (ZIPs + Orphaned Images)
         if (sourceFolderId !== folderId) {
             console.log(`[DEBUG] Proxy active. Checking Root Folder (${folderId}) for ZIPs and extra images...`);
@@ -136,7 +163,7 @@ export async function GET(request: Request) {
             if (rootImages.length > 0) {
                 console.log(`[DEBUG] Found ${rootImages.length} extra images in root. Appending...`);
                 // Mark them as from root if needed, or just append
-                mainFiles = [...mainFiles, ...rootImages];
+                mainFiles = [...mainFiles, ...rootImages.filter((f: any) => !isSystemFile(f.name))];
             }
         } else {
             // [NEW] FALLBACK FLEXIBILITY:
@@ -174,7 +201,7 @@ export async function GET(request: Request) {
 
                 if (flattenedFiles.length > 0) {
                     console.log(`[DEBUG] Found ${flattenedFiles.length} files in subfolders. Merging...`);
-                    mainFiles = [...mainFiles, ...flattenedFiles];
+                    mainFiles = [...mainFiles, ...flattenedFiles.filter((f: any) => !isSystemFile(f.name) && isValidMediaFile(f))];
                 }
             }
         }

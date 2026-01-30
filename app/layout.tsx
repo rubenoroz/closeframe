@@ -19,6 +19,28 @@ export const metadata: Metadata = {
   icons: {
     icon: "/favicon.svg",
   },
+  openGraph: {
+    title: "Closerlens - Galerías Profesionales",
+    description: "Plataforma de galerías fotográficas profesionales sin almacenamiento",
+    url: "https://www.closerlens.com",
+    siteName: "Closerlens",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Closerlens - Galerías Profesionales",
+      },
+    ],
+    locale: "es_MX",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Closerlens - Galerías Profesionales",
+    description: "Plataforma de galerías fotográficas profesionales sin almacenamiento",
+    images: ["/og-image.png"],
+  },
 };
 
 export default function RootLayout({

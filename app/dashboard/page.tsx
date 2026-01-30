@@ -13,7 +13,6 @@ import DriveFilePicker from "@/components/DriveFilePicker";
 import ZipFilePicker from "@/components/ZipFilePicker";
 import FocalPointPicker from "@/components/FocalPointPicker";
 import MusicPicker from "@/components/MusicPicker";
-import MomentsManager from "@/components/MomentsManager";
 
 interface Project {
     id: string;
@@ -728,13 +727,25 @@ export default function DashboardPage() {
                                                     <span className="text-xs text-neutral-400 font-medium">Reproducción automática (Autoplay)</span>
                                                 </div>
 
-                                                {/* Moments Order */}
+                                                {/* Moments & File Organization CTA */}
                                                 <div>
-                                                    <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-3 block">Orden de Momentos</label>
-                                                    <MomentsManager
-                                                        cloudAccountId={selectedProject.cloudAccountId}
-                                                        rootFolderId={selectedProject.rootFolderId}
-                                                    />
+                                                    <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-3 block">Gestión de Contenido</label>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => router.push(`/dashboard/organize/${selectedProject.id}`)}
+                                                        className={`w-full p-4 rounded-xl border border-neutral-800 bg-neutral-800/20 hover:bg-neutral-800/40 hover:border-emerald-500/50 transition-all flex items-center justify-between group`}
+                                                    >
+                                                        <div className="flex items-center gap-3 text-left">
+                                                            <div className="w-10 h-10 bg-neutral-800 rounded-lg flex items-center justify-center group-hover:bg-emerald-500/10 group-hover:text-emerald-400 transition">
+                                                                <Layout className="w-5 h-5" />
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-sm font-medium">Personalizar Orden y Momentos</p>
+                                                                <p className="text-[10px] text-neutral-500">Reorganiza fotos, videos y carpetas a tu gusto.</p>
+                                                            </div>
+                                                        </div>
+                                                        <Plus className="w-4 h-4 text-neutral-600 group-hover:text-emerald-400" />
+                                                    </button>
                                                 </div>
                                             </div>
                                         )}

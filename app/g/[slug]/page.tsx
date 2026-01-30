@@ -6,6 +6,7 @@ import GalleryBlocked from "@/components/gallery/GalleryBlocked";
 import { GoogleDriveProvider } from "@/lib/cloud/google-drive-provider";
 import { getFreshGoogleAuth } from "@/lib/cloud/google-auth";
 import { getEffectivePlanConfig } from "@/lib/plans.config";
+import { Metadata } from "next";
 
 interface Props {
     params: Promise<{
@@ -15,6 +16,53 @@ interface Props {
 
 // Ensure dynamic rendering
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+    const { slug } = await params;
+    const project = await prisma.project.findUnique({
+        where: { slug },
+        select: {
+            name: true,
+            headerTitle: true,
+            user: {
+                select: {
+                    businessName: true,
+                    businessLogo: true,
+                }
+            }
+        }
+    });
+
+    if (!project) return { title: "Galería no encontrada" };
+
+    const title = `${project.headerTitle || project.name} - ${project.user?.businessName || "Closerlens"}`;
+    const description = `Galería fotográfica de ${project.user?.businessName || "Closerlens"}`;
+    const logoUrl = project.user?.businessLogo || "https://www.closerlens.com/og-image.png";
+
+    return {
+        title,
+        description,
+        openGraph: {
+            title,
+            description,
+            images: [
+                {
+                    url: logoUrl,
+                    width: 800,
+                    height: 800,
+                    alt: title,
+                }
+            ],
+            type: "website",
+        },
+        twitter: {
+            card: "summary_large_image",
+            title,
+            description,
+            images: [logoUrl],
+        },
+    };
+}
 
 export default async function PublicGalleryPage({ params }: Props) {
     const { slug } = await params;

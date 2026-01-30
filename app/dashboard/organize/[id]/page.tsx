@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Save, Loader2, GripVertical, Folder as FolderIcon, LayoutGrid, Video, Trash2, Plus } from "lucide-react";
+import GalleryLoaderGrid from "@/components/gallery/GalleryLoaderGrid";
 import {
     DndContext,
     closestCenter,
@@ -95,8 +96,14 @@ export default function OrganizePage() {
                 setRootFolderId(project.rootFolderId);
                 setEnableVideoTab(!!project.enableVideoTab);
 
-                // 2. Fetch Folders
-                const fRes = await fetch(`/api/cloud/folders?cloudAccountId=${project.cloudAccountId}&folderId=${project.rootFolderId}`);
+                // 2, 3 (Root), 4 Start in parallel
+                const [fRes, rootFilesRes, vRes] = await Promise.all([
+                    fetch(`/api/cloud/folders?cloudAccountId=${project.cloudAccountId}&folderId=${project.rootFolderId}`),
+                    fetch(`/api/cloud/files?cloudAccountId=${project.cloudAccountId}&folderId=${project.rootFolderId}&projectId=${projectId}`),
+                    fetch(`/api/projects/${projectId}/videos`)
+                ]);
+
+                // Handle Folders
                 let validFolders: FolderItem[] = [];
                 if (fRes.ok) {
                     const fData = await fRes.json();
@@ -121,13 +128,18 @@ export default function OrganizePage() {
                 }
                 setFolders(validFolders);
 
-                // 3. Fetch Files (Tagged by folderId)
-                // Root files
-                const rootFiles = await fetch(`/api/cloud/files?cloudAccountId=${project.cloudAccountId}&folderId=${project.rootFolderId}&projectId=${projectId}`)
-                    .then(r => r.json())
-                    .then(d => (d.files || []).map((f: any) => ({ ...f, folderId: 'root' })));
+                // Handle Videos
+                if (vRes.ok) {
+                    const vData = await vRes.json();
+                    setProjectVideos(vData.videos || []);
+                }
 
-                // Subfolder files
+                // Handle Files
+                const rootFiles = rootFilesRes.ok
+                    ? (await rootFilesRes.json()).files.map((f: any) => ({ ...f, folderId: 'root' }))
+                    : [];
+
+                // Subfolder files in parallel
                 const subFilesPromises = validFolders.map(folder =>
                     fetch(`/api/cloud/files?cloudAccountId=${project.cloudAccountId}&folderId=${folder.id}&projectId=${projectId}`)
                         .then(r => r.ok ? r.json() : { files: [] })
@@ -138,17 +150,20 @@ export default function OrganizePage() {
                 // Merge
                 let merged = [...rootFiles, ...subFilesLists.flat()];
                 // Filter junk
-                merged = merged.filter(f =>
-                    !f.name.toLowerCase().endsWith('.zip') &&
-                    !f.name.startsWith('.') && // Filter dotfiles like .DS_Store
-                    !['webjpg', 'jpg', 'raw', 'print', 'highres', 'icon'].includes(f.name.toLowerCase())
-                );
-                // Deduplicate by ID
+                merged = merged.filter(f => {
+                    const low = f.name.toLowerCase();
+                    const isSystem = f.name.startsWith('.') || low === 'thumbs.db' || low === 'desktop.ini' || f.name.includes('Icon\r');
+                    const isMedia = f.mimeType?.startsWith('image/') || f.mimeType?.startsWith('video/') || low.endsWith('.zip') || f.mimeType?.includes('zip');
+                    const isStructure = ['webjpg', 'jpg', 'raw', 'print', 'highres', 'icon'].includes(low);
+
+                    return !isSystem && isMedia && !isStructure;
+                });
+                // Deduplicate
                 const uniqueMap = new Map();
                 merged.forEach(f => uniqueMap.set(f.id, f));
                 merged = Array.from(uniqueMap.values());
 
-                // Apply Manual File Order (Global)
+                // Apply Manual File Order
                 if (project.fileOrder && Array.isArray(project.fileOrder)) {
                     const fOrder = new Map();
                     project.fileOrder.forEach((id: string, idx: number) => fOrder.set(id, idx));
@@ -164,23 +179,11 @@ export default function OrganizePage() {
                 setAllFiles(merged);
                 setFileOrder(project.fileOrder || []);
 
-                // 4. Fetch Videos
-                try {
-                    const vRes = await fetch(`/api/projects/${projectId}/videos`);
-                    if (vRes.ok) {
-                        const vData = await vRes.json();
-                        setProjectVideos(vData.videos || []);
-                    }
-                } catch (e) {
-                    console.error("Failed to fetch videos", e);
-                }
-
-                // 5. Intelligent Tab Selection (Hide Principal if empty)
+                // Tab Selection
                 const rootHasFiles = merged.some(f => f.folderId === 'root');
                 if (!rootHasFiles && validFolders.length > 0) {
                     setActiveTabId(validFolders[0].id);
                 }
-
                 setLoading(false);
 
             } catch (e) {
@@ -360,8 +363,11 @@ export default function OrganizePage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-neutral-950 text-white flex items-center justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
+            <div className="min-h-screen bg-neutral-950 text-white flex flex-col items-center justify-center">
+                <GalleryLoaderGrid />
+                <p className="text-neutral-500 text-xs tracking-[0.3em] font-light uppercase animate-pulse">
+                    Preparando Organizador...
+                </p>
             </div>
         );
     }
@@ -566,7 +572,7 @@ export default function OrganizePage() {
                                 // File Drag Overlay
                                 <div className="w-full aspect-[2/3] bg-neutral-800 rounded-lg overflow-hidden shadow-2xl skew-y-2 scale-105 border-2 border-emerald-500 opacity-90 cursor-grabbing">
                                     <img
-                                        src={`/api/cloud/thumbnail?c=${cloudAccountId}&f=${activeDragId}&s=400`}
+                                        src={`/api/cloud/thumbnail?c=${cloudAccountId}&f=${activeDragId}&s=300${allFiles.find(f => f.id === activeDragId)?.thumbnailLink ? `&t=${encodeURIComponent(allFiles.find(f => f.id === activeDragId)!.thumbnailLink!)}` : ""}`}
                                         alt=""
                                         className="w-full h-full object-cover"
                                     />
@@ -631,7 +637,7 @@ function SortableFile({ file, cloudAccountId }: { file: FileItem, cloudAccountId
             className="group relative aspect-[3/2] bg-neutral-900 rounded-lg overflow-hidden border border-neutral-800/50 hover:border-neutral-600 transition-all duration-300 touch-none cursor-grab active:cursor-grabbing shadow-sm hover:shadow-xl hover:shadow-black/50"
         >
             <img
-                src={`/api/cloud/thumbnail?c=${cloudAccountId}&f=${file.id}&s=400`}
+                src={`/api/cloud/thumbnail?c=${cloudAccountId}&f=${file.id}&s=300${file.thumbnailLink ? `&t=${encodeURIComponent(file.thumbnailLink)}` : ""}`}
                 alt={file.name}
                 className="w-full h-full object-cover select-none pointer-events-none transition-transform duration-500 group-hover:scale-105"
                 loading="lazy"

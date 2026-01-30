@@ -638,7 +638,8 @@ function MediaCard({
     const isExternal = !!item.isExternal;
 
     // Determine thumbnail size based on plan limits
-    const thumbSize = lowResThumbnails ? 600 : 800;
+    // Optimized: 600px is enough for most grid views and retina mobile
+    const thumbSize = lowResThumbnails ? 400 : 600;
 
     // Calculate aspect ratio for placeholder sizing (avoids layout shift)
     // Default to 4:3 if dimensions unknown
