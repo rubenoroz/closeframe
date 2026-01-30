@@ -20,7 +20,7 @@ export async function GET(request: Request) {
             return NextResponse.json({ error: "Provider required" }, { status: 400 });
         }
 
-        let items = [];
+        let items: any[] = [];
 
         if (provider === "youtube") {
             items = await YouTube.listPlaylists(session.user.id);

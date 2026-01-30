@@ -28,7 +28,7 @@ export const VimeoClient = {
     },
 
     getClient: async (userId: string) => {
-        const account = await prisma.oAuthAccount.findFirst({
+        const account = await (prisma as any).oAuthAccount.findFirst({
             where: { userId, provider: "vimeo" }
         });
 
@@ -39,7 +39,7 @@ export const VimeoClient = {
         return new Vimeo(VIMEO_CLIENT_ID!, VIMEO_CLIENT_SECRET!, account.accessToken);
     },
 
-    listVideos: async (userId: string, page = 1, playlistId?: string) => {
+    listVideos: async (userId: string, page = 1, playlistId?: string): Promise<any> => {
         const client = await VimeoClient.getClient(userId);
         return new Promise((resolve, reject) => {
             // If playlistId (Album ID) is provided, fetch from that album; otherwise fetch all videos
@@ -72,7 +72,7 @@ export const VimeoClient = {
         });
     },
 
-    listPlaylists: async (userId: string) => {
+    listPlaylists: async (userId: string): Promise<any[]> => {
         const client = await VimeoClient.getClient(userId);
         return new Promise((resolve, reject) => {
             client.request({
