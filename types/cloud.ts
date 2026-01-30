@@ -25,4 +25,7 @@ export interface CloudFile {
         raw?: string | { id: string; name: string } | null;
         [key: string]: any;
     };
+    isExternal?: boolean;
+    provider?: string;
+    externalId?: string;
 }

@@ -531,7 +531,7 @@ export default function DashboardPage() {
                                                         className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 transition ${isLight ? "text-neutral-700 hover:bg-neutral-50" : "text-neutral-300 hover:bg-white/5"
                                                             }`}
                                                     >
-                                                        <Layout className="w-4 h-4" /> Organizar Fotos
+                                                        <Layout className="w-4 h-4" /> Organizar Fotos y Videos
                                                     </button>
                                                     <div className={`h-px my-1 ${isLight ? 'bg-neutral-100' : 'bg-neutral-800'}`}></div>
                                                     <button
@@ -1058,7 +1058,7 @@ export default function DashboardPage() {
                                                                 {planLimits?.videoEnabled === false ? (
                                                                     <span className="text-[9px] text-amber-400">Tu plan no incluye video. <a href="/pricing" className="underline">Actualizar</a></span>
                                                                 ) : (
-                                                                    <span className="text-[9px] text-neutral-500">Permite ver videos en la galería</span>
+                                                                    <span className="text-[9px] text-neutral-500">Habilita la pestaña. Agrega los videos desde "Organizar".</span>
                                                                 )}
                                                             </div>
                                                             <input

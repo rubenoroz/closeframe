@@ -22,6 +22,7 @@ interface CloudAccount {
 function CloudManagerContent() {
     const searchParams = useSearchParams();
     const [accounts, setAccounts] = useState<CloudAccount[]>([]);
+    const [videoAccounts, setVideoAccounts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [tempName, setTempName] = useState("");
@@ -85,10 +86,27 @@ function CloudManagerContent() {
     const fetchAccounts = async () => {
         try {
             const res = await fetch("/api/cloud/accounts");
+            if (!res.ok) throw new Error("Failed to fetch accounts");
+
             const data = await res.json();
-            setAccounts(data);
+
+            // Handle new API response structure { storage: [], video: [] }
+            if (data && typeof data === 'object' && !Array.isArray(data)) {
+                setAccounts(Array.isArray(data.storage) ? data.storage : []);
+                setVideoAccounts(Array.isArray(data.video) ? data.video : []);
+            } else if (Array.isArray(data)) {
+                // Backward compatibility
+                setAccounts(data);
+                setVideoAccounts([]);
+            } else {
+                // Fallback
+                setAccounts([]);
+                setVideoAccounts([]);
+            }
         } catch (error) {
-            console.error(error);
+            console.error("Error fetching accounts:", error);
+            // Ensure no undefined state
+            setAccounts([]);
         } finally {
             setLoading(false);
         }
@@ -110,14 +128,18 @@ function CloudManagerContent() {
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm("¿Estás seguro de que quieres desconectar esta nube? Las galerías asociadas podrían dejar de funcionar.")) return;
+    const handleDelete = async (id: string, type: "storage" | "video" = "storage") => {
+        if (!confirm("¿Estás seguro de que quieres desconectar esta cuenta?")) return;
         try {
-            const res = await fetch(`/api/cloud/accounts?id=${id}`, {
+            const res = await fetch(`/api/cloud/accounts?id=${id}&type=${type}`, {
                 method: "DELETE"
             });
             if (res.ok) {
-                setAccounts(accounts.filter(a => a.id !== id));
+                if (type === "video") {
+                    setVideoAccounts(videoAccounts.filter(a => a.id !== id));
+                } else {
+                    setAccounts(accounts.filter(a => a.id !== id));
+                }
             }
         } catch (error) {
             console.error(error);
@@ -143,89 +165,215 @@ function CloudManagerContent() {
             </header>
 
             <main>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                    {accounts.map((account) => (
-                        <motion.div
-                            key={account.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            whileHover={{ scale: 1.02 }}
-                            className="rounded-xl md:rounded-2xl border border-neutral-700/50 bg-neutral-900 p-4 md:p-6 flex flex-col group transition-all hover:bg-neutral-800/80 hover:border-emerald-500/30 border-b-4 shadow-2xl shadow-black/50"
-                        >
-                            <div className="flex items-start justify-between mb-8">
-                                <div className="flex-1 min-w-0">
-                                    {editingId === account.id ? (
-                                        <div className="flex items-center gap-2">
-                                            <input
-                                                autoFocus
-                                                value={tempName}
-                                                onChange={(e) => setTempName(e.target.value)}
-                                                className="bg-neutral-800 border border-neutral-700 rounded-lg px-2 py-1 text-sm outline-none text-white w-full"
-                                                onKeyDown={(e) => e.key === "Enter" && handleRename(account.id)}
-                                            />
-                                            <button onClick={() => handleRename(account.id)} className="text-emerald-500 hover:text-emerald-400">
-                                                <Check className="w-4 h-4" />
-                                            </button>
-                                            <button onClick={() => setEditingId(null)} className="text-neutral-500 hover:text-neutral-400">
-                                                <X className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <div className="flex flex-col gap-1">
+                {/* Error / Success Messages */}
+                {searchParams.get("success") === "connected" && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mb-6 p-4 bg-green-500/10 border border-green-500/20 rounded-xl text-green-500 text-sm flex items-center gap-2"
+                    >
+                        <Check className="w-4 h-4" />
+                        <div>
+                            <span className="font-bold">¡Conexión exitosa!</span> Tu cuenta ha sido vinculada correctamente.
+                        </div>
+                    </motion.div>
+                )}
+
+                {searchParams.get("error") && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-sm"
+                    >
+                        <div className="flex items-center gap-2 font-bold mb-1">
+                            <Trash2 className="w-4 h-4" />
+                            <span>Error de Conexión</span>
+                        </div>
+                        <p>{searchParams.get("error")}</p>
+                        {searchParams.get("details") && (
+                            <pre className="mt-2 text-xs bg-black/20 p-2 rounded overflow-x-auto">
+                                {decodeURIComponent(searchParams.get("details")!)}
+                            </pre>
+                        )}
+                    </motion.div>
+                )}
+
+                {/* STORAGE / NUBES SECTION */}
+                <div className="mb-6">
+                    <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] mb-6 text-neutral-600">Almacenamiento (Nubes)</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                        {accounts.map((account) => (
+                            <motion.div
+                                key={account.id}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                whileHover={{ scale: 1.02 }}
+                                className="rounded-xl md:rounded-2xl border border-neutral-700/50 bg-neutral-900 p-4 md:p-6 flex flex-col group transition-all hover:bg-neutral-800/80 hover:border-emerald-500/30 border-b-4 shadow-2xl shadow-black/50"
+                            >
+                                <div className="flex items-start justify-between mb-8">
+                                    <div className="flex-1 min-w-0">
+                                        {editingId === account.id ? (
                                             <div className="flex items-center gap-2">
-                                                <HardDrive className="w-4 h-4 text-neutral-500 shrink-0" />
-                                                <span className="text-sm font-medium truncate text-white">
-                                                    {account.name || (() => {
-                                                        const providerName = {
-                                                            microsoft: "Onedrive",
-                                                            google: "Drive",
-                                                            dropbox: "Dropbox",
-                                                            koofr: "Koofr"
-                                                        }[account.provider] || account.provider;
-                                                        return `${providerName} - ${account.email}`;
-                                                    })()}
-                                                </span>
-                                                <button
-                                                    onClick={() => {
-                                                        setEditingId(account.id);
-                                                        setTempName(account.name || "");
-                                                    }}
-                                                    className="opacity-0 group-hover:opacity-100 transition-opacity"
-                                                >
-                                                    <Edit2 className="w-3 h-3 text-neutral-500 hover:text-white" />
+                                                <input
+                                                    autoFocus
+                                                    value={tempName}
+                                                    onChange={(e) => setTempName(e.target.value)}
+                                                    className="bg-neutral-800 border border-neutral-700 rounded-lg px-2 py-1 text-sm outline-none text-white w-full"
+                                                    onKeyDown={(e) => e.key === "Enter" && handleRename(account.id)}
+                                                />
+                                                <button onClick={() => handleRename(account.id)} className="text-emerald-500 hover:text-emerald-400">
+                                                    <Check className="w-4 h-4" />
+                                                </button>
+                                                <button onClick={() => setEditingId(null)} className="text-neutral-500 hover:text-neutral-400">
+                                                    <X className="w-4 h-4" />
                                                 </button>
                                             </div>
-                                            <span className="text-[10px] uppercase tracking-widest text-neutral-600 font-bold ml-6">
-                                                {account.provider}
-                                            </span>
-                                        </div>
+                                        ) : (
+                                            <div className="flex flex-col gap-1">
+                                                <div className="flex items-center gap-2">
+                                                    <HardDrive className="w-4 h-4 text-neutral-500 shrink-0" />
+                                                    <span className="text-sm font-medium truncate text-white">
+                                                        {account.name || (() => {
+                                                            const providerName = {
+                                                                microsoft: "Onedrive",
+                                                                google: "Drive",
+                                                                dropbox: "Dropbox",
+                                                                koofr: "Koofr"
+                                                            }[account.provider] || account.provider;
+                                                            return `${providerName} - ${account.email}`;
+                                                        })()}
+                                                    </span>
+                                                    <button
+                                                        onClick={() => {
+                                                            setEditingId(account.id);
+                                                            setTempName(account.name || "");
+                                                        }}
+                                                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    >
+                                                        <Edit2 className="w-3 h-3 text-neutral-500 hover:text-white" />
+                                                    </button>
+                                                </div>
+                                                <span className="text-[10px] uppercase tracking-widest text-neutral-600 font-bold ml-6">
+                                                    {account.provider}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-500/10 shrink-0">
+                                        <CheckCircle className="w-4 h-4 text-emerald-500" />
+                                    </div>
+                                </div>
+
+                                {/* Quota Display Component */}
+                                <QuotaDisplay accountId={account.id} />
+
+                                <div className="flex gap-2 mt-auto">
+                                    <button
+                                        onClick={() => {
+                                            if (account.provider === 'google') {
+                                                window.location.href = `/api/connect/google?prompt=consent`;
+                                            } else if (account.provider === 'microsoft') {
+                                                window.location.href = `/api/connect/microsoft?prompt=login`;
+                                            } else if (account.provider === 'dropbox') {
+                                                window.location.href = `/api/connect/dropbox`;
+                                            } else if (account.provider === 'koofr') {
+                                                setShowKoofrModal(true);
+                                            }
+                                        }}
+                                        className="flex-1 flex items-center justify-center gap-1.5 md:gap-2 px-3 md:px-4 py-2 md:py-2.5 rounded-lg md:rounded-xl border border-neutral-800 hover:border-neutral-700 hover:bg-neutral-800 transition text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-neutral-400 hover:text-white"
+                                    >
+                                        <RefreshCw className="w-3 h-3" /> <span className="hidden sm:inline">Re</span>autorizar
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(account.id)}
+                                        className="flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-lg md:rounded-xl border border-neutral-800 hover:border-red-500/50 hover:bg-red-500/10 transition text-neutral-500 hover:text-red-500"
+                                    >
+                                        <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                                    </button>
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* VIDEO SERVICES SECTION (MOVED BELOW) */}
+                <section className="mb-12">
+                    <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] mb-6 text-neutral-600">Servicios de Video (Closer Gallery)</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {/* List Video Accounts */}
+                        {videoAccounts.map(account => (
+                            <motion.div
+                                key={account.id}
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="rounded-xl border border-neutral-800 bg-[#0a0a0a] p-6 flex flex-col items-center gap-4 relative group"
+                            >
+                                <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button
+                                        onClick={() => handleDelete(account.id, "video")}
+                                        className="text-neutral-600 hover:text-red-500 transition"
+                                        title="Desconectar"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </div>
+
+                                <div className="w-12 h-12 flex items-center justify-center rounded-full bg-neutral-900 border border-neutral-800 overflow-hidden">
+                                    {account.image ? (
+                                        <img
+                                            src={account.image}
+                                            alt={account.name || account.provider}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <img
+                                            src={`/assets/logos/${account.provider}.svg`}
+                                            alt={account.provider}
+                                            className="w-6 h-6 object-contain"
+                                            onError={(e) => {
+                                                e.currentTarget.style.display = 'none';
+                                            }}
+                                        />
                                     )}
                                 </div>
-                                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-500/10 shrink-0">
-                                    <CheckCircle className="w-4 h-4 text-emerald-500" />
+                                <div className="text-center w-full px-2">
+                                    <h3 className="text-sm font-medium text-white truncate w-full" title={account.name || account.provider}>
+                                        {account.name || account.provider}
+                                    </h3>
+                                    <p className="text-xs text-neutral-500 capitalize">{account.provider} Conectado</p>
                                 </div>
-                            </div>
+                                <div className="flex items-center gap-2 px-3 py-1 bg-green-500/10 rounded-full text-[10px] font-bold text-green-500 uppercase tracking-wider">
+                                    <Check className="w-3 h-3" /> Activo
+                                </div>
+                            </motion.div>
+                        ))}
 
-                            {/* Quota Display Component */}
-                            <QuotaDisplay accountId={account.id} />
-
-                            <div className="flex gap-2 mt-auto">
-                                <button
-                                    onClick={() => window.location.href = `/api/connect/google?prompt=consent`}
-                                    className="flex-1 flex items-center justify-center gap-1.5 md:gap-2 px-3 md:px-4 py-2 md:py-2.5 rounded-lg md:rounded-xl border border-neutral-800 hover:border-neutral-700 hover:bg-neutral-800 transition text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-neutral-400 hover:text-white"
-                                >
-                                    <RefreshCw className="w-3 h-3" /> <span className="hidden sm:inline">Re</span>autorizar
-                                </button>
-                                <button
-                                    onClick={() => handleDelete(account.id)}
-                                    className="flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-lg md:rounded-xl border border-neutral-800 hover:border-red-500/50 hover:bg-red-500/10 transition text-neutral-500 hover:text-red-500"
-                                >
-                                    <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                                </button>
+                        {/* Connection Buttons */}
+                        <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => window.location.href = "/api/auth/connect/youtube"}
+                            className="h-40 rounded-xl border border-dashed border-neutral-800 hover:border-red-600/50 hover:bg-neutral-900 flex flex-col items-center justify-center gap-3 transition-all"
+                        >
+                            <div className="w-12 h-12 bg-red-600/10 rounded-full flex items-center justify-center text-red-600 overflow-hidden p-2">
+                                <img src="/assets/logos/youtube.svg" alt="YouTube" className="w-full h-full object-contain" />
                             </div>
-                        </motion.div>
-                    ))}
-                </div>
+                            <span className="text-sm font-medium text-neutral-400">Conectar YouTube</span>
+                        </motion.button>
+
+                        <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => window.location.href = "/api/auth/connect/vimeo"}
+                            className="h-40 rounded-xl border border-dashed border-neutral-800 hover:border-sky-500/50 hover:bg-neutral-900 flex flex-col items-center justify-center gap-3 transition-all"
+                        >
+                            <div className="w-12 h-12 bg-sky-500/10 rounded-full flex items-center justify-center text-sky-500 overflow-hidden p-2">
+                                <img src="/assets/logos/vimeo.svg" alt="Vimeo" className="w-full h-full object-contain" />
+                            </div>
+                            <span className="text-sm font-medium text-neutral-400">Conectar Vimeo</span>
+                        </motion.button>
+                    </div>
+                </section>
 
                 {/* Herramientas de Organización - Template Download */}
                 <section className="mt-8 md:mt-12 bg-neutral-900 rounded-2xl md:rounded-3xl border border-neutral-800 p-5 md:p-8 lg:p-12 relative overflow-hidden group">
@@ -506,7 +654,7 @@ function QuotaDisplay({ accountId }: { accountId: string }) {
             </div>
             <div className="w-full bg-neutral-800 h-1 rounded-full overflow-hidden">
                 <div
-                    className={cn("h-full transition-all duration-1000 ease-out", isFull ? "bg-red-500" : "bg-emerald-500")}
+                    className={cn("h-full rounded-full transition-all duration-1000 ease-out", isFull ? "bg-red-500" : "bg-emerald-500")}
                     style={{ width: `${barWidth}%` }}
                 />
             </div>
@@ -518,7 +666,7 @@ export default function CloudManager() {
     return (
         <Suspense fallback={
             <div className="flex h-[60vh] items-center justify-center text-neutral-500 gap-2">
-                <Loader2 className="w-5 h-5 animate-spin" /> Cargando...
+                <Loader2 className="w-5 h-5 animate-spin" /> Cargando interfaz...
             </div>
         }>
             <CloudManagerContent />

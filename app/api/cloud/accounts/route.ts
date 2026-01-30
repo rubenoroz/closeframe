@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
     const session = await auth();
     if (!session?.user?.id) {
@@ -10,14 +12,31 @@ export async function GET() {
 
     const user = await prisma.user.findUnique({
         where: { id: session.user.id },
-        include: { cloudAccounts: { include: { projects: true } } }
+        include: {
+            cloudAccounts: { include: { projects: true } },
+            oauthAccounts: true
+        }
     });
 
     if (!user) {
         return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    return NextResponse.json(user.cloudAccounts);
+    // Filter out secrets from video accounts
+    const videoAccounts = user.oauthAccounts.map(acc => ({
+        id: acc.id,
+        provider: acc.provider,
+        providerAccountId: acc.providerAccountId,
+        createdAt: acc.createdAt,
+        name: acc.name,
+        image: acc.image
+        // Don't leak tokens
+    }));
+
+    return NextResponse.json({
+        storage: user.cloudAccounts,
+        video: videoAccounts
+    });
 }
 
 export async function PATCH(request: Request) {
@@ -72,14 +91,26 @@ export async function DELETE(request: Request) {
     try {
         const { searchParams } = new URL(request.url);
         const id = searchParams.get("id");
+        const type = searchParams.get("type"); // "storage" | "video"
 
         if (!id) {
             return NextResponse.json({ error: "ID is required" }, { status: 400 });
         }
 
-        await prisma.cloudAccount.delete({
-            where: { id }
-        });
+        if (type === "video") {
+            const account = await prisma.oAuthAccount.findUnique({ where: { id } });
+            if (!account || account.userId !== session.user.id) {
+                return NextResponse.json({ error: "Not found or unauthorized" }, { status: 404 });
+            }
+            await prisma.oAuthAccount.delete({ where: { id } });
+        } else {
+            // Default to cloudAccount for backward compat or explicit type
+            const account = await prisma.cloudAccount.findUnique({ where: { id } });
+            if (!account || account.userId !== session.user.id) {
+                return NextResponse.json({ error: "Not found or unauthorized" }, { status: 404 });
+            }
+            await prisma.cloudAccount.delete({ where: { id } });
+        }
 
         return NextResponse.json({ success: true });
     } catch (error: any) {

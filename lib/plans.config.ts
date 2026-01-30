@@ -16,7 +16,11 @@ export const PLANS = {
             manualOrdering: false,
             listView: false,
             bookingConfig: false,
-            zipDownloadsEnabled: false, // [NEW] Free users cannot download ZIPs
+            zipDownloadsEnabled: false,
+            closerGallery: false,
+            musicGallery: false,
+            videoGallery: false,
+            externalVideoAuth: false,
         }
     },
     PRO: {
@@ -36,7 +40,11 @@ export const PLANS = {
             manualOrdering: true,
             listView: true,
             bookingConfig: true,
-            zipDownloadsEnabled: 'static_only', // [NEW] Pro users use efficient static ZIPs
+            zipDownloadsEnabled: 'static_only', // Pro users use efficient static ZIPs
+            closerGallery: false,
+            musicGallery: false,
+            videoGallery: false, // Reverted to false
+            externalVideoAuth: false,
         }
     },
     STUDIO: {
@@ -48,6 +56,7 @@ export const PLANS = {
             bookingWindow: 0, // Unlimited
             maxProjects: -1,
             maxCloudAccounts: -1,
+            closerGalleryLimit: 10,
         },
         features: {
             advancedSocialNetworks: true,
@@ -56,7 +65,36 @@ export const PLANS = {
             manualOrdering: true,
             listView: true,
             bookingConfig: true,
-            zipDownloadsEnabled: true, // [NEW] Studio users get full dynamic ZIPs
+            zipDownloadsEnabled: true, // Studio users get full dynamic ZIPs
+            closerGallery: true,
+            musicGallery: true,
+            videoGallery: true,
+            externalVideoAuth: false,
+        }
+    },
+    AGENCY: {
+        id: 'agency',
+        name: 'Agency',
+        limits: {
+            bioMaxLength: 2000,
+            maxSocialLinks: -1,
+            bookingWindow: 0,
+            maxProjects: -1,
+            maxCloudAccounts: -1,
+            closerGalleryLimit: -1,
+        },
+        features: {
+            advancedSocialNetworks: true,
+            callToAction: true,
+            hideBranding: true,
+            manualOrdering: true,
+            listView: true,
+            bookingConfig: true,
+            zipDownloadsEnabled: true,
+            closerGallery: true,
+            musicGallery: true,
+            videoGallery: true,
+            externalVideoAuth: true,
         }
     }
 } as const;
@@ -68,10 +106,11 @@ export function getPlanConfig(planName?: string | null) {
 
     const normalizedName = planName.toUpperCase();
 
-    // Handle specific plan codes from DB (e.g. 'plan-pro')
-    if (normalizedName === 'PRO' || normalizedName === 'PLAN-PRO') return PLANS.PRO;
-    if (normalizedName === 'STUDIO' || normalizedName === 'PLAN-STUDIO') return PLANS.STUDIO;
-    if (normalizedName === 'AGENCY' || normalizedName === 'PLAN-AGENCY') return PLANS.STUDIO; // Map Agency to Studio features
+    // Handle name variations and suffixes (e.g. 'Agency-Monthly', 'Plan Studio')
+    if (normalizedName.includes('AGENCY')) return PLANS.AGENCY;
+    if (normalizedName.includes('STUDIO') || normalizedName.includes('ESTUDIO')) return PLANS.STUDIO;
+    if (normalizedName.includes('PRO') || normalizedName.includes('PROFESIONAL')) return PLANS.PRO;
+    if (normalizedName.includes('FREE') || normalizedName.includes('PERSONAL')) return PLANS.FREE;
 
     return PLANS.FREE;
 }
@@ -94,12 +133,12 @@ export function getEffectivePlanConfig(baseConfig: any, overrides?: any) {
         ...baseConfig,
         limits: {
             ...baseConfig.limits,
-            ...overrides.limits, // Allow overriding specific limits e.g. { "bioMaxLength": 1000 }
-            ...overrides // Backwards compatibility if they put limits at root
+            ...overrides.limits,
+            ...overrides // Backwards compatibility
         },
         features: {
             ...baseConfig.features,
-            ...overrides.features, // Allow overriding specific features e.g. { "advancedSocialNetworks": true }
+            ...overrides.features,
             ...overrides // Backwards compatibility
         }
     };

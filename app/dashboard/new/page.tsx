@@ -53,7 +53,7 @@ export default function NewProjectPage() {
         fetch("/api/cloud/accounts")
             .then((res) => res.json())
             .then((data) => {
-                const cloudAccounts = Array.isArray(data) ? data : (data.accounts || []);
+                const cloudAccounts = Array.isArray(data) ? data : (data.storage || data.accounts || []);
                 setAccounts(cloudAccounts);
                 if (cloudAccounts.length > 0) {
                     setSelectedAccount(cloudAccounts[0]);
@@ -167,7 +167,7 @@ export default function NewProjectPage() {
                 <div className="space-y-4 md:space-y-6">
                     <div className="flex items-center gap-3 md:gap-4 mb-2">
                         <div className="w-8 h-8 md:w-10 md:h-10 bg-white text-black rounded-full flex items-center justify-center text-base md:text-lg font-bold">1</div>
-                        <h2 className="text-lg md:text-xl font-medium">Elige una cuenta de Drive</h2>
+                        <h2 className="text-lg md:text-xl font-medium">Elige una cuenta de Nube</h2>
                     </div>
 
                     <div className="grid grid-cols-1 gap-3">

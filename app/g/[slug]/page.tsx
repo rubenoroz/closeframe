@@ -19,7 +19,7 @@ export const dynamic = "force-dynamic";
 export default async function PublicGalleryPage({ params }: Props) {
     const { slug } = await params;
 
-    const project = await prisma.project.findUnique({
+    const project = await (prisma.project as any).findUnique({
         where: { slug },
         include: {
             user: {
@@ -33,7 +33,7 @@ export default async function PublicGalleryPage({ params }: Props) {
                     plan: {
                         select: {
                             name: true,
-                            config: true // Fetch New Modular Config
+                            config: true
                         }
                     }
                 }
@@ -44,6 +44,11 @@ export default async function PublicGalleryPage({ params }: Props) {
     if (!project) {
         return notFound();
     }
+
+    // Fetch external videos separately to work around out-of-sync types
+    const externalVideos = await (prisma as any).externalVideo.findMany({
+        where: { projectId: project.id }
+    });
 
     // Calculate Effective Config server-side
     const effectiveConfig = getEffectivePlanConfig(
@@ -77,9 +82,9 @@ export default async function PublicGalleryPage({ params }: Props) {
     // Check if video is enabled by plan
     const planAllowsVideo = effectiveConfig.features?.videoGallery ?? false;
 
-    // Use the user's explicit configuration for video tab visibility
+    // Use the user's explicit configuration
     // But only if the plan allows video
-    const enableVideoTab = planAllowsVideo && (project.enableVideoTab || false);
+    const enableVideoTab = planAllowsVideo && !!project.enableVideoTab;
     let videoFolderId = project.videoFolderId || null;
 
     // Only auto-detect Videos folder if user explicitly enabled video tab but didn't configure a folder
@@ -123,6 +128,7 @@ export default async function PublicGalleryPage({ params }: Props) {
         ...project,
         enableVideoTab,
         videoFolderId,
+        externalVideos, // [NEW] Pass videos to client
         enableWatermark: project.enableWatermark || false,
         planLimits: {
             maxImagesPerProject: effectiveConfig.limits?.maxImagesPerProject ?? null,
@@ -136,6 +142,34 @@ export default async function PublicGalleryPage({ params }: Props) {
             galleryCover: effectiveConfig.features?.galleryCover ?? false,
         }
     };
+
+    // [CLOSER GALLERY LOGIC]
+    // If project is marked as Closer Gallery AND plan allows it
+    if (project.isCloserGallery && effectiveConfig.features?.closerGallery) {
+        // Fetch Closer Gallery Structure (Momentos)
+        const { GalleryIndexer } = await import("@/lib/gallery/indexer");
+        const indexer = new GalleryIndexer();
+
+        try {
+            const structure = await indexer.indexGallery(project.cloudAccountId, project.rootFolderId, project.id);
+
+            // Import Client Component dynamically or directly
+            const { default: CloserGalleryClient } = await import("@/components/closer/CloserGalleryClient");
+
+            return (
+                <CloserGalleryClient
+                    project={enhancedProject}
+                    structure={structure}
+                    studioProfile={project.user}
+                />
+            );
+        } catch (error) {
+            console.error("Error indexing Closer Gallery:", error);
+            // Fallback to standard gallery if indexing fails? Or show error?
+            // For now, let's fallback to standard to avoid white screen, or simple error page.
+            // But usually this means Drive issues.
+        }
+    }
 
     return (
         <PublicGalleryClient project={enhancedProject} />

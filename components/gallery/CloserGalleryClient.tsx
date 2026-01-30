@@ -47,6 +47,17 @@ export default function CloserGalleryClient({
     const isMusicEnabled = !!project.musicTrackId;
     const musicTrack = isMusicEnabled ? getTrackById(project.musicTrackId) : null;
 
+    // 3. Derived Momentos with Virtual Video Chip
+    const displayMomentos = useMemo(() => {
+        if (!project.enableVideoTab) return momentos;
+        return [
+            ...momentos,
+            { id: "videos-virtual", name: "Videos" }
+        ];
+    }, [momentos, project.enableVideoTab]);
+
+    const isVideoTabActive = activeMomentoId === "videos-virtual";
+
     // 1. Fetch Folder Structure (Momentos)
     useEffect(() => {
         const fetchStructure = async () => {
@@ -143,7 +154,52 @@ export default function CloserGalleryClient({
                     files.sort((a, b) => a.name.localeCompare(b.name));
                 }
 
-                setGalleryFiles(files);
+                // [HYBRID LOGIC] Inject matching external videos
+                if (project.externalVideos && project.externalVideos.length > 0) {
+                    const activeMomento = displayMomentos.find(m => m.id === activeMomentoId);
+                    const activeMomentoName = activeMomento?.name;
+
+                    if (activeMomentoName && activeMomentoId !== "videos-virtual") {
+                        const matchingVideos = project.externalVideos
+                            .filter((v: any) => v.momentName === activeMomentoName)
+                            .map((v: any) => ({
+                                id: v.id,
+                                name: v.title || "Video",
+                                mimeType: "video/external",
+                                thumbnailLink: v.thumbnail,
+                                width: 1920,
+                                height: 1080,
+                                isExternal: true,
+                                provider: v.provider,
+                                externalId: v.externalId
+                            }));
+
+                        files = [...files, ...matchingVideos];
+                    } else if (!activeMomentoId || activeMomentoId === "videos-virtual") {
+                        // Aggregate all videos for "Todos" view OR virtual "Videos" tab
+                        const allExternal = project.externalVideos.map((v: any) => ({
+                            id: v.id,
+                            name: v.title || "Video",
+                            mimeType: "video/external",
+                            thumbnailLink: v.thumbnail,
+                            width: 1920,
+                            height: 1080,
+                            isExternal: true,
+                            provider: v.provider,
+                            externalId: v.externalId
+                        }));
+                        files = [...files, ...allExternal];
+                    }
+                }
+
+                setGalleryFiles(files.sort((a, b) => {
+                    const idxA = project.fileOrder?.indexOf(a.id) ?? -1;
+                    const idxB = project.fileOrder?.indexOf(b.id) ?? -1;
+                    if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+                    if (idxA !== -1) return -1;
+                    if (idxB !== -1) return 1;
+                    return a.name.localeCompare(b.name);
+                }));
             } catch (error) {
                 console.error("Error loading content:", error);
             } finally {
@@ -152,7 +208,8 @@ export default function CloserGalleryClient({
         };
 
         fetchContent();
-    }, [activeMomentoId, isLocked, isLoadingStructure, project.cloudAccountId, project.rootFolderId, momentos]);
+    }, [activeMomentoId, isLocked, isLoadingStructure, project.cloudAccountId, project.rootFolderId, momentos, project.externalVideos, displayMomentos]);
+
 
 
     // Handlers
@@ -213,10 +270,10 @@ export default function CloserGalleryClient({
                 coverImageFocus={project.headerImageFocus}
             />
 
-            {/* Momentos Navigation */}
-            {momentos.length > 0 && (
+            {/* Momentos Navigation with Virtual Video Chip */}
+            {displayMomentos.length > 0 && (
                 <MomentosBar
-                    momentos={momentos}
+                    momentos={displayMomentos}
                     activeMomentoId={activeMomentoId}
                     onMomentoChange={setActiveMomentoId}
                     theme="dark"
@@ -235,18 +292,20 @@ export default function CloserGalleryClient({
             )}
 
             {/* Main Gallery Viewer */}
-            {isLoadingFiles ? (
+            {isLoadingFiles && !isVideoTabActive ? (
                 <div className="flex flex-col items-center justify-center min-h-[50vh]">
                     <Loader2 className="w-8 h-8 text-neutral-500 animate-spin mb-4" />
                     <p className="text-neutral-500 text-sm tracking-widest font-light uppercase">Cargando Momento...</p>
                 </div>
             ) : (
                 <GalleryViewer
+                    key={isVideoTabActive ? "videos" : "photos"}
                     cloudAccountId={project.cloudAccountId}
-                    folderId={project.rootFolderId}
+                    folderId={isVideoTabActive ? (project.videoFolderId || "") : project.rootFolderId}
+                    projectId={project.id}
 
                     // Pass aggregated files
-                    preloadedFiles={galleryFiles}
+                    preloadedFiles={!isVideoTabActive ? galleryFiles : undefined}
 
                     // Config
                     projectName={project.name}
@@ -262,6 +321,7 @@ export default function CloserGalleryClient({
                     zipFileId={project.zipFileId}
 
                     theme="dark"
+                    mediaType={isVideoTabActive ? "videos" : "photos"}
                     className="pt-0"
 
                     // Video Events

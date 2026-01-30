@@ -145,6 +145,17 @@ export default function Lightbox({
     };
 
     useEffect(() => {
+        if (!isOpen) return;
+
+        const isVideo = currentFile.mimeType?.startsWith('video/') || currentFile.isExternal;
+        if (isVideo) {
+            onVideoPlay?.();
+        } else {
+            onVideoPause?.();
+        }
+    }, [currentIndex, isOpen, currentFile, onVideoPlay, onVideoPause]);
+
+    useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (!isOpen) return;
             if (e.key === "ArrowRight") handleNext();
@@ -225,7 +236,21 @@ export default function Lightbox({
                         className="w-full h-full p-4 md:p-12 flex items-center justify-center"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        {currentFile.mimeType?.startsWith('video/') ? (
+                        {currentFile.isExternal ? (
+                            <div className="w-full max-w-5xl aspect-video bg-black rounded-lg overflow-hidden shadow-2xl border border-white/10">
+                                <iframe
+                                    src={
+                                        currentFile.provider === 'vimeo'
+                                            ? `https://player.vimeo.com/video/${currentFile.externalId}?autoplay=1&title=0&byline=0&portrait=0`
+                                            : `https://www.youtube.com/embed/${currentFile.externalId}?autoplay=1&rel=0`
+                                    }
+                                    className="w-full h-full"
+                                    allow="autoplay; fullscreen; picture-in-picture"
+                                    allowFullScreen
+                                    title={currentFile.name}
+                                />
+                            </div>
+                        ) : currentFile.mimeType?.startsWith('video/') ? (
                             <video
                                 key={`video-${currentFile.id}`}
                                 controls

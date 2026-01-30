@@ -41,6 +41,7 @@ interface Props {
 export default function GalleryViewer({
     cloudAccountId,
     folderId,
+    projectId, // [FIX] Add projectId to destructuring
     projectName = "Galería",
     downloadEnabled = true,
     downloadJpgEnabled = true,
@@ -283,6 +284,48 @@ export default function GalleryViewer({
             return;
         }
 
+        // [NEW] Fetch External Videos from Project API if mediaType is videos
+        if (mediaType === 'videos' && projectId) {
+            setLoading(true);
+            console.log("[GalleryViewer] Fetching external videos for project:", projectId);
+            fetch(`/api/projects/${projectId}/videos`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.videos) {
+                        const mappedVideos: CloudFile[] = data.videos.map((v: any) => ({
+                            id: v.id, // Store DB ID here
+                            name: v.title || "Video",
+                            mimeType: "video/external", // Special mime for external
+                            thumbnailLink: v.thumbnail,
+                            width: 1920,
+                            height: 1080,
+                            isExternal: true,
+                            provider: v.provider,
+                            // Store external ID in a format Lightbox might expect if needed, 
+                            // or we'll update Lightbox to look at 'provider' and 'externalId'
+                            // For now, let's put externalId in formats.raw simply to carry it over
+                            formats: {
+                                web: "",
+                                raw: v.externalId // Hack to carry external ID? Better to use a dedicated field
+                            },
+                            // Actually, let's trust we can access the 'projectVideos' or map it properly.
+                            // Ideally CloudFile should have 'externalId'. 
+                            // Extended property 'externalId' on the object
+                            externalId: v.externalId
+                        }));
+                        setFiles(mappedVideos);
+                    } else {
+                        setFiles([]);
+                    }
+                    setLoading(false);
+                })
+                .catch(err => {
+                    console.error("Failed to fetch videos", err);
+                    setLoading(false);
+                });
+            return;
+        }
+
         if (!cloudAccountId || !folderId) return;
 
         setLoading(true);
@@ -304,7 +347,7 @@ export default function GalleryViewer({
                 setError("Error de conexión");
                 setLoading(false);
             });
-    }, [cloudAccountId, folderId]);
+    }, [cloudAccountId, folderId, mediaType, projectId]);
 
     // Derived download state
     const anyDownloadEnabled = downloadEnabled && (downloadJpgEnabled || downloadRawEnabled);
@@ -588,7 +631,11 @@ function MediaCard({
 }) {
     const [loaded, setLoaded] = useState(false);
     const [error, setError] = useState(false);
-    const isVideo = item.mimeType?.startsWith('video/');
+    // [FIX] Detect external videos by mimeType 'video/external' OR prefix, or explicit prop
+    const isVideo = item.mimeType?.startsWith('video/') || item.isExternal;
+    // [FIX] If external, assume loaded once rendered or use simple onLoad
+
+    const isExternal = !!item.isExternal;
 
     // Determine thumbnail size based on plan limits
     const thumbSize = lowResThumbnails ? 600 : 800;
@@ -645,7 +692,10 @@ function MediaCard({
                     )}
 
                     <img
-                        src={`/api/cloud/thumbnail?c=${cloudAccountId}&f=${item.id}&s=${thumbSize}&t=${encodeURIComponent(item.thumbnailLink || '')}&v=2`}
+                        src={isExternal && item.thumbnailLink
+                            ? item.thumbnailLink
+                            : `/api/cloud/thumbnail?c=${cloudAccountId}&f=${item.id}&s=${thumbSize}&t=${encodeURIComponent(item.thumbnailLink || '')}&v=2`
+                        }
                         alt={item.name}
                         className={`absolute inset-0 w-full h-full object-cover transform group-hover:scale-105 transition duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
                         onLoad={() => setLoaded(true)}
@@ -655,7 +705,7 @@ function MediaCard({
                     />
 
                     {/* Video play icon overlay */}
-                    {isVideo && loaded && (
+                    {isVideo && (loaded || isExternal) && (
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                             <div className="w-16 h-16 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center border-2 border-white/30 shadow-xl">
                                 <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
