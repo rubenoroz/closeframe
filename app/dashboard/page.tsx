@@ -77,7 +77,6 @@ export default function DashboardPage() {
         lowResDownloads?: boolean;
         passwordProtection?: boolean;
         galleryCover?: boolean;
-        galleryCover?: boolean;
         closerGalleries?: boolean; // [NEW] Feature flag
         collaborativeGalleries?: boolean; // [NEW] Feature flag
     } | null>(null);
