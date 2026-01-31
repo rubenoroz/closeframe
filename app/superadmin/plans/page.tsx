@@ -43,6 +43,7 @@ interface Plan {
     displayName: string;
     description: string | null;
     price: number;
+    monthlyPrice: number | null;
     currency: string;
     interval: string;
     features: string[];
@@ -83,6 +84,7 @@ const emptyPlan: Omit<Plan, "id" | "_count"> = {
     displayName: "",
     description: "",
     price: 0,
+    monthlyPrice: 0,
     currency: "USD",
     interval: "month",
     features: [],
@@ -478,10 +480,10 @@ export default function PlansPage() {
                             </div>
 
                             {/* Pricing */}
-                            <div className="grid grid-cols-3 gap-4">
+                            <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-neutral-300 mb-2">
-                                        Precio
+                                        Precio Anual/Base
                                     </label>
                                     <input
                                         type="number"
@@ -489,6 +491,20 @@ export default function PlansPage() {
                                         step="0.01"
                                         value={editingPlan.price}
                                         onChange={(e) => setEditingPlan({ ...editingPlan, price: parseFloat(e.target.value) || 0 })}
+                                        className="w-full px-4 py-2.5 bg-neutral-800 border border-neutral-700 rounded-xl text-white focus:outline-none focus:border-violet-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-neutral-300 mb-2">
+                                        Precio Mensual (Opcional)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        value={editingPlan.monthlyPrice || ""}
+                                        placeholder="Solo si difiere del base"
+                                        onChange={(e) => setEditingPlan({ ...editingPlan, monthlyPrice: parseFloat(e.target.value) || null })}
                                         className="w-full px-4 py-2.5 bg-neutral-800 border border-neutral-700 rounded-xl text-white focus:outline-none focus:border-violet-500"
                                     />
                                 </div>
@@ -508,7 +524,7 @@ export default function PlansPage() {
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-neutral-300 mb-2">
-                                        Intervalo
+                                        Intervalo por defecto
                                     </label>
                                     <select
                                         value={editingPlan.interval}

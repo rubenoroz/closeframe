@@ -42,6 +42,10 @@ interface PublicGalleryClientProps {
         musicTrackId?: string | null;
         musicEnabled?: boolean;
 
+        // [NEW] Collaborative Sections
+        collaborativeSections?: { id: string; name: string; driveFolderId: string }[];
+        collaborativeGalleryId?: string;
+
         planLimits?: {
             maxImagesPerProject: number | null;
             videoEnabled: boolean;
@@ -87,6 +91,54 @@ export default function PublicGalleryClient({ project }: PublicGalleryClientProp
     const [showCover, setShowCover] = useState(!!project.coverImage && !!project.planLimits?.galleryCover);
     const [activeTab, setActiveTab] = useState<"photos" | "videos">("photos");
     const [tabMounted, setTabMounted] = useState(false);
+
+    // [NEW] Collaborative Filtering State
+    const [activeSectionId, setActiveSectionId] = useState<string>("all");
+    const [collaborativeFiles, setCollaborativeFiles] = useState<any[]>([]);
+    const [isLoadingCollaborative, setIsLoadingCollaborative] = useState(false);
+
+    // [NEW] Fetch Collaborative Content
+    useEffect(() => {
+        if (!project.collaborativeSections || project.collaborativeSections.length === 0) return;
+
+        const fetchCollaborativeContent = async () => {
+            setIsLoadingCollaborative(true);
+            try {
+                // Fetch root files (General)
+                const rootRes = await fetch(`/api/cloud/files?cloudAccountId=${project.cloudAccountId}&folderId=${project.rootFolderId}`);
+                let rootFiles = [];
+                if (rootRes.ok) {
+                    const data = await rootRes.json();
+                    rootFiles = data.files || [];
+                }
+
+                // Fetch section files
+                const sectionPromises = project.collaborativeSections!.map(section =>
+                    fetch(`/api/cloud/files?cloudAccountId=${project.cloudAccountId}&folderId=${section.driveFolderId}`)
+                        .then(r => r.ok ? r.json() : { files: [] })
+                        .then(data => ({
+                            sectionId: section.id,
+                            files: (data.files || []).map((f: any) => ({ ...f, sectionId: section.id }))
+                        }))
+                );
+
+                const sectionsData = await Promise.all(sectionPromises);
+                const allSectionFiles = sectionsData.flatMap(d => d.files);
+
+                // Combine unique files (prefer section attribution if duplicate)
+                const allFilesMap = new Map();
+                [...rootFiles, ...allSectionFiles].forEach(f => allFilesMap.set(f.id, f));
+
+                setCollaborativeFiles(Array.from(allFilesMap.values()));
+            } catch (error) {
+                console.error("Error loading collaborative content:", error);
+            } finally {
+                setIsLoadingCollaborative(false);
+            }
+        };
+
+        fetchCollaborativeContent();
+    }, [project.collaborativeSections, project.cloudAccountId, project.rootFolderId]);
 
     // Initial Cover Check (Client Only)
     useEffect(() => {
@@ -197,30 +249,76 @@ export default function PublicGalleryClient({ project }: PublicGalleryClientProp
                 />
             </div>
 
+            {/* [NEW] Section Filters (Pills) */}
+            {project.collaborativeSections && project.collaborativeSections.length > 0 && activeTab === 'photos' && (
+                <div className="flex justify-center px-4 pb-4">
+                    <div className="flex items-center gap-2 overflow-x-auto max-w-full pb-2 no-scrollbar">
+                        <button
+                            onClick={() => setActiveSectionId("all")}
+                            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap ${activeSectionId === "all"
+                                ? (headerBackground === 'light' ? 'bg-neutral-900 text-white' : 'bg-white text-neutral-900')
+                                : (headerBackground === 'light' ? 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200' : 'bg-white/10 text-neutral-400 hover:bg-white/20')
+                                }`}
+                        >
+                            Todos
+                        </button>
+                        {project.collaborativeSections.map(section => (
+                            <button
+                                key={section.id}
+                                onClick={() => setActiveSectionId(section.id)}
+                                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap ${activeSectionId === section.id
+                                    ? (headerBackground === 'light' ? 'bg-neutral-900 text-white' : 'bg-white text-neutral-900')
+                                    : (headerBackground === 'light' ? 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200' : 'bg-white/10 text-neutral-400 hover:bg-white/20')
+                                    }`}
+                            >
+                                {section.name}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
+
             {/* Gallery Viewer */}
-            <GalleryViewer
-                key={activeTab}
-                cloudAccountId={project.cloudAccountId}
-                folderId={currentFolderId}
-                projectId={project.id} // Enforce manual order if set
-                projectName={project.name}
-                downloadEnabled={project.downloadEnabled}
-                downloadJpgEnabled={project.downloadJpgEnabled}
-                downloadRawEnabled={project.downloadRawEnabled}
-                studioName={project.user?.businessName || "CloserLens"}
-                studioLogo={project.user?.businessLogo || ""}
-                studioLogoScale={project.user?.businessLogoScale || 100}
-                theme={headerBackground}
-                mediaType={activeTab}
-                enableWatermark={project.enableWatermark || !!project.planLimits?.watermarkText}
-                maxImages={project.planLimits?.maxImagesPerProject || null}
-                watermarkText={project.planLimits?.watermarkText || null}
-                lowResDownloads={!!project.planLimits?.lowResDownloads}
-                lowResThumbnails={!!project.planLimits?.lowResThumbnails}
-                zipDownloadsEnabled={project.planLimits?.zipDownloadsEnabled ?? true}
-                zipFileId={project.zipFileId || null}
-                layoutType={project.layoutType}
-            />
+            {isLoadingCollaborative && project.collaborativeSections && project.collaborativeSections.length > 0 ? (
+                <div className="flex flex-col items-center justify-center py-20">
+                    <Loader2 className={`w-8 h-8 animate-spin ${headerBackground === 'light' ? 'text-neutral-900' : 'text-white'}`} />
+                    <p className={`mt-2 text-sm ${headerBackground === 'light' ? 'text-neutral-500' : 'text-neutral-400'}`}>Cargando fotos...</p>
+                </div>
+            ) : (
+                <GalleryViewer
+                    key={activeTab}
+                    cloudAccountId={project.cloudAccountId}
+                    folderId={currentFolderId}
+                    projectId={project.id} // Enforce manual order if set
+                    projectName={project.name}
+
+                    // [NEW] Pass filtered files if collaborative mode
+                    preloadedFiles={
+                        project.collaborativeSections && project.collaborativeSections.length > 0 && activeTab === 'photos'
+                            ? (activeSectionId === 'all'
+                                ? collaborativeFiles
+                                : collaborativeFiles.filter(f => f.sectionId === activeSectionId))
+                            : undefined
+                    }
+
+                    downloadEnabled={project.downloadEnabled}
+                    downloadJpgEnabled={project.downloadJpgEnabled}
+                    downloadRawEnabled={project.downloadRawEnabled}
+                    studioName={project.user?.businessName || "CloserLens"}
+                    studioLogo={project.user?.businessLogo || ""}
+                    studioLogoScale={project.user?.businessLogoScale || 100}
+                    theme={headerBackground}
+                    mediaType={activeTab}
+                    enableWatermark={project.enableWatermark || !!project.planLimits?.watermarkText}
+                    maxImages={project.planLimits?.maxImagesPerProject || null}
+                    watermarkText={project.planLimits?.watermarkText || null}
+                    lowResDownloads={!!project.planLimits?.lowResDownloads}
+                    lowResThumbnails={!!project.planLimits?.lowResThumbnails}
+                    zipDownloadsEnabled={project.planLimits?.zipDownloadsEnabled ?? true}
+                    zipFileId={project.zipFileId || null}
+                    layoutType={project.layoutType}
+                />
+            )}
 
 
 

@@ -21,6 +21,7 @@ export async function GET() {
 
     const scopes = [
         "https://www.googleapis.com/auth/drive.readonly", // Read-only access to files
+        "https://www.googleapis.com/auth/drive.file",     // Create/Edit specific files
         "https://www.googleapis.com/auth/userinfo.email", // Get user email
     ];
 

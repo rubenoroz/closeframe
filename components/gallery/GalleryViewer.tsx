@@ -67,7 +67,8 @@ export default function GalleryViewer({
     onVideoPause
 }: Props) {
     const [files, setFiles] = useState<CloudFile[]>(preloadedFiles || []);
-    const [loading, setLoading] = useState(true);
+    // [FIX] If preloadedFiles are provided, we don't need to load
+    const [loading, setLoading] = useState(preloadedFiles ? false : true);
     const [error, setError] = useState<string | null>(null);
     const [lightboxOpen, setLightboxOpen] = useState(false);
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -77,11 +78,13 @@ export default function GalleryViewer({
     // [NEW] Separate media content from static ZIP resources
     // [FIX] Apply maxImages limit here, not during file loading
     const mediaFiles = useMemo(() => {
+        console.log("[GalleryViewer] files input:", files.length, files.slice(0, 2));
         const media = files.filter(f =>
             !f.mimeType?.includes('zip') &&
             !f.mimeType?.includes('compressed') &&
             !f.name.toLowerCase().endsWith('.zip')
         );
+        console.log("[GalleryViewer] mediaFiles after filter:", media.length);
         // Apply maxImages limit only to displayable media
         if (maxImages && maxImages > 0) {
             console.log("[GalleryViewer] Applying maxImages limit:", maxImages, "to", media.length, "media files");
@@ -279,10 +282,18 @@ export default function GalleryViewer({
         }
     };
 
+    // [FIX] Update state when preloadedFiles prop changes
     useEffect(() => {
         if (preloadedFiles) {
+            console.log("[GalleryViewer] preloadedFiles updated:", preloadedFiles.length);
             setFiles(preloadedFiles);
             setLoading(false);
+        }
+    }, [preloadedFiles]);
+
+    useEffect(() => {
+        if (preloadedFiles) {
+            // Handled by the effect above
             return;
         }
 
@@ -714,8 +725,7 @@ function MediaCard({
     return (
         <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
+            animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: (index % 10) * 0.05 }}
             className={`relative w-full rounded-xl bg-neutral-800 overflow-hidden cursor-pointer group border-2 transition-all duration-300 ${isSelected ? "border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]" : "border-transparent"
                 }`}

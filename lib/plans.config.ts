@@ -70,6 +70,7 @@ export const PLANS = {
             musicGallery: true,
             videoGallery: true,
             externalVideoAuth: false,
+            collaborativeGalleries: true,
         }
     },
     AGENCY: {
@@ -95,6 +96,7 @@ export const PLANS = {
             musicGallery: true,
             videoGallery: true,
             externalVideoAuth: true,
+            collaborativeGalleries: true,
         }
     }
 } as const;

@@ -797,6 +797,26 @@ export const FEATURE_POOL: FeatureDefinition[] = [
         icon: CreditCard,
         type: "boolean",
         defaultValue: false
+    },
+
+    // --- CLOSER GALLERIES (Premium) ---
+    {
+        id: "closerGalleries",
+        label: "Galerías Closer",
+        description: "Galerías profesionales con todas las funciones premium",
+        category: "gallery",
+        type: "boolean",
+        defaultValue: false,
+        icon: ImageIcon
+    },
+    {
+        id: "collaborativeGalleries",
+        label: "Galerías Colaborativas QR",
+        description: "Invitados suben fotos vía código QR a tu Drive",
+        category: "gallery",
+        type: "boolean",
+        defaultValue: false,
+        icon: QrCode
     }
 ];
 

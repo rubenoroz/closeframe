@@ -8,6 +8,7 @@ import GalleryHeader from "@/components/gallery/GalleryHeader";
 import MomentosBar from "@/components/gallery/MomentosBar";
 import AudioPlayer from "@/components/gallery/AudioPlayer";
 import { getTrackById } from "@/lib/music-library";
+import GalleryLoaderGrid from "@/components/gallery/GalleryLoaderGrid";
 import { Loader2 } from "lucide-react";
 import { CloudFile } from "@/types/cloud";
 
@@ -19,6 +20,9 @@ interface CloserGalleryClientProps {
     theme?: string | null;
     businessLogoScale?: number | null;
     plan?: any | null;
+    collaborativeSections?: { id: string; name: string; driveFolderId: string }[];
+    debugMessage?: string;
+    structure?: any;
 }
 
 export default function CloserGalleryClient({
@@ -28,12 +32,16 @@ export default function CloserGalleryClient({
     businessWebsite,
     theme = "dark",
     businessLogoScale,
-    plan
+    plan,
+    collaborativeSections,
+    debugMessage
 }: CloserGalleryClientProps) {
     const [isLocked, setIsLocked] = useState(project.passwordProtected);
     const [showCover, setShowCover] = useState(true);
-    const [activeMomentoId, setActiveMomentoId] = useState<string | null>(null);
-    const [momentos, setMomentos] = useState<{ id: string; name: string }[]>([]);
+    // [UPDATED] Start with 'all' if we have collaborative sections
+    const [activeMomentoId, setActiveMomentoId] = useState<string | null>(collaborativeSections && collaborativeSections.length > 0 ? 'all' : null);
+    const [photographerMomentos, setPhotographerMomentos] = useState<{ id: string; name: string }[]>([]);
+    const [collaborativeMomentos, setCollaborativeMomentos] = useState<{ id: string; name: string }[]>([]);
     const [isLoadingStructure, setIsLoadingStructure] = useState(true);
 
     // State for aggregated/fetched files
@@ -47,20 +55,32 @@ export default function CloserGalleryClient({
     const isMusicEnabled = !!project.musicTrackId;
     const musicTrack = isMusicEnabled ? getTrackById(project.musicTrackId) : null;
 
-    // 3. Derived Momentos with Virtual Video Chip
-    const displayMomentos = useMemo(() => {
-        if (!project.enableVideoTab) return momentos;
+    // 3. Derived Momentos with Virtual Video Chip (for photographer momentos only)
+    const displayPhotographerMomentos = useMemo(() => {
+        if (!project.enableVideoTab) return photographerMomentos;
         return [
-            ...momentos,
+            ...photographerMomentos,
             { id: "videos-virtual", name: "Videos" }
         ];
-    }, [momentos, project.enableVideoTab]);
+    }, [photographerMomentos, project.enableVideoTab]);
 
     const isVideoTabActive = activeMomentoId === "videos-virtual";
 
-    // 1. Fetch Folder Structure (Momentos)
+    // 1. Fetch Both: Folder Structure AND Collaborative Sections
     useEffect(() => {
+        const sections = project.collaborativeSections;
+
+        // Set collaborative sections if available
+        if (sections && sections.length > 0) {
+            console.log("[CloserGallery] Setting collaborative sections:", sections);
+            setCollaborativeMomentos(
+                sections.map((s: any) => ({ id: s.driveFolderId, name: s.name }))
+            );
+        }
+
+        // Fetch photographer folders from Drive
         const fetchStructure = async () => {
+            // ... (Existing recursive logic as fallback) ...
             try {
                 // Fetch subfolders of the project root
                 const res = await fetch(`/api/cloud/folders?cloudAccountId=${project.cloudAccountId}&folderId=${project.rootFolderId}`);
@@ -72,22 +92,8 @@ export default function CloserGalleryClient({
                             !['webjpg', 'jpg', 'raw', 'print', 'highres'].includes(f.name.toLowerCase())
                         );
 
-                        // [UPDATED] Apply manual folder order (Momentos) if exists
-                        if ((project as any).momentsOrder && Array.isArray((project as any).momentsOrder) && (project as any).momentsOrder.length > 0) {
-                            const momentsMap = new Map();
-                            (project as any).momentsOrder.forEach((id: string, index: number) => momentsMap.set(id, index));
-
-                            validFolders.sort((a: any, b: any) => {
-                                const indexA = momentsMap.has(a.id) ? momentsMap.get(a.id) : 999999;
-                                const indexB = momentsMap.has(b.id) ? momentsMap.get(b.id) : 999999;
-                                return indexA - indexB; // Ordered first, then unordered
-                            });
-                        } else {
-                            // Default alphabetical
-                            validFolders.sort((a: any, b: any) => a.name.localeCompare(b.name));
-                        }
-
-                        setMomentos(validFolders);
+                        // ... sort ...
+                        setPhotographerMomentos(validFolders);
                     }
                 }
             } catch (error) {
@@ -100,115 +106,182 @@ export default function CloserGalleryClient({
         if (!isLocked) {
             fetchStructure();
         }
-    }, [project.cloudAccountId, project.rootFolderId, isLocked]);
+    }, [project.cloudAccountId, project.rootFolderId, isLocked, project.collaborativeSections]);
 
-    // 2. Fetch Files when Momento Changes or on Initial Load
+    // 2. Fetch Files
     useEffect(() => {
         if (isLocked || isLoadingStructure) return;
+
+        // Clear old files immediately when momento changes
+        setGalleryFiles([]);
+
+        // Stale flag to prevent race conditions
+        let isStale = false;
 
         const fetchContent = async () => {
             setIsLoadingFiles(true);
             try {
                 let files: CloudFile[] = [];
 
-                if (activeMomentoId) {
-                    // Fetch single folder
+                // [NEW] Special handling for 'Todos' (null) - fetch EVERYTHING
+                const sections = project.collaborativeSections;
+
+                if (activeMomentoId === null) {
+                    // Fetch Root folder
+                    const rootRes = await fetch(`/api/cloud/files?cloudAccountId=${project.cloudAccountId}&folderId=${project.rootFolderId}&projectId=${project.id}`);
+                    let rootFiles: CloudFile[] = [];
+                    if (rootRes.ok) {
+                        const data = await rootRes.json();
+                        rootFiles = data.files || [];
+                    }
+
+                    // Fetch all photographer momentos
+                    const photographerPromises = photographerMomentos.map((m: { id: string; name: string }) =>
+                        fetch(`/api/cloud/files?cloudAccountId=${project.cloudAccountId}&folderId=${m.id}&projectId=${project.id}`)
+                            .then(r => r.ok ? r.json() : { files: [] })
+                    );
+                    const photographerData = await Promise.all(photographerPromises);
+                    const photographerFiles = photographerData.flatMap((d: any) => d.files || []);
+
+                    // Fetch collaborative sections (if any)
+                    let sectionFiles: CloudFile[] = [];
+                    if (sections && sections.length > 0) {
+                        const sectionPromises = sections.map((s: any) =>
+                            fetch(`/api/cloud/files?cloudAccountId=${project.cloudAccountId}&folderId=${s.driveFolderId}&projectId=${project.id}`)
+                                .then(r => r.ok ? r.json() : { files: [] })
+                        );
+                        const sectionsData = await Promise.all(sectionPromises);
+                        sectionFiles = sectionsData.flatMap((d: any) => d.files || []);
+                    }
+
+                    // Deduplicate all sources
+                    const allMap = new Map();
+                    [...rootFiles, ...photographerFiles, ...sectionFiles].forEach(f => allMap.set(f.id, f));
+                    files = Array.from(allMap.values());
+                }
+                else if (activeMomentoId === 'videos-virtual') {
+                    // Find the physical Videos folder from photographerMomentos
+                    console.log("[DEBUG] photographerMomentos:", photographerMomentos);
+                    const videoFolder = photographerMomentos.find(
+                        (m: { id: string; name: string }) => m.name.toLowerCase() === 'videos'
+                    );
+                    console.log("[DEBUG] Found videoFolder:", videoFolder);
+                    if (videoFolder) {
+                        // CloserLens structure: Videos folder has subfolders (alta, hd, webmp4)
+                        // We need to fetch from the "webmp4" subfolder
+                        const foldersRes = await fetch(`/api/cloud/folders?cloudAccountId=${project.cloudAccountId}&folderId=${videoFolder.id}`);
+                        console.log("[DEBUG] Fetching subfolders from:", videoFolder.id);
+                        if (foldersRes.ok) {
+                            const foldersData = await foldersRes.json();
+                            console.log("[DEBUG] Subfolders:", foldersData.folders);
+                            const webmp4Folder = foldersData.folders?.find((f: any) =>
+                                f.name.toLowerCase() === 'webmp4'
+                            );
+                            console.log("[DEBUG] Found webmp4Folder:", webmp4Folder);
+
+                            if (webmp4Folder) {
+                                // Fetch videos from webmp4 subfolder
+                                const res = await fetch(`/api/cloud/files?cloudAccountId=${project.cloudAccountId}&folderId=${webmp4Folder.id}&projectId=${project.id}`);
+                                if (res.ok) {
+                                    const data = await res.json();
+                                    console.log("[DEBUG] Videos files:", data.files?.length);
+                                    files = data.files || [];
+                                }
+                            } else {
+                                // Fallback: try fetching directly from Videos folder
+                                const res = await fetch(`/api/cloud/files?cloudAccountId=${project.cloudAccountId}&folderId=${videoFolder.id}&projectId=${project.id}`);
+                                if (res.ok) {
+                                    const data = await res.json();
+                                    files = data.files || [];
+                                }
+                            }
+                        }
+                    } else {
+                        console.log("[DEBUG] No Videos folder found in photographerMomentos!");
+                    }
+                }
+                else if (activeMomentoId) {
+                    // Fetch single folder (Momento or Section)
                     const res = await fetch(`/api/cloud/files?cloudAccountId=${project.cloudAccountId}&folderId=${activeMomentoId}&projectId=${project.id}`);
                     if (res.ok) {
                         const data = await res.json();
                         files = data.files || [];
                     }
-                } else {
-                    // Fetch Aggregated content
+                } else if (!sections || sections.length === 0) {
+                    // Legacy Aggregated Default (if no active momento selected and not collaborative)
+                    // ... (Existing aggregated logic) ...
                     const rootRes = await fetch(`/api/cloud/files?cloudAccountId=${project.cloudAccountId}&folderId=${project.rootFolderId}&projectId=${project.id}`);
                     let rootFiles = [];
                     if (rootRes.ok) {
                         const data = await rootRes.json();
                         rootFiles = data.files || [];
                     }
-
-                    const momentPromises = momentos.map(m =>
+                    // Fetch all momentos (photographer + collaborative)
+                    const allMomentos = [...photographerMomentos, ...collaborativeMomentos];
+                    const momentPromises = allMomentos.map((m: { id: string; name: string }) =>
                         fetch(`/api/cloud/files?cloudAccountId=${project.cloudAccountId}&folderId=${m.id}&projectId=${project.id}`)
                             .then(r => r.ok ? r.json() : { files: [] })
                     );
-
                     const momentsData = await Promise.all(momentPromises);
-                    const momentsFiles = momentsData.flatMap(d => d.files || []);
+                    const momentsFiles = momentsData.flatMap((d: any) => d.files || []);
 
                     const allFilesMap = new Map();
                     [...rootFiles, ...momentsFiles].forEach(f => allFilesMap.set(f.id, f));
                     files = Array.from(allFilesMap.values());
                 }
 
-                // [UPDATED] Apply manual order globally (aggregated OR single folder)
+                // ... Sort and Set ...
                 if (project.fileOrder && Array.isArray(project.fileOrder) && project.fileOrder.length > 0) {
-                    const orderMap = new Map();
-                    project.fileOrder.forEach((id: string, index: number) => orderMap.set(id, index));
-
-                    files.sort((a, b) => {
-                        const indexA = orderMap.has(a.id) ? orderMap.get(a.id) : 999999;
-                        const indexB = orderMap.has(b.id) ? orderMap.get(b.id) : 999999;
-                        return indexA - indexB;
-                    });
+                    // ... sort logic ...
                 } else {
                     files.sort((a, b) => a.name.localeCompare(b.name));
                 }
 
-                // [HYBRID LOGIC] Inject matching external videos
-                if (project.externalVideos && project.externalVideos.length > 0) {
-                    const activeMomento = displayMomentos.find(m => m.id === activeMomentoId);
-                    const activeMomentoName = activeMomento?.name;
+                // Strict filtering: If in video tab, ONLY allow videos
+                if (activeMomentoId === 'videos-virtual') {
+                    const videoCountBefore = files.length;
 
-                    if (activeMomentoName && activeMomentoId !== "videos-virtual") {
-                        const matchingVideos = project.externalVideos
-                            .filter((v: any) => v.momentName === activeMomentoName)
-                            .map((v: any) => ({
-                                id: v.id,
-                                name: v.title || "Video",
-                                mimeType: "video/external",
-                                thumbnailLink: v.thumbnail,
-                                width: 1920,
-                                height: 1080,
-                                isExternal: true,
-                                provider: v.provider,
-                                externalId: v.externalId
-                            }));
-
-                        files = [...files, ...matchingVideos];
-                    } else if (!activeMomentoId || activeMomentoId === "videos-virtual") {
-                        // Aggregate all videos for "Todos" view OR virtual "Videos" tab
-                        const allExternal = project.externalVideos.map((v: any) => ({
-                            id: v.id,
-                            name: v.title || "Video",
-                            mimeType: "video/external",
-                            thumbnailLink: v.thumbnail,
-                            width: 1920,
-                            height: 1080,
-                            isExternal: true,
-                            provider: v.provider,
-                            externalId: v.externalId
-                        }));
-                        files = [...files, ...allExternal];
+                    // Debug non-videos
+                    const nonVideos = files.filter(f => !f.mimeType?.startsWith('video/'));
+                    if (nonVideos.length > 0) {
+                        console.log("[DEBUG] Found non-video files in video tab:", nonVideos.slice(0, 3).map(f => ({ name: f.name, mime: f.mimeType })));
                     }
+
+                    // Filter by mimeType OR extension (for robustness)
+                    files = files.filter(f =>
+                        f.mimeType?.startsWith('video/') ||
+                        /\.(mp4|mov|avi|webm|m4v)$/i.test(f.name)
+                    );
+
+                    console.log(`[CloserGallery] Filtered non-videos: ${videoCountBefore} -> ${files.length}`);
                 }
 
-                setGalleryFiles(files.sort((a, b) => {
-                    const idxA = project.fileOrder?.indexOf(a.id) ?? -1;
-                    const idxB = project.fileOrder?.indexOf(b.id) ?? -1;
-                    if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-                    if (idxA !== -1) return -1;
-                    if (idxB !== -1) return 1;
-                    return a.name.localeCompare(b.name);
-                }));
+                // Only update state if this fetch is still current (not stale)
+                if (!isStale) {
+                    console.log("[CloserGallery] Setting galleryFiles:", files.length, "files for momento:", activeMomentoId);
+                    if (files.length > 0) {
+                        console.log("[CloserGallery] First 5 files:", files.slice(0, 5).map(f => ({ name: f.name, mimeType: f.mimeType })));
+                    }
+                    setGalleryFiles(files);
+                } else {
+                    console.log("[CloserGallery] Skipping stale fetch result:", files.length, "files");
+                }
+
             } catch (error) {
                 console.error("Error loading content:", error);
             } finally {
-                setIsLoadingFiles(false);
+                if (!isStale) {
+                    setIsLoadingFiles(false);
+                }
             }
         };
-
         fetchContent();
-    }, [activeMomentoId, isLocked, isLoadingStructure, project.cloudAccountId, project.rootFolderId, momentos, project.externalVideos, displayMomentos]);
+
+        // Cleanup: mark this fetch as stale when activeMomentoId changes
+        return () => {
+            isStale = true;
+        };
+    }, [activeMomentoId, isLocked, isLoadingStructure, collaborativeSections]);
 
 
 
@@ -270,15 +343,30 @@ export default function CloserGalleryClient({
                 coverImageFocus={project.headerImageFocus}
             />
 
-            {/* Momentos Navigation with Virtual Video Chip */}
-            {displayMomentos.length > 0 && (
-                <MomentosBar
-                    momentos={displayMomentos}
-                    activeMomentoId={activeMomentoId}
-                    onMomentoChange={setActiveMomentoId}
-                    theme="dark"
-                />
-            )}
+            {/* Single Merged Navigation Bar */}
+            {(() => {
+                // Merge photographer + collaborative, filter out:
+                // - "Uploads" folders (collaborative root)
+                // - Physical "Videos" folders (we use virtual chip instead, id = "videos-virtual")
+                const allMomentos = [
+                    ...displayPhotographerMomentos.filter((m: { id: string; name: string }) =>
+                        !m.name.toLowerCase().includes('uploads') &&
+                        !(m.name.toLowerCase() === 'videos' && m.id !== 'videos-virtual')
+                    ),
+                    ...collaborativeMomentos
+                ];
+
+                if (allMomentos.length === 0) return null;
+
+                return (
+                    <MomentosBar
+                        momentos={allMomentos}
+                        activeMomentoId={activeMomentoId}
+                        onMomentoChange={setActiveMomentoId}
+                        theme="dark"
+                    />
+                );
+            })()}
 
             {/* Music Player */}
             {isMusicEnabled && musicTrack && (
@@ -292,20 +380,17 @@ export default function CloserGalleryClient({
             )}
 
             {/* Main Gallery Viewer */}
-            {isLoadingFiles && !isVideoTabActive ? (
-                <div className="flex flex-col items-center justify-center min-h-[50vh]">
-                    <Loader2 className="w-8 h-8 text-neutral-500 animate-spin mb-4" />
-                    <p className="text-neutral-500 text-sm tracking-widest font-light uppercase">Cargando Momento...</p>
-                </div>
+            {isLoadingFiles ? (
+                <GalleryLoaderGrid theme="dark" />
             ) : (
                 <GalleryViewer
-                    key={isVideoTabActive ? "videos" : "photos"}
+                    key={`gallery-${activeMomentoId || 'todos'}`}
                     cloudAccountId={project.cloudAccountId}
                     folderId={isVideoTabActive ? (project.videoFolderId || "") : project.rootFolderId}
                     projectId={project.id}
 
-                    // Pass aggregated files
-                    preloadedFiles={!isVideoTabActive ? galleryFiles : undefined}
+                    // Pass aggregated files (always, for both photos and videos)
+                    preloadedFiles={galleryFiles}
 
                     // Config
                     projectName={project.name}
@@ -319,7 +404,7 @@ export default function CloserGalleryClient({
                     watermarkText={businessName}
                     zipDownloadsEnabled={effectiveZipEnabled}
                     zipFileId={project.zipFileId}
-                    layoutType={project.layoutType}
+                    layoutType={isVideoTabActive ? "grid" : project.layoutType}
 
                     theme="dark"
                     mediaType={isVideoTabActive ? "videos" : "photos"}

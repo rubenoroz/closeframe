@@ -15,6 +15,7 @@ import DriveFilePicker from "@/components/DriveFilePicker";
 import ZipFilePicker from "@/components/ZipFilePicker";
 import FocalPointPicker from "@/components/FocalPointPicker";
 import MusicPicker from "@/components/MusicPicker";
+import CollaborativeSettings from "@/components/gallery/CollaborativeSettings";
 
 interface Project {
     id: string;
@@ -76,7 +77,9 @@ export default function DashboardPage() {
         lowResDownloads?: boolean;
         passwordProtection?: boolean;
         galleryCover?: boolean;
+        galleryCover?: boolean;
         closerGalleries?: boolean; // [NEW] Feature flag
+        collaborativeGalleries?: boolean; // [NEW] Feature flag
     } | null>(null);
     const [showCoverPicker, setShowCoverPicker] = useState(false);
     const [showHeaderImagePicker, setShowHeaderImagePicker] = useState(false);
@@ -153,7 +156,8 @@ export default function DashboardPage() {
                             lowResDownloads: features.lowResDownloads ?? false,
                             passwordProtection: features.passwordProtection ?? true,
                             galleryCover: features.galleryCover ?? features.coverImage ?? false,
-                            closerGalleries: features.closerGalleries ?? features.zipDownloadsEnabled === true // Proxy for Studio
+                            closerGalleries: features.closerGalleries ?? features.zipDownloadsEnabled === true, // Proxy for Studio
+                            collaborativeGalleries: features.collaborativeGalleries ?? false
                         });
                     } else if (settingsData.user.plan?.limits) {
                         try {
@@ -166,7 +170,8 @@ export default function DashboardPage() {
                                 lowResDownloads: limits.lowResDownloads ?? false,
                                 passwordProtection: limits.passwordProtection ?? true,
                                 galleryCover: limits.coverImage ?? limits.galleryCover ?? false,
-                                closerGalleries: limits.closerGalleries ?? limits.zipDownloadsEnabled === true
+                                closerGalleries: limits.closerGalleries ?? limits.zipDownloadsEnabled === true,
+                                collaborativeGalleries: limits.collaborativeGalleries ?? false
                             });
                         } catch { }
                     }
@@ -797,7 +802,6 @@ export default function DashboardPage() {
                                                     </label>
                                                     <span className="text-xs text-neutral-400 font-medium">Reproducción automática (Autoplay)</span>
                                                 </div>
-
                                                 {/* Moments & File Organization CTA */}
                                                 <div>
                                                     <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-3 block">Gestión de Contenido</label>
@@ -827,6 +831,16 @@ export default function DashboardPage() {
                                                 Activa para habilitar navegación por momentos, música y diseño inmersivo.
                                             </p>
                                         )}
+                                    </div>
+                                )}
+
+                                {/* B - COLLABORATIVE GALLERY SECTION (Only for Closer Galleries) */}
+                                {editData.isCloserGallery && (
+                                    <div className={`p-5 rounded-2xl border-2 transition-all ${isLight ? "bg-neutral-50 border-neutral-100" : "bg-neutral-800/20 border-neutral-800"}`}>
+                                        <CollaborativeSettings
+                                            projectId={selectedProject.id}
+                                            isGoogleDrive={selectedProject.cloudAccount.provider === 'google'}
+                                        />
                                     </div>
                                 )}
 
@@ -936,8 +950,8 @@ export default function DashboardPage() {
                                                                     type="button"
                                                                     onClick={() => setEditData({ ...editData, headerFontFamily: opt.val })}
                                                                     className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between ${editData.headerFontFamily === opt.val
-                                                                            ? (isLight ? 'bg-emerald-50 text-emerald-600' : 'bg-emerald-500/10 text-emerald-400')
-                                                                            : (isLight ? 'hover:bg-neutral-50' : 'hover:bg-white/5')
+                                                                        ? (isLight ? 'bg-emerald-50 text-emerald-600' : 'bg-emerald-500/10 text-emerald-400')
+                                                                        : (isLight ? 'hover:bg-neutral-50' : 'hover:bg-white/5')
                                                                         }`}
                                                                     style={{ fontFamily: opt.font }}
                                                                 >
@@ -1438,7 +1452,7 @@ export default function DashboardPage() {
                                 </div>
                             </form>
                         </div>
-                    </div>
+                    </div >
                 )
                 }
             </div >

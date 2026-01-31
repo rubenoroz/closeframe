@@ -185,6 +185,9 @@ model Project {
   user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   cloudAccount      CloudAccount @relation(fields: [cloudAccountId], references: [id])
   externalVideos    ExternalVideo[]
+  
+  // Collaborative Gallery (QR Uploads)
+  collaborativeGallery CollaborativeGallery?
 }
 
 model Booking {
@@ -208,6 +211,7 @@ model Plan {
   displayName String   // "Free", "Pro", "Studio"
   description String?
   price       Float    @default(0)
+  monthlyPrice Float?  // Price for monthly billing if different
   currency    String   @default("USD")
   interval    String   @default("month") // "month", "year"
   features    String   // JSON array de características (Legacy)
@@ -350,4 +354,86 @@ model ExternalVideo {
   updatedAt   DateTime @updatedAt
 
   @@index([projectId])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// COLLABORATIVE GALLERIES (QR UPLOADS)
+// ═══════════════════════════════════════════════════════════════════════════
+
+model CollaborativeGallery {
+  id              String   @id @default(cuid())
+  projectId       String   @unique
+  isActive        Boolean  @default(false)
+  
+  // Limit Overrides (null = use plan defaults)
+  maxFilesTotal       Int?     // Max files for entire gallery
+  maxFilesPerSection  Int?     // Max files per QR section
+  maxFilesPerDevice   Int?     // Max files per device fingerprint
+  maxFileSizeBytes    Int?     // Max single file size
+  allowVideo          Boolean  @default(false)  // Only enabled by Super Admin
+  
+  // Google Drive folder for collaborative uploads
+  driveFolderId   String?
+  
+  // Relations
+  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sections        QrSection[]
+  uploads         CollaborativeUpload[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model QrSection {
+  id                      String   @id @default(cuid())
+  collaborativeGalleryId  String
+  
+  name            String   // "Mesa 1", "VIP", "Día 1"
+  slug            String   @unique  // Public token for URL (e.g., "abc123xyz")
+  
+  // Google Drive subfolder
+  driveFolderId   String
+  
+  isActive        Boolean  @default(true)
+  
+  // Stats
+  accessCount     Int      @default(0)
+  
+  // Relations
+  gallery         CollaborativeGallery @relation(fields: [collaborativeGalleryId], references: [id], onDelete: Cascade)
+  uploads         CollaborativeUpload[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([collaborativeGalleryId])
+}
+
+model CollaborativeUpload {
+  id                      String   @id @default(cuid())
+  collaborativeGalleryId  String
+  qrSectionId             String
+  
+  // File info
+  driveFileId     String
+  fileName        String
+  mimeType        String
+  sizeBytes       Int
+  
+  // Device tracking (for limits and audit)
+  deviceId        String?  // Browser fingerprint hash
+  ipAddress       String?
+  userAgent       String?
+  
+  status          String   @default("success")  // success, failed_limit, failed_type, failed_size
+  
+  // Relations
+  gallery         CollaborativeGallery @relation(fields: [collaborativeGalleryId], references: [id], onDelete: Cascade)
+  section         QrSection @relation(fields: [qrSectionId], references: [id], onDelete: Cascade)
+  
+  createdAt       DateTime @default(now())
+  
+  @@index([collaborativeGalleryId])
+  @@index([qrSectionId])
+  @@index([deviceId])
 }

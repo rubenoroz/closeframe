@@ -80,7 +80,10 @@ export async function PUT(req: NextRequest) {
         if (name !== undefined) updateData.name = name;
         if (displayName !== undefined) updateData.displayName = displayName;
         if (description !== undefined) updateData.description = description;
+        if (description !== undefined) updateData.description = description;
         if (price !== undefined) updateData.price = price;
+        if (body.monthlyPrice !== undefined) updateData.monthlyPrice = body.monthlyPrice;
+        if (currency !== undefined) updateData.currency = currency;
         if (currency !== undefined) updateData.currency = currency;
         if (interval !== undefined) updateData.interval = interval;
         if (isActive !== undefined) updateData.isActive = isActive;
@@ -117,7 +120,7 @@ export async function POST(req: NextRequest) {
         }
 
         const body = await req.json();
-        const { name, displayName, description, price, currency, interval, features, limits, isActive, config } = body;
+        const { name, displayName, description, price, monthlyPrice, currency, interval, features, limits, isActive, config } = body;
 
         const newPlan = await prisma.plan.create({
             data: {
@@ -125,6 +128,7 @@ export async function POST(req: NextRequest) {
                 displayName,
                 description,
                 price,
+                monthlyPrice,
                 currency,
                 interval,
                 isActive: isActive ?? true,

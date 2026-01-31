@@ -75,7 +75,9 @@ export const PLAN_DEFAULTS = {
             bookingPayments: false,
             castingPayments: false,
             contracts: false,
-            store: false
+            store: false,
+            closerGalleries: false,
+            collaborativeGalleries: false
         },
         limits: {
             bioMaxLength: 150,
@@ -164,7 +166,9 @@ export const PLAN_DEFAULTS = {
             bookingPayments: false,
             castingPayments: false,
             contracts: false,
-            store: false
+            store: false,
+            closerGalleries: false,
+            collaborativeGalleries: false
         },
         limits: {
             bioMaxLength: 500,
@@ -230,6 +234,8 @@ export const PLAN_DEFAULTS = {
             castingPayments: true,
             bookingPayments: true,
             prioritySupport: true,
+            closerGalleries: true,
+            collaborativeGalleries: true,
 
             // False defaults to ensure type safety
             customDomain: false,
@@ -339,6 +345,8 @@ export const PLAN_DEFAULTS = {
             gdprCompliance: true,
             assistMigration: true,
             customStripePayments: true,
+            closerGalleries: true,
+            collaborativeGalleries: true,
 
             // False defaults
             lowResThumbnails: false

@@ -171,12 +171,49 @@ export default async function PublicGalleryPage({ params }: Props) {
         }
     }
 
+    // [NEW] Fetch Collaborative Gallery Sections if enabled
+    let collaborativeSections: { id: string; name: string; driveFolderId: string }[] = [];
+    let collaborativeGalleryId = null;
+    let debugMessage = "Init";
+
+    const isCollaborativeEnabled = effectiveConfig.features?.collaborativeGalleries;
+    debugMessage += ` | Enabled: ${isCollaborativeEnabled} | ${Date.now()}`;
+
+    try {
+        if (isCollaborativeEnabled) {
+            const collabGallery = await prisma.collaborativeGallery.findUnique({
+                where: { projectId: project.id },
+                include: {
+                    sections: {
+                        where: { isActive: true },
+                        select: { id: true, name: true, driveFolderId: true }
+                    }
+                }
+            });
+
+            if (collabGallery) {
+                debugMessage += ` | ValidGallery: ${collabGallery.id}`;
+                if (collabGallery.isActive) {
+                    collaborativeGalleryId = collabGallery.id;
+                    collaborativeSections = collabGallery.sections;
+                    debugMessage += ` | SECTIONS: ${collabGallery.sections.length}`;
+                }
+            } else {
+                debugMessage += " | NoGalleryFound";
+            }
+        }
+    } catch (e: any) {
+        debugMessage += ` | ERROR: ${e.message}`;
+    }
+
     // Create enhanced project object with detected video folder and plan limits
     const enhancedProject = {
         ...project,
         enableVideoTab,
         videoFolderId,
-        externalVideos, // [NEW] Pass videos to client
+        externalVideos,
+        collaborativeSections, // Pass sections to client
+        collaborativeGalleryId,
         enableWatermark: project.enableWatermark || false,
         planLimits: {
             maxImagesPerProject: effectiveConfig.limits?.maxImagesPerProject ?? null,
@@ -202,13 +239,22 @@ export default async function PublicGalleryPage({ params }: Props) {
             const structure = await indexer.indexGallery(project.cloudAccountId, project.rootFolderId, project.id);
 
             // Import Client Component dynamically or directly
-            const { default: CloserGalleryClient } = await import("@/components/closer/CloserGalleryClient");
+            const { default: CloserGalleryClient } = await import("@/components/gallery/CloserGalleryClient");
 
             return (
                 <CloserGalleryClient
                     project={enhancedProject}
                     structure={structure}
-                    studioProfile={project.user}
+                    // studioProfile={project.user} // REMOVED - Incompatible
+                    businessName={project.user?.businessName}
+                    businessLogo={project.user?.businessLogo}
+                    businessWebsite={project.user?.businessWebsite}
+                    theme={project.user?.theme}
+                    businessLogoScale={project.user?.businessLogoScale}
+
+                    collaborativeSections={collaborativeSections}
+                    debugMessage={"HARDCODED_TEST_" + Date.now()}
+                    plan={project.user.plan}
                 />
             );
         } catch (error) {
