@@ -3,8 +3,10 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Save, Loader2, GripVertical, Folder as FolderIcon, LayoutGrid, Video, Trash2, Plus } from "lucide-react";
+import { ArrowLeft, Save, Loader2, GripVertical, Folder as FolderIcon, LayoutGrid, Video, Trash2, Plus, QrCode } from "lucide-react";
 import GalleryLoaderGrid from "@/components/gallery/GalleryLoaderGrid";
+import CollaborativeSettings from "@/components/gallery/CollaborativeSettings";
+
 import {
     DndContext,
     closestCenter,
@@ -74,6 +76,7 @@ export default function OrganizePage() {
 
     const [cloudAccountId, setCloudAccountId] = useState<string | null>(null);
     const [rootFolderId, setRootFolderId] = useState<string | null>(null);
+    const [isGoogleDrive, setIsGoogleDrive] = useState(false); // [NEW] Track provider
     const [projectName, setProjectName] = useState("");
 
     const sensors = useSensors(
@@ -117,7 +120,7 @@ export default function OrganizePage() {
 
     // [NEW] Effect to fetch active tab content if missing
     useEffect(() => {
-        if (!loading && activeTabId !== 'videos' && !loadedFolders.has(activeTabId) && cloudAccountId && rootFolderId) {
+        if (!loading && activeTabId !== 'videos' && activeTabId !== 'collaborative' && !loadedFolders.has(activeTabId) && cloudAccountId && rootFolderId) {
             const loadTab = async () => {
                 setLoadingTab(true);
                 await fetchFolderFiles(activeTabId, cloudAccountId, rootFolderId);
@@ -125,7 +128,7 @@ export default function OrganizePage() {
             };
             loadTab();
         }
-    }, [activeTabId, loading, cloudAccountId, rootFolderId]);
+    }, [activeTabId, loading, cloudAccountId, rootFolderId, loadedFolders]);
 
     // [NEW] Background queue effect
     useEffect(() => {
@@ -157,6 +160,7 @@ export default function OrganizePage() {
                 setProjectName(project.name);
                 setCloudAccountId(project.cloudAccountId);
                 setRootFolderId(project.rootFolderId);
+                setIsGoogleDrive(project.cloudAccount?.provider === 'google'); // [NEW]
                 setEnableVideoTab(!!project.enableVideoTab);
                 setFileOrder(project.fileOrder || []);
 
@@ -264,6 +268,9 @@ export default function OrganizePage() {
             // Dragging video
             return;
         }
+
+        if (activeTabId === 'collaborative') return; // No DND in collaborative tab
+
 
         // Folder or File
         if (folders.find(f => f.id === active.id)) {
@@ -445,6 +452,8 @@ export default function OrganizePage() {
 
     // Determine if we show 'Principal' tab
     const showPrincipalTab = allFiles.some(f => f.folderId === 'root') || folders.length === 0 || loadedFolders.has('root');
+    const showCollaborativeTab = isGoogleDrive; // Only for Google Drive projects
+
 
     if (loading) {
         return (
@@ -474,90 +483,113 @@ export default function OrganizePage() {
                             <Link href="/dashboard" className="p-2.5 hover:bg-white/5 rounded-full transition text-neutral-400 hover:text-white border border-transparent hover:border-white/10">
                                 <ArrowLeft className="w-5 h-5" />
                             </Link>
-                            <div>
+                            <div className="hidden sm:block">
                                 <h1 className="text-xl font-light tracking-tight mb-1">{projectName}</h1>
                                 <p className="text-xs text-neutral-500 font-medium uppercase tracking-widest">
                                     Organización de Contenido
-                                    <span className="ml-2 px-2 py-0.5 bg-neutral-800 text-neutral-400 rounded text-[10px]">
-                                        Video Mode: {enableVideoTab ? "ON" : "OFF"}
-                                    </span>
                                 </p>
                             </div>
+                            {/* Mobile Compact Header Info */}
+                            <div className="sm:hidden">
+                                <h1 className="text-sm font-medium tracking-tight line-clamp-1">{projectName}</h1>
+                            </div>
                         </div>
+                    </div>
 
-                        <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                        {activeTabId !== 'collaborative' && (
                             <button
                                 onClick={() => setShowVideoPicker(true)}
-                                className="flex items-center gap-2 px-4 py-2.5 bg-neutral-800 hover:bg-neutral-700 text-white rounded-full text-sm font-medium transition border border-white/5"
+                                className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-neutral-800 hover:bg-neutral-700 text-white rounded-full text-xs sm:text-sm font-medium transition border border-white/5 whitespace-nowrap"
                                 title="Agregar video de YouTube o Vimeo"
                             >
                                 <Plus className="w-4 h-4" />
-                                <span className="hidden sm:inline">Agregar YouTube/Vimeo</span>
+                                <span className="hidden sm:inline">Agregar Video</span>
                                 <span className="sm:hidden">Video</span>
                             </button>
+                        )}
 
-                            <button
-                                onClick={handleSave}
-                                disabled={saving}
-                                className="flex items-center gap-2 px-6 py-2.5 bg-white text-black hover:bg-neutral-200 rounded-full text-sm font-medium transition disabled:opacity-50 shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_25px_rgba(255,255,255,0.2)]"
-                            >
-                                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                                Guardar Cambios
-                            </button>
-                        </div>
+                        <button
+                            onClick={handleSave}
+                            disabled={saving}
+                            className="flex items-center gap-2 px-4 sm:px-6 py-2 bg-white text-black hover:bg-neutral-200 rounded-full text-xs sm:text-sm font-medium transition disabled:opacity-50 shadow-[0_0_15px_rgba(255,255,255,0.1)]"
+                        >
+                            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                            <span className="hidden sm:inline">Guardar Cambios</span>
+                            <span className="sm:hidden">Guardar</span>
+                        </button>
                     </div>
+                </div>
 
-                    {/* --- TABS (Sortable Folders) --- */}
-                    <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide mask-linear-fade">
-                        {/* Root Tab (Conditional) */}
-                        {showPrincipalTab && (
+                {/* --- TABS (Sortable Folders) --- */}
+                <div className="flex items-center gap-2 overflow-x-auto pb-4 pt-2 px-1 scrollbar-hide mask-linear-fade -mx-6 sm:mx-0 px-6 sm:px-0">
+                    {/* Collaborative / QR Tab (First for visibility if requested, or Last? Usually Last) */}
+
+                    {/* Root Tab (Conditional) */}
+                    {showPrincipalTab && (
+                        <button
+                            onClick={() => setActiveTabId('root')}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium transition whitespace-nowrap uppercase tracking-wider ${activeTabId === 'root' ? 'bg-white text-black' : 'bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-white hover:border-neutral-700'
+                                }`}
+                        >
+                            <LayoutGrid className="w-3.5 h-3.5" />
+                            Principal
+                        </button>
+                    )}
+
+                    {showPrincipalTab && <div className="w-px h-6 bg-neutral-800 mx-2 shrink-0" />}
+
+                    {/* Sortable Folder Tabs */}
+                    <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragStart={handleDragStart}
+                        onDragEnd={handleDragEnd}
+                    >
+                        <SortableContext items={folders.map(f => f.id)} strategy={horizontalListSortingStrategy}>
+                            <div className="flex items-center gap-2">
+                                {folders.map(folder => (
+                                    <SortableTab
+                                        key={folder.id}
+                                        folder={folder}
+                                        isActive={activeTabId === folder.id}
+                                        onClick={() => setActiveTabId(folder.id)}
+                                    />
+                                ))}
+                            </div>
+                        </SortableContext>
+                    </DndContext>
+
+                    {enableVideoTab && (
+                        <>
+                            <div className="w-px h-6 bg-neutral-800 mx-2 shrink-0" />
                             <button
-                                onClick={() => setActiveTabId('root')}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium transition whitespace-nowrap uppercase tracking-wider ${activeTabId === 'root' ? 'bg-white text-black' : 'bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-white hover:border-neutral-700'
+                                onClick={() => setActiveTabId('videos')}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium transition whitespace-nowrap uppercase tracking-wider ${activeTabId === 'videos' ? 'bg-white text-black' : 'bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-white hover:border-neutral-700'
                                     }`}
                             >
-                                <LayoutGrid className="w-3.5 h-3.5" />
-                                Principal
+                                <Video className="w-3.5 h-3.5" />
+                                Videos
                             </button>
-                        )}
+                        </>
+                    )}
 
-                        {showPrincipalTab && <div className="w-px h-6 bg-neutral-800 mx-2 shrink-0" />}
-
-                        {/* Sortable Folder Tabs */}
-                        <DndContext
-                            sensors={sensors}
-                            collisionDetection={closestCenter}
-                            onDragStart={handleDragStart}
-                            onDragEnd={handleDragEnd}
-                        >
-                            <SortableContext items={folders.map(f => f.id)} strategy={horizontalListSortingStrategy}>
-                                <div className="flex items-center gap-2">
-                                    {folders.map(folder => (
-                                        <SortableTab
-                                            key={folder.id}
-                                            folder={folder}
-                                            isActive={activeTabId === folder.id}
-                                            onClick={() => setActiveTabId(folder.id)}
-                                        />
-                                    ))}
-                                </div>
-                            </SortableContext>
-                        </DndContext>
-
-                        {enableVideoTab && (
-                            <>
-                                <div className="w-px h-6 bg-neutral-800 mx-2 shrink-0" />
-                                <button
-                                    onClick={() => setActiveTabId('videos')}
-                                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium transition whitespace-nowrap uppercase tracking-wider ${activeTabId === 'videos' ? 'bg-white text-black' : 'bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-white hover:border-neutral-700'
-                                        }`}
-                                >
-                                    <Video className="w-3.5 h-3.5" />
-                                    YouTube / Vimeo
-                                </button>
-                            </>
-                        )}
-                    </div>
+                    {showCollaborativeTab && (
+                        <>
+                            <div className="w-px h-6 bg-neutral-800 mx-2 shrink-0" />
+                            <button
+                                onClick={() => setActiveTabId('collaborative')}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium transition whitespace-nowrap uppercase tracking-wider ${activeTabId === 'collaborative'
+                                    ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white border-transparent shadow-[0_0_15px_rgba(139,92,246,0.3)]'
+                                    : 'bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-white hover:border-neutral-700'
+                                    }`}
+                            >
+                                <QrCode className="w-3.5 h-3.5" />
+                                <span className="hidden sm:inline">Galería Colaborativa</span>
+                                <span className="sm:hidden">QR / Invitados</span>
+                            </button>
+                        </>
+                    )}
                 </div>
             </header>
 
@@ -574,6 +606,18 @@ export default function OrganizePage() {
                         <div className="col-span-full py-32 flex flex-col items-center justify-center">
                             <GalleryLoaderGrid />
                             <p className="mt-4 text-neutral-500 text-xs tracking-widest uppercase animate-pulse">Cargando momento...</p>
+                        </div>
+                    ) : activeTabId === 'collaborative' ? (
+                        /* COLLABORATIVE VIEW */
+                        <div className="col-span-full max-w-4xl mx-auto w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <div className="mb-8 text-center sm:text-left">
+                                <h2 className="text-2xl font-light mb-2">Galería Colaborativa</h2>
+                                <p className="text-neutral-400 text-sm">Gestiona los códigos QR para que tus invitados suban fotos directamente.</p>
+                            </div>
+                            <CollaborativeSettings
+                                projectId={projectId}
+                                isGoogleDrive={isGoogleDrive}
+                            />
                         </div>
                     ) : activeTabId === 'videos' ? (
                         /* VIDEO GRID */
@@ -635,12 +679,12 @@ export default function OrganizePage() {
                                 <div className="px-4 py-2 bg-neutral-800 text-white rounded-full text-xs font-medium shadow-2xl opacity-90 cursor-grabbing border border-emerald-500/50 tracking-wider uppercase">
                                     {folders.find(f => f.id === activeDragId)?.name}
                                 </div>
-                            ) : activeTabId === 'videos' ? (
+                            ) : activeTabId === 'collaborative' ? null : activeTabId === 'videos' ? (
                                 // Video Drag Overlay (simplified)
                                 <div className="w-full aspect-video bg-neutral-800 rounded-lg shadow-2xl border border-emerald-500"></div>
                             ) : (
                                 // File Drag Overlay
-                                <div className="w-full aspect-[2/3] bg-neutral-800 rounded-lg overflow-hidden shadow-2xl skew-y-2 scale-105 border-2 border-emerald-500 opacity-90 cursor-grabbing">
+                                <div className="w-full aspect-[2/3] bg-neutral-900 rounded-lg overflow-hidden shadow-2xl skew-y-2 scale-105 border-2 border-emerald-500 opacity-90 cursor-grabbing">
                                     <img
                                         src={`/api/cloud/thumbnail?c=${cloudAccountId}&f=${activeDragId}&s=300${allFiles.find(f => f.id === activeDragId)?.thumbnailLink ? `&t=${encodeURIComponent(allFiles.find(f => f.id === activeDragId)!.thumbnailLink!)}` : ""}`}
                                         alt=""
@@ -783,4 +827,3 @@ function SortableVideo({ video, onDelete }: { video: VideoItem, onDelete: () => 
         </div>
     );
 }
-
