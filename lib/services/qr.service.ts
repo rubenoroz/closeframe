@@ -188,7 +188,7 @@ export async function generateQRCode(url: string): Promise<Buffer> {
         </svg>
     `);
 
-    let footerOverlay = footerBg;
+    let footerOverlay: any = footerBg;
 
     try {
         let logoSvg = await fs.promises.readFile(FULL_LOGO_PATH, 'utf8');
