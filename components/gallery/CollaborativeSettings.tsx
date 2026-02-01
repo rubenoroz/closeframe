@@ -207,8 +207,12 @@ export default function CollaborativeSettings({ projectId, isGoogleDrive }: Prop
                         <QrCode className="w-5 h-5 text-violet-400" />
                     </div>
                     <div>
-                        <h3 className="text-white font-semibold">Collaborative Gallery</h3>
-                        <p className="text-slate-400 text-sm">Let guests upload photos via QR codes</p>
+                        <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">
+                            Galería Colaborativa
+                        </h2>
+                        <p className="text-violet-200/60">
+                            Deja que tus invitados suban fotos vía código QR
+                        </p>
                     </div>
                 </div>
 
@@ -237,37 +241,37 @@ export default function CollaborativeSettings({ projectId, isGoogleDrive }: Prop
                     {/* Stats */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                         <div className="bg-white/5 rounded-xl p-4">
-                            <p className="text-slate-400 text-xs mb-1">Total Uploads</p>
+                            <p className="text-slate-400 text-xs mb-1">Total Subidas</p>
                             <p className="text-2xl font-bold text-white">{data.totalUploads}</p>
                         </div>
                         <div className="bg-white/5 rounded-xl p-4">
-                            <p className="text-slate-400 text-xs mb-1">QR Sections</p>
+                            <p className="text-slate-400 text-xs mb-1">Secciones QR</p>
                             <p className="text-2xl font-bold text-white">{data.sections.length}</p>
                         </div>
                         <div className="bg-white/5 rounded-xl p-4">
-                            <p className="text-slate-400 text-xs mb-1">Status</p>
-                            <p className="text-lg font-medium text-emerald-400">Active</p>
+                            <p className="text-slate-400 text-xs mb-1">Estado</p>
+                            <p className="text-lg font-medium text-emerald-400">Activo</p>
                         </div>
                     </div>
 
                     {/* Sections */}
                     <div className="space-y-3">
                         <div className="flex items-center justify-between">
-                            <h4 className="text-white font-medium">QR Sections</h4>
+                            <h4 className="text-white font-medium">Secciones QR</h4>
                             <button
                                 type="button"
                                 onClick={() => setShowAddModal(true)}
                                 className="flex items-center gap-2 px-3 py-1.5 bg-white/10 hover:bg-white/15 rounded-lg text-sm text-white transition-colors"
                             >
                                 <Plus className="w-4 h-4" />
-                                Add Section
+                                Agregar Sección
                             </button>
                         </div>
 
                         {data.sections.length === 0 ? (
                             <div className="bg-white/5 rounded-xl p-6 text-center">
                                 <Upload className="w-8 h-8 text-slate-500 mx-auto mb-2" />
-                                <p className="text-slate-400 text-sm">No sections yet. Create one to generate a QR code.</p>
+                                <p className="text-slate-400 text-sm">No hay secciones aún. Crea una para generar un código QR.</p>
                             </div>
                         ) : (
                             <div className="space-y-2">
@@ -285,7 +289,7 @@ export default function CollaborativeSettings({ projectId, isGoogleDrive }: Prop
                                             <div>
                                                 <p className="text-white font-medium">{section.name}</p>
                                                 <p className="text-slate-500 text-xs">
-                                                    {section.uploadCount} uploads • {section.accessCount} scans
+                                                    {section.uploadCount} subidas • {section.accessCount} escaneos
                                                 </p>
                                             </div>
                                         </div>
@@ -298,7 +302,7 @@ export default function CollaborativeSettings({ projectId, isGoogleDrive }: Prop
                                                     handleCopyLink(section.slug);
                                                 }}
                                                 className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                                                title="Copy link"
+                                                title="Copiar enlace"
                                             >
                                                 {copiedSlug === section.slug ? (
                                                     <Check className="w-4 h-4 text-emerald-400" />
@@ -313,7 +317,7 @@ export default function CollaborativeSettings({ projectId, isGoogleDrive }: Prop
                                                     handleDownloadQR(section.id, section.name);
                                                 }}
                                                 className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                                                title="Download QR"
+                                                title="Descargar QR"
                                             >
                                                 <Download className="w-4 h-4 text-slate-400" />
                                             </button>
@@ -323,7 +327,7 @@ export default function CollaborativeSettings({ projectId, isGoogleDrive }: Prop
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                                                title="Open upload page"
+                                                title="Abrir página de subida"
                                             >
                                                 <ExternalLink className="w-4 h-4 text-slate-400" />
                                             </a>
@@ -353,12 +357,12 @@ export default function CollaborativeSettings({ projectId, isGoogleDrive }: Prop
                             onClick={(e) => e.stopPropagation()}
                             className="bg-slate-800 rounded-2xl p-6 w-full max-w-md border border-white/10"
                         >
-                            <h3 className="text-white font-semibold text-lg mb-4">Add QR Section</h3>
+                            <h3 className="text-white font-semibold text-lg mb-4">Nueva Sección QR</h3>
                             <input
                                 type="text"
                                 value={newSectionName}
                                 onChange={(e) => setNewSectionName(e.target.value)}
-                                placeholder="e.g., Table 1, VIP Area, Day 1..."
+                                placeholder="ej. Mesa 1, Zona VIP, Día 1..."
                                 className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:border-violet-500 mb-4"
                                 autoFocus
                             />
@@ -368,7 +372,7 @@ export default function CollaborativeSettings({ projectId, isGoogleDrive }: Prop
                                     onClick={() => setShowAddModal(false)}
                                     className="px-4 py-2 text-slate-400 hover:text-white transition-colors"
                                 >
-                                    Cancel
+                                    Cancelar
                                 </button>
                                 <button
                                     type="button"
@@ -377,7 +381,7 @@ export default function CollaborativeSettings({ projectId, isGoogleDrive }: Prop
                                     className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
                                 >
                                     {creatingSection && <Loader2 className="w-4 h-4 animate-spin" />}
-                                    Create
+                                    Crear
                                 </button>
                             </div>
                         </motion.div>

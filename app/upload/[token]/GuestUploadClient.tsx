@@ -154,10 +154,10 @@ export default function GuestUploadClient({ token }: { token: string }) {
             <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-8 text-center"
+                className="mb-8 flex flex-col items-center"
             >
-                <h1 className="text-2xl font-bold text-white mb-2">📷 Closerlens</h1>
-                <p className="text-slate-400 text-sm">Share your photos</p>
+                <img src="/logo-white.svg" alt="Closerlens" className="h-8 mb-4 opacity-90" />
+                <p className="text-slate-400 text-sm">Comparte tus mejores fotos del evento</p>
             </motion.div>
 
             {/* Main Card */}
