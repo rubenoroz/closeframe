@@ -19,6 +19,69 @@ export default function GuestUploadClient({ token }: { token: string }) {
     const [deviceId] = useState(() => getOrCreateDeviceId());
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    const compressImage = async (file: File): Promise<File> => {
+        // Only convert images
+        if (!file.type.startsWith('image/')) return file;
+
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            const url = URL.createObjectURL(file);
+
+            img.onload = () => {
+                URL.revokeObjectURL(url);
+
+                let width = img.width;
+                let height = img.height;
+                const maxDim = 2048; // Max dimension
+
+                // Scaling logic
+                if (width > height) {
+                    if (width > maxDim) {
+                        height = Math.round((height * maxDim) / width);
+                        width = maxDim;
+                    }
+                } else {
+                    if (height > maxDim) {
+                        width = Math.round((width * maxDim) / height);
+                        height = maxDim;
+                    }
+                }
+
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    resolve(file); // Fallback
+                    return;
+                }
+
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // Convert to JPEG with quality 0.8
+                canvas.toBlob((blob) => {
+                    if (blob) {
+                        const newFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
+                            type: 'image/jpeg',
+                            lastModified: Date.now(),
+                        });
+                        resolve(newFile);
+                    } else {
+                        resolve(file); // Fallback
+                    }
+                }, 'image/jpeg', 0.8);
+            };
+
+            img.onerror = () => {
+                URL.revokeObjectURL(url);
+                resolve(file); // Fallback
+            };
+
+            img.src = url;
+        });
+    };
+
     const handleFileSelect = useCallback(async (files: FileList | null) => {
         if (!files || files.length === 0) return;
 
@@ -26,11 +89,18 @@ export default function GuestUploadClient({ token }: { token: string }) {
         setError(null);
         setProgress({ total: files.length, completed: 0, failed: 0 });
 
-        const uploadPromises = Array.from(files).map(async (file) => {
-            const formData = new FormData();
-            formData.append('file', file);
+        // Process files one by one to avoid memory issues on mobile
+        const results = [];
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
 
             try {
+                // Compress/Convert first
+                const processedFile = await compressImage(file);
+
+                const formData = new FormData();
+                formData.append('file', processedFile);
+
                 const res = await fetch(`/api/upload/${token}`, {
                     method: 'POST',
                     headers: {
@@ -46,14 +116,18 @@ export default function GuestUploadClient({ token }: { token: string }) {
                 }
 
                 setProgress(p => ({ ...p, completed: p.completed + 1 }));
-                return { success: true };
-            } catch (err) {
-                setProgress(p => ({ ...p, failed: p.failed + 1 }));
-                return { success: false, error: err instanceof Error ? err.message : 'Upload failed' };
-            }
-        });
+                results.push({ success: true });
 
-        const results = await Promise.all(uploadPromises);
+            } catch (err) {
+                console.error(`Upload error for ${file.name}:`, err);
+                setProgress(p => ({ ...p, failed: p.failed + 1 }));
+                results.push({
+                    success: false,
+                    error: err instanceof Error ? err.message : 'Upload failed'
+                });
+            }
+        }
+
         const failedCount = results.filter(r => !r.success).length;
         const lastError = results.find(r => !r.success)?.error;
 
@@ -61,7 +135,7 @@ export default function GuestUploadClient({ token }: { token: string }) {
             setState('error');
             setError(lastError || 'All uploads failed');
         } else if (failedCount > 0) {
-            setState('success');
+            setState('success'); // Show success but maybe warn? For now simple success
             setError(`${failedCount} file(s) could not be uploaded`);
         } else {
             setState('success');
