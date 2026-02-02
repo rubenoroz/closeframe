@@ -362,72 +362,44 @@ export default async function PlanBPage() {
                     </div>
                 </section>
 
-                {/* Smart Folders Section */}
-                <section className="py-20 md:py-32 bg-[#080808]">
-                    <div className="max-w-[1400px] mx-auto px-6 lg:px-20">
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 md:gap-32 items-center">
-                            <div>
-                                <h2 className="text-4xl md:text-7xl font-bold mb-10 tracking-tighter leading-tight">Smart Folders:<br /><span className="text-[#cdb8e1] italic">Mirror Sync.</span></h2>
-                                <p className="text-xl text-white/50 mb-12 font-light leading-relaxed">Olvídate de organizar dos veces. La estructura que creas en Google Drive se convierte automáticamente en el menú de tu galería CloserLens.</p>
-                                <div className="grid grid-cols-1 gap-4">
-                                    <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 rounded-3xl border-[#cdb8e1]/20 flex items-center gap-6">
-                                        <div className="size-14 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-400">
-                                            <span className="material-symbols-outlined text-4xl">drive_file_move</span>
-                                        </div>
-                                        <p className="text-sm text-white/60">Arrastra fotos a subcarpetas en tu Mac o PC y listo.</p>
-                                    </div>
-                                </div>
+                {/* Scena Section */}
+                <section className="py-24 md:py-32 bg-black text-white overflow-hidden relative" id="scena">
+                    <div className="max-w-[1400px] mx-auto px-6 lg:px-20 grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-24 items-center">
+                        <div>
+                            <span className="text-[#cdb8e1] font-black text-[10px] tracking-[0.4em] uppercase mb-6 block italic">SCENA</span>
+                            <h2 className="text-4xl md:text-6xl font-bold mb-8 leading-[1.1] tracking-tighter">
+                                Visualiza tu <br />
+                                flujo de trabajo.
+                            </h2>
+
+                            <div className="space-y-8 text-lg font-light text-white/60 leading-relaxed md:max-w-lg">
+                                <p>
+                                    Deja de perderte entre pendientes, mensajes y fechas sueltas. <br />
+                                    Scena te permite organizar tus proyectos en un tablero claro y flexible, pensado para flujos creativos reales.
+                                </p>
+                                <p>
+                                    Empieza en Kanban para ver el estado de cada proyecto y, cuando lo necesites, conviértelo en una línea de tiempo tipo Gantt para planear entregas, sesiones y fechas clave.
+                                </p>
                             </div>
-                            <div className="relative">
-                                <div className="flex flex-col gap-8">
-                                    <div className="hidden md:block bg-white/5 backdrop-blur-xl border border-white/10 p-6 rounded-2xl border-white/5 opacity-60 scale-95 translate-x-[-10%] origin-right">
-                                        <div className="flex items-center gap-4 mb-4 text-xs font-bold text-white/30 tracking-widest uppercase italic">
-                                            <img alt="Drive" className="size-4" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBdRFGduAjb227kdKrpEwHu_4M_DOQLYT52r1bVY3hnWKLhqgwNfzq-TTzVlc7hAZjqYCrI-uYYWyoYG3I5hte6a8jcL9EFOZ_Ax4b-rRpwGw6U_lTqydZ9CoHQV8-VUnhAKmYQcEKvDlSDN36fQDR2eUMaPgB-tsmFqILaKhhaKF3awdWQzTW2MHiEeXIPhRmXxGkJ3WTnLgRYoFO2rq_J0slHqyyKktnVNZ7xe4Knasf3zocxnN160f2sBvDbdYYo0TsN626my54" />
-                                            Google Drive Source
-                                        </div>
-                                        <div className="space-y-2">
-                                            <div className="flex items-center gap-3 py-2 px-3 bg-white/5 rounded-lg">
-                                                <span className="material-symbols-outlined text-blue-400">folder</span>
-                                                <span className="text-sm">Sofía y Fernando</span>
-                                            </div>
-                                            <div className="ml-8 space-y-2">
-                                                <div className="flex items-center gap-3 py-2 px-3 bg-white/10 rounded-lg">
-                                                    <span className="material-symbols-outlined text-yellow-400">folder</span>
-                                                    <span className="text-sm">01. Ceremonia</span>
-                                                </div>
-                                                <div className="flex items-center gap-3 py-2 px-3 bg-white/5 rounded-lg opacity-50">
-                                                    <span className="material-symbols-outlined text-yellow-400">folder</span>
-                                                    <span className="text-sm">02. Sesión Pareja</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="absolute top-1/2 left-0 -translate-y-1/2 -translate-x-1/2 z-20">
-                                        <div className="size-16 bg-[#cdb8e1] rounded-full flex items-center justify-center shadow-2xl border-4 border-[#0a0a0a]">
-                                            <span className="material-symbols-outlined text-black font-black">arrow_forward</span>
-                                        </div>
-                                    </div>
-                                    <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-[2.5rem] shadow-2xl border-[#cdb8e1]/40">
-                                        <div className="flex items-center gap-4 mb-8 text-xs font-bold text-[#cdb8e1] tracking-widest uppercase">
-                                            CloserLens Premium Gallery
-                                        </div>
-                                        <div className="flex flex-wrap gap-4 mb-10">
-                                            <div className="px-6 py-2 bg-[#cdb8e1] text-black rounded-full text-xs font-bold">TODO</div>
-                                            <div className="px-6 py-2 border border-white/10 rounded-full text-xs font-bold hover:border-[#cdb8e1] transition-all">CEREMONIA</div>
-                                            <div className="px-6 py-2 border border-white/10 rounded-full text-xs font-bold">SESIÓN PAREJA</div>
-                                            <div className="px-6 py-2 border border-white/10 rounded-full text-xs font-bold">FIESTA</div>
-                                        </div>
-                                        <div className="grid grid-cols-3 gap-3">
-                                            <div className="aspect-square bg-white/5 rounded-xl"></div>
-                                            <div className="aspect-square bg-white/5 rounded-xl"></div>
-                                            <div className="aspect-square bg-white/10 rounded-xl relative overflow-hidden">
-                                                <div className="absolute inset-0 bg-[#cdb8e1]/20 flex items-center justify-center">
-                                                    <span className="material-symbols-outlined text-[#cdb8e1] text-xl">favorite</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+
+                            <div className="mt-12 flex items-center gap-4">
+                                <a href="/signup" className="bg-white text-black px-8 py-4 rounded-full font-bold hover:bg-[#cdb8e1] transition-colors inline-flex items-center gap-2">
+                                    Empezar ahora
+                                    <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                                </a>
+                            </div>
+                        </div>
+
+                        <div className="relative space-y-6">
+                            {/* Gantt Image (Small/Top) */}
+                            <div className="relative z-10 ml-auto w-[85%] rounded-[2rem] overflow-hidden border border-white/10 shadow-2xl bg-[#1a1a1a]">
+                                <img src="/scena-gantt.jpg" alt="Gantt View" className="w-full h-auto" />
+                            </div>
+
+                            {/* Kanban Image (Main/Bottom) */}
+                            <div className="relative z-0 mr-auto w-full rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl bg-[#1a1a1a]">
+                                <img src="/scena-kanban.jpg" alt="Kanban Board" className="w-full h-auto" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none"></div>
                             </div>
                         </div>
                     </div>
