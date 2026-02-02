@@ -558,10 +558,10 @@ export default async function PlanBPage() {
                 </footer>
 
                 {/* Sticky Bottom Bar */}
-                <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[60] bg-black/80 backdrop-blur-xl border border-white/10 px-10 py-5 rounded-full flex items-center gap-10 shadow-2xl border-white/20">
-                    <span className="text-xs font-bold text-white/90 hidden lg:block tracking-widest uppercase">Eleva tu flujo de trabajo.</span>
-                    <div className="flex gap-4">
-                        <button className="bg-white text-black px-8 py-2 rounded-full text-xs font-black tracking-widest uppercase hover:bg-[#cdb8e1] transition-all">Prueba Gratis</button>
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] bg-black/60 backdrop-blur-md border border-white/10 px-6 py-3 rounded-full flex items-center gap-6 shadow-2xl border-white/5 hover:bg-black/80 transition-all">
+                    <span className="text-[10px] font-bold text-white/60 hidden lg:block tracking-widest uppercase">Eleva tu flujo de trabajo.</span>
+                    <div className="flex gap-3">
+                        <button className="bg-white text-black px-5 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase hover:bg-[#cdb8e1] transition-all">Prueba Gratis</button>
                     </div>
                 </div>
             </div>
