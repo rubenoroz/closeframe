@@ -552,7 +552,7 @@ export default async function PlanBPage() {
                             <a className="hover:text-[#cdb8e1] transition-colors" href="#">Twitter</a>
                         </div>
                     </div>
-                    <p className="max-w-[1400px] mx-auto mt-8 text-[9px] text-white/20 text-center leading-relaxed">
+                    <p className="max-w-[1400px] mx-auto mt-12 text-xs text-white/40 text-center leading-relaxed">
                         Google Drive, Dropbox, YouTube, Vimeo y OneDrive son marcas registradas de sus respectivos propietarios. Galerías Closer no está afiliado ni respaldado por dichas compañías.
                     </p>
                 </footer>
