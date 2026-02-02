@@ -37,7 +37,7 @@ export default function MomentosBar({
         <div className="w-full flex justify-center py-6 sticky top-0 z-30 pointer-events-none backdrop-blur-md bg-neutral-900/50 transition-all">
             <div
                 ref={scrollRef}
-                className="pointer-events-auto max-w-full overflow-x-auto flex items-center gap-2 px-6 pb-2 scrollbar-none no-scrollbar mask-gradient"
+                className="pointer-events-auto max-w-full overflow-x-auto flex items-center gap-2 px-6 pb-2 scrollbar-none no-scrollbar mask-gradient touch-pan-x"
                 style={{
                     maskImage: 'linear-gradient(to right, transparent, black 10%, black 90%, transparent)',
                     WebkitMaskImage: 'linear-gradient(to right, transparent, black 10%, black 90%, transparent)'

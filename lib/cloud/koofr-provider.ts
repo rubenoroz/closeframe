@@ -18,19 +18,34 @@ export class KoofrProvider {
 
     private async getPrimaryMountId(): Promise<string | null> {
         try {
+            console.log("[Koofr] Getting mounts...");
             const res = await fetch(`${this.baseUrl}/api/v2/mounts`, {
                 headers: this.getHeaders()
             });
-            if (!res.ok) return null;
+
+            console.log(`[Koofr] Mounts response: ${res.status} ${res.statusText}`);
+
+            if (!res.ok) {
+                const text = await res.text();
+                console.error(`[Koofr] Mounts error body: ${text}`);
+                throw new Error(`Koofr API Error: ${res.status} ${res.statusText} - ${text}`);
+            }
+
             const data = await res.json();
             const mounts = data.mounts;
             // Look for the primary mount (usually type 'device' and root true, or just the first one)
             // Koofr main storage is usually the first mount or has isPrimary
             const primary = mounts.find((m: any) => m.isPrimary) || mounts[0];
-            return primary ? primary.id : null;
-        } catch (e) {
-            console.error("Koofr getMounts error:", e);
-            return null;
+
+            if (!primary) {
+                console.error("[Koofr] No mounts found in response");
+                return null;
+            }
+
+            return primary.id;
+        } catch (e: any) {
+            console.error("Koofr getMounts error details:", e);
+            throw new Error(`Failed to get mounts: ${e.message}`);
         }
     }
 

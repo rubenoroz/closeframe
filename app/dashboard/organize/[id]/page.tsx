@@ -15,6 +15,8 @@ import {
     useSensor,
     useSensors,
     DragOverlay,
+    TouchSensor,
+    MouseSensor,
 } from "@dnd-kit/core";
 import {
     arrayMove,
@@ -80,7 +82,13 @@ export default function OrganizePage() {
     const [projectName, setProjectName] = useState("");
 
     const sensors = useSensors(
-        useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+        useSensor(MouseSensor, { activationConstraint: { distance: 10 } }),
+        useSensor(TouchSensor, {
+            activationConstraint: {
+                delay: 250,
+                tolerance: 5,
+            },
+        }),
         useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
     );
 
@@ -748,7 +756,7 @@ function SortableFile({ file, cloudAccountId }: { file: FileItem, cloudAccountId
             style={style}
             {...attributes}
             {...listeners}
-            className="group relative aspect-[3/2] bg-neutral-900 rounded-lg overflow-hidden border border-neutral-800/50 hover:border-neutral-600 transition-all duration-300 touch-none cursor-grab active:cursor-grabbing shadow-sm hover:shadow-xl hover:shadow-black/50"
+            className="group relative aspect-[3/2] bg-neutral-900 rounded-lg overflow-hidden border border-neutral-800/50 hover:border-neutral-600 transition-all duration-300 cursor-grab active:cursor-grabbing shadow-sm hover:shadow-xl hover:shadow-black/50"
         >
             <img
                 src={`/api/cloud/thumbnail?c=${cloudAccountId}&f=${file.id}&s=300${file.thumbnailLink ? `&t=${encodeURIComponent(file.thumbnailLink)}` : ""}`}
@@ -790,7 +798,7 @@ function SortableVideo({ video, onDelete }: { video: VideoItem, onDelete: () => 
             style={style}
             {...attributes}
             {...listeners}
-            className="group relative aspect-video bg-neutral-900 rounded-lg overflow-hidden border border-neutral-800/50 hover:border-neutral-600 transition-all duration-300 touch-none cursor-grab active:cursor-grabbing shadow-sm hover:shadow-xl hover:shadow-black/50"
+            className="group relative aspect-video bg-neutral-900 rounded-lg overflow-hidden border border-neutral-800/50 hover:border-neutral-600 transition-all duration-300 cursor-grab active:cursor-grabbing shadow-sm hover:shadow-xl hover:shadow-black/50"
         >
             <img
                 src={video.thumbnail}

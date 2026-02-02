@@ -72,7 +72,10 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: true });
 
     } catch (error: any) {
-        console.error("Koofr Connect Error:", error);
-        return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
+        console.error("Koofr Connect Error Details:", error);
+        return NextResponse.json({
+            error: error.message || "Internal Server Error",
+            details: error.stack
+        }, { status: 500 });
     }
 }

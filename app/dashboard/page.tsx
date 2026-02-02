@@ -72,6 +72,9 @@ export default function DashboardPage() {
     const [theme, setTheme] = useState<string>("dark");
     const [profileViews, setProfileViews] = useState<number>(0);
     const [username, setUsername] = useState<string | null>(null);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [isFontDropdownOpen, setIsFontDropdownOpen] = useState(false);
+    const filteredProjects = projects.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
     const [planLimits, setPlanLimits] = useState<{
         videoEnabled?: boolean;
         lowResDownloads?: boolean;
@@ -412,9 +415,25 @@ export default function DashboardPage() {
 
             <div className="max-w-6xl mx-auto relative z-10">
                 <header className="flex flex-col md:flex-row md:items-center justify-between mb-6 md:mb-10 gap-4">
-                    <div>
+                    <div className="flex-1">
                         <h1 className="text-2xl md:text-3xl font-light mb-1">Mis Galerías</h1>
-                        <p className="text-neutral-500 text-xs md:text-sm">Gestiona y comparte tus proyectos fotográficos.</p>
+                        <p className="text-neutral-500 text-xs md:text-sm mb-4 md:mb-0">Gestiona y comparte tus proyectos fotográficos.</p>
+                    </div>
+
+                    <div className={`flex items-center px-4 py-2.5 rounded-xl border transition-all w-full md:w-auto md:min-w-[300px] ${isLight ? 'bg-white border-neutral-200 focus-within:border-emerald-500 shadow-sm' : 'bg-neutral-900 border-neutral-800 focus-within:border-emerald-500'}`}>
+                        <Search className="w-4 h-4 text-neutral-400 mr-2" />
+                        <input
+                            type="text"
+                            placeholder="Buscar galería..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="bg-transparent border-none outline-none text-sm w-full placeholder:text-neutral-500"
+                        />
+                        {searchTerm && (
+                            <button onClick={() => setSearchTerm("")}>
+                                <X className="w-3 h-3 text-neutral-500 hover:text-neutral-300" />
+                            </button>
+                        )}
                     </div>
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
                         {userId && (
@@ -467,7 +486,7 @@ export default function DashboardPage() {
                     )}
                 </div>
 
-                {projects.length === 0 ? (
+                {filteredProjects.length === 0 ? (
                     <div className="border border-dashed border-neutral-800 rounded-3xl p-12 flex flex-col items-center justify-center text-center bg-neutral-900/20 hover:bg-neutral-900/40 transition group">
                         <div className="w-16 h-16 bg-neutral-800 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition">
                             <Folder className="w-6 h-6 text-neutral-400" />
@@ -483,7 +502,7 @@ export default function DashboardPage() {
                     </div>
                 ) : (
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {projects.map(project => (
+                        {filteredProjects.map(project => (
                             <div key={project.id} className={`group border rounded-2xl p-5 transition-all duration-300 flex flex-col min-h-[220px] relative ${isLight ? "bg-white border-neutral-100 hover:border-emerald-500 hover:shadow-xl hover:shadow-neutral-200/50" : "bg-neutral-900 border-neutral-800 hover:border-neutral-700"
                                 }`}>
                                 {project.passwordProtected ? (
@@ -911,10 +930,11 @@ export default function DashboardPage() {
                                                     )}
                                                 </label>
                                                 {/* Custom Font Selector */}
-                                                <div className="relative group/font">
+                                                <div className="relative">
                                                     <button
                                                         type="button"
                                                         disabled={!!planLimits?.lowResDownloads}
+                                                        onClick={() => setIsFontDropdownOpen(!isFontDropdownOpen)}
                                                         className={`w-full text-left border rounded-xl px-4 py-2.5 text-sm transition-all flex items-center justify-between ${isLight ? 'bg-white border-neutral-200 hover:border-emerald-500' : 'bg-neutral-900 border-neutral-700 hover:border-emerald-500'
                                                             } ${planLimits?.lowResDownloads ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                                                         style={{
@@ -934,7 +954,7 @@ export default function DashboardPage() {
 
                                                     {/* Custom Dropdown Menu */}
                                                     {!planLimits?.lowResDownloads && (
-                                                        <div className={`absolute left-0 right-0 top-full mt-1 rounded-xl border shadow-xl overflow-hidden z-[60] p-1 transition-all opacity-0 invisible group-hover/font:opacity-100 group-hover/font:visible ${isLight ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'
+                                                        <div className={`absolute left-0 right-0 top-full mt-1 rounded-xl border shadow-xl overflow-hidden z-[60] p-1 transition-all ${isFontDropdownOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'} ${isLight ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'
                                                             }`}>
                                                             {[
                                                                 { val: "Inter", label: "Inter (Profesional)", font: "Inter, sans-serif" },
@@ -947,7 +967,10 @@ export default function DashboardPage() {
                                                                 <button
                                                                     key={opt.val}
                                                                     type="button"
-                                                                    onClick={() => setEditData({ ...editData, headerFontFamily: opt.val })}
+                                                                    onClick={() => {
+                                                                        setEditData({ ...editData, headerFontFamily: opt.val });
+                                                                        setIsFontDropdownOpen(false);
+                                                                    }}
                                                                     className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between ${editData.headerFontFamily === opt.val
                                                                         ? (isLight ? 'bg-emerald-50 text-emerald-600' : 'bg-emerald-500/10 text-emerald-400')
                                                                         : (isLight ? 'hover:bg-neutral-50' : 'hover:bg-white/5')
@@ -1125,6 +1148,15 @@ export default function DashboardPage() {
                                             </p>
                                             <div className="flex-1 h-px bg-neutral-800"></div>
                                         </div>
+
+                                        {editData.layoutType === "mosaic" && (
+                                            <div className="mt-3 bg-amber-500/10 border border-amber-500/20 p-3 rounded-xl flex items-start gap-2">
+                                                <AlertCircle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                                                <p className="text-[10px] text-amber-200/80 leading-relaxed">
+                                                    <strong className="text-amber-500">Importante:</strong> Para que este diseño funcione correctamente, las imágenes deben contener metadata original (ancho/alto). Si las imágenes fueron procesadas por WhatsApp u optimizadores que eliminan metadata, se mostrarán cuadradas (crop).
+                                                </p>
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Imagen de fondo del header */}

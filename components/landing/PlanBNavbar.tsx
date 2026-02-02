@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import React from "react";
 
 export function PlanBNavbar() {
@@ -39,9 +40,11 @@ export function PlanBNavbar() {
                     >
                         Precios
                     </a>
-                    <button className="bg-white text-black px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest hover:bg-[#cdb8e1] transition-all">
-                        Login
-                    </button>
+                    <Link href="/login">
+                        <button className="bg-white text-black px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest hover:bg-[#cdb8e1] transition-all">
+                            Login
+                        </button>
+                    </Link>
                 </nav>
             </div>
         </header>
