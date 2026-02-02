@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Plus, MoreVertical, Archive, Trash2, Undo2, FolderOpen, Calendar, Copy } from "lucide-react";
+import { Plus, MoreVertical, Archive, Trash2, Undo2, FolderOpen, Calendar, Copy, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -32,6 +32,18 @@ export function ProjectList() {
     const [loading, setLoading] = useState(true);
     const [view, setView] = useState<'active' | 'archived'>('active');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [searchTerm, setSearchTerm] = useState("");
+
+    // Filter projects by search term
+    const filteredProjects = projects.filter(p => {
+        if (!searchTerm) return true;
+        const term = searchTerm.toLowerCase();
+        return (
+            p.name.toLowerCase().includes(term) ||
+            p.description?.toLowerCase().includes(term) ||
+            p.booking?.customerName?.toLowerCase().includes(term)
+        );
+    });
 
     const colors = [
         'bg-pink-100 dark:bg-pink-900/20 border-pink-200 dark:border-pink-800',
@@ -89,18 +101,36 @@ export function ProjectList() {
     return (
         <div className="flex flex-col h-full bg-neutral-50 dark:bg-neutral-950">
             {/* Header */}
-            <div className="h-[60px] border-b border-neutral-200 dark:border-neutral-800 flex items-center px-6 justify-between shrink-0 bg-white dark:bg-neutral-900">
+            <div className="h-auto border-b border-neutral-200 dark:border-neutral-800 flex flex-col sm:flex-row items-start sm:items-center px-6 py-4 gap-4 justify-between shrink-0 bg-white dark:bg-neutral-900">
                 <h1 className="font-semibold text-lg flex items-center gap-2 text-neutral-900 dark:text-neutral-100">
                     <ScenaIcon className="w-6 h-6 text-emerald-500" />
                     Mis Proyectos
                 </h1>
-                <Button
-                    onClick={() => setIsCreateModalOpen(true)}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
-                >
-                    <Plus className="w-4 h-4" />
-                    Nuevo Proyecto
-                </Button>
+                <div className="flex items-center gap-3 w-full sm:w-auto">
+                    {/* Search Bar */}
+                    <div className="flex items-center px-3 py-2 rounded-lg border bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 focus-within:border-emerald-500 transition-all flex-1 sm:flex-initial sm:min-w-[250px]">
+                        <Search className="w-4 h-4 text-neutral-400 mr-2" />
+                        <input
+                            type="text"
+                            placeholder="Buscar proyecto..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="bg-transparent border-none outline-none text-sm w-full placeholder:text-neutral-500 text-neutral-900 dark:text-white"
+                        />
+                        {searchTerm && (
+                            <button onClick={() => setSearchTerm("")}>
+                                <X className="w-3 h-3 text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300" />
+                            </button>
+                        )}
+                    </div>
+                    <Button
+                        onClick={() => setIsCreateModalOpen(true)}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 whitespace-nowrap"
+                    >
+                        <Plus className="w-4 h-4" />
+                        <span className="hidden sm:inline">Nuevo Proyecto</span>
+                    </Button>
+                </div>
             </div>
 
             {/* Content */}
@@ -139,20 +169,26 @@ export function ProjectList() {
                             <div key={i} className="h-48 rounded-2xl bg-neutral-100 dark:bg-neutral-800 animate-pulse" />
                         ))}
                     </div>
-                ) : projects.length === 0 ? (
+                ) : filteredProjects.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 text-center">
                         <div className="w-20 h-20 bg-neutral-100 dark:bg-neutral-800 rounded-full flex items-center justify-center mb-6">
                             <FolderOpen className="w-10 h-10 text-neutral-400" />
                         </div>
                         <h3 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100 mb-2">
-                            {view === 'active' ? 'No hay proyectos activos' : 'No hay proyectos archivados'}
+                            {searchTerm
+                                ? 'No se encontraron proyectos'
+                                : view === 'active'
+                                    ? 'No hay proyectos activos'
+                                    : 'No hay proyectos archivados'}
                         </h3>
                         <p className="text-neutral-500 max-w-sm mb-6">
-                            {view === 'active'
-                                ? 'Crea tu primer proyecto para comenzar a organizar tus tareas.'
-                                : 'Los proyectos que archives aparecerán aquí.'}
+                            {searchTerm
+                                ? `No hay proyectos que coincidan con "${searchTerm}".`
+                                : view === 'active'
+                                    ? 'Crea tu primer proyecto para comenzar a organizar tus tareas.'
+                                    : 'Los proyectos que archives aparecerán aquí.'}
                         </p>
-                        {view === 'active' && (
+                        {view === 'active' && !searchTerm && (
                             <Button
                                 onClick={() => setIsCreateModalOpen(true)}
                                 variant="outline"
@@ -163,7 +199,7 @@ export function ProjectList() {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                        {projects.map((project, idx) => (
+                        {filteredProjects.map((project, idx) => (
                             <div
                                 key={project.id}
                                 className={`relative group rounded-2xl p-5 border transition-all hover:shadow-md hover:-translate-y-1 flex flex-col h-[200px] ${colors[idx % colors.length]}`}

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import BookingCalendar, { BookingEvent } from "@/components/booking/BookingCalendar";
-import { X, Loader2, CalendarDays, UserCircle, Mail, FileText, Check, Trash2, Phone, MessageCircle, ExternalLink } from "lucide-react";
+import { X, Loader2, CalendarDays, UserCircle, Mail, FileText, Check, Trash2, Phone, MessageCircle, ExternalLink, Search, LayoutGrid } from "lucide-react";
 import { Skeleton } from "@/components/Skeleton";
 import { cn } from "@/lib/utils";
 
@@ -31,7 +31,8 @@ export default function BookingsPage() {
     });
     const [saving, setSaving] = useState(false);
     const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "confirmed">("all");
-    const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
+    const [viewMode, setViewMode] = useState<"calendar" | "list" | "combo">("calendar");
+    const [searchTerm, setSearchTerm] = useState("");
     const [userPlan, setUserPlan] = useState<string>("free");
 
     const openWhatsApp = (phone: string) => {
@@ -60,9 +61,19 @@ export default function BookingsPage() {
         fetchBookings();
     }, [fetchBookings]);
 
-    // Convert bookings to calendar events
+    // Convert bookings to calendar events with search filter
     const events: BookingEvent[] = bookings
         .filter(b => filterStatus === "all" || b.status === filterStatus)
+        .filter(b => {
+            if (!searchTerm) return true;
+            const term = searchTerm.toLowerCase();
+            return (
+                b.customerName.toLowerCase().includes(term) ||
+                b.customerEmail.toLowerCase().includes(term) ||
+                (b.customerPhone?.toLowerCase().includes(term)) ||
+                (b.notes?.toLowerCase().includes(term))
+            );
+        })
         .map((b) => ({
             id: b.id,
             title: b.customerName,
@@ -204,126 +215,84 @@ export default function BookingsPage() {
                 </button>
             </div>
 
-            {/* View Toggle */}
-            <div className="flex bg-neutral-900 rounded-lg p-1 w-fit mb-6 border border-neutral-800">
-                <button
-                    onClick={() => setViewMode("calendar")}
-                    className={cn(
-                        "px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2",
-                        viewMode === "calendar" ? "bg-neutral-800 text-white shadow-sm" : "text-neutral-400 hover:text-white"
+            {/* Search and View Toggle Row */}
+            <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                {/* Search Bar */}
+                <div className="flex items-center px-4 py-2.5 rounded-xl border bg-neutral-900 border-neutral-800 focus-within:border-emerald-500 transition-all flex-1 sm:max-w-xs">
+                    <Search className="w-4 h-4 text-neutral-400 mr-2" />
+                    <input
+                        type="text"
+                        placeholder="Buscar reserva..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="bg-transparent border-none outline-none text-sm w-full placeholder:text-neutral-500 text-white"
+                    />
+                    {searchTerm && (
+                        <button onClick={() => setSearchTerm("")}>
+                            <X className="w-3 h-3 text-neutral-500 hover:text-neutral-300" />
+                        </button>
                     )}
-                >
-                    <CalendarDays className="w-4 h-4" /> Calendario
-                </button>
-                <button
-                    onClick={() => setViewMode("list")}
-                    className={cn(
-                        "px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2",
-                        viewMode === "list" ? "bg-neutral-800 text-white shadow-sm" : "text-neutral-400 hover:text-white"
-                    )}
-                >
-                    <FileText className="w-4 h-4" /> Lista
-                </button>
+                </div>
+
+                {/* View Toggle */}
+                <div className="flex bg-neutral-900 rounded-lg p-1 w-fit border border-neutral-800">
+                    <button
+                        onClick={() => setViewMode("calendar")}
+                        className={cn(
+                            "px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2",
+                            viewMode === "calendar" ? "bg-neutral-800 text-white shadow-sm" : "text-neutral-400 hover:text-white"
+                        )}
+                    >
+                        <CalendarDays className="w-4 h-4" /> <span className="hidden sm:inline">Calendario</span>
+                    </button>
+                    <button
+                        onClick={() => setViewMode("list")}
+                        className={cn(
+                            "px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2",
+                            viewMode === "list" ? "bg-neutral-800 text-white shadow-sm" : "text-neutral-400 hover:text-white"
+                        )}
+                    >
+                        <FileText className="w-4 h-4" /> <span className="hidden sm:inline">Lista</span>
+                    </button>
+                    <button
+                        onClick={() => setViewMode("combo")}
+                        className={cn(
+                            "px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2",
+                            viewMode === "combo" ? "bg-neutral-800 text-white shadow-sm" : "text-neutral-400 hover:text-white"
+                        )}
+                    >
+                        <LayoutGrid className="w-4 h-4" /> <span className="hidden sm:inline">Ambos</span>
+                    </button>
+                </div>
             </div>
 
-            {viewMode === "calendar" ? (
+            {/* Calendar View */}
+            {viewMode === "calendar" && (
                 <BookingCalendar
                     events={events}
                     onEventAdd={handleSlotSelect}
                     onEventSelect={handleEventSelect}
                 />
-            ) : (
-                <div className="bg-neutral-900 border border-neutral-800 rounded-2xl overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
-                            <thead>
-                                <tr className="border-b border-neutral-800 bg-neutral-800/50">
-                                    <th className="p-4 text-xs font-medium text-neutral-400 uppercase tracking-widest">Estado</th>
-                                    <th className="p-4 text-xs font-medium text-neutral-400 uppercase tracking-widest">Fecha y Hora</th>
-                                    <th className="p-4 text-xs font-medium text-neutral-400 uppercase tracking-widest">Cliente</th>
-                                    <th className="p-4 text-xs font-medium text-neutral-400 uppercase tracking-widest">Contacto</th>
-                                    <th className="p-4 text-xs font-medium text-neutral-400 uppercase tracking-widest">Notas</th>
-                                    <th className="p-4 text-xs font-medium text-neutral-400 uppercase tracking-widest text-right">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-neutral-800">
-                                {events.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={6} className="p-8 text-center text-neutral-500 text-sm">
-                                            No hay reservas para mostrar.
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    events
-                                        .sort((a, b) => a.start.getTime() - b.start.getTime())
-                                        .map((event) => (
-                                            <tr key={event.id} className="hover:bg-neutral-800/30 transition-colors group">
-                                                <td className="p-4">
-                                                    <span className={cn(
-                                                        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border",
-                                                        event.status === "confirmed"
-                                                            ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
-                                                            : "bg-amber-500/10 text-amber-500 border-amber-500/20"
-                                                    )}>
-                                                        <div className={cn("w-1.5 h-1.5 rounded-full", event.status === "confirmed" ? "bg-emerald-500" : "bg-amber-500")} />
-                                                        {event.status === "confirmed" ? "Confirmada" : "Pendiente"}
-                                                    </span>
-                                                </td>
-                                                <td className="p-4">
-                                                    <div className="flex flex-col">
-                                                        <span className="text-sm font-medium text-white">
-                                                            {event.start.toLocaleDateString("es-ES", { weekday: 'short', day: 'numeric', month: 'short' })}
-                                                        </span>
-                                                        <span className="text-xs text-neutral-400">
-                                                            {event.start.toLocaleTimeString("es-ES", { hour: '2-digit', minute: '2-digit' })}
-                                                        </span>
-                                                    </div>
-                                                </td>
-                                                <td className="p-4">
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center text-neutral-400 shrink-0">
-                                                            <UserCircle className="w-4 h-4" />
-                                                        </div>
-                                                        <span className="text-sm font-medium text-neutral-200">{event.customerName}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="p-4">
-                                                    <div className="space-y-1">
-                                                        {event.customerEmail && (
-                                                            <a href={`mailto:${event.customerEmail}`} className="flex items-center gap-1.5 text-xs text-neutral-400 hover:text-white transition-colors">
-                                                                <Mail className="w-3 h-3" /> {event.customerEmail}
-                                                            </a>
-                                                        )}
-                                                        {event.customerPhone && (
-                                                            <a href={`https://wa.me/${event.customerPhone.replace(/\D/g, '')}`} target="_blank" className="flex items-center gap-1.5 text-xs text-neutral-400 hover:text-green-500 transition-colors">
-                                                                <MessageCircle className="w-3 h-3" /> {event.customerPhone}
-                                                            </a>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                                <td className="p-4 max-w-[200px]">
-                                                    {event.notes ? (
-                                                        <p className="text-xs text-neutral-400 truncate" title={event.notes}>
-                                                            {event.notes}
-                                                        </p>
-                                                    ) : (
-                                                        <span className="text-xs text-neutral-600 italic">Sin notas</span>
-                                                    )}
-                                                </td>
-                                                <td className="p-4 text-right">
-                                                    <button
-                                                        onClick={() => handleEventSelect(event)}
-                                                        className="px-3 py-1.5 rounded-lg text-xs font-medium bg-neutral-800 hover:bg-neutral-700 text-white transition-colors border border-neutral-700"
-                                                    >
-                                                        Gestionar
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))
-                                )}
-                            </tbody>
-                        </table>
+            )}
+
+            {/* List View */}
+            {viewMode === "list" && (
+                <BookingListTable events={events} onEventSelect={handleEventSelect} />
+            )}
+
+            {/* Combo View: Calendar + List */}
+            {viewMode === "combo" && (
+                <div className="space-y-6">
+                    {/* Compact Calendar */}
+                    <div className="max-h-[400px] overflow-hidden rounded-2xl border border-neutral-800">
+                        <BookingCalendar
+                            events={events}
+                            onEventAdd={handleSlotSelect}
+                            onEventSelect={handleEventSelect}
+                        />
                     </div>
+                    {/* List Below */}
+                    <BookingListTable events={events} onEventSelect={handleEventSelect} />
                 </div>
             )}
 
@@ -507,6 +476,110 @@ export default function BookingsPage() {
                     </div>
                 </div>
             )}
+        </div>
+    );
+}
+
+// Extracted List Table Component for reuse
+function BookingListTable({
+    events,
+    onEventSelect
+}: {
+    events: BookingEvent[];
+    onEventSelect: (event: BookingEvent) => void;
+}) {
+    return (
+        <div className="bg-neutral-900 border border-neutral-800 rounded-2xl overflow-hidden">
+            <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                    <thead>
+                        <tr className="border-b border-neutral-800 bg-neutral-800/50">
+                            <th className="p-4 text-xs font-medium text-neutral-400 uppercase tracking-widest">Estado</th>
+                            <th className="p-4 text-xs font-medium text-neutral-400 uppercase tracking-widest">Fecha y Hora</th>
+                            <th className="p-4 text-xs font-medium text-neutral-400 uppercase tracking-widest">Cliente</th>
+                            <th className="p-4 text-xs font-medium text-neutral-400 uppercase tracking-widest hidden md:table-cell">Contacto</th>
+                            <th className="p-4 text-xs font-medium text-neutral-400 uppercase tracking-widest hidden lg:table-cell">Notas</th>
+                            <th className="p-4 text-xs font-medium text-neutral-400 uppercase tracking-widest text-right">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-neutral-800">
+                        {events.length === 0 ? (
+                            <tr>
+                                <td colSpan={6} className="p-8 text-center text-neutral-500 text-sm">
+                                    No hay reservas para mostrar.
+                                </td>
+                            </tr>
+                        ) : (
+                            events
+                                .sort((a, b) => a.start.getTime() - b.start.getTime())
+                                .map((event) => (
+                                    <tr key={event.id} className="hover:bg-neutral-800/30 transition-colors group">
+                                        <td className="p-4">
+                                            <span className={cn(
+                                                "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border",
+                                                event.status === "confirmed"
+                                                    ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                                                    : "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                                            )}>
+                                                <div className={cn("w-1.5 h-1.5 rounded-full", event.status === "confirmed" ? "bg-emerald-500" : "bg-amber-500")} />
+                                                {event.status === "confirmed" ? "Confirmada" : "Pendiente"}
+                                            </span>
+                                        </td>
+                                        <td className="p-4">
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-medium text-white">
+                                                    {event.start.toLocaleDateString("es-ES", { weekday: 'short', day: 'numeric', month: 'short' })}
+                                                </span>
+                                                <span className="text-xs text-neutral-400">
+                                                    {event.start.toLocaleTimeString("es-ES", { hour: '2-digit', minute: '2-digit' })}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td className="p-4">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center text-neutral-400 shrink-0">
+                                                    <UserCircle className="w-4 h-4" />
+                                                </div>
+                                                <span className="text-sm font-medium text-neutral-200">{event.customerName}</span>
+                                            </div>
+                                        </td>
+                                        <td className="p-4 hidden md:table-cell">
+                                            <div className="space-y-1">
+                                                {event.customerEmail && (
+                                                    <a href={`mailto:${event.customerEmail}`} className="flex items-center gap-1.5 text-xs text-neutral-400 hover:text-white transition-colors">
+                                                        <Mail className="w-3 h-3" /> {event.customerEmail}
+                                                    </a>
+                                                )}
+                                                {event.customerPhone && (
+                                                    <a href={`https://wa.me/${event.customerPhone.replace(/\D/g, '')}`} target="_blank" className="flex items-center gap-1.5 text-xs text-neutral-400 hover:text-green-500 transition-colors">
+                                                        <MessageCircle className="w-3 h-3" /> {event.customerPhone}
+                                                    </a>
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td className="p-4 max-w-[200px] hidden lg:table-cell">
+                                            {event.notes ? (
+                                                <p className="text-xs text-neutral-400 truncate" title={event.notes}>
+                                                    {event.notes}
+                                                </p>
+                                            ) : (
+                                                <span className="text-xs text-neutral-600 italic">Sin notas</span>
+                                            )}
+                                        </td>
+                                        <td className="p-4 text-right">
+                                            <button
+                                                onClick={() => onEventSelect(event)}
+                                                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-neutral-800 hover:bg-neutral-700 text-white transition-colors border border-neutral-700"
+                                            >
+                                                Gestionar
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                        )}
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
 }

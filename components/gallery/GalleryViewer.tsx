@@ -422,7 +422,7 @@ export default function GalleryViewer({
             </header>
 
             {/* Main Content */}
-            <main className="px-4 md:px-8 pt-28 pb-32 min-h-screen">
+            <main className={`px-4 md:px-8 pb-32 min-h-screen ${className === 'pt-0' ? 'pt-4' : 'pt-28'}`}>
                 {loading ? (
                     <GalleryLoaderGrid theme={theme} />
                 ) : error ? (

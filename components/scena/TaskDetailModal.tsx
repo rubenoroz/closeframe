@@ -384,37 +384,20 @@ export function TaskDetailModal({ task, projectId, onClose, onTaskUpdate }: Task
                     </div>
                 </div>
 
-                {/* Footer with Save Button */}
+                {/* Footer */}
                 <div className="flex items-center justify-between p-4 border-t border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800/50">
-                    <span className="text-xs text-neutral-400">
-                        Los cambios se guardan automáticamente
+                    <span className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        Cambios guardados automáticamente
                     </span>
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={onClose}
-                            className="px-4 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded-lg transition-colors"
-                        >
-                            Cerrar
-                        </button>
-                        <button
-                            onClick={async () => {
-                                // Save all at once
-                                await saveField("title", title);
-                                await saveField("description", description);
-                                await saveField("startDate", startDate || null);
-                                await saveField("endDate", endDate || null);
-                                await saveField("toleranceDate", toleranceDate || null);
-                                await saveField("priority", priority);
-                                await saveField("progress", progress);
-                                await saveField("isHiddenInGantt", isHiddenInGantt);
-                                await saveField("checklist", JSON.stringify(checklist));
-                                onClose();
-                            }}
-                            className="px-4 py-2 text-sm font-medium bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
-                        >
-                            Guardar y Cerrar
-                        </button>
-                    </div>
+                    <button
+                        onClick={onClose}
+                        className="px-5 py-2 text-sm font-medium bg-neutral-800 dark:bg-neutral-700 text-white rounded-lg hover:bg-neutral-900 dark:hover:bg-neutral-600 transition-colors"
+                    >
+                        Cerrar
+                    </button>
                 </div>
             </div>
         </div>,

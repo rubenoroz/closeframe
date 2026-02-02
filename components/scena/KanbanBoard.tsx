@@ -18,7 +18,7 @@ import { Task } from "./Task";
 import { TaskDetailModal } from "./TaskDetailModal";
 import { GanttChart } from "./GanttChart";
 import { Button } from "@/components/ui/button";
-import { Loader2, BarChart3, FileSpreadsheet, PieChart, Plus, Eye, EyeOff } from "lucide-react";
+import { Loader2, BarChart3, FileSpreadsheet, PieChart, Plus, Eye, EyeOff, Search, X } from "lucide-react";
 import { FetchedTask } from "@/types/scena";
 
 const ProjectStatisticsModal = dynamic(
@@ -62,6 +62,7 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
     const [viewMode, setViewMode] = useState<'kanban' | 'gantt'>('kanban');
     const [showArchivedTasks, setShowArchivedTasks] = useState(false);
     const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
+    const [searchTerm, setSearchTerm] = useState("");
 
     // Collapsed tasks for hierarchy
     const [collapsedTasks, setCollapsedTasks] = useState<Set<string>>(() => {
@@ -92,11 +93,21 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
         [processedData, selectedTaskId]
     );
 
-    // Filter visible tasks
+    // Filter visible tasks (including search)
     const visibleTasks = useMemo(() => {
         const taskMap = new Map(tasks.map(t => [t.id, t]));
+        const term = searchTerm.toLowerCase().trim();
 
         return processedData.filter(task => {
+            // Search filter
+            if (term) {
+                const matchesSearch =
+                    task.title?.toLowerCase().includes(term) ||
+                    task.description?.toLowerCase().includes(term) ||
+                    task.tags?.some((tag: string) => tag.toLowerCase().includes(term));
+                if (!matchesSearch) return false;
+            }
+
             // Handle archived tasks
             if (task.isArchived) return showArchivedTasks;
             if (showArchivedTasks) return false;
@@ -118,7 +129,7 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
             }
             return true;
         });
-    }, [processedData, tasks, collapsedTasks, showArchivedTasks, activeItem]);
+    }, [processedData, tasks, collapsedTasks, showArchivedTasks, activeItem, searchTerm]);
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -312,8 +323,25 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
     return (
         <div className="h-full flex flex-col overflow-hidden">
             {/* Header Toolbar */}
-            <div className="flex items-center justify-between gap-4 mb-4 flex-wrap">
-                <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+                <div className="flex items-center gap-2 flex-wrap">
+                    {/* Search Bar */}
+                    <div className="flex items-center px-3 py-2 rounded-lg border bg-neutral-800 border-neutral-700 focus-within:border-emerald-500 transition-all w-full sm:w-auto sm:min-w-[200px]">
+                        <Search className="w-4 h-4 text-neutral-400 mr-2" />
+                        <input
+                            type="text"
+                            placeholder="Buscar tarea..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="bg-transparent border-none outline-none text-sm w-full placeholder:text-neutral-500 text-white"
+                        />
+                        {searchTerm && (
+                            <button onClick={() => setSearchTerm("")}>
+                                <X className="w-3 h-3 text-neutral-500 hover:text-neutral-300" />
+                            </button>
+                        )}
+                    </div>
+
                     <button
                         onClick={() => setViewMode(viewMode === 'kanban' ? 'gantt' : 'kanban')}
                         className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-all ${viewMode === 'gantt'
@@ -322,7 +350,7 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
                             }`}
                     >
                         <BarChart3 className="w-4 h-4" />
-                        {viewMode === 'kanban' ? 'Ver Gantt' : 'Ver Kanban'}
+                        <span className="hidden sm:inline">{viewMode === 'kanban' ? 'Ver Gantt' : 'Ver Kanban'}</span>
                     </button>
 
                     <button
@@ -333,7 +361,7 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
                             }`}
                     >
                         {showArchivedTasks ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                        {showArchivedTasks ? "Activas" : "Archivadas"}
+                        <span className="hidden sm:inline">{showArchivedTasks ? "Activas" : "Archivadas"}</span>
                     </button>
                 </div>
 
@@ -344,7 +372,7 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
                             className="px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 bg-neutral-700 text-neutral-100 hover:bg-neutral-600 border border-neutral-600 transition-all"
                         >
                             <FileSpreadsheet className="w-4 h-4" />
-                            Exportar Excel
+                            <span className="hidden sm:inline">Exportar Excel</span>
                         </button>
                     )}
 
@@ -353,7 +381,7 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
                         className="px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 bg-neutral-700 text-neutral-100 hover:bg-neutral-600 border border-neutral-600 transition-all"
                     >
                         <PieChart className="w-4 h-4" />
-                        Estadísticas
+                        <span className="hidden sm:inline">Estadísticas</span>
                     </button>
                 </div>
             </div>

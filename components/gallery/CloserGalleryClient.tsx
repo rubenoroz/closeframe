@@ -52,6 +52,9 @@ export default function CloserGalleryClient({
     const [shouldPlay, setShouldPlay] = useState(false);
     const [isVideoPlaying, setIsVideoPlaying] = useState(false);
 
+    // Search state
+    const [searchTerm, setSearchTerm] = useState("");
+
     const isMusicEnabled = !!project.musicTrackId;
     const musicTrack = isMusicEnabled ? getTrackById(project.musicTrackId) : null;
 
@@ -123,10 +126,10 @@ export default function CloserGalleryClient({
             try {
                 let files: CloudFile[] = [];
 
-                // [NEW] Special handling for 'Todos' (null) - fetch EVERYTHING
+                // [NEW] Special handling for 'Todos' (null or 'all') - fetch EVERYTHING
                 const sections = project.collaborativeSections;
 
-                if (activeMomentoId === null) {
+                if (activeMomentoId === null || activeMomentoId === 'all') {
                     // Fetch Root folder
                     const rootRes = await fetch(`/api/cloud/files?cloudAccountId=${project.cloudAccountId}&folderId=${project.rootFolderId}&projectId=${project.id}`);
                     let rootFiles: CloudFile[] = [];
@@ -364,6 +367,9 @@ export default function CloserGalleryClient({
                         activeMomentoId={activeMomentoId}
                         onMomentoChange={setActiveMomentoId}
                         theme="dark"
+                        totalCount={isLoadingFiles ? undefined : galleryFiles.length}
+                        searchTerm={searchTerm}
+                        onSearchChange={setSearchTerm}
                     />
                 );
             })()}
@@ -389,8 +395,13 @@ export default function CloserGalleryClient({
                     folderId={isVideoTabActive ? (project.videoFolderId || "") : project.rootFolderId}
                     projectId={project.id}
 
-                    // Pass aggregated files (always, for both photos and videos)
-                    preloadedFiles={galleryFiles}
+                    // Pass aggregated files (filtered by search if active)
+                    preloadedFiles={searchTerm
+                        ? galleryFiles.filter(f =>
+                            f.name.toLowerCase().includes(searchTerm.toLowerCase())
+                        )
+                        : galleryFiles
+                    }
 
                     // Config
                     projectName={project.name}
