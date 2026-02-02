@@ -338,9 +338,8 @@ export default async function PlanBPage() {
                 <section className="relative py-20 md:py-32 flex items-center overflow-hidden bg-black" id="studio">
                     <div className="max-w-[1400px] mx-auto w-full px-6 lg:px-20 grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-24 items-center">
                         <div className="order-2 lg:order-1 relative">
-                            <div className="bg-white/5 backdrop-blur-xl border border-white/10 aspect-video rounded-[3rem] overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,1)] relative border-white/20 group">
-                                <img alt="Studio Experience" className="w-full h-full object-cover" src="/studio-showcase.png" />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
+                            <div className="relative">
+                                <img alt="Studio Experience" className="w-full h-auto object-contain" src="/studio-showcase.png" />
                             </div>
                         </div>
                         <div className="order-1 lg:order-2 max-w-xl">
