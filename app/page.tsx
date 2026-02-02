@@ -339,58 +339,8 @@ export default async function PlanBPage() {
                     <div className="max-w-[1400px] mx-auto w-full px-6 lg:px-20 grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-24 items-center">
                         <div className="order-2 lg:order-1 relative">
                             <div className="bg-white/5 backdrop-blur-xl border border-white/10 aspect-video rounded-[3rem] overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,1)] relative border-white/20 group">
-                                <img alt="Studio Experience" className="w-full h-full object-cover opacity-60" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4jyKiTJRi1xH4_X6VdTyoj0odZaeaIXSfPgtN1SvQwq8zVsc6EhOP52ldQBkGmy0xVU-3tUNOIxz1fStfGM2GDGe5s-ZlXJHmyS9b8XSoQaR2aiUf4F5CrK9Ba0NE7J6iaaI2STcqPPoKRfK_JBqxyHeqwyKWOhxWU2qIdVz-OAD7dmC37vx-S4zcnCSbc230B0O5vxnEeS8piJANNxQz5C1KV7E4TFjWJUjfjRfYSbZHjMwlw4UrFN-DHXe21cXNA_5XGpZVWbs" />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
-                                <div className="absolute top-8 left-8 flex gap-3 items-center bg-white/5 backdrop-blur-md px-4 py-2 rounded-full border border-white/20">
-                                    <span className="size-2 rounded-full bg-red-500 animate-pulse"></span>
-                                    <span className="text-[10px] font-bold tracking-widest uppercase">Video 4K Live</span>
-                                </div>
-                                <div className="absolute bottom-8 left-8 right-8 space-y-6">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-4">
-                                            <div className="size-14 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/10">
-                                                <span className="material-symbols-outlined text-white">music_note</span>
-                                            </div>
-                                            <div>
-                                                <p className="font-bold text-lg italic">Celestial Horizon</p>
-                                                <p className="text-[10px] tracking-[0.2em] text-white/40 uppercase">Envato Music Collection</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex gap-4">
-                                            <span className="material-symbols-outlined text-white/60">skip_previous</span>
-                                            <span className="material-symbols-outlined text-white">pause</span>
-                                            <span className="material-symbols-outlined text-white/60">skip_next</span>
-                                        </div>
-                                    </div>
-                                    <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
-                                        <div className="h-full w-2/5 bg-[#cdb8e1]"></div>
-                                    </div>
-                                </div>
-                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <div className="size-24 bg-[#cdb8e1] text-black rounded-full flex items-center justify-center shadow-3xl">
-                                        <span className="material-symbols-outlined text-5xl">play_arrow</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="absolute -bottom-12 -right-12 w-64 bg-white/5 backdrop-blur-xl border border-white/10 p-6 rounded-3xl hidden xl:block shadow-2xl border-white/20">
-                                <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-2">
-                                    <span className="text-[10px] font-black tracking-widest uppercase text-white/40">Music Library</span>
-                                    <span className="material-symbols-outlined text-xs">close</span>
-                                </div>
-                                <div className="space-y-3">
-                                    <div className="flex items-center gap-3 p-2 bg-[#cdb8e1]/20 rounded-xl border border-[#cdb8e1]/20">
-                                        <div className="size-8 bg-[#cdb8e1] rounded-lg flex items-center justify-center text-black">
-                                            <span className="material-symbols-outlined text-sm">equalizer</span>
-                                        </div>
-                                        <span className="text-xs font-bold">Dreamy Loft</span>
-                                    </div>
-                                    <div className="flex items-center gap-3 p-2 bg-white/5 rounded-xl">
-                                        <div className="size-8 bg-white/10 rounded-lg flex items-center justify-center">
-                                            <span className="material-symbols-outlined text-sm">play_arrow</span>
-                                        </div>
-                                        <span className="text-xs text-white/60">Urban Echo</span>
-                                    </div>
-                                </div>
+                                <img alt="Studio Experience" className="w-full h-full object-cover" src="/studio-showcase.png" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
                             </div>
                         </div>
                         <div className="order-1 lg:order-2 max-w-xl">
