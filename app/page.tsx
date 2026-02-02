@@ -55,7 +55,7 @@ export default async function PlanBPage() {
                 {/* Features Scroll Section */}
                 <section className="py-32 bg-[#0a0a0a] overflow-hidden" id="features">
                     <div className="max-w-[1400px] mx-auto px-6 lg:px-20 mb-16">
-                        <div className="w-96 mb-2">
+                        <div className="w-32 md:w-96 mb-2">
                             <img src="/logo-white.svg" alt="CloserLens" className="w-full h-auto object-contain" />
                         </div>
                         <h3 className="text-3xl md:text-5xl font-light text-[#cdb8e1] mb-2 tracking-tight leading-none">Más cerca. Más claro. Más tuyo.</h3>
@@ -393,7 +393,7 @@ export default async function PlanBPage() {
                             </div>
                             <div className="relative">
                                 <div className="flex flex-col gap-8">
-                                    <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 rounded-2xl border-white/5 opacity-60 scale-95 translate-x-[-10%] origin-right">
+                                    <div className="hidden md:block bg-white/5 backdrop-blur-xl border border-white/10 p-6 rounded-2xl border-white/5 opacity-60 scale-95 translate-x-[-10%] origin-right">
                                         <div className="flex items-center gap-4 mb-4 text-xs font-bold text-white/30 tracking-widest uppercase italic">
                                             <img alt="Drive" className="size-4" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBdRFGduAjb227kdKrpEwHu_4M_DOQLYT52r1bVY3hnWKLhqgwNfzq-TTzVlc7hAZjqYCrI-uYYWyoYG3I5hte6a8jcL9EFOZ_Ax4b-rRpwGw6U_lTqydZ9CoHQV8-VUnhAKmYQcEKvDlSDN36fQDR2eUMaPgB-tsmFqILaKhhaKF3awdWQzTW2MHiEeXIPhRmXxGkJ3WTnLgRYoFO2rq_J0slHqyyKktnVNZ7xe4Knasf3zocxnN160f2sBvDbdYYo0TsN626my54" />
                                             Google Drive Source
