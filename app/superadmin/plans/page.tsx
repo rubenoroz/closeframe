@@ -58,6 +58,7 @@ interface Plan {
 
 import PlansMatrixTable from "@/components/plans/PlansMatrixTable";
 import { PLAN_DEFAULTS } from "@/lib/plan-defaults";
+import { FEATURE_POOL } from "@/lib/features";
 
 const defaultLimits: PlanLimits = {
     maxProjects: 5,
@@ -107,7 +108,7 @@ export default function PlansPage() {
 
     const fetchPlans = async () => {
         try {
-            const response = await fetch("/api/superadmin/plans");
+            const response = await fetch("/api/superadmin/plans", { cache: "no-store" });
             const data = await response.json();
             if (data.plans) {
                 setPlans(data.plans);
@@ -133,7 +134,9 @@ export default function PlansPage() {
 
         setSaving(true);
         try {
+            // DEBUG: Check payload
             const method = isCreating ? "POST" : "PUT";
+
             const response = await fetch("/api/superadmin/plans", {
                 method,
                 headers: { "Content-Type": "application/json" },
@@ -141,7 +144,7 @@ export default function PlansPage() {
             });
 
             if (response.ok) {
-                await fetchPlans();
+                await fetchPlans(); // Refetch
                 setEditingPlan(null);
                 setIsCreating(false);
             } else {
@@ -310,7 +313,7 @@ export default function PlansPage() {
             </div>
 
             {viewMode === 'matrix' ? (
-                <PlansMatrixTable />
+                <PlansMatrixTable onUpdate={fetchPlans} />
             ) : (
                 /* Plans Grid */
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -380,19 +383,62 @@ export default function PlansPage() {
                                 <span>{plan._count?.users || 0} usuarios</span>
                             </div>
 
-                            {/* Features */}
+                            {/* Features (Dynamic from Matrix) */}
                             <ul className="space-y-2">
-                                {plan.features.slice(0, 5).map((feature, index) => (
-                                    <li key={index} className="flex items-center gap-2 text-sm">
-                                        <Check className="w-4 h-4 text-green-400 shrink-0" />
-                                        <span className="text-neutral-300">{feature}</span>
-                                    </li>
-                                ))}
-                                {plan.features.length > 5 && (
-                                    <li className="text-sm text-neutral-500">
-                                        +{plan.features.length - 5} más...
-                                    </li>
-                                )}
+                                {FEATURE_POOL.filter(f => {
+                                    // Logic to determine if feature should be shown
+                                    const config = plan.config || {};
+                                    const group = config.features || {};
+                                    const limitGroup = config.limits || {};
+
+                                    const val = f.type === 'number' ? limitGroup[f.id] : group[f.id];
+                                    const finalVal = val !== undefined ? val : f.defaultValue;
+
+                                    if (f.type === 'boolean') return finalVal === true;
+                                    if (f.type === 'number') return true; // Always show limits? Or only if not -1/0? Let's show all for now or filter.
+                                    return !!finalVal;
+                                }).slice(0, 6).map((feature, index) => {
+                                    const config = plan.config || {};
+                                    const group = config.features || {};
+                                    const limitGroup = config.limits || {};
+                                    const val = feature.type === 'number' ? limitGroup[feature.id] : group[feature.id];
+                                    const finalVal = val !== undefined ? val : feature.defaultValue;
+
+                                    return (
+                                        <li key={index} className="flex items-center gap-2 text-sm">
+                                            <Check className="w-4 h-4 text-green-400 shrink-0" />
+                                            <span className="text-neutral-300">
+                                                {feature.type === 'number'
+                                                    ? `${feature.label}: ${finalVal === -1 ? 'Ilimitado' : finalVal}`
+                                                    : feature.label}
+                                            </span>
+                                        </li>
+                                    )
+                                })}
+
+                                {FEATURE_POOL.filter(f => {
+                                    const config = plan.config || {};
+                                    const group = config.features || {};
+                                    const limitGroup = config.limits || {};
+                                    const val = f.type === 'number' ? limitGroup[f.id] : group[f.id];
+                                    const finalVal = val !== undefined ? val : f.defaultValue;
+                                    if (f.type === 'boolean') return finalVal === true;
+                                    if (f.type === 'number') return true;
+                                    return !!finalVal;
+                                }).length > 6 && (
+                                        <li className="text-sm text-neutral-500">
+                                            +{FEATURE_POOL.filter(f => {
+                                                const config = plan.config || {};
+                                                const group = config.features || {};
+                                                const limitGroup = config.limits || {};
+                                                const val = f.type === 'number' ? limitGroup[f.id] : group[f.id];
+                                                const finalVal = val !== undefined ? val : f.defaultValue;
+                                                if (f.type === 'boolean') return finalVal === true;
+                                                if (f.type === 'number') return true;
+                                                return !!finalVal;
+                                            }).length - 6} más...
+                                        </li>
+                                    )}
                             </ul>
 
                             {/* Status Badge */}
@@ -573,41 +619,13 @@ export default function PlansPage() {
                                 </div>
                             </div>
 
-                            {/* Features Display (Marketing) */}
-                            <div>
-                                <h3 className="text-sm font-medium text-neutral-300 mb-3 mt-6">Características (Marketing)</h3>
-                                <p className="text-xs text-neutral-500 mb-3">
-                                    Lista de puntos clave que se mostrarán en la tarjeta de precios.
+                            {/* Features Display (Marketing) - Deprecated in favor of Matrix */}
+                            <div className="bg-neutral-800/50 p-4 rounded-xl border border-neutral-800">
+                                <h3 className="text-sm font-medium text-neutral-300 mb-2">Características del Plan</h3>
+                                <p className="text-sm text-neutral-400">
+                                    Las características y límites de este plan se gestionan desde la vista de <strong>Matriz Detallada</strong>.
+                                    Los cambios que realices allí se reflejarán automáticamente en la tarjeta y en la página de precios.
                                 </p>
-                                <div className="flex gap-2 mb-3">
-                                    <input
-                                        type="text"
-                                        value={newFeature}
-                                        onChange={(e) => setNewFeature(e.target.value)}
-                                        onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addFeature())}
-                                        placeholder="Agregar característica (ej: 10GB Almacenamiento)..."
-                                        className="flex-1 px-4 py-2 bg-neutral-800 border border-neutral-700 rounded-xl text-white text-sm focus:outline-none focus:border-violet-500"
-                                    />
-                                    <button
-                                        onClick={addFeature}
-                                        className="px-4 py-2 bg-neutral-800 hover:bg-neutral-700 rounded-xl transition"
-                                    >
-                                        <Plus className="w-5 h-5" />
-                                    </button>
-                                </div>
-                                <ul className="space-y-2">
-                                    {editingPlan.features.map((feature, index) => (
-                                        <li key={index} className="flex items-center justify-between p-2 bg-neutral-800/50 rounded-lg">
-                                            <span className="text-sm text-neutral-300">{feature}</span>
-                                            <button
-                                                onClick={() => removeFeature(index)}
-                                                className="p-1 hover:bg-neutral-700 rounded transition"
-                                            >
-                                                <X className="w-4 h-4 text-neutral-400" />
-                                            </button>
-                                        </li>
-                                    ))}
-                                </ul>
                             </div>
 
                             {/* Active Toggle */}

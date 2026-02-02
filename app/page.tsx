@@ -9,11 +9,19 @@ import { PricingSection } from "@/components/landing/PricingSection";
 
 import Image from "next/image";
 
+export const dynamic = "force-dynamic";
+
 export default async function PlanBPage() {
-    const plans = await prisma.plan.findMany({
+    const rawPlans = await prisma.plan.findMany({
         orderBy: { sortOrder: 'asc' },
         where: { isActive: true }
     });
+
+    const plans = rawPlans.map(plan => ({
+        ...plan,
+        features: plan.features ? JSON.parse(plan.features) : [],
+        limits: plan.limits ? JSON.parse(plan.limits) : {},
+    }));
     return (
         <div className="bg-[#0a0a0a] font-[var(--font-spline)] text-white transition-colors duration-300 antialiased overflow-x-hidden min-h-screen">
             <div className="relative flex flex-col w-full">

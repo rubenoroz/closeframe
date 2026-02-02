@@ -5,7 +5,12 @@ import { FEATURE_POOL } from "@/lib/features";
 import { Check, X, Save, RefreshCw, Loader2, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export default function PlansMatrixTable() {
+
+interface Props {
+    onUpdate?: () => void;
+}
+
+export default function PlansMatrixTable({ onUpdate }: Props) {
     const [plans, setPlans] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState<string | null>(null);
@@ -75,6 +80,9 @@ export default function PlansMatrixTable() {
             });
 
             if (!res.ok) throw new Error("Failed to save");
+
+            // Notify parent to refresh
+            if (onUpdate) onUpdate();
 
             alert(`Plan ${plan.displayName} actualizado!`);
         } catch (err) {

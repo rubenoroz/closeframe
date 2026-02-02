@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 
+export const dynamic = "force-dynamic";
+
 // GET: List all plans with their modular config
 export async function GET() {
     try {
@@ -59,8 +61,10 @@ export async function PUT(req: NextRequest) {
 
         const body = await req.json();
 
-        // Handle Sort Order Bulk Update
-        if (!body.planId && body.id && typeof body.sortOrder === 'number') {
+        // Handle Sort Order Bulk Update (only if distinct fields are missing)
+        const isSortOnly = !body.planId && body.id && typeof body.sortOrder === 'number' && !body.name && !body.price;
+
+        if (isSortOnly) {
             const updated = await prisma.plan.update({
                 where: { id: body.id },
                 data: { sortOrder: body.sortOrder }
@@ -80,10 +84,8 @@ export async function PUT(req: NextRequest) {
         if (name !== undefined) updateData.name = name;
         if (displayName !== undefined) updateData.displayName = displayName;
         if (description !== undefined) updateData.description = description;
-        if (description !== undefined) updateData.description = description;
         if (price !== undefined) updateData.price = price;
         if (body.monthlyPrice !== undefined) updateData.monthlyPrice = body.monthlyPrice;
-        if (currency !== undefined) updateData.currency = currency;
         if (currency !== undefined) updateData.currency = currency;
         if (interval !== undefined) updateData.interval = interval;
         if (isActive !== undefined) updateData.isActive = isActive;
@@ -92,10 +94,18 @@ export async function PUT(req: NextRequest) {
         if (features !== undefined) updateData.features = JSON.stringify(features);
         if (limits !== undefined) updateData.limits = JSON.stringify(limits);
 
+        console.log("Update Data Prepared:", updateData);
+
         const updatedPlan = await prisma.plan.update({
             where: { id: targetId },
             data: updateData
         });
+
+        // Purge cache
+        const { revalidatePath } = await import("next/cache");
+        revalidatePath("/superadmin/plans"); // Admin page
+        revalidatePath("/"); // Landing page
+        revalidatePath("/plan-b"); // Just in case
 
         return NextResponse.json({ plan: updatedPlan });
 

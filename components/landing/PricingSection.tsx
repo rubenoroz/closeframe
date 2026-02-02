@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
+import { FEATURE_POOL } from "@/lib/features";
+import { Check } from "lucide-react";
 
 interface Plan {
     id: string;
@@ -9,24 +11,15 @@ interface Plan {
     price: number;
     monthlyPrice?: number | null;
     interval: string;
-    features: string;
+    features: string[]; // Updated to array usually, or matches Prisma
     isActive: boolean;
     sortOrder: number;
+    config?: any; // Add config
 }
 
 interface PricingSectionProps {
     plans: Plan[];
 }
-
-const parseFeatures = (json: string) => {
-    try {
-        const parsed = JSON.parse(json);
-        if (Array.isArray(parsed)) return parsed;
-        return [];
-    } catch {
-        return [];
-    }
-};
 
 export function PricingSection({ plans }: PricingSectionProps) {
     const [billingCycle, setBillingCycle] = useState<'month' | 'year'>('year');
@@ -60,7 +53,6 @@ export function PricingSection({ plans }: PricingSectionProps) {
             <div className="max-w-[1600px] mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                 {plans.map((plan) => {
                     const isRecommended = plan.name === 'studio';
-                    const features = parseFeatures(plan.features) as string[];
 
                     // Determine price to show
                     // If billingCycle is 'month', show monthlyPrice if available, else standard price
@@ -93,13 +85,36 @@ export function PricingSection({ plans }: PricingSectionProps) {
                                 {priceToShow > 0 && <span className={`${isRecommended ? "text-[#cdb8e1]/60" : "text-white/30"} text-xs ml-2`}>{intervalLabel}</span>}
                             </div>
 
-                            <ul className={`space-y-6 mb-12 text-sm flex-1 ${isRecommended ? "text-white/70" : "text-white/50"}`}>
-                                {features.slice(0, 10).map((feature: string, i: number) => (
-                                    <li key={i} className={`flex items-start gap-3 ${isRecommended ? "font-bold" : ""}`}>
-                                        <span className={`material-symbols-outlined text-lg flex-shrink-0 ${isRecommended ? "text-[#cdb8e1]" : "text-[#cdb8e1]"}`}>check</span>
-                                        <span className="leading-tight">{feature}</span>
-                                    </li>
-                                ))}
+                            <ul className={`space-y-4 mb-12 text-sm flex-1 ${isRecommended ? "text-white/70" : "text-white/50"}`}>
+                                {FEATURE_POOL.filter(f => {
+                                    const config = plan.config || {};
+                                    const group = config.features || {};
+                                    const limitGroup = config.limits || {};
+
+                                    const val = f.type === 'number' ? limitGroup[f.id] : group[f.id];
+                                    const finalVal = val !== undefined ? val : f.defaultValue;
+
+                                    if (f.type === 'boolean') return finalVal === true;
+                                    if (f.type === 'number') return true;
+                                    return !!finalVal;
+                                }).slice(0, 12).map((feature, i) => {
+                                    const config = plan.config || {};
+                                    const group = config.features || {};
+                                    const limitGroup = config.limits || {};
+                                    const val = feature.type === 'number' ? limitGroup[feature.id] : group[feature.id];
+                                    const finalVal = val !== undefined ? val : feature.defaultValue;
+
+                                    return (
+                                        <li key={i} className={`flex items-start gap-3 ${isRecommended ? "font-bold" : ""}`}>
+                                            <Check className={`w-5 h-5 flex-shrink-0 ${isRecommended ? "text-[#cdb8e1]" : "text-[#cdb8e1]"}`} />
+                                            <span className="leading-tight">
+                                                {feature.type === 'number'
+                                                    ? `${feature.label}: ${finalVal === -1 ? 'Ilimitado' : finalVal}`
+                                                    : feature.label}
+                                            </span>
+                                        </li>
+                                    )
+                                })}
                             </ul>
 
                             <button className={`w-full py-4 rounded-full font-bold uppercase tracking-widest text-[10px] transition-all ${isRecommended
