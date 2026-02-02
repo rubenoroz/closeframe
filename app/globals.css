@@ -54,9 +54,13 @@ body {
 }
 
 .animate-scroll-right {
-  animation: scroll-right 25s linear infinite;
+  animation: scroll-right 30s linear infinite;
+  will-change: transform;
+  backface-visibility: hidden;
 }
 
 .animate-scroll-left {
-  animation: scroll-left 50s linear infinite;
+  animation: scroll-left 30s linear infinite;
+  will-change: transform;
+  backface-visibility: hidden;
 }

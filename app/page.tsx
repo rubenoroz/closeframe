@@ -67,94 +67,180 @@ export default async function PlanBPage() {
                             <div className="flex gap-3 w-fit py-2 animate-scroll-right hover:[animation-play-state:paused]">
                                 {/* Original Set */}
                                 <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[420px]">
-                                    <img alt="Portrait" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCpXkC43P7GKmeVa5AcqrrB26_6yYZyxZKbQ4Rkv-yUDS1MhQ0_pOQUUJVTggKws6Ar7vTDCGnwzopT8ZS3WztFsQ3DSwug8wntoPR1kZQa2rrufhb28ISGkYfaCgAHSVJN-3sFzet2wvbDYbyjHm1z72TK3gK1ArdLukJiTfnRBoArSDYOj3_xsR2l2hdHZirioU3L0jv9fw7ULyAOZpfyvGw_hDKwGWDqb3OxaFFlQqlqjkegRkYpMtxtR-lb5Xvg0TIM8PXnilM" />
+                                    <img alt="Gallery Showcase" className="w-full h-full object-cover" src="/gallery-showcase.jpg" />
                                 </div>
-                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[350px] p-10 flex flex-col justify-end bg-white/5 backdrop-blur-xl border border-white/10 group">
-                                    <div className="absolute top-8 left-8 flex gap-2">
-                                        <div className="size-2 rounded-full bg-blue-500"></div>
-                                        <div className="size-2 rounded-full bg-blue-500/40"></div>
-                                    </div>
-                                    <span className="material-symbols-outlined text-[#cdb8e1] text-5xl mb-6">collections_bookmark</span>
-                                    <h3 className="text-3xl font-bold mb-3 tracking-tight">Galerías Closer</h3>
-                                    <p className="text-white/50 text-sm leading-relaxed">Transforma tus carpetas en experiencias visuales de alto impacto.</p>
+                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[380px] p-10 flex flex-col justify-center items-center text-center bg-white/5 backdrop-blur-xl border border-white/10 group">
+                                    <h3 className="text-3xl font-bold mb-4 tracking-tight">Galerías Closer</h3>
+                                    <p className="text-white/50 text-sm leading-relaxed max-w-xs">Transforma tus carpetas de Drive, OneDrive, Dropbox y Koofr en experiencias visuales de alto impacto.</p>
                                 </div>
-                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[420px] bg-black/60 p-8 border border-white/10">
-                                    <div className="flex items-center justify-between mb-8 border-b border-white/5 pb-4">
-                                        <div className="flex items-center gap-3">
-                                            <img alt="Drive" className="size-5" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA6hDuD35H0iOySf7pud9NCJ5TBpoh7FdvsAksXM7iEKqvzD826Z_s1jl--IF1_cGR2WPp4n5nQHTjMX6eT7MDmd3QuWddwXXCiz01uNEaOqA8NZ_pPUUzLYRvnCIHqdN3a4hNyKSciSYij8_V-YnTZ4VDrXk6poaKSr9pW5EKipLU-BsGyc_z-DdkCCK4-LAXA0UmFgFtjetj4if4FtP6EfWIZTOxun6dOkFQ7BJOV1YwtHeWO3gVWlEa-Xqpszx0nULeQN5dOjEI" />
-                                            <span className="text-xs font-bold tracking-widest uppercase text-white/40">Google Drive Sync</span>
-                                        </div>
-                                        <span className="text-[10px] text-green-400 font-bold bg-green-400/10 px-2 py-1 rounded">CONNECTED</span>
+                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[480px] bg-gradient-to-br from-neutral-900 to-black p-6 border border-white/10">
+                                    {/* Header */}
+                                    <div className="flex items-center justify-between mb-5">
+                                        <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/40">Tu Nube Conectada</span>
+                                        <span className="text-[9px] text-green-400 font-bold bg-green-400/10 px-2 py-1 rounded-full flex items-center gap-1">
+                                            <span className="size-1.5 rounded-full bg-green-400 animate-pulse"></span>
+                                            SINCRONIZADO
+                                        </span>
                                     </div>
-                                    <div className="space-y-4">
-                                        <div className="flex items-center gap-4 bg-white/5 p-3 rounded-xl">
-                                            <span className="material-symbols-outlined text-blue-400">image</span>
-                                            <div className="flex-1">
-                                                <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
-                                                    <div className="h-full w-3/4 bg-[#cdb8e1] animate-pulse"></div>
+
+                                    {/* Main Content */}
+                                    <div className="flex gap-5 h-[calc(100%-50px)]">
+                                        {/* Left: Storage Circle */}
+                                        <div className="flex flex-col items-center justify-center">
+                                            <div className="relative size-28">
+                                                <svg className="size-28 -rotate-90" viewBox="0 0 100 100">
+                                                    <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="12" />
+                                                    <circle cx="50" cy="50" r="42" fill="none" stroke="url(#gradient)" strokeWidth="12" strokeLinecap="round" strokeDasharray="264" strokeDashoffset="66" className="animate-pulse" />
+                                                    <defs>
+                                                        <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                                            <stop offset="0%" stopColor="#cdb8e1" />
+                                                            <stop offset="100%" stopColor="#8b5cf6" />
+                                                        </linearGradient>
+                                                    </defs>
+                                                </svg>
+                                                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                                    <span className="text-2xl font-bold">75%</span>
+                                                    <span className="text-[8px] text-white/40 uppercase tracking-wider">Usado</span>
                                                 </div>
                                             </div>
-                                            <span className="text-[10px] text-white/40">75%</span>
+                                            <span className="text-[10px] text-white/50 mt-2">11.2 GB de 15 GB</span>
                                         </div>
-                                        <div className="flex items-center gap-4 bg-white/5 p-3 rounded-xl opacity-50">
-                                            <span className="material-symbols-outlined text-blue-400">image</span>
-                                            <div className="flex-1"><div className="h-1.5 w-1/2 bg-white/10 rounded-full"></div></div>
+
+                                        {/* Right: Cloud Services */}
+                                        <div className="flex-1 flex flex-col justify-between py-1">
+                                            {/* Connected Clouds - 2x2 Grid */}
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <div className="flex items-center gap-2 bg-white/5 px-2.5 py-1.5 rounded-lg">
+                                                    <img alt="Drive" className="size-4" src="/assets/logos/drive.svg" />
+                                                    <span className="text-[10px] text-white/70 flex-1">Drive</span>
+                                                    <span className="size-1.5 rounded-full bg-green-400"></span>
+                                                </div>
+                                                <div className="flex items-center gap-2 bg-white/5 px-2.5 py-1.5 rounded-lg">
+                                                    <img alt="OneDrive" className="size-4" src="/assets/logos/onedrive.svg" />
+                                                    <span className="text-[10px] text-white/70 flex-1">OneDrive</span>
+                                                    <span className="size-1.5 rounded-full bg-green-400"></span>
+                                                </div>
+                                                <div className="flex items-center gap-2 bg-white/5 px-2.5 py-1.5 rounded-lg">
+                                                    <img alt="Dropbox" className="size-4" src="/assets/logos/dropbox.svg" />
+                                                    <span className="text-[10px] text-white/70 flex-1">Dropbox</span>
+                                                    <span className="size-1.5 rounded-full bg-green-400"></span>
+                                                </div>
+                                                <div className="flex items-center gap-2 bg-white/5 px-2.5 py-1.5 rounded-lg">
+                                                    <img alt="Koofr" className="size-4" src="/assets/logos/koofr.svg" />
+                                                    <span className="text-[10px] text-white/70 flex-1">Koofr</span>
+                                                    <span className="size-1.5 rounded-full bg-green-400"></span>
+                                                </div>
+                                            </div>
+
+                                            {/* Stats */}
+                                            <div className="flex gap-4 mt-3">
+                                                <div className="text-center">
+                                                    <span className="text-xl font-bold text-[#cdb8e1]">24</span>
+                                                    <span className="text-[9px] text-white/40 block uppercase tracking-wider">Galerías</span>
+                                                </div>
+                                                <div className="text-center">
+                                                    <span className="text-xl font-bold text-white">1,847</span>
+                                                    <span className="text-[9px] text-white/40 block uppercase tracking-wider">Archivos</span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                                 <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[420px]">
-                                    <img alt="Studio" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4jyKiTJRi1xH4_X6VdTyoj0odZaeaIXSfPgtN1SvQwq8zVsc6EhOP52ldQBkGmy0xVU-3tUNOIxz1fStfGM2GDGe5s-ZlXJHmyS9b8XSoQaR2aiUf4F5CrK9Ba0NE7J6iaaI2STcqPPoKRfK_JBqxyHeqwyKWOhxWU2qIdVz-OAD7dmC37vx-S4zcnCSbc230B0O5vxnEeS8piJANNxQz5C1KV7E4TFjWJUjfjRfYSbZHjMwlw4UrFN-DHXe21cXNA_5XGpZVWbs" />
+                                    <img alt="Calendar" className="w-full h-full object-cover" src="/calendar-showcase.jpg" />
                                 </div>
-                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[350px] p-10 flex flex-col justify-end bg-[#cdb8e1]/10 border border-[#cdb8e1]/20 backdrop-blur-xl">
-                                    <span className="material-symbols-outlined text-[#cdb8e1] text-5xl mb-6">event</span>
-                                    <h3 className="text-3xl font-bold mb-3 tracking-tight">Agenda tus eventos</h3>
-                                    <p className="text-white/70 text-sm leading-relaxed">Administra tu calendario y sesiones con un sistema de reservas integrado.</p>
+                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[380px] p-10 flex flex-col justify-center items-center text-center bg-[#cdb8e1]/10 border border-[#cdb8e1]/20 backdrop-blur-xl">
+                                    <h3 className="text-3xl font-bold mb-4 tracking-tight">Agenda tus eventos</h3>
+                                    <p className="text-white/70 text-sm leading-relaxed max-w-xs">Administra tu calendario y sesiones con un sistema de reservas integrado.</p>
                                 </div>
 
                                 {/* Duplicate Set */}
                                 <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[420px]">
-                                    <img alt="Portrait" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCpXkC43P7GKmeVa5AcqrrB26_6yYZyxZKbQ4Rkv-yUDS1MhQ0_pOQUUJVTggKws6Ar7vTDCGnwzopT8ZS3WztFsQ3DSwug8wntoPR1kZQa2rrufhb28ISGkYfaCgAHSVJN-3sFzet2wvbDYbyjHm1z72TK3gK1ArdLukJiTfnRBoArSDYOj3_xsR2l2hdHZirioU3L0jv9fw7ULyAOZpfyvGw_hDKwGWDqb3OxaFFlQqlqjkegRkYpMtxtR-lb5Xvg0TIM8PXnilM" />
+                                    <img alt="Gallery Showcase" className="w-full h-full object-cover" src="/gallery-showcase.jpg" />
                                 </div>
-                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[350px] p-10 flex flex-col justify-end bg-white/5 backdrop-blur-xl border border-white/10 group">
-                                    <div className="absolute top-8 left-8 flex gap-2">
-                                        <div className="size-2 rounded-full bg-blue-500"></div>
-                                        <div className="size-2 rounded-full bg-blue-500/40"></div>
-                                    </div>
-                                    <span className="material-symbols-outlined text-[#cdb8e1] text-5xl mb-6">collections_bookmark</span>
-                                    <h3 className="text-3xl font-bold mb-3 tracking-tight">Galerías Closer</h3>
-                                    <p className="text-white/50 text-sm leading-relaxed">Transforma tus carpetas en experiencias visuales de alto impacto.</p>
+                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[380px] p-10 flex flex-col justify-center items-center text-center bg-white/5 backdrop-blur-xl border border-white/10 group">
+                                    <h3 className="text-3xl font-bold mb-4 tracking-tight">Galerías Closer</h3>
+                                    <p className="text-white/50 text-sm leading-relaxed max-w-xs">Transforma tus carpetas de Drive, OneDrive, Dropbox y Koofr en experiencias visuales de alto impacto.</p>
                                 </div>
-                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[420px] bg-black/60 p-8 border border-white/10">
-                                    <div className="flex items-center justify-between mb-8 border-b border-white/5 pb-4">
-                                        <div className="flex items-center gap-3">
-                                            <img alt="Drive" className="size-5" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA6hDuD35H0iOySf7pud9NCJ5TBpoh7FdvsAksXM7iEKqvzD826Z_s1jl--IF1_cGR2WPp4n5nQHTjMX6eT7MDmd3QuWddwXXCiz01uNEaOqA8NZ_pPUUzLYRvnCIHqdN3a4hNyKSciSYij8_V-YnTZ4VDrXk6poaKSr9pW5EKipLU-BsGyc_z-DdkCCK4-LAXA0UmFgFtjetj4if4FtP6EfWIZTOxun6dOkFQ7BJOV1YwtHeWO3gVWlEa-Xqpszx0nULeQN5dOjEI" />
-                                            <span className="text-xs font-bold tracking-widest uppercase text-white/40">Google Drive Sync</span>
-                                        </div>
-                                        <span className="text-[10px] text-green-400 font-bold bg-green-400/10 px-2 py-1 rounded">CONNECTED</span>
+                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[480px] bg-gradient-to-br from-neutral-900 to-black p-6 border border-white/10">
+                                    {/* Header */}
+                                    <div className="flex items-center justify-between mb-5">
+                                        <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/40">Tu Nube Conectada</span>
+                                        <span className="text-[9px] text-green-400 font-bold bg-green-400/10 px-2 py-1 rounded-full flex items-center gap-1">
+                                            <span className="size-1.5 rounded-full bg-green-400 animate-pulse"></span>
+                                            SINCRONIZADO
+                                        </span>
                                     </div>
-                                    <div className="space-y-4">
-                                        <div className="flex items-center gap-4 bg-white/5 p-3 rounded-xl">
-                                            <span className="material-symbols-outlined text-blue-400">image</span>
-                                            <div className="flex-1">
-                                                <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
-                                                    <div className="h-full w-3/4 bg-[#cdb8e1] animate-pulse"></div>
+
+                                    {/* Main Content */}
+                                    <div className="flex gap-5 h-[calc(100%-50px)]">
+                                        {/* Left: Storage Circle */}
+                                        <div className="flex flex-col items-center justify-center">
+                                            <div className="relative size-28">
+                                                <svg className="size-28 -rotate-90" viewBox="0 0 100 100">
+                                                    <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="12" />
+                                                    <circle cx="50" cy="50" r="42" fill="none" stroke="url(#gradient2)" strokeWidth="12" strokeLinecap="round" strokeDasharray="264" strokeDashoffset="66" className="animate-pulse" />
+                                                    <defs>
+                                                        <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="0%">
+                                                            <stop offset="0%" stopColor="#cdb8e1" />
+                                                            <stop offset="100%" stopColor="#8b5cf6" />
+                                                        </linearGradient>
+                                                    </defs>
+                                                </svg>
+                                                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                                    <span className="text-2xl font-bold">75%</span>
+                                                    <span className="text-[8px] text-white/40 uppercase tracking-wider">Usado</span>
                                                 </div>
                                             </div>
-                                            <span className="text-[10px] text-white/40">75%</span>
+                                            <span className="text-[10px] text-white/50 mt-2">11.2 GB de 15 GB</span>
                                         </div>
-                                        <div className="flex items-center gap-4 bg-white/5 p-3 rounded-xl opacity-50">
-                                            <span className="material-symbols-outlined text-blue-400">image</span>
-                                            <div className="flex-1"><div className="h-1.5 w-1/2 bg-white/10 rounded-full"></div></div>
+
+                                        {/* Right: Cloud Services */}
+                                        <div className="flex-1 flex flex-col justify-between py-1">
+                                            {/* Connected Clouds - 2x2 Grid */}
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <div className="flex items-center gap-2 bg-white/5 px-2.5 py-1.5 rounded-lg">
+                                                    <img alt="Drive" className="size-4" src="/assets/logos/drive.svg" />
+                                                    <span className="text-[10px] text-white/70 flex-1">Drive</span>
+                                                    <span className="size-1.5 rounded-full bg-green-400"></span>
+                                                </div>
+                                                <div className="flex items-center gap-2 bg-white/5 px-2.5 py-1.5 rounded-lg">
+                                                    <img alt="OneDrive" className="size-4" src="/assets/logos/onedrive.svg" />
+                                                    <span className="text-[10px] text-white/70 flex-1">OneDrive</span>
+                                                    <span className="size-1.5 rounded-full bg-green-400"></span>
+                                                </div>
+                                                <div className="flex items-center gap-2 bg-white/5 px-2.5 py-1.5 rounded-lg">
+                                                    <img alt="Dropbox" className="size-4" src="/assets/logos/dropbox.svg" />
+                                                    <span className="text-[10px] text-white/70 flex-1">Dropbox</span>
+                                                    <span className="size-1.5 rounded-full bg-green-400"></span>
+                                                </div>
+                                                <div className="flex items-center gap-2 bg-white/5 px-2.5 py-1.5 rounded-lg">
+                                                    <img alt="Koofr" className="size-4" src="/assets/logos/koofr.svg" />
+                                                    <span className="text-[10px] text-white/70 flex-1">Koofr</span>
+                                                    <span className="size-1.5 rounded-full bg-green-400"></span>
+                                                </div>
+                                            </div>
+
+                                            {/* Stats */}
+                                            <div className="flex gap-4 mt-3">
+                                                <div className="text-center">
+                                                    <span className="text-xl font-bold text-[#cdb8e1]">24</span>
+                                                    <span className="text-[9px] text-white/40 block uppercase tracking-wider">Galerías</span>
+                                                </div>
+                                                <div className="text-center">
+                                                    <span className="text-xl font-bold text-white">1,847</span>
+                                                    <span className="text-[9px] text-white/40 block uppercase tracking-wider">Archivos</span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                                 <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[420px]">
-                                    <img alt="Studio" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4jyKiTJRi1xH4_X6VdTyoj0odZaeaIXSfPgtN1SvQwq8zVsc6EhOP52ldQBkGmy0xVU-3tUNOIxz1fStfGM2GDGe5s-ZlXJHmyS9b8XSoQaR2aiUf4F5CrK9Ba0NE7J6iaaI2STcqPPoKRfK_JBqxyHeqwyKWOhxWU2qIdVz-OAD7dmC37vx-S4zcnCSbc230B0O5vxnEeS8piJANNxQz5C1KV7E4TFjWJUjfjRfYSbZHjMwlw4UrFN-DHXe21cXNA_5XGpZVWbs" />
+                                    <img alt="Calendar" className="w-full h-full object-cover" src="/calendar-showcase.jpg" />
                                 </div>
-                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[350px] p-10 flex flex-col justify-end bg-[#cdb8e1]/10 border border-[#cdb8e1]/20 backdrop-blur-xl">
-                                    <span className="material-symbols-outlined text-[#cdb8e1] text-5xl mb-6">event</span>
-                                    <h3 className="text-3xl font-bold mb-3 tracking-tight">Agenda tus eventos</h3>
-                                    <p className="text-white/70 text-sm leading-relaxed">Administra tu calendario y sesiones con un sistema de reservas integrado.</p>
+                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[380px] p-10 flex flex-col justify-center items-center text-center bg-[#cdb8e1]/10 border border-[#cdb8e1]/20 backdrop-blur-xl">
+                                    <h3 className="text-3xl font-bold mb-4 tracking-tight">Agenda tus eventos</h3>
+                                    <p className="text-white/70 text-sm leading-relaxed max-w-xs">Administra tu calendario y sesiones con un sistema de reservas integrado.</p>
                                 </div>
                             </div>
                         </div>
@@ -163,99 +249,39 @@ export default async function PlanBPage() {
                         <div className="relative overflow-hidden group">
                             <div className="flex gap-3 w-fit py-2 animate-scroll-left hover:[animation-play-state:paused]">
                                 {/* Original Set */}
-                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[480px] bg-white/5 backdrop-blur-xl border border-white/10 p-6">
-                                    <div className="flex items-center justify-between mb-6">
-                                        <span className="text-xs font-bold uppercase tracking-widest text-white/40 italic">Organiza tus proyectos</span>
-                                        <div className="flex -space-x-2">
-                                            <div className="size-6 rounded-full bg-[#cdb8e1] border-2 border-black"></div>
-                                            <div className="size-6 rounded-full bg-blue-400 border-2 border-black"></div>
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-3 gap-3">
-                                        <div className="space-y-2">
-                                            <div className="text-[9px] uppercase font-bold text-white/30">Ready</div>
-                                            <div className="h-24 bg-white/5 rounded-2xl border border-white/10 p-2">
-                                                <div className="h-full w-full bg-white/5 rounded-lg"></div>
-                                            </div>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <div className="text-[9px] uppercase font-bold text-[#cdb8e1]">Retouching</div>
-                                            <div className="h-24 bg-[#cdb8e1]/10 rounded-2xl border border-[#cdb8e1]/20 p-2">
-                                                <div className="h-full w-full bg-[#cdb8e1]/10 rounded-lg"></div>
-                                            </div>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <div className="text-[9px] uppercase font-bold text-white/30">Delivered</div>
-                                            <div className="h-24 bg-white/5 rounded-2xl border border-white/10 p-2"></div>
-                                        </div>
-                                    </div>
+                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[380px] bg-white/5 backdrop-blur-xl border border-white/10 p-8 flex flex-col justify-center">
+                                    <h3 className="text-2xl font-bold mb-4 tracking-tight">Organiza tus momentos</h3>
+                                    <p className="text-white/50 text-sm leading-relaxed mb-4">Crea carpetas en tu nube y se convertirán automáticamente en secciones de tu galería.</p>
+                                    <p className="text-white/40 text-xs leading-relaxed">Ceremonia, Recepción, Sesión de pareja... tus clientes navegan fácilmente entre cada momento especial.</p>
                                 </div>
                                 <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[420px]">
-                                    <img alt="Event" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC41p8R7-woErTUg9JzHCERhIvnIPxxJ5qyN4k3rZLvErQkXtekziJ0vSLJkMvLg_EdoAYj4ROOGiOMiOgT-Yrxmd_Qv5tW3pfIV9wa31ggsaMSRURWDRCaNnbwAIpbBI5b2pCYRiZ_-QbFe0Mrr0Mdv9v8VHoLsSk8cur3z3zsVP4OYFUpljx6duMRsUNJgbjmrMLksVXJSUY2xz25B7sFUFjblQRXrxnclw2r8c65NrxGgL3wtvJ23SM8RIyekoiTinBlog3VFeg" />
+                                    <img alt="Organizing photos" className="w-full h-full object-cover" src="/organize-showcase.jpg" />
                                 </div>
-                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[380px] bg-white/5 backdrop-blur-xl border border-white/10 p-0 flex flex-col">
-                                    <div className="flex-1 flex items-center justify-center relative">
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent"></div>
-                                        <div className="z-10 text-center">
-                                            <div className="size-20 bg-[#cdb8e1] rounded-full flex items-center justify-center mb-4 mx-auto shadow-2xl shadow-[#cdb8e1]/20">
-                                                <span className="material-symbols-outlined text-black text-4xl">music_note</span>
-                                            </div>
-                                            <p className="font-bold text-xl mb-1">Música y Tipografía</p>
-                                            <p className="text-[10px] text-white/40 tracking-[0.4em] uppercase">Personalización Total</p>
-                                        </div>
-                                    </div>
-                                    <div className="h-1 bg-white/10 w-full"><div className="h-full w-1/3 bg-[#cdb8e1]"></div></div>
+                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[380px] bg-gradient-to-br from-[#cdb8e1]/20 to-black/80 backdrop-blur-xl border border-[#cdb8e1]/30 p-8 flex flex-col justify-center items-center text-center">
+                                    <h3 className="text-2xl font-bold mb-3 tracking-tight">Personaliza tus galerías</h3>
+                                    <p className="text-white/60 text-sm leading-relaxed mb-2">Añade música de fondo y elige entre docenas de tipografías premium.</p>
+                                    <p className="text-[#cdb8e1] text-xs font-medium">Tu marca, tu estilo ✨</p>
                                 </div>
                                 <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[420px]">
-                                    <img alt="Portrait Photography" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAhIOTWnXZB4Yo4E2uRwFLYQgWFCBVlPbsNQuRwXD9CSsaiErKRNztcvhl4IltGg99l7nQBN8g1AeMWpH_eYiPxB9KQ4m6EHYSE31PrlI7KFktTnZOMZrYB27JKP-krOygGqQeEA2mBnQp8U61kWYQ9ySlNVvvCS4OBrNTKWOs-h9k93mkQMgiGtIiqwPMms9Ovn8w-PcEWQTqMbdK8uk1Dtd-qgnL0AbMPAEpG5jhlnbN30zKj6-TT42mTyTdHNJICuIG0R7odYO8" />
+                                    <img alt="Music and Typography" className="w-full h-full object-cover" src="/music-typography-showcase.jpg" />
                                 </div>
 
                                 {/* Duplicate Set */}
-                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[480px] bg-white/5 backdrop-blur-xl border border-white/10 p-6">
-                                    <div className="flex items-center justify-between mb-6">
-                                        <span className="text-xs font-bold uppercase tracking-widest text-white/40 italic">Organiza tus proyectos</span>
-                                        <div className="flex -space-x-2">
-                                            <div className="size-6 rounded-full bg-[#cdb8e1] border-2 border-black"></div>
-                                            <div className="size-6 rounded-full bg-blue-400 border-2 border-black"></div>
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-3 gap-3">
-                                        <div className="space-y-2">
-                                            <div className="text-[9px] uppercase font-bold text-white/30">Ready</div>
-                                            <div className="h-24 bg-white/5 rounded-2xl border border-white/10 p-2">
-                                                <div className="h-full w-full bg-white/5 rounded-lg"></div>
-                                            </div>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <div className="text-[9px] uppercase font-bold text-[#cdb8e1]">Retouching</div>
-                                            <div className="h-24 bg-[#cdb8e1]/10 rounded-2xl border border-[#cdb8e1]/20 p-2">
-                                                <div className="h-full w-full bg-[#cdb8e1]/10 rounded-lg"></div>
-                                            </div>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <div className="text-[9px] uppercase font-bold text-white/30">Delivered</div>
-                                            <div className="h-24 bg-white/5 rounded-2xl border border-white/10 p-2"></div>
-                                        </div>
-                                    </div>
+                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[380px] bg-white/5 backdrop-blur-xl border border-white/10 p-8 flex flex-col justify-center">
+                                    <h3 className="text-2xl font-bold mb-4 tracking-tight">Organiza tus momentos</h3>
+                                    <p className="text-white/50 text-sm leading-relaxed mb-4">Crea carpetas en tu nube y se convertirán automáticamente en secciones de tu galería.</p>
+                                    <p className="text-white/40 text-xs leading-relaxed">Ceremonia, Recepción, Sesión de pareja... tus clientes navegan fácilmente entre cada momento especial.</p>
                                 </div>
                                 <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[420px]">
-                                    <img alt="Event" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC41p8R7-woErTUg9JzHCERhIvnIPxxJ5qyN4k3rZLvErQkXtekziJ0vSLJkMvLg_EdoAYj4ROOGiOMiOgT-Yrxmd_Qv5tW3pfIV9wa31ggsaMSRURWDRCaNnbwAIpbBI5b2pCYRiZ_-QbFe0Mrr0Mdv9v8VHoLsSk8cur3z3zsVP4OYFUpljx6duMRsUNJgbjmrMLksVXJSUY2xz25B7sFUFjblQRXrxnclw2r8c65NrxGgL3wtvJ23SM8RIyekoiTinBlog3VFeg" />
+                                    <img alt="Organizing photos" className="w-full h-full object-cover" src="/organize-showcase.jpg" />
                                 </div>
-                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[380px] bg-white/5 backdrop-blur-xl border border-white/10 p-0 flex flex-col">
-                                    <div className="flex-1 flex items-center justify-center relative">
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent"></div>
-                                        <div className="z-10 text-center">
-                                            <div className="size-20 bg-[#cdb8e1] rounded-full flex items-center justify-center mb-4 mx-auto shadow-2xl shadow-[#cdb8e1]/20">
-                                                <span className="material-symbols-outlined text-black text-4xl">music_note</span>
-                                            </div>
-                                            <p className="font-bold text-xl mb-1">Música y Tipografía</p>
-                                            <p className="text-[10px] text-white/40 tracking-[0.4em] uppercase">Personalización Total</p>
-                                        </div>
-                                    </div>
-                                    <div className="h-1 bg-white/10 w-full"><div className="h-full w-1/3 bg-[#cdb8e1]"></div></div>
+                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[380px] bg-gradient-to-br from-[#cdb8e1]/20 to-black/80 backdrop-blur-xl border border-[#cdb8e1]/30 p-8 flex flex-col justify-center items-center text-center">
+                                    <h3 className="text-2xl font-bold mb-3 tracking-tight">Personaliza tus galerías</h3>
+                                    <p className="text-white/60 text-sm leading-relaxed mb-2">Añade música de fondo y elige entre docenas de tipografías premium.</p>
+                                    <p className="text-[#cdb8e1] text-xs font-medium">Tu marca, tu estilo ✨</p>
                                 </div>
                                 <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[420px]">
-                                    <img alt="Portrait Photography" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAhIOTWnXZB4Yo4E2uRwFLYQgWFCBVlPbsNQuRwXD9CSsaiErKRNztcvhl4IltGg99l7nQBN8g1AeMWpH_eYiPxB9KQ4m6EHYSE31PrlI7KFktTnZOMZrYB27JKP-krOygGqQeEA2mBnQp8U61kWYQ9ySlNVvvCS4OBrNTKWOs-h9k93mkQMgiGtIiqwPMms9Ovn8w-PcEWQTqMbdK8uk1Dtd-qgnL0AbMPAEpG5jhlnbN30zKj6-TT42mTyTdHNJICuIG0R7odYO8" />
+                                    <img alt="Music and Typography" className="w-full h-full object-cover" src="/music-typography-showcase.jpg" />
                                 </div>
                             </div>
                         </div>
@@ -264,39 +290,43 @@ export default async function PlanBPage() {
                         <div className="relative overflow-hidden group">
                             <div className="flex gap-4 w-fit py-2 animate-scroll-right hover:[animation-play-state:paused]">
                                 {/* Original Set */}
-                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[350px] p-10 flex flex-col justify-end bg-white/5 backdrop-blur-xl border border-white/10">
-                                    <span className="material-symbols-outlined text-[#cdb8e1] text-5xl mb-6">smart_display</span>
-                                    <h3 className="text-3xl font-bold mb-3 tracking-tight">Video Integrado</h3>
-                                    <p className="text-white/50 text-sm leading-relaxed">Tus fotos y videos de la nube conviven con YouTube y Vimeo en un mismo sitio.</p>
+                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[380px] p-8 flex flex-col justify-center bg-white/5 backdrop-blur-xl border border-white/10">
+                                    <div className="flex gap-3 mb-4">
+                                        <img alt="YouTube" className="size-8" src="/assets/logos/youtube.svg" />
+                                        <img alt="Vimeo" className="size-8" src="/assets/logos/vimeo.svg" />
+                                    </div>
+                                    <h3 className="text-2xl font-bold mb-3 tracking-tight">Videos en tus Galerías</h3>
+                                    <p className="text-white/60 text-sm leading-relaxed">Tus recuerdos de la nube conviven con tus videos de YouTube y Vimeo en un mismo lugar.</p>
                                 </div>
                                 <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[420px]">
-                                    <img alt="Photographer work" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCDEvIB6g-xfLvj5yUIKJDCgGOmKyt28b4eXmy3Pe_Wfre8UzTJZKX8XBN8fg5hkdPdNbq8Tt9Ujv8Wsfg5XSkNQES0fstubgOWoeb2oYB_QYhdVCvx5HSFM_BZU30Qxk76Frw-fruXkjpV-ZCoCizDpLo2okjts2Jcb3wrw3sIwkL9jBSbz0nnJYXCXfYfAZ4FgFowg0P1UadRe79ePdo_K08PGOgchjG_QdJ2Qvlbvo4AYJEa3irk7ldRDh0IdkvgbrknPWkQJqA" />
+                                    <img alt="Video player" className="w-full h-full object-cover" src="/video-showcase.jpg" />
                                 </div>
-                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[350px] p-10 flex flex-col justify-end bg-white/5 backdrop-blur-xl border border-white/10">
-                                    <span className="material-symbols-outlined text-white text-5xl mb-6">groups</span>
-                                    <h3 className="text-3xl font-bold mb-3 tracking-tight">Galerías Colaborativas</h3>
-                                    <p className="text-white/50 text-sm leading-relaxed">Crea eventos participativos donde todos contribuyen al álbum vía QR.</p>
+                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[380px] p-8 flex flex-col justify-center bg-white/5 backdrop-blur-xl border border-white/10">
+                                    <h3 className="text-2xl font-bold mb-3 tracking-tight">Galerías Colaborativas</h3>
+                                    <p className="text-white/60 text-sm leading-relaxed">Permite que tus invitados compartan sus fotos directamente a tu galería mediante un código QR.</p>
                                 </div>
                                 <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[420px]">
-                                    <img alt="Workflow session" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCDEvIB6g-xfLvj5yUIKJDCgGOmKyt28b4eXmy3Pe_Wfre8UzTJZKX8XBN8fg5hkdPdNbq8Tt9Ujv8Wsfg5XSkNQES0fstubgOWoeb2oYB_QYhdVCvx5HSFM_BZU30Qxk76Frw-fruXkjpV-ZCoCizDpLo2okjts2Jcb3wrw3sIwkL9jBSbz0nnJYXCXfYfAZ4FgFowg0P1UadRe79ePdo_K08PGOgchjG_QdJ2Qvlbvo4AYJEa3irk7ldRDh0IdkvgbrknPWkQJqA" />
+                                    <img alt="Collaborative gallery" className="w-full h-full object-cover" src="/collaborative-showcase.jpg" />
                                 </div>
 
                                 {/* Duplicate Set */}
-                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[350px] p-10 flex flex-col justify-end bg-white/5 backdrop-blur-xl border border-white/10">
-                                    <span className="material-symbols-outlined text-[#cdb8e1] text-5xl mb-6">smart_display</span>
-                                    <h3 className="text-3xl font-bold mb-3 tracking-tight">Video Integrado</h3>
-                                    <p className="text-white/50 text-sm leading-relaxed">Tus fotos y videos de la nube conviven con YouTube y Vimeo en un mismo sitio.</p>
+                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[380px] p-8 flex flex-col justify-center bg-white/5 backdrop-blur-xl border border-white/10">
+                                    <div className="flex gap-3 mb-4">
+                                        <img alt="YouTube" className="size-8" src="/assets/logos/youtube.svg" />
+                                        <img alt="Vimeo" className="size-8" src="/assets/logos/vimeo.svg" />
+                                    </div>
+                                    <h3 className="text-2xl font-bold mb-3 tracking-tight">Videos en tus Galerías</h3>
+                                    <p className="text-white/60 text-sm leading-relaxed">Tus recuerdos de la nube conviven con tus videos de YouTube y Vimeo en un mismo lugar.</p>
                                 </div>
                                 <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[420px]">
-                                    <img alt="Photographer work" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCDEvIB6g-xfLvj5yUIKJDCgGOmKyt28b4eXmy3Pe_Wfre8UzTJZKX8XBN8fg5hkdPdNbq8Tt9Ujv8Wsfg5XSkNQES0fstubgOWoeb2oYB_QYhdVCvx5HSFM_BZU30Qxk76Frw-fruXkjpV-ZCoCizDpLo2okjts2Jcb3wrw3sIwkL9jBSbz0nnJYXCXfYfAZ4FgFowg0P1UadRe79ePdo_K08PGOgchjG_QdJ2Qvlbvo4AYJEa3irk7ldRDh0IdkvgbrknPWkQJqA" />
+                                    <img alt="Video player" className="w-full h-full object-cover" src="/video-showcase.jpg" />
                                 </div>
-                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[350px] p-10 flex flex-col justify-end bg-white/5 backdrop-blur-xl border border-white/10">
-                                    <span className="material-symbols-outlined text-white text-5xl mb-6">groups</span>
-                                    <h3 className="text-3xl font-bold mb-3 tracking-tight">Galerías Colaborativas</h3>
-                                    <p className="text-white/50 text-sm leading-relaxed">Crea eventos participativos donde todos contribuyen al álbum vía QR.</p>
+                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[380px] p-8 flex flex-col justify-center bg-white/5 backdrop-blur-xl border border-white/10">
+                                    <h3 className="text-2xl font-bold mb-3 tracking-tight">Galerías Colaborativas</h3>
+                                    <p className="text-white/60 text-sm leading-relaxed">Permite que tus invitados compartan sus fotos directamente a tu galería mediante un código QR.</p>
                                 </div>
                                 <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[420px]">
-                                    <img alt="Workflow session" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCDEvIB6g-xfLvj5yUIKJDCgGOmKyt28b4eXmy3Pe_Wfre8UzTJZKX8XBN8fg5hkdPdNbq8Tt9Ujv8Wsfg5XSkNQES0fstubgOWoeb2oYB_QYhdVCvx5HSFM_BZU30Qxk76Frw-fruXkjpV-ZCoCizDpLo2okjts2Jcb3wrw3sIwkL9jBSbz0nnJYXCXfYfAZ4FgFowg0P1UadRe79ePdo_K08PGOgchjG_QdJ2Qvlbvo4AYJEa3irk7ldRDh0IdkvgbrknPWkQJqA" />
+                                    <img alt="Collaborative gallery" className="w-full h-full object-cover" src="/collaborative-showcase.jpg" />
                                 </div>
                             </div>
                         </div>
