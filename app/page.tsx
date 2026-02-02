@@ -484,22 +484,12 @@ export default async function PlanBPage() {
                             <div className="bg-gray-100 rounded-[2.5rem] overflow-hidden aspect-[4/3] relative shadow-lg group">
                                 <img src="/family-showcase.jpg" alt="Family Memories" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                                 <div className="absolute top-0 left-0 w-full h-1 bg-[#cdb8e1]"></div>
-
-                                <div className="absolute bottom-6 left-6 right-6 bg-white/90 backdrop-blur-md p-6 rounded-2xl shadow-sm flex items-center gap-4">
-                                    <div className="size-10 bg-[#cdb8e1] rounded-full flex items-center justify-center text-white">
-                                        <span className="material-symbols-outlined">family_history</span>
-                                    </div>
-                                    <div>
-                                        <h3 className="font-bold text-sm">Recuerdos en Familia</h3>
-                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Client Portal</p>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                         <div>
                             <h2 className="text-4xl md:text-6xl font-bold mb-8 tracking-tighter">CloserLens for Family</h2>
 
-                            <div className="space-y-6 text-xl text-gray-500 font-light leading-relaxed mb-10">
+                            <div className="space-y-6 text-xl text-gray-500 font-light leading-relaxed mb-10 text-justify hyphens-auto">
                                 <p>
                                     Un espacio pensado para compartir recuerdos sin complicaciones.
                                 </p>
@@ -521,7 +511,7 @@ export default async function PlanBPage() {
                                     Interfaz limpia, sin distracciones
                                 </li>
                                 <li className="flex items-center gap-3">
-                                    <span className="material-symbols-outlined text-[#cdb8e1]">check_circle</span>
+                                    <span className="material-symbols-outlined text-white bg-[#cdb8e1] rounded-full text-[16px] p-0.5">check</span>
                                     Imágenes optimizadas para móviles
                                 </li>
                             </ul>
