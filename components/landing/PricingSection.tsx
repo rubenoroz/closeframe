@@ -32,9 +32,9 @@ export function PricingSection({ plans }: PricingSectionProps) {
     const [billingCycle, setBillingCycle] = useState<'month' | 'year'>('year');
 
     return (
-        <section className="py-32 px-6 lg:px-20 bg-[#0a0a0a]" id="pricing">
-            <div className="max-w-[1200px] mx-auto text-center mb-24">
-                <h2 className="text-6xl md:text-8xl font-bold mb-10 tracking-tighter">Planes.</h2>
+        <section className="py-20 md:py-32 px-6 lg:px-20 bg-[#0a0a0a]" id="pricing">
+            <div className="max-w-[1200px] mx-auto text-center mb-12 md:mb-24">
+                <h2 className="text-4xl md:text-8xl font-bold mb-10 tracking-tighter">Planes.</h2>
                 <div className="inline-flex items-center bg-white/5 p-1 rounded-full border border-white/10">
                     <button
                         onClick={() => setBillingCycle('month')}
@@ -78,7 +78,7 @@ export function PricingSection({ plans }: PricingSectionProps) {
                     const intervalLabel = billingCycle === 'month' ? '/mes' : '/año';
 
                     return (
-                        <div key={plan.id} className={`bg-white/5 backdrop-blur-xl border p-10 rounded-[2rem] flex flex-col transition-all relative ${isRecommended
+                        <div key={plan.id} className={`bg-white/5 backdrop-blur-xl border p-6 md:p-10 rounded-[2rem] flex flex-col transition-all relative ${isRecommended
                             ? "border-[#cdb8e1]/40 bg-[#cdb8e1]/5 scale-105 z-10 shadow-2xl shadow-[#cdb8e1]/10"
                             : "border-white/10 hover:border-white/20"
                             }`}>

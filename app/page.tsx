@@ -35,8 +35,8 @@ export default async function PlanBPage() {
                     <div className="relative z-10 max-w-[1400px] mx-auto w-full">
                         <div className="max-w-4xl">
                             <span className="inline-block px-4 py-1 mb-8 rounded-full bg-[#cdb8e1]/20 border border-[#cdb8e1]/30 text-[#cdb8e1] text-[10px] font-bold tracking-[0.2em] uppercase">FOTOGRAFOS · ACTORES · MODELOS · MÚSICOS · FAMILIAS · STUDIOS · AGENCIAS</span>
-                            <h1 className="font-serif text-7xl md:text-[120px] font-light text-white mb-8 leading-[0.85] tracking-tight">
-                                Tu nube, <br /><span className="italic text-[#cdb8e1] ml-20">tu galería.</span>
+                            <h1 className="font-serif text-5xl md:text-7xl lg:text-[120px] font-light text-white mb-8 leading-[0.9] md:leading-[0.85] tracking-tight">
+                                Tu nube, <br /><span className="italic text-[#cdb8e1] ml-0 md:ml-20">tu galería.</span>
                             </h1>
                             <div className="flex flex-col md:flex-row md:items-end gap-8">
                                 <p className="text-xl md:text-2xl text-white/60 max-w-xl leading-relaxed font-light">
@@ -66,10 +66,10 @@ export default async function PlanBPage() {
                         <div className="relative overflow-hidden group">
                             <div className="flex gap-3 w-fit py-2 animate-scroll-right hover:[animation-play-state:paused]">
                                 {/* Original Set */}
-                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[420px]">
+                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[420px]">
                                     <img alt="Portrait" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCpXkC43P7GKmeVa5AcqrrB26_6yYZyxZKbQ4Rkv-yUDS1MhQ0_pOQUUJVTggKws6Ar7vTDCGnwzopT8ZS3WztFsQ3DSwug8wntoPR1kZQa2rrufhb28ISGkYfaCgAHSVJN-3sFzet2wvbDYbyjHm1z72TK3gK1ArdLukJiTfnRBoArSDYOj3_xsR2l2hdHZirioU3L0jv9fw7ULyAOZpfyvGw_hDKwGWDqb3OxaFFlQqlqjkegRkYpMtxtR-lb5Xvg0TIM8PXnilM" />
                                 </div>
-                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[350px] p-10 flex flex-col justify-end bg-white/5 backdrop-blur-xl border border-white/10 group">
+                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[350px] p-10 flex flex-col justify-end bg-white/5 backdrop-blur-xl border border-white/10 group">
                                     <div className="absolute top-8 left-8 flex gap-2">
                                         <div className="size-2 rounded-full bg-blue-500"></div>
                                         <div className="size-2 rounded-full bg-blue-500/40"></div>
@@ -78,7 +78,7 @@ export default async function PlanBPage() {
                                     <h3 className="text-3xl font-bold mb-3 tracking-tight">Galerías Closer</h3>
                                     <p className="text-white/50 text-sm leading-relaxed">Transforma tus carpetas en experiencias visuales de alto impacto.</p>
                                 </div>
-                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[420px] bg-black/60 p-8 border border-white/10">
+                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[420px] bg-black/60 p-8 border border-white/10">
                                     <div className="flex items-center justify-between mb-8 border-b border-white/5 pb-4">
                                         <div className="flex items-center gap-3">
                                             <img alt="Drive" className="size-5" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA6hDuD35H0iOySf7pud9NCJ5TBpoh7FdvsAksXM7iEKqvzD826Z_s1jl--IF1_cGR2WPp4n5nQHTjMX6eT7MDmd3QuWddwXXCiz01uNEaOqA8NZ_pPUUzLYRvnCIHqdN3a4hNyKSciSYij8_V-YnTZ4VDrXk6poaKSr9pW5EKipLU-BsGyc_z-DdkCCK4-LAXA0UmFgFtjetj4if4FtP6EfWIZTOxun6dOkFQ7BJOV1YwtHeWO3gVWlEa-Xqpszx0nULeQN5dOjEI" />
@@ -102,20 +102,20 @@ export default async function PlanBPage() {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[420px]">
+                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[420px]">
                                     <img alt="Studio" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4jyKiTJRi1xH4_X6VdTyoj0odZaeaIXSfPgtN1SvQwq8zVsc6EhOP52ldQBkGmy0xVU-3tUNOIxz1fStfGM2GDGe5s-ZlXJHmyS9b8XSoQaR2aiUf4F5CrK9Ba0NE7J6iaaI2STcqPPoKRfK_JBqxyHeqwyKWOhxWU2qIdVz-OAD7dmC37vx-S4zcnCSbc230B0O5vxnEeS8piJANNxQz5C1KV7E4TFjWJUjfjRfYSbZHjMwlw4UrFN-DHXe21cXNA_5XGpZVWbs" />
                                 </div>
-                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[350px] p-10 flex flex-col justify-end bg-[#cdb8e1]/10 border border-[#cdb8e1]/20 backdrop-blur-xl">
+                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[350px] p-10 flex flex-col justify-end bg-[#cdb8e1]/10 border border-[#cdb8e1]/20 backdrop-blur-xl">
                                     <span className="material-symbols-outlined text-[#cdb8e1] text-5xl mb-6">event</span>
                                     <h3 className="text-3xl font-bold mb-3 tracking-tight">Agenda tus eventos</h3>
                                     <p className="text-white/70 text-sm leading-relaxed">Administra tu calendario y sesiones con un sistema de reservas integrado.</p>
                                 </div>
 
                                 {/* Duplicate Set */}
-                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[420px]">
+                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[420px]">
                                     <img alt="Portrait" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCpXkC43P7GKmeVa5AcqrrB26_6yYZyxZKbQ4Rkv-yUDS1MhQ0_pOQUUJVTggKws6Ar7vTDCGnwzopT8ZS3WztFsQ3DSwug8wntoPR1kZQa2rrufhb28ISGkYfaCgAHSVJN-3sFzet2wvbDYbyjHm1z72TK3gK1ArdLukJiTfnRBoArSDYOj3_xsR2l2hdHZirioU3L0jv9fw7ULyAOZpfyvGw_hDKwGWDqb3OxaFFlQqlqjkegRkYpMtxtR-lb5Xvg0TIM8PXnilM" />
                                 </div>
-                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[350px] p-10 flex flex-col justify-end bg-white/5 backdrop-blur-xl border border-white/10 group">
+                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[350px] p-10 flex flex-col justify-end bg-white/5 backdrop-blur-xl border border-white/10 group">
                                     <div className="absolute top-8 left-8 flex gap-2">
                                         <div className="size-2 rounded-full bg-blue-500"></div>
                                         <div className="size-2 rounded-full bg-blue-500/40"></div>
@@ -124,7 +124,7 @@ export default async function PlanBPage() {
                                     <h3 className="text-3xl font-bold mb-3 tracking-tight">Galerías Closer</h3>
                                     <p className="text-white/50 text-sm leading-relaxed">Transforma tus carpetas en experiencias visuales de alto impacto.</p>
                                 </div>
-                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[420px] bg-black/60 p-8 border border-white/10">
+                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[420px] bg-black/60 p-8 border border-white/10">
                                     <div className="flex items-center justify-between mb-8 border-b border-white/5 pb-4">
                                         <div className="flex items-center gap-3">
                                             <img alt="Drive" className="size-5" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA6hDuD35H0iOySf7pud9NCJ5TBpoh7FdvsAksXM7iEKqvzD826Z_s1jl--IF1_cGR2WPp4n5nQHTjMX6eT7MDmd3QuWddwXXCiz01uNEaOqA8NZ_pPUUzLYRvnCIHqdN3a4hNyKSciSYij8_V-YnTZ4VDrXk6poaKSr9pW5EKipLU-BsGyc_z-DdkCCK4-LAXA0UmFgFtjetj4if4FtP6EfWIZTOxun6dOkFQ7BJOV1YwtHeWO3gVWlEa-Xqpszx0nULeQN5dOjEI" />
@@ -148,10 +148,10 @@ export default async function PlanBPage() {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[420px]">
+                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[420px]">
                                     <img alt="Studio" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4jyKiTJRi1xH4_X6VdTyoj0odZaeaIXSfPgtN1SvQwq8zVsc6EhOP52ldQBkGmy0xVU-3tUNOIxz1fStfGM2GDGe5s-ZlXJHmyS9b8XSoQaR2aiUf4F5CrK9Ba0NE7J6iaaI2STcqPPoKRfK_JBqxyHeqwyKWOhxWU2qIdVz-OAD7dmC37vx-S4zcnCSbc230B0O5vxnEeS8piJANNxQz5C1KV7E4TFjWJUjfjRfYSbZHjMwlw4UrFN-DHXe21cXNA_5XGpZVWbs" />
                                 </div>
-                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[350px] p-10 flex flex-col justify-end bg-[#cdb8e1]/10 border border-[#cdb8e1]/20 backdrop-blur-xl">
+                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[350px] p-10 flex flex-col justify-end bg-[#cdb8e1]/10 border border-[#cdb8e1]/20 backdrop-blur-xl">
                                     <span className="material-symbols-outlined text-[#cdb8e1] text-5xl mb-6">event</span>
                                     <h3 className="text-3xl font-bold mb-3 tracking-tight">Agenda tus eventos</h3>
                                     <p className="text-white/70 text-sm leading-relaxed">Administra tu calendario y sesiones con un sistema de reservas integrado.</p>
@@ -163,7 +163,7 @@ export default async function PlanBPage() {
                         <div className="relative overflow-hidden group">
                             <div className="flex gap-3 w-fit py-2 animate-scroll-left hover:[animation-play-state:paused]">
                                 {/* Original Set */}
-                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[480px] bg-white/5 backdrop-blur-xl border border-white/10 p-6">
+                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[480px] bg-white/5 backdrop-blur-xl border border-white/10 p-6">
                                     <div className="flex items-center justify-between mb-6">
                                         <span className="text-xs font-bold uppercase tracking-widest text-white/40 italic">Organiza tus proyectos</span>
                                         <div className="flex -space-x-2">
@@ -190,10 +190,10 @@ export default async function PlanBPage() {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[420px]">
+                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[420px]">
                                     <img alt="Event" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC41p8R7-woErTUg9JzHCERhIvnIPxxJ5qyN4k3rZLvErQkXtekziJ0vSLJkMvLg_EdoAYj4ROOGiOMiOgT-Yrxmd_Qv5tW3pfIV9wa31ggsaMSRURWDRCaNnbwAIpbBI5b2pCYRiZ_-QbFe0Mrr0Mdv9v8VHoLsSk8cur3z3zsVP4OYFUpljx6duMRsUNJgbjmrMLksVXJSUY2xz25B7sFUFjblQRXrxnclw2r8c65NrxGgL3wtvJ23SM8RIyekoiTinBlog3VFeg" />
                                 </div>
-                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[380px] bg-white/5 backdrop-blur-xl border border-white/10 p-0 flex flex-col">
+                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[380px] bg-white/5 backdrop-blur-xl border border-white/10 p-0 flex flex-col">
                                     <div className="flex-1 flex items-center justify-center relative">
                                         <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent"></div>
                                         <div className="z-10 text-center">
@@ -206,12 +206,12 @@ export default async function PlanBPage() {
                                     </div>
                                     <div className="h-1 bg-white/10 w-full"><div className="h-full w-1/3 bg-[#cdb8e1]"></div></div>
                                 </div>
-                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[420px]">
+                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[420px]">
                                     <img alt="Portrait Photography" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAhIOTWnXZB4Yo4E2uRwFLYQgWFCBVlPbsNQuRwXD9CSsaiErKRNztcvhl4IltGg99l7nQBN8g1AeMWpH_eYiPxB9KQ4m6EHYSE31PrlI7KFktTnZOMZrYB27JKP-krOygGqQeEA2mBnQp8U61kWYQ9ySlNVvvCS4OBrNTKWOs-h9k93mkQMgiGtIiqwPMms9Ovn8w-PcEWQTqMbdK8uk1Dtd-qgnL0AbMPAEpG5jhlnbN30zKj6-TT42mTyTdHNJICuIG0R7odYO8" />
                                 </div>
 
                                 {/* Duplicate Set */}
-                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[480px] bg-white/5 backdrop-blur-xl border border-white/10 p-6">
+                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[480px] bg-white/5 backdrop-blur-xl border border-white/10 p-6">
                                     <div className="flex items-center justify-between mb-6">
                                         <span className="text-xs font-bold uppercase tracking-widest text-white/40 italic">Organiza tus proyectos</span>
                                         <div className="flex -space-x-2">
@@ -238,10 +238,10 @@ export default async function PlanBPage() {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[420px]">
+                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[420px]">
                                     <img alt="Event" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC41p8R7-woErTUg9JzHCERhIvnIPxxJ5qyN4k3rZLvErQkXtekziJ0vSLJkMvLg_EdoAYj4ROOGiOMiOgT-Yrxmd_Qv5tW3pfIV9wa31ggsaMSRURWDRCaNnbwAIpbBI5b2pCYRiZ_-QbFe0Mrr0Mdv9v8VHoLsSk8cur3z3zsVP4OYFUpljx6duMRsUNJgbjmrMLksVXJSUY2xz25B7sFUFjblQRXrxnclw2r8c65NrxGgL3wtvJ23SM8RIyekoiTinBlog3VFeg" />
                                 </div>
-                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[380px] bg-white/5 backdrop-blur-xl border border-white/10 p-0 flex flex-col">
+                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[380px] bg-white/5 backdrop-blur-xl border border-white/10 p-0 flex flex-col">
                                     <div className="flex-1 flex items-center justify-center relative">
                                         <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent"></div>
                                         <div className="z-10 text-center">
@@ -254,7 +254,7 @@ export default async function PlanBPage() {
                                     </div>
                                     <div className="h-1 bg-white/10 w-full"><div className="h-full w-1/3 bg-[#cdb8e1]"></div></div>
                                 </div>
-                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[420px]">
+                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[420px]">
                                     <img alt="Portrait Photography" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAhIOTWnXZB4Yo4E2uRwFLYQgWFCBVlPbsNQuRwXD9CSsaiErKRNztcvhl4IltGg99l7nQBN8g1AeMWpH_eYiPxB9KQ4m6EHYSE31PrlI7KFktTnZOMZrYB27JKP-krOygGqQeEA2mBnQp8U61kWYQ9ySlNVvvCS4OBrNTKWOs-h9k93mkQMgiGtIiqwPMms9Ovn8w-PcEWQTqMbdK8uk1Dtd-qgnL0AbMPAEpG5jhlnbN30zKj6-TT42mTyTdHNJICuIG0R7odYO8" />
                                 </div>
                             </div>
@@ -264,38 +264,38 @@ export default async function PlanBPage() {
                         <div className="relative overflow-hidden group">
                             <div className="flex gap-4 w-fit py-2 animate-scroll-right hover:[animation-play-state:paused]">
                                 {/* Original Set */}
-                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[350px] p-10 flex flex-col justify-end bg-white/5 backdrop-blur-xl border border-white/10">
+                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[350px] p-10 flex flex-col justify-end bg-white/5 backdrop-blur-xl border border-white/10">
                                     <span className="material-symbols-outlined text-[#cdb8e1] text-5xl mb-6">smart_display</span>
                                     <h3 className="text-3xl font-bold mb-3 tracking-tight">Video Integrado</h3>
                                     <p className="text-white/50 text-sm leading-relaxed">Tus fotos y videos de la nube conviven con YouTube y Vimeo en un mismo sitio.</p>
                                 </div>
-                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[420px]">
+                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[420px]">
                                     <img alt="Photographer work" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCDEvIB6g-xfLvj5yUIKJDCgGOmKyt28b4eXmy3Pe_Wfre8UzTJZKX8XBN8fg5hkdPdNbq8Tt9Ujv8Wsfg5XSkNQES0fstubgOWoeb2oYB_QYhdVCvx5HSFM_BZU30Qxk76Frw-fruXkjpV-ZCoCizDpLo2okjts2Jcb3wrw3sIwkL9jBSbz0nnJYXCXfYfAZ4FgFowg0P1UadRe79ePdo_K08PGOgchjG_QdJ2Qvlbvo4AYJEa3irk7ldRDh0IdkvgbrknPWkQJqA" />
                                 </div>
-                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[350px] p-10 flex flex-col justify-end bg-white/5 backdrop-blur-xl border border-white/10">
+                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[350px] p-10 flex flex-col justify-end bg-white/5 backdrop-blur-xl border border-white/10">
                                     <span className="material-symbols-outlined text-white text-5xl mb-6">groups</span>
                                     <h3 className="text-3xl font-bold mb-3 tracking-tight">Galerías Colaborativas</h3>
                                     <p className="text-white/50 text-sm leading-relaxed">Crea eventos participativos donde todos contribuyen al álbum vía QR.</p>
                                 </div>
-                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[420px]">
+                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[420px]">
                                     <img alt="Workflow session" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCDEvIB6g-xfLvj5yUIKJDCgGOmKyt28b4eXmy3Pe_Wfre8UzTJZKX8XBN8fg5hkdPdNbq8Tt9Ujv8Wsfg5XSkNQES0fstubgOWoeb2oYB_QYhdVCvx5HSFM_BZU30Qxk76Frw-fruXkjpV-ZCoCizDpLo2okjts2Jcb3wrw3sIwkL9jBSbz0nnJYXCXfYfAZ4FgFowg0P1UadRe79ePdo_K08PGOgchjG_QdJ2Qvlbvo4AYJEa3irk7ldRDh0IdkvgbrknPWkQJqA" />
                                 </div>
 
                                 {/* Duplicate Set */}
-                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[350px] p-10 flex flex-col justify-end bg-white/5 backdrop-blur-xl border border-white/10">
+                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[350px] p-10 flex flex-col justify-end bg-white/5 backdrop-blur-xl border border-white/10">
                                     <span className="material-symbols-outlined text-[#cdb8e1] text-5xl mb-6">smart_display</span>
                                     <h3 className="text-3xl font-bold mb-3 tracking-tight">Video Integrado</h3>
                                     <p className="text-white/50 text-sm leading-relaxed">Tus fotos y videos de la nube conviven con YouTube y Vimeo en un mismo sitio.</p>
                                 </div>
-                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[420px]">
+                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[420px]">
                                     <img alt="Photographer work" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCDEvIB6g-xfLvj5yUIKJDCgGOmKyt28b4eXmy3Pe_Wfre8UzTJZKX8XBN8fg5hkdPdNbq8Tt9Ujv8Wsfg5XSkNQES0fstubgOWoeb2oYB_QYhdVCvx5HSFM_BZU30Qxk76Frw-fruXkjpV-ZCoCizDpLo2okjts2Jcb3wrw3sIwkL9jBSbz0nnJYXCXfYfAZ4FgFowg0P1UadRe79ePdo_K08PGOgchjG_QdJ2Qvlbvo4AYJEa3irk7ldRDh0IdkvgbrknPWkQJqA" />
                                 </div>
-                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[350px] p-10 flex flex-col justify-end bg-white/5 backdrop-blur-xl border border-white/10">
+                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[350px] p-10 flex flex-col justify-end bg-white/5 backdrop-blur-xl border border-white/10">
                                     <span className="material-symbols-outlined text-white text-5xl mb-6">groups</span>
                                     <h3 className="text-3xl font-bold mb-3 tracking-tight">Galerías Colaborativas</h3>
                                     <p className="text-white/50 text-sm leading-relaxed">Crea eventos participativos donde todos contribuyen al álbum vía QR.</p>
                                 </div>
-                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[420px]">
+                                <div className="h-[280px] rounded-[2.5rem] overflow-hidden flex-shrink-0 relative transition-all duration-500 w-[85vw] sm:w-[420px]">
                                     <img alt="Workflow session" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCDEvIB6g-xfLvj5yUIKJDCgGOmKyt28b4eXmy3Pe_Wfre8UzTJZKX8XBN8fg5hkdPdNbq8Tt9Ujv8Wsfg5XSkNQES0fstubgOWoeb2oYB_QYhdVCvx5HSFM_BZU30Qxk76Frw-fruXkjpV-ZCoCizDpLo2okjts2Jcb3wrw3sIwkL9jBSbz0nnJYXCXfYfAZ4FgFowg0P1UadRe79ePdo_K08PGOgchjG_QdJ2Qvlbvo4AYJEa3irk7ldRDh0IdkvgbrknPWkQJqA" />
                                 </div>
                             </div>
@@ -304,8 +304,8 @@ export default async function PlanBPage() {
                 </section>
 
                 {/* Studio Section */}
-                <section className="relative py-32 flex items-center overflow-hidden bg-black" id="studio">
-                    <div className="max-w-[1400px] mx-auto w-full px-6 lg:px-20 grid grid-cols-1 lg:grid-cols-2 gap-24 items-center">
+                <section className="relative py-20 md:py-32 flex items-center overflow-hidden bg-black" id="studio">
+                    <div className="max-w-[1400px] mx-auto w-full px-6 lg:px-20 grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-24 items-center">
                         <div className="order-2 lg:order-1 relative">
                             <div className="bg-white/5 backdrop-blur-xl border border-white/10 aspect-video rounded-[3rem] overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,1)] relative border-white/20 group">
                                 <img alt="Studio Experience" className="w-full h-full object-cover opacity-60" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4jyKiTJRi1xH4_X6VdTyoj0odZaeaIXSfPgtN1SvQwq8zVsc6EhOP52ldQBkGmy0xVU-3tUNOIxz1fStfGM2GDGe5s-ZlXJHmyS9b8XSoQaR2aiUf4F5CrK9Ba0NE7J6iaaI2STcqPPoKRfK_JBqxyHeqwyKWOhxWU2qIdVz-OAD7dmC37vx-S4zcnCSbc230B0O5vxnEeS8piJANNxQz5C1KV7E4TFjWJUjfjRfYSbZHjMwlw4UrFN-DHXe21cXNA_5XGpZVWbs" />
@@ -376,11 +376,11 @@ export default async function PlanBPage() {
                 </section>
 
                 {/* Smart Folders Section */}
-                <section className="py-32 bg-[#080808]">
+                <section className="py-20 md:py-32 bg-[#080808]">
                     <div className="max-w-[1400px] mx-auto px-6 lg:px-20">
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-32 items-center">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 md:gap-32 items-center">
                             <div>
-                                <h2 className="text-5xl md:text-7xl font-bold mb-10 tracking-tighter leading-tight">Smart Folders:<br /><span className="text-[#cdb8e1] italic">Mirror Sync.</span></h2>
+                                <h2 className="text-4xl md:text-7xl font-bold mb-10 tracking-tighter leading-tight">Smart Folders:<br /><span className="text-[#cdb8e1] italic">Mirror Sync.</span></h2>
                                 <p className="text-xl text-white/50 mb-12 font-light leading-relaxed">Olvídate de organizar dos veces. La estructura que creas en Google Drive se convierte automáticamente en el menú de tu galería CloserLens.</p>
                                 <div className="grid grid-cols-1 gap-4">
                                     <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 rounded-3xl border-[#cdb8e1]/20 flex items-center gap-6">
@@ -447,8 +447,8 @@ export default async function PlanBPage() {
                 </section>
 
                 {/* Family Portal Section */}
-                <section className="py-24 bg-white text-black">
-                    <div className="max-w-[1400px] mx-auto px-6 lg:px-20 grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+                <section className="py-16 md:py-24 bg-white text-black">
+                    <div className="max-w-[1400px] mx-auto px-6 lg:px-20 grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-20 items-center">
                         <div className="relative">
                             <div className="bg-gray-100 rounded-[3rem] p-12 aspect-[4/3] relative overflow-hidden shadow-sm">
                                 <div className="absolute top-0 left-0 w-full h-1 bg-[#cdb8e1]"></div>
@@ -472,7 +472,7 @@ export default async function PlanBPage() {
                         </div>
                         <div>
                             <span className="text-[#cdb8e1] font-black text-[10px] tracking-[0.4em] uppercase mb-6 block">Coming Soon</span>
-                            <h2 className="text-5xl md:text-6xl font-bold mb-8 tracking-tighter">CloserLens for Family</h2>
+                            <h2 className="text-4xl md:text-6xl font-bold mb-8 tracking-tighter">CloserLens for Family</h2>
                             <p className="text-xl text-gray-500 mb-10 font-light leading-relaxed">
                                 Una interfaz simplificada y cálida diseñada específicamente para entregas familiares. Botones grandes, acceso sin contraseña por correo y optimización para tíos y abuelos.
                             </p>
@@ -489,8 +489,8 @@ export default async function PlanBPage() {
                 <PricingSection plans={plans} />
 
                 {/* Footer */}
-                <footer className="py-24 px-6 lg:px-20 border-t border-white/5 bg-black">
-                    <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-20">
+                <footer className="py-16 md:py-24 px-6 lg:px-20 border-t border-white/5 bg-black">
+                    <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-10 md:gap-20">
                         <div className="col-span-1 md:col-span-2">
                             <div className="w-56 mb-8 relative">
                                 <img src="/logo-white.svg" alt="CloserLens" className="w-full h-auto object-contain" />
