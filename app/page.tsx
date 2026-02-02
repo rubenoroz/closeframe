@@ -517,7 +517,7 @@ export default async function PlanBPage() {
                                     Interfaz limpia, sin distracciones
                                 </li>
                                 <li className="flex items-center gap-3">
-                                    <span className="material-symbols-outlined text-white bg-[#cdb8e1] rounded-full text-[16px] p-0.5">check</span>
+                                    <span className="material-symbols-outlined text-[#cdb8e1]">check_circle</span>
                                     Imágenes optimizadas para móviles
                                 </li>
                             </ul>
