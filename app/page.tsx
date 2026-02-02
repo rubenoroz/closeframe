@@ -394,13 +394,19 @@ export default async function PlanBPage() {
                             </div>
                         </div>
                         <div className="order-1 lg:order-2 max-w-xl">
-                            <span className="text-[#cdb8e1] font-black text-[10px] tracking-[0.4em] uppercase mb-6 block italic">Flujo Creativo</span>
+                            <span className="text-[#cdb8e1] font-black text-[10px] tracking-[0.4em] uppercase mb-6 block italic">FLUJO CREATIVO</span>
                             <h2 className="text-4xl md:text-6xl font-bold mb-8 leading-[1.1] tracking-tighter text-white">Inmersión profesional <br />para tu flujo creativo.</h2>
-                            <p className="text-lg text-white/50 mb-8 font-light leading-relaxed">
-                                Eleva tu forma de trabajar y de entregar tu contenido.
+
+                            <p className="text-xl text-white font-medium mb-6 leading-relaxed">
+                                Trabaja con orden. Entrega con intención.
                             </p>
-                            <p className="text-lg text-white/50 mb-0 font-light leading-relaxed">
-                                CloserLens conecta tus proyectos, tu agenda y tus galerías en un solo lugar, pensado para <span className="text-white font-medium">fotógrafos, actores, modelos, músicos, familias, studios y agencias</span> que buscan orden, claridad y una presentación que realmente se siente premium.
+
+                            <p className="text-lg text-white/60 mb-8 font-light leading-relaxed">
+                                CloserLens conecta tus proyectos, tu agenda y tus galerías en un solo lugar, para que te concentres en crear mientras todo lo demás fluye contigo.
+                            </p>
+
+                            <p className="text-sm text-white/40 font-medium leading-relaxed border-t border-white/10 pt-6 mt-8">
+                                Pensado para <span className="text-white/70">fotógrafos, actores, modelos, músicos, familias, estudios y agencias</span> que buscan una experiencia clara, cuidada y verdaderamente premium.
                             </p>
                         </div>
                     </div>
