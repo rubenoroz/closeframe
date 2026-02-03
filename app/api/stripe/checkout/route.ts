@@ -157,16 +157,38 @@ export async function POST(req: Request) {
             // ══════════════════════════════════════════════════════════════════
             console.log("[CHECKOUT] Processing UPGRADE with proration");
 
-            await stripe.subscriptions.update(user.stripeSubscriptionId, {
+            // Update subscription with proration
+            const updatedSubscription = await stripe.subscriptions.update(user.stripeSubscriptionId, {
                 items: [{
                     id: subscriptionItemId,
                     price: priceId,
                 }],
-                proration_behavior: 'create_prorations', // Charge difference immediately
+                proration_behavior: 'create_prorations',
+                payment_behavior: 'pending_if_incomplete', // Require payment for proration
                 metadata: {
                     planId: planId,
                 }
             });
+
+            // Create and pay the proration invoice immediately
+            try {
+                const invoice = await stripe.invoices.create({
+                    customer: customerId,
+                    subscription: user.stripeSubscriptionId,
+                    auto_advance: true, // Auto-finalize
+                });
+
+                // Pay the invoice immediately
+                if (invoice.amount_due > 0) {
+                    await stripe.invoices.pay(invoice.id);
+                    console.log(`[CHECKOUT] Proration invoice paid: ${invoice.id}, amount: ${invoice.amount_due}`);
+                }
+            } catch (invoiceError: any) {
+                // If no items to invoice, that's okay (might happen if change is tiny)
+                if (invoiceError.code !== 'invoice_no_subscription_line_items') {
+                    console.error("[CHECKOUT] Invoice error:", invoiceError);
+                }
+            }
 
             // Update user's plan in our database
             await prisma.user.update({
