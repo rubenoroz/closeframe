@@ -66,9 +66,10 @@ export default async function PublicProfilePage({ params }: Props) {
                     cloudAccountId: true,
                     rootFolderId: true,
                 },
-                orderBy: {
-                    createdAt: 'desc'
-                }
+                orderBy: [
+                    { profileOrder: 'asc' },
+                    { createdAt: 'desc' }
+                ]
             }
         }
     });

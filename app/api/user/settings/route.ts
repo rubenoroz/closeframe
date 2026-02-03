@@ -71,8 +71,13 @@ export async function GET() {
                         showInProfile: true,
                         coverImage: true,
                         cloudAccountId: true,
-                        createdAt: true
-                    }
+                        createdAt: true,
+                        profileOrder: true
+                    },
+                    orderBy: [
+                        { profileOrder: 'asc' },
+                        { createdAt: 'desc' }
+                    ]
                 }
             }
         });

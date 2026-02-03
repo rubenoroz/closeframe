@@ -11,6 +11,22 @@ import {
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent
+} from "@dnd-kit/core";
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    rectSortingStrategy
+} from "@dnd-kit/sortable";
+import { SortableProjectItem } from "@/components/dashboard/SortableProjectItem";
 
 import { getPlanConfig } from "@/lib/plans.config";
 
@@ -165,6 +181,80 @@ export default function SettingsPage() {
                 setLoading(false);
             });
     }, []);
+
+    // Dnd Sensors
+    const sensors = useSensors(
+        useSensor(PointerSensor),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
+
+    const handleDragEnd = async (event: DragEndEvent) => {
+        const { active, over } = event;
+
+        if (active.id !== over?.id) {
+            setUser((prev) => {
+                const publicProjects = prev.projects.filter(p => p.public);
+                const oldIndex = publicProjects.findIndex((p) => p.id === active.id);
+                const newIndex = publicProjects.findIndex((p) => p.id === over?.id);
+
+                // Reorder visible list
+                const newPublicOrder = arrayMove(publicProjects, oldIndex, newIndex);
+
+                // Merge back into full list
+                // Create a map of updated indices/order for the public items
+                // Actually, just save the API order is enough for backend
+                // For frontend, we need to reconstruct user.projects maintaining other items?
+                // Simplest strategy: just reorder user.projects completely if they are all public?
+                // Or map the new order.
+
+                // Better approach:
+                // Extract public ones, reorder them.
+                // Reconstruct full list by replacing the public segment or just putting them in their new relative positions?
+                // Since 'projects' is array of all projects, mixing public and private.
+
+                // Let's assume we want to update the profileOrder field in local state too?
+                // Or just the array position.
+                // The UI maps `user.projects.filter(p => p.public)`. 
+                // So if we update the `profileOrder` locally it might not help unless we sort by it.
+                // But typically user.projects is just a list.
+
+                // Let's reorder the logic:
+                // 1. Get current public projects
+                // 2. Perform arrayMove on that subset
+                // 3. Update the global projects array to reflect this new order of public items (keeping non-public items where they are? or just grouping?)
+
+                // Since this UI view IS the "Public Galleries" list, let's treat these as the ones we care about ordering.
+
+                const newOrderedIds = newPublicOrder.map(p => p.id);
+
+                // Send to API
+                fetch("/api/projects/reorder", {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ orderedIds: newOrderedIds }),
+                }).catch(console.error);
+
+                // Update local state:
+                // We need to keep the non-public projects too.
+                const nonPublicProjects = prev.projects.filter(p => !p.public);
+
+                // It's tricky to keep original interleaving if we only reorder public.
+                // But usually we just want public ones to appear in a specific order in UI.
+                // Let's just concat: Public (Ordered) + Private.
+                // Or keep original array but swap positions?
+
+                // Simplest for now: Public (ordered) + Non-Public
+                // This might change their position in other lists but "Public Galleries" section only shows public ones.
+
+                return {
+                    ...prev,
+                    projects: [...newPublicOrder, ...nonPublicProjects]
+                };
+            });
+        }
+    };
 
     const toggleProfileVisibility = async (projectId: string, currentStatus: boolean) => {
         try {
@@ -954,42 +1044,25 @@ export default function SettingsPage() {
                                 No hay galerías públicas. Marca una galería como pública desde el dashboard.
                             </div>
                         ) : (
-                            user.projects.filter(p => p.public).map((project) => (
-                                <motion.div
-                                    key={project.id}
-                                    whileHover={{ scale: 1.01 }}
-                                    className={cn(
-                                        "flex items-center justify-between p-4 rounded-xl border transition-all",
-                                        isLight
-                                            ? "bg-white border-neutral-200 hover:border-emerald-500/30"
-                                            : "bg-neutral-900/30 border-neutral-800 hover:bg-neutral-900 ml-0"
-                                    )}
+                            <DndContext
+                                sensors={sensors}
+                                collisionDetection={closestCenter}
+                                onDragEnd={handleDragEnd}
+                            >
+                                <SortableContext
+                                    items={user.projects.filter(p => p.public).map(p => p.id)}
+                                    strategy={rectSortingStrategy}
                                 >
-                                    <div className="flex items-center gap-4">
-                                        <div className={cn(
-                                            "w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center transition-colors",
-                                            isLight ? "bg-neutral-100 border border-neutral-100" : "bg-neutral-800 border border-neutral-700"
-                                        )}>
-                                            {project.coverImage && project.cloudAccountId ? (
-                                                <img
-                                                    src={`/api/cloud/thumbnail?c=${project.cloudAccountId}&f=${project.coverImage}&s=100`}
-                                                    className="w-full h-full object-cover"
-                                                    alt=""
-                                                />
-                                            ) : (
-                                                <Folder className={cn("w-4 h-4", isLight ? "text-neutral-300" : "text-neutral-600")} />
-                                            )}
-                                        </div>
-                                        <span className={cn("text-sm font-medium", isLight ? "text-neutral-900" : "text-white")}>{project.name}</span>
-                                    </div>
-                                    <input
-                                        type="checkbox"
-                                        checked={project.showInProfile}
-                                        onChange={() => toggleProfileVisibility(project.id, project.showInProfile)}
-                                        className="w-5 h-5 accent-emerald-500 rounded cursor-pointer"
-                                    />
-                                </motion.div>
-                            ))
+                                    {user.projects.filter(p => p.public).map((project) => (
+                                        <SortableProjectItem
+                                            key={project.id}
+                                            project={project}
+                                            isLight={isLight}
+                                            toggleVisibility={toggleProfileVisibility}
+                                        />
+                                    ))}
+                                </SortableContext>
+                            </DndContext>
                         )}
                     </div>
                 </section >
