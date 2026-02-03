@@ -51,7 +51,7 @@ export const authConfig = {
             if (!isLoggedIn && !isPublicRoute) {
                 // Permitir acceso a galerías públicas (por ahora asumiendo que /g/* o /p/* son públicas o manejan su propia auth)
                 // Si no, redirigir a login
-                if (nextUrl.pathname.startsWith('/g/') || nextUrl.pathname.startsWith('/p/')) {
+                if (nextUrl.pathname.startsWith('/g/') || nextUrl.pathname.startsWith('/p/') || nextUrl.pathname.startsWith('/u/') || nextUrl.pathname.startsWith('/upload/')) {
                     return true;
                 }
                 return false;
