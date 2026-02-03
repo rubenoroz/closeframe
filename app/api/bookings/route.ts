@@ -5,7 +5,10 @@ import { auth } from "@/auth";
 // GET: List all bookings for the current user
 export async function GET() {
     try {
+        console.log("Starting GET /api/bookings");
         const session = await auth();
+        console.log("Session retrieved:", session?.user?.id ? "User ID found" : "No User ID");
+
         if (!session?.user?.id) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
@@ -14,16 +17,18 @@ export async function GET() {
             where: { id: session.user.id },
             select: { plan: { select: { name: true } } }
         });
+        console.log("User plan fetched");
 
         const bookings = await prisma.booking.findMany({
             where: { userId: session.user.id },
             orderBy: { date: "asc" },
         });
+        console.log(`Fetched ${bookings.length} bookings`);
 
         return NextResponse.json({ bookings, plan: user?.plan?.name });
     } catch (error) {
-        console.error("GET Bookings Error:", error);
-        return NextResponse.json({ error: "Failed to fetch bookings" }, { status: 500 });
+        console.error("GET Bookings Error FULL DETAILS:", error);
+        return NextResponse.json({ error: "Failed to fetch bookings", details: String(error) }, { status: 500 });
     }
 }
 
@@ -36,7 +41,7 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
-        const { customerName, customerEmail, date, notes, status } = body;
+        const { customerName, customerEmail, date, endDate, notes, status } = body;
 
         if (!customerName || !customerEmail || !date) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -48,6 +53,7 @@ export async function POST(request: Request) {
                 customerEmail,
                 customerPhone: body.customerPhone || null,
                 date: new Date(date),
+                endDate: endDate ? new Date(endDate) : new Date(new Date(date).getTime() + 60 * 60 * 1000), // Default to 1h if not provided
                 notes: notes || null,
                 status: status || "pending",
                 userId: session.user.id,
@@ -102,7 +108,7 @@ export async function PATCH(request: Request) {
         }
 
         const body = await request.json();
-        const { id, customerName, customerEmail, date, notes, status, customerPhone } = body;
+        const { id, customerName, customerEmail, date, endDate, notes, status, customerPhone } = body;
 
         if (!id) {
             return NextResponse.json({ error: "Missing booking ID" }, { status: 400 });
@@ -124,6 +130,7 @@ export async function PATCH(request: Request) {
                 customerEmail,
                 customerPhone: customerPhone || null,
                 date: date ? new Date(date) : undefined,
+                endDate: endDate ? new Date(endDate) : undefined,
                 notes: notes || null,
                 status,
             },

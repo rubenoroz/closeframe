@@ -14,6 +14,7 @@ interface Booking {
     customerPhone?: string;
     notes?: string;
     status: string;
+    endDate?: string;
 }
 
 export default function BookingsPage() {
@@ -26,6 +27,7 @@ export default function BookingsPage() {
         customerEmail: "",
         customerPhone: "",
         date: "",
+        endDate: "",
         notes: "",
         status: "pending",
     });
@@ -78,12 +80,13 @@ export default function BookingsPage() {
             id: b.id,
             title: b.customerName,
             start: new Date(b.date),
-            end: new Date(new Date(b.date).getTime() + 60 * 60 * 1000), // 1 hour duration
+            end: b.endDate ? new Date(b.endDate) : new Date(new Date(b.date).getTime() + 60 * 60 * 1000), // Use endDate or default to 1h
             customerName: b.customerName,
             customerEmail: b.customerEmail,
             customerPhone: b.customerPhone,
             notes: b.notes,
             status: b.status,
+            endDate: b.endDate,
         }));
 
     // Helper to format date for datetime-local input (YYYY-MM-DDTHH:mm)
@@ -93,13 +96,14 @@ export default function BookingsPage() {
         return localDate.toISOString().slice(0, 16);
     };
 
-    const handleSlotSelect = ({ start }: { start: Date; end: Date }) => {
+    const handleSlotSelect = ({ start, end }: { start: Date; end: Date }) => {
         setSelectedEvent(null);
         setFormData({
             customerName: "",
             customerEmail: "",
             customerPhone: "",
             date: formatToLocalISO(start),
+            endDate: formatToLocalISO(end),
             notes: "",
             status: "confirmed", // Default to confirmed if created manually by admin
         });
@@ -113,6 +117,7 @@ export default function BookingsPage() {
             customerEmail: event.customerEmail || "",
             customerPhone: event.customerPhone || "",
             date: formatToLocalISO(event.start),
+            endDate: formatToLocalISO(event.end),
             notes: event.notes || "",
             status: event.status || "pending",
         });
@@ -128,6 +133,7 @@ export default function BookingsPage() {
             const submitData = {
                 ...formData,
                 date: new Date(formData.date).toISOString(),
+                endDate: formData.endDate ? new Date(formData.endDate).toISOString() : undefined,
                 id: selectedEvent?.id // Include ID if editing
             };
 
@@ -305,6 +311,7 @@ export default function BookingsPage() {
                         customerEmail: "",
                         customerPhone: "",
                         date: formatToLocalISO(new Date()),
+                        endDate: formatToLocalISO(new Date()),
                         notes: "",
                         status: "confirmed",
                     });
@@ -395,17 +402,31 @@ export default function BookingsPage() {
                                 </div>
                             </div>
 
-                            <div>
-                                <label className="text-sm text-neutral-400 flex items-center gap-2 mb-2">
-                                    <CalendarDays className="w-4 h-4" /> Fecha y Hora
-                                </label>
-                                <input
-                                    type="datetime-local"
-                                    value={formData.date}
-                                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                                    className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition"
-                                    required
-                                />
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-sm text-neutral-400 flex items-center gap-2 mb-2">
+                                        <CalendarDays className="w-4 h-4" /> Inicio
+                                    </label>
+                                    <input
+                                        type="datetime-local"
+                                        value={formData.date}
+                                        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                                        className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-sm text-neutral-400 flex items-center gap-2 mb-2">
+                                        Fin
+                                    </label>
+                                    <input
+                                        type="datetime-local"
+                                        value={formData.endDate}
+                                        onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                                        className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition"
+                                        required
+                                    />
+                                </div>
                             </div>
 
                             <div>

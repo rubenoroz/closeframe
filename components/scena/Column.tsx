@@ -94,11 +94,11 @@ export function Column({
                 }`}
         >
             {/* Header */}
-            <div className="flex items-center justify-between p-3 border-b border-neutral-200/50 dark:border-neutral-700/50">
+            <div className="flex items-center justify-between p-3 border-b border-neutral-200/50">
                 <div className="flex items-center gap-2 flex-1">
                     <button
                         {...listeners}
-                        className="cursor-grab text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors active:cursor-grabbing"
+                        className="cursor-grab text-neutral-500 hover:text-neutral-800 transition-colors active:cursor-grabbing"
                     >
                         <GripVertical size={18} />
                     </button>
@@ -116,19 +116,19 @@ export function Column({
                                     setIsEditingTitle(false);
                                 }
                             }}
-                            className="flex-1 px-2 py-1 text-sm font-semibold bg-white dark:bg-neutral-700 border border-neutral-300 dark:border-neutral-600 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                            className="flex-1 px-2 py-1 text-sm font-semibold bg-white/50 border border-neutral-300 rounded focus:ring-2 focus:ring-blue-500 outline-none text-neutral-900"
                             autoFocus
                         />
                     ) : (
                         <h2
-                            className="text-sm font-semibold text-neutral-700 dark:text-neutral-200 cursor-pointer hover:text-neutral-900 dark:hover:text-white truncate"
+                            className="text-sm font-semibold text-neutral-800 cursor-pointer hover:text-black truncate"
                             onDoubleClick={() => setIsEditingTitle(true)}
                         >
                             {name}
                         </h2>
                     )}
 
-                    <span className="text-xs text-neutral-400 dark:text-neutral-500 ml-1">
+                    <span className="text-xs text-neutral-500 ml-1">
                         ({tasks.length})
                     </span>
                 </div>
@@ -136,7 +136,7 @@ export function Column({
                 <div className="flex items-center gap-1">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <button className="p-1.5 rounded-lg hover:bg-white/50 dark:hover:bg-neutral-700/50 text-neutral-500 dark:text-neutral-400 transition-colors">
+                            <button className="p-1.5 rounded-lg hover:bg-black/5 text-neutral-500 hover:text-neutral-800 transition-colors">
                                 <Palette size={15} />
                             </button>
                         </DropdownMenuTrigger>
@@ -156,7 +156,7 @@ export function Column({
 
                     <button
                         onClick={() => onAddTask(id)}
-                        className="p-1.5 rounded-lg hover:bg-white/50 dark:hover:bg-neutral-700/50 text-neutral-500 dark:text-neutral-400 transition-colors"
+                        className="p-1.5 rounded-lg hover:bg-black/5 text-neutral-500 hover:text-neutral-800 transition-colors"
                         title="Agregar tarea"
                     >
                         <Plus size={15} />
@@ -164,7 +164,7 @@ export function Column({
 
                     <button
                         onClick={() => onDeleteColumn(id)}
-                        className="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-neutral-500 hover:text-red-600 dark:text-neutral-400 transition-colors"
+                        className="p-1.5 rounded-lg hover:bg-red-100 text-neutral-500 hover:text-red-600 transition-colors"
                         title="Eliminar columna"
                     >
                         <X size={15} />
@@ -189,7 +189,7 @@ export function Column({
                 </SortableContext>
 
                 {tasks.length === 0 && (
-                    <div className="text-center py-8 text-neutral-400 dark:text-neutral-500 text-sm">
+                    <div className="text-center py-8 text-neutral-500 text-sm">
                         Sin tareas
                     </div>
                 )}

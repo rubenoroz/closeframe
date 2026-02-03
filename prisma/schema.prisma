@@ -197,6 +197,7 @@ model Booking {
   customerEmail String
   customerPhone String?
   date          DateTime
+  endDate       DateTime?
   notes         String?
   status        String   @default("pending")
   userId        String
