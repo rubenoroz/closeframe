@@ -225,7 +225,7 @@ export default function ProfileCTA({ callToAction, userId, isLight, bookingWindo
                                     )}>
                                         <Check className="w-4 h-4 mt-0.5 shrink-0" />
                                         <span>
-                                            <strong>Nota:</strong> Tu cita quedará confirmada únicamente vía WhatsApp/Teléfono. Esta solicitud es provisional.
+                                            <strong>Nota:</strong> Esta solicitud es provisional. La fecha y hora exacta de tu cita se confirmará vía WhatsApp o llamada telefónica.
                                         </span>
                                     </div>
 
