@@ -83,20 +83,31 @@ export async function POST(request: Request) {
             cloudAccountId,
             rootFolderId,
             password,
+            category, // [NEW]
             downloadEnabled,
             downloadJpgEnabled,
             downloadRawEnabled,
             headerTitle,
             headerFontFamily,
+            headerFontSize, // [NEW]
             headerColor,
             headerBackground,
+            headerImage, // [NEW]
+            headerImageFocus, // [NEW]
+            coverImage, // [NEW]
+            coverImageFocus, // [NEW]
             enableVideoTab,
             videoFolderId,
             downloadVideoHdEnabled,
             downloadVideoRawEnabled,
+            layoutType, // [NEW]
+            zipFileId, // [NEW]
+            zipFileName, // [NEW]
             isCloserGallery,
-            isCollaborative, // [NEW]
-            moments // [NEW]
+            isCollaborative,
+            moments,
+            musicTrackId, // [NEW]
+            musicEnabled // [NEW]
         } = body;
 
         if (!name || !cloudAccountId || !rootFolderId) {
@@ -151,10 +162,11 @@ export async function POST(request: Request) {
             data: {
                 name,
                 slug,
+                category: category || null,
                 cloudAccountId,
                 rootFolderId,
                 userId: session.user.id,
-                layoutType: "grid",
+                layoutType: layoutType || "grid",
                 passwordProtected,
                 passwordHash,
                 downloadEnabled: downloadEnabled ?? true,
@@ -163,8 +175,13 @@ export async function POST(request: Request) {
                 // Header customization
                 headerTitle: headerTitle || name, // Fallback to project name
                 headerFontFamily: headerFontFamily || "Inter",
+                headerFontSize: headerFontSize || 100,
                 headerColor: headerColor || "#FFFFFF",
                 headerBackground: headerBackground || "dark",
+                headerImage: headerImage || null,
+                headerImageFocus: headerImageFocus || "50,50",
+                coverImage: coverImage || null,
+                coverImageFocus: coverImageFocus || "50,50",
                 // Video tab
                 enableVideoTab: enableVideoTab || false,
                 videoFolderId: enableVideoTab ? videoFolderId : null,
@@ -172,6 +189,12 @@ export async function POST(request: Request) {
                 downloadVideoRawEnabled: downloadVideoRawEnabled ?? false,
                 isCloserGallery: isCloserGallery ?? false,
                 isCollaborative: isCollaborative ?? false, // Save collaborative status
+                // Zip file
+                zipFileId: zipFileId || null,
+                zipFileName: zipFileName || null,
+                // Music
+                musicTrackId: musicTrackId || null,
+                musicEnabled: musicEnabled ?? false,
             },
         });
 
