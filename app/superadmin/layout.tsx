@@ -10,7 +10,8 @@ import {
     BarChart3,
     Settings,
     ChevronLeft,
-    Loader2
+    Loader2,
+    History
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect } from "react";
@@ -71,6 +72,11 @@ export default function SuperadminLayout({ children }: SuperadminLayoutProps) {
             href: "/superadmin/plans",
             label: "Planes",
             icon: <CreditCard className="w-5 h-5" />
+        },
+        {
+            href: "/superadmin/audit-logs",
+            label: "Auditoría",
+            icon: <History className="w-5 h-5" />
         },
         {
             href: "/superadmin/settings",

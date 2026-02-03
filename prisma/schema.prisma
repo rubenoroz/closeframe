@@ -456,3 +456,28 @@ model CollaborativeUpload {
   @@index([qrSectionId])
   @@index([deviceId])
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FEATURE OVERRIDE AUDIT LOG (Super Admin)
+// ═══════════════════════════════════════════════════════════════════════════
+
+model FeatureOverrideLog {
+  id          String   @id @default(cuid())
+  userId      String   // User who received the override
+  adminId     String   // SuperAdmin who made the change
+  adminEmail  String?  // SuperAdmin email for easy reference
+  
+  // What changed
+  action      String   // "override_updated" | "override_cleared"
+  changes     Json     // { features: { videoGallery: true }, limits: { maxProjects: 50 } }
+  previousValue Json?  // Previous featureOverrides value (for rollback reference)
+  
+  // Optional metadata
+  reason      String?  // "Prueba para cliente VIP", "Promoción temporal"
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([adminId])
+  @@index([createdAt])
+}

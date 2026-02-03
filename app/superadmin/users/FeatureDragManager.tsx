@@ -22,17 +22,30 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { PLANS, getPlanConfig } from "@/lib/plans.config";
-import { Check, Lock, Shield, Star, Crown, LayoutGrid, List, Calendar, Image as ImageIcon, MousePointerClick } from "lucide-react";
+import { Check, Lock, Shield, Star, Crown, LayoutGrid, List, Calendar, Image as ImageIcon, MousePointerClick, Download, Sparkles, Music, Video, Youtube, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Define all possible features with metadata
 const ALL_FEATURES = [
+    // Profile & Social
     { id: "advancedSocialNetworks", label: "Redes Sociales Avanzadas", icon: Star, description: "LinkedIn, YouTube, Website custom" },
     { id: "callToAction", label: "Call To Action", icon: MousePointerClick, description: "Botón principal en perfil" },
     { id: "hideBranding", label: "Ocultar Marca", icon: Crown, description: "Remueve 'Powered by Closerlens'" },
+
+    // Gallery & Organization
     { id: "manualOrdering", label: "Orden Manual", icon: List, description: "Reordenar fotos en galerías" },
     { id: "listView", label: "Vista de Lista", icon: LayoutGrid, description: "Ver reservas en lista" },
+    { id: "zipDownloadsEnabled", label: "Descargas ZIP", icon: Download, description: "Permitir descargas en ZIP" },
+
+    // Booking
     { id: "bookingConfig", label: "Config. Reservas", icon: Calendar, description: "Ventana y anticipación personalizada" },
+
+    // Closer Gallery (Premium)
+    { id: "closerGallery", label: "Closer Gallery", icon: Sparkles, description: "Galerías premium con efectos" },
+    { id: "musicGallery", label: "Música en Galerías", icon: Music, description: "Añadir música de fondo" },
+    { id: "videoGallery", label: "Video en Galerías", icon: Video, description: "Soporte para video en galerías" },
+    { id: "externalVideoAuth", label: "Videos Externos", icon: Youtube, description: "YouTube/Vimeo integrado" },
+    { id: "collaborativeGalleries", label: "Galerías Colaborativas", icon: Users, description: "Subidas por QR desde invitados" },
 ];
 
 interface FeatureDragManagerProps {
@@ -283,6 +296,97 @@ export default function FeatureDragManager({ userPlanId, currentOverrides, onCha
                     ) : null}
                 </DragOverlay>
             </DndContext>
+
+            {/* LÍMITES PERSONALIZADOS */}
+            <div className="mt-6 pt-5 border-t border-neutral-800">
+                <h4 className="text-xs font-bold text-neutral-400 mb-4 flex items-center gap-2">
+                    <Shield className="w-3.5 h-3.5 text-amber-500" />
+                    Límites Personalizados (Override)
+                </h4>
+                <p className="text-[10px] text-neutral-500 mb-4">
+                    Deja vacío para usar el valor del plan. Los valores aquí sobrescriben el plan.
+                </p>
+
+                <div className="grid grid-cols-3 gap-3">
+                    <div>
+                        <label className="block text-[10px] text-neutral-500 mb-1.5">Máx. Proyectos</label>
+                        <input
+                            type="number"
+                            min="-1"
+                            placeholder={String(basePlanStats.limits?.maxProjects ?? "∞")}
+                            value={currentOverrides?.limits?.maxProjects ?? ""}
+                            onChange={(e) => {
+                                const val = e.target.value === "" ? undefined : parseInt(e.target.value);
+                                onChange({
+                                    ...currentOverrides,
+                                    limits: { ...currentOverrides?.limits, maxProjects: val }
+                                });
+                            }}
+                            className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-white text-sm focus:outline-none focus:border-amber-500 placeholder-neutral-600"
+                        />
+                        <p className="text-[9px] text-neutral-600 mt-1">-1 = ilimitado</p>
+                    </div>
+
+                    <div>
+                        <label className="block text-[10px] text-neutral-500 mb-1.5">Máx. Bio (chars)</label>
+                        <input
+                            type="number"
+                            min="0"
+                            placeholder={String(basePlanStats.limits?.bioMaxLength ?? "∞")}
+                            value={currentOverrides?.limits?.bioMaxLength ?? ""}
+                            onChange={(e) => {
+                                const val = e.target.value === "" ? undefined : parseInt(e.target.value);
+                                onChange({
+                                    ...currentOverrides,
+                                    limits: { ...currentOverrides?.limits, bioMaxLength: val }
+                                });
+                            }}
+                            className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-white text-sm focus:outline-none focus:border-amber-500 placeholder-neutral-600"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-[10px] text-neutral-500 mb-1.5">Máx. Nubes</label>
+                        <input
+                            type="number"
+                            min="-1"
+                            placeholder={String(basePlanStats.limits?.maxCloudAccounts ?? "∞")}
+                            value={currentOverrides?.limits?.maxCloudAccounts ?? ""}
+                            onChange={(e) => {
+                                const val = e.target.value === "" ? undefined : parseInt(e.target.value);
+                                onChange({
+                                    ...currentOverrides,
+                                    limits: { ...currentOverrides?.limits, maxCloudAccounts: val }
+                                });
+                            }}
+                            className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-white text-sm focus:outline-none focus:border-amber-500 placeholder-neutral-600"
+                        />
+                        <p className="text-[9px] text-neutral-600 mt-1">-1 = ilimitado</p>
+                    </div>
+                </div>
+
+                {/* Closer Gallery Limit - only show if closerGallery is enabled */}
+                {(activeItems.includes('closerGallery') || basePlanStats.features?.closerGallery) && (
+                    <div className="mt-4">
+                        <label className="block text-[10px] text-neutral-500 mb-1.5">Límite Closer Gallery</label>
+                        <input
+                            type="number"
+                            min="-1"
+                            placeholder={String((basePlanStats.limits as any)?.closerGalleryLimit ?? "∞")}
+                            value={currentOverrides?.limits?.closerGalleryLimit ?? ""}
+                            onChange={(e) => {
+                                const val = e.target.value === "" ? undefined : parseInt(e.target.value);
+                                onChange({
+                                    ...currentOverrides,
+                                    limits: { ...currentOverrides?.limits, closerGalleryLimit: val }
+                                });
+                            }}
+                            className="w-full max-w-[150px] px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-white text-sm focus:outline-none focus:border-amber-500 placeholder-neutral-600"
+                        />
+                        <p className="text-[9px] text-neutral-600 mt-1">-1 = ilimitado</p>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

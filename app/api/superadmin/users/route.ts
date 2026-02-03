@@ -101,7 +101,7 @@ export async function PUT(request: NextRequest) {
 
     try {
         const body = await request.json();
-        const { userId, role, planId, planExpiresAt } = body;
+        const { userId, role, planId, planExpiresAt, featureOverrides, overrideReason } = body;
 
         if (!userId) {
             return NextResponse.json(
@@ -118,6 +118,22 @@ export async function PUT(request: NextRequest) {
             );
         }
 
+        // Get admin info for audit log
+        const { auth } = await import("@/auth");
+        const session = await auth();
+        const adminId = session?.user?.id || "unknown";
+        const adminEmail = session?.user?.email || "unknown";
+
+        // Get previous featureOverrides for audit log
+        let previousOverrides = null;
+        if (featureOverrides !== undefined) {
+            const currentUser = await prisma.user.findUnique({
+                where: { id: userId },
+                select: { featureOverrides: true }
+            });
+            previousOverrides = currentUser?.featureOverrides;
+        }
+
         // Actualizar usuario
         const updatedUser = await prisma.user.update({
             where: { id: userId },
@@ -127,7 +143,7 @@ export async function PUT(request: NextRequest) {
                 ...(planExpiresAt !== undefined && {
                     planExpiresAt: planExpiresAt ? new Date(planExpiresAt) : null
                 }),
-                ...(body.featureOverrides !== undefined && { featureOverrides: body.featureOverrides })
+                ...(featureOverrides !== undefined && { featureOverrides })
             },
             select: {
                 id: true,
@@ -139,6 +155,29 @@ export async function PUT(request: NextRequest) {
                 featureOverrides: true
             }
         });
+
+        // Create audit log if featureOverrides changed
+        if (featureOverrides !== undefined) {
+            const hasChanges = JSON.stringify(featureOverrides) !== JSON.stringify(previousOverrides);
+
+            if (hasChanges) {
+                await prisma.featureOverrideLog.create({
+                    data: {
+                        userId,
+                        adminId,
+                        adminEmail,
+                        action: Object.keys(featureOverrides?.features || {}).length === 0 &&
+                            Object.keys(featureOverrides?.limits || {}).length === 0
+                            ? "override_cleared"
+                            : "override_updated",
+                        changes: featureOverrides || {},
+                        previousValue: previousOverrides || {},
+                        reason: overrideReason || null
+                    }
+                });
+                console.log(`[AUDIT] Admin ${adminEmail} updated overrides for user ${userId}`);
+            }
+        }
 
         return NextResponse.json(updatedUser);
 
