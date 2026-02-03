@@ -1029,7 +1029,7 @@ export default function SettingsPage() {
                                 )}
                             </div>
                             <Link
-                                href="/pricing"
+                                href="/#pricing"
                                 className={`px-5 py-2.5 rounded-full text-sm font-medium transition ${isLight ? 'bg-neutral-900 text-white hover:bg-black' : 'bg-white text-black hover:bg-neutral-200'}`}
                             >
                                 {user.plan?.name === 'free' || !user.plan ? 'Actualizar Plan' : 'Cambiar Plan'}
