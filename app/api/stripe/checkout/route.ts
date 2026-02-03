@@ -225,15 +225,26 @@ export async function POST(req: Request) {
 
             // Note: We DON'T update the user's planId here
             // The webhook will handle it when the new billing period starts
-            // But we can store metadata to show "Scheduled downgrade"
 
-            const periodEnd = new Date((subscription as any).current_period_end * 1000);
+            // Safely handle period end date
+            const periodEndTimestamp = (subscription as any).current_period_end;
+            let message: string;
+            let effectiveDate: string;
+
+            if (periodEndTimestamp && !isNaN(periodEndTimestamp)) {
+                const periodEnd = new Date(periodEndTimestamp * 1000);
+                message = `Tu plan cambiará a partir del ${periodEnd.toLocaleDateString('es-MX')}`;
+                effectiveDate = periodEnd.toISOString();
+            } else {
+                message = "Tu plan cambiará al final de tu período de facturación actual";
+                effectiveDate = new Date().toISOString();
+            }
 
             return NextResponse.json({
                 success: true,
-                message: `Tu plan cambiará a partir del ${periodEnd.toLocaleDateString('es-MX')}`,
+                message,
                 type: "downgrade",
-                effectiveDate: periodEnd.toISOString()
+                effectiveDate
             });
         }
 
