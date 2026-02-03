@@ -1,7 +1,9 @@
 import React from "react";
+import { headers } from "next/headers";
 import { prisma } from "@/lib/db";
 import { PlanBNavbar } from "@/components/landing/PlanBNavbar";
 import { PricingSection } from "@/components/landing/PricingSection";
+import { getRegionFromHeaders } from "@/lib/geo";
 // We don't use next/image yet to keep compatibility with provided external URLs for the prototype
 /* eslint-disable @next/next/no-img-element */
 
@@ -12,6 +14,10 @@ import Image from "next/image";
 export const dynamic = "force-dynamic";
 
 export default async function PlanBPage() {
+    // Detect visitor region from Vercel's geo headers
+    const headersList = await headers();
+    const region = getRegionFromHeaders(headersList);
+
     const rawPlans = await prisma.plan.findMany({
         orderBy: { sortOrder: 'asc' },
         where: { isActive: true }
@@ -456,7 +462,7 @@ export default async function PlanBPage() {
                 </section>
 
                 {/* Pricing Section */}
-                <PricingSection plans={plans} />
+                <PricingSection plans={plans} region={region} />
 
                 {/* Footer */}
                 <footer className="py-16 md:py-24 px-6 lg:px-20 border-t border-white/5 bg-black">

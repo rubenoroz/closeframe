@@ -90,6 +90,18 @@ export async function PUT(req: NextRequest) {
         if (interval !== undefined) updateData.interval = interval;
         if (isActive !== undefined) updateData.isActive = isActive;
 
+        // Regional Pricing Fields
+        if (body.priceMXN !== undefined) updateData.priceMXN = body.priceMXN;
+        if (body.monthlyPriceMXN !== undefined) updateData.monthlyPriceMXN = body.monthlyPriceMXN;
+        if (body.priceUSD !== undefined) updateData.priceUSD = body.priceUSD;
+        if (body.monthlyPriceUSD !== undefined) updateData.monthlyPriceUSD = body.monthlyPriceUSD;
+
+        // Stripe Price IDs
+        if (body.stripePriceIdMXNMonthly !== undefined) updateData.stripePriceIdMXNMonthly = body.stripePriceIdMXNMonthly;
+        if (body.stripePriceIdMXNYearly !== undefined) updateData.stripePriceIdMXNYearly = body.stripePriceIdMXNYearly;
+        if (body.stripePriceIdUSDMonthly !== undefined) updateData.stripePriceIdUSDMonthly = body.stripePriceIdUSDMonthly;
+        if (body.stripePriceIdUSDYearly !== undefined) updateData.stripePriceIdUSDYearly = body.stripePriceIdUSDYearly;
+
         // Handle legacy fields for backward compatibility if PlansPage sends them
         if (features !== undefined) updateData.features = JSON.stringify(features);
         if (limits !== undefined) updateData.limits = JSON.stringify(limits);
@@ -137,10 +149,21 @@ export async function POST(req: NextRequest) {
                 name,
                 displayName,
                 description,
-                price,
+                price: price || 0,
                 monthlyPrice,
-                currency,
-                interval,
+                currency: currency || 'USD',
+                interval: interval || 'month',
+                // Regional Pricing
+                priceMXN: body.priceMXN || 0,
+                monthlyPriceMXN: body.monthlyPriceMXN,
+                priceUSD: body.priceUSD || 0,
+                monthlyPriceUSD: body.monthlyPriceUSD,
+                // Stripe Price IDs
+                stripePriceIdMXNMonthly: body.stripePriceIdMXNMonthly,
+                stripePriceIdMXNYearly: body.stripePriceIdMXNYearly,
+                stripePriceIdUSDMonthly: body.stripePriceIdUSDMonthly,
+                stripePriceIdUSDYearly: body.stripePriceIdUSDYearly,
+                // Legacy
                 isActive: isActive ?? true,
                 features: JSON.stringify(features || []),
                 limits: JSON.stringify(limits || {}),

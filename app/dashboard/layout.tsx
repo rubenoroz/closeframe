@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { Camera, LayoutGrid, Plus, Settings, LogOut, CalendarDays, ChevronDown, User, Monitor, CreditCard, Menu, X, Sun, Moon } from "lucide-react";
+import { Camera, LayoutGrid, Plus, Settings, LogOut, CalendarDays, ChevronDown, User, Monitor, CreditCard, Menu, X, Sun, Moon, Shield } from "lucide-react";
 import Image from "next/image";
 import { ScenaIcon } from "@/components/icons/ScenaIcon";
 import { cn } from "@/lib/utils";
@@ -35,6 +35,10 @@ export default function DashboardLayout({
             : []),
         { href: "/dashboard/clouds", label: "Nubes conectadas", icon: <Settings className="w-5 h-5" /> },
         { href: "/dashboard/billing", label: "Cuentas y pagos", icon: <CreditCard className="w-5 h-5" /> },
+        // Conditional Superadmin Link
+        ...(userRole === 'SUPERADMIN'
+            ? [{ href: "/superadmin", label: "Superadmin", icon: <Shield className="w-5 h-5" /> }]
+            : []),
     ];
 
     return (

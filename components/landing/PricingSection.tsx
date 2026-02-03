@@ -1,34 +1,94 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { FEATURE_POOL } from "@/lib/features";
-import { Check } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
+import type { Region } from "@/lib/geo";
 
 interface Plan {
     id: string;
     name: string;
     displayName: string;
+    // Legacy fields
     price: number;
     monthlyPrice?: number | null;
+    // Regional pricing
+    priceMXN?: number;
+    monthlyPriceMXN?: number | null;
+    priceUSD?: number;
+    monthlyPriceUSD?: number | null;
+    // Stripe Price IDs
+    stripePriceIdMXNMonthly?: string | null;
+    stripePriceIdMXNYearly?: string | null;
+    stripePriceIdUSDMonthly?: string | null;
+    stripePriceIdUSDYearly?: string | null;
+
     interval: string;
-    features: string[]; // Updated to array usually, or matches Prisma
+    features: string[];
     isActive: boolean;
     sortOrder: number;
-    config?: any; // Add config
+    config?: any;
 }
 
 interface PricingSectionProps {
     plans: Plan[];
+    region: Region;
 }
 
-export function PricingSection({ plans }: PricingSectionProps) {
+export function PricingSection({ plans, region }: PricingSectionProps) {
+    const router = useRouter();
     const [billingCycle, setBillingCycle] = useState<'month' | 'year'>('year');
+    const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
+
+    // Use the region detected by IP - no manual toggle
+    const currencySymbol = region === 'MX' ? '$' : '$';
+    const currencyCode = region === 'MX' ? 'MXN' : 'USD';
+
+    const handleCheckout = async (planId: string, priceId: string | null | undefined, isFree: boolean) => {
+        if (isFree) {
+            // Redirect to register for free plan
+            router.push('/register');
+            return;
+        }
+
+        if (!priceId) {
+            alert('Este plan no está configurado para tu región. Contacta soporte.');
+            return;
+        }
+
+        setLoadingPlanId(planId);
+
+        try {
+            const response = await fetch('/api/stripe/checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ planId, priceId }),
+            });
+
+            const data = await response.json();
+
+            if (data.url) {
+                window.location.href = data.url;
+            } else {
+                // User might not be logged in
+                router.push('/login?redirect=/pricing');
+            }
+        } catch (error) {
+            console.error('Checkout error:', error);
+            alert('Error al procesar. Intenta de nuevo.');
+        } finally {
+            setLoadingPlanId(null);
+        }
+    };
 
     return (
         <section className="py-20 md:py-32 px-6 lg:px-20 bg-[#0a0a0a]" id="pricing">
             <div className="max-w-[1200px] mx-auto text-center mb-12 md:mb-24">
                 <h2 className="text-4xl md:text-8xl font-bold mb-10 tracking-tighter">Planes.</h2>
-                <div className="inline-flex items-center bg-white/5 p-1 rounded-full border border-white/10">
+
+                {/* Billing Cycle Toggle */}
+                <div className="inline-flex items-center bg-white/5 p-1 rounded-full border border-white/10 mb-4">
                     <button
                         onClick={() => setBillingCycle('month')}
                         className={`px-6 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-all ${billingCycle === 'month'
@@ -48,26 +108,49 @@ export function PricingSection({ plans }: PricingSectionProps) {
                         Anual
                     </button>
                 </div>
+
+                {/* Region Indicator - Display only, not clickable */}
+                <div className="flex items-center justify-center gap-2 text-white/40 text-xs">
+                    <span>Precios en</span>
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full border border-white/10">
+                        <span className="text-sm">{region === 'MX' ? '🇲🇽' : '🌎'}</span>
+                        <span className="font-bold text-white/60">{currencyCode}</span>
+                    </span>
+                </div>
             </div>
-            {/* Updated to 5 columns for dynamic plans */}
+
+            {/* Plans Grid */}
             <div className="max-w-[1600px] mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                 {plans.map((plan) => {
                     const isRecommended = plan.name === 'studio';
 
-                    // Determine price to show
-                    // If billingCycle is 'month', show monthlyPrice if available, else standard price
-                    // If billingCycle is 'year', show standard price (assuming standard price is for the interval set in DB, often used for anual)
-                    // Wait, if standard price is annual (e.g. 5000), we show 5000 /año.
-                    // If standard price is monthly-billed-annually, it might be 400. 
-                    // Let's assume:
-                    // 'year' view -> base plan.price
-                    // 'month' view -> plan.monthlyPrice ?? plan.price
+                    // Get price based on region and billing cycle
+                    let priceToShow: number;
+                    let stripePriceId: string | null | undefined;
 
-                    const priceToShow = billingCycle === 'month' && plan.monthlyPrice
-                        ? plan.monthlyPrice
-                        : plan.price;
+                    if (region === 'MX') {
+                        priceToShow = billingCycle === 'month'
+                            ? (plan.monthlyPriceMXN ?? plan.priceMXN ?? plan.monthlyPrice ?? plan.price)
+                            : (plan.priceMXN ?? plan.price);
+                        stripePriceId = billingCycle === 'month'
+                            ? plan.stripePriceIdMXNMonthly
+                            : plan.stripePriceIdMXNYearly;
+                    } else {
+                        priceToShow = billingCycle === 'month'
+                            ? (plan.monthlyPriceUSD ?? plan.priceUSD ?? plan.monthlyPrice ?? plan.price)
+                            : (plan.priceUSD ?? plan.price);
+                        stripePriceId = billingCycle === 'month'
+                            ? plan.stripePriceIdUSDMonthly
+                            : plan.stripePriceIdUSDYearly;
+                    }
 
                     const intervalLabel = billingCycle === 'month' ? '/mes' : '/año';
+
+                    // Format price with locale
+                    const formattedPrice = new Intl.NumberFormat(region === 'MX' ? 'es-MX' : 'en-US', {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0,
+                    }).format(priceToShow);
 
                     return (
                         <div key={plan.id} className={`bg-white/5 backdrop-blur-xl border p-6 md:p-10 rounded-[2rem] flex flex-col transition-all relative ${isRecommended
@@ -80,9 +163,20 @@ export function PricingSection({ plans }: PricingSectionProps) {
                             <span className={`text-[10px] font-black tracking-[0.3em] uppercase mb-12 ${isRecommended ? "text-[#cdb8e1]" : "text-white/30"}`}>
                                 {plan.displayName}
                             </span>
-                            <div className={`flex items-baseline mb-10 ${isRecommended ? "text-[#cdb8e1]" : ""}`}>
-                                <span className="text-5xl font-black">${priceToShow}</span>
-                                {priceToShow > 0 && <span className={`${isRecommended ? "text-[#cdb8e1]/60" : "text-white/30"} text-xs ml-2`}>{intervalLabel}</span>}
+                            <div className={`flex flex-col mb-10 ${isRecommended ? "text-[#cdb8e1]" : ""}`}>
+                                <div className="flex items-baseline">
+                                    <span className="text-5xl font-black">{currencySymbol}{formattedPrice}</span>
+                                    {priceToShow > 0 && <span className={`${isRecommended ? "text-[#cdb8e1]/60" : "text-white/30"} text-xs ml-2`}>/mes</span>}
+                                </div>
+                                {/* Show annual total when billing cycle is yearly */}
+                                {billingCycle === 'year' && priceToShow > 0 && (
+                                    <span className={`text-xs mt-1 ${isRecommended ? "text-[#cdb8e1]/50" : "text-white/25"}`}>
+                                        (Pagas {currencySymbol}{new Intl.NumberFormat(region === 'MX' ? 'es-MX' : 'en-US', {
+                                            minimumFractionDigits: 0,
+                                            maximumFractionDigits: 0,
+                                        }).format(priceToShow * 12)} al año)
+                                    </span>
+                                )}
                             </div>
 
                             <ul className={`space-y-4 mb-12 text-sm flex-1 ${isRecommended ? "text-white/70" : "text-white/50"}`}>
@@ -117,10 +211,15 @@ export function PricingSection({ plans }: PricingSectionProps) {
                                 })}
                             </ul>
 
-                            <button className={`w-full py-4 rounded-full font-bold uppercase tracking-widest text-[10px] transition-all ${isRecommended
-                                ? "bg-[#cdb8e1] text-black hover:shadow-2xl hover:shadow-[#cdb8e1]/40"
-                                : "border border-white/10 hover:bg-white hover:text-black"
-                                }`}>
+                            <button
+                                onClick={() => handleCheckout(plan.id, stripePriceId, priceToShow === 0)}
+                                disabled={loadingPlanId === plan.id}
+                                className={`w-full py-4 rounded-full font-bold uppercase tracking-widest text-[10px] transition-all flex items-center justify-center gap-2 ${isRecommended
+                                    ? "bg-[#cdb8e1] text-black hover:shadow-2xl hover:shadow-[#cdb8e1]/40"
+                                    : "border border-white/10 hover:bg-white hover:text-black"
+                                    } ${loadingPlanId === plan.id ? "opacity-70 cursor-wait" : ""}`}
+                            >
+                                {loadingPlanId === plan.id && <Loader2 className="w-4 h-4 animate-spin" />}
                                 {priceToShow === 0 ? "Registrarse" : isRecommended ? "Experiencia" : "Elegir " + plan.displayName}
                             </button>
                         </div>

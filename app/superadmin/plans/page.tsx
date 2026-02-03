@@ -51,6 +51,16 @@ interface Plan {
     config?: any;
     isActive: boolean;
     sortOrder: number;
+    // Regional pricing
+    priceMXN?: number;
+    monthlyPriceMXN?: number | null;
+    priceUSD?: number;
+    monthlyPriceUSD?: number | null;
+    // Stripe IDs
+    stripePriceIdMXNMonthly?: string | null;
+    stripePriceIdMXNYearly?: string | null;
+    stripePriceIdUSDMonthly?: string | null;
+    stripePriceIdUSDYearly?: string | null;
     _count?: {
         users: number;
     };
@@ -368,13 +378,20 @@ export default function PlansPage() {
                                 )}
                             </div>
 
-                            {/* Price */}
-                            <div className="flex items-baseline gap-1 mb-4">
-                                <span className="text-3xl font-bold">
-                                    {plan.currency === "USD" ? "$" : plan.currency}
-                                    {plan.price}
-                                </span>
-                                <span className="text-neutral-400">/{plan.interval === "month" ? "mes" : "año"}</span>
+                            {/* Price - Show both regions */}
+                            <div className="flex flex-col gap-1 mb-4">
+                                <div className="flex items-baseline gap-1">
+                                    <span className="text-2xl font-bold text-emerald-400">
+                                        MXN{plan.priceMXN ?? 0}
+                                    </span>
+                                    <span className="text-neutral-500 text-sm">/mes</span>
+                                </div>
+                                <div className="flex items-baseline gap-1">
+                                    <span className="text-lg font-medium text-blue-400">
+                                        ${plan.priceUSD ?? 0}
+                                    </span>
+                                    <span className="text-neutral-500 text-xs">USD/mes</span>
+                                </div>
                             </div>
 
                             {/* Users Count */}
@@ -525,62 +542,155 @@ export default function PlansPage() {
                                 />
                             </div>
 
-                            {/* Pricing */}
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-neutral-300 mb-2">
-                                        Precio Anual/Base
-                                    </label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        value={editingPlan.price}
-                                        onChange={(e) => setEditingPlan({ ...editingPlan, price: parseFloat(e.target.value) || 0 })}
-                                        className="w-full px-4 py-2.5 bg-neutral-800 border border-neutral-700 rounded-xl text-white focus:outline-none focus:border-violet-500"
-                                    />
+                            {/* Precios Regionales */}
+                            <div className="space-y-4">
+                                <h3 className="text-sm font-medium text-neutral-300 flex items-center gap-2">
+                                    <span className="text-lg">🇲🇽</span> Precios México (MXN)
+                                </h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-neutral-400 mb-1">
+                                            Plan anual (por mes)
+                                        </label>
+                                        <p className="text-xs text-neutral-500 mb-2">Se cobra ×12 al año</p>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            step="1"
+                                            value={(editingPlan as any).priceMXN ?? ""}
+                                            onChange={(e) => setEditingPlan({ ...editingPlan, priceMXN: e.target.value === "" ? 0 : parseFloat(e.target.value) } as any)}
+                                            className="w-full px-4 py-2.5 bg-neutral-800 border border-neutral-700 rounded-xl text-white focus:outline-none focus:border-violet-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-neutral-400 mb-1">
+                                            Plan mensual
+                                        </label>
+                                        <p className="text-xs text-neutral-500 mb-2">Cobro mes a mes</p>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            step="1"
+                                            value={(editingPlan as any).monthlyPriceMXN ?? ""}
+                                            placeholder="Opcional"
+                                            onChange={(e) => setEditingPlan({ ...editingPlan, monthlyPriceMXN: e.target.value === "" ? null : parseFloat(e.target.value) } as any)}
+                                            className="w-full px-4 py-2.5 bg-neutral-800 border border-neutral-700 rounded-xl text-white focus:outline-none focus:border-violet-500"
+                                        />
+                                    </div>
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-neutral-300 mb-2">
-                                        Precio Mensual (Opcional)
-                                    </label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        value={editingPlan.monthlyPrice || ""}
-                                        placeholder="Solo si difiere del base"
-                                        onChange={(e) => setEditingPlan({ ...editingPlan, monthlyPrice: parseFloat(e.target.value) || null })}
-                                        className="w-full px-4 py-2.5 bg-neutral-800 border border-neutral-700 rounded-xl text-white focus:outline-none focus:border-violet-500"
-                                    />
+                            </div>
+
+                            <div className="space-y-4">
+                                <h3 className="text-sm font-medium text-neutral-300 flex items-center gap-2">
+                                    <span className="text-lg">🌎</span> Precios Internacional (USD)
+                                </h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-neutral-400 mb-1">
+                                            Plan anual (por mes)
+                                        </label>
+                                        <p className="text-xs text-neutral-500 mb-2">Se cobra ×12 al año</p>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            step="0.01"
+                                            value={(editingPlan as any).priceUSD ?? ""}
+                                            onChange={(e) => setEditingPlan({ ...editingPlan, priceUSD: e.target.value === "" ? 0 : parseFloat(e.target.value) } as any)}
+                                            className="w-full px-4 py-2.5 bg-neutral-800 border border-neutral-700 rounded-xl text-white focus:outline-none focus:border-violet-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-neutral-400 mb-1">
+                                            Plan mensual
+                                        </label>
+                                        <p className="text-xs text-neutral-500 mb-2">Cobro mes a mes</p>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            step="0.01"
+                                            value={(editingPlan as any).monthlyPriceUSD ?? ""}
+                                            placeholder="Opcional"
+                                            onChange={(e) => setEditingPlan({ ...editingPlan, monthlyPriceUSD: e.target.value === "" ? null : parseFloat(e.target.value) } as any)}
+                                            className="w-full px-4 py-2.5 bg-neutral-800 border border-neutral-700 rounded-xl text-white focus:outline-none focus:border-violet-500"
+                                        />
+                                    </div>
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-neutral-300 mb-2">
-                                        Moneda
-                                    </label>
-                                    <select
-                                        value={editingPlan.currency}
-                                        onChange={(e) => setEditingPlan({ ...editingPlan, currency: e.target.value })}
-                                        className="w-full px-4 py-2.5 bg-neutral-800 border border-neutral-700 rounded-xl text-white focus:outline-none focus:border-violet-500"
-                                    >
-                                        <option value="USD">USD</option>
-                                        <option value="MXN">MXN</option>
-                                        <option value="EUR">EUR</option>
-                                    </select>
+                            </div>
+
+                            {/* Stripe Price IDs */}
+                            <div className="space-y-4 p-4 bg-neutral-800/50 rounded-xl border border-neutral-700">
+                                <h3 className="text-sm font-medium text-neutral-300 flex items-center gap-2">
+                                    <DollarSign className="w-4 h-4 text-violet-400" />
+                                    Stripe Price IDs (Opcional)
+                                </h3>
+                                <p className="text-xs text-neutral-500">
+                                    Configura estos IDs después de crear los productos en tu dashboard de Stripe.
+                                </p>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-medium text-neutral-500 mb-1">
+                                            MXN Mensual
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={(editingPlan as any).stripePriceIdMXNMonthly || ""}
+                                            placeholder="price_..."
+                                            onChange={(e) => setEditingPlan({ ...editingPlan, stripePriceIdMXNMonthly: e.target.value || null } as any)}
+                                            className="w-full px-3 py-2 bg-neutral-900 border border-neutral-700 rounded-lg text-white text-sm focus:outline-none focus:border-violet-500 font-mono"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-neutral-500 mb-1">
+                                            MXN Anual
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={(editingPlan as any).stripePriceIdMXNYearly || ""}
+                                            placeholder="price_..."
+                                            onChange={(e) => setEditingPlan({ ...editingPlan, stripePriceIdMXNYearly: e.target.value || null } as any)}
+                                            className="w-full px-3 py-2 bg-neutral-900 border border-neutral-700 rounded-lg text-white text-sm focus:outline-none focus:border-violet-500 font-mono"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-neutral-500 mb-1">
+                                            USD Mensual
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={(editingPlan as any).stripePriceIdUSDMonthly || ""}
+                                            placeholder="price_..."
+                                            onChange={(e) => setEditingPlan({ ...editingPlan, stripePriceIdUSDMonthly: e.target.value || null } as any)}
+                                            className="w-full px-3 py-2 bg-neutral-900 border border-neutral-700 rounded-lg text-white text-sm focus:outline-none focus:border-violet-500 font-mono"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-neutral-500 mb-1">
+                                            USD Anual
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={(editingPlan as any).stripePriceIdUSDYearly || ""}
+                                            placeholder="price_..."
+                                            onChange={(e) => setEditingPlan({ ...editingPlan, stripePriceIdUSDYearly: e.target.value || null } as any)}
+                                            className="w-full px-3 py-2 bg-neutral-900 border border-neutral-700 rounded-lg text-white text-sm focus:outline-none focus:border-violet-500 font-mono"
+                                        />
+                                    </div>
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-neutral-300 mb-2">
-                                        Intervalo por defecto
-                                    </label>
-                                    <select
-                                        value={editingPlan.interval}
-                                        onChange={(e) => setEditingPlan({ ...editingPlan, interval: e.target.value })}
-                                        className="w-full px-4 py-2.5 bg-neutral-800 border border-neutral-700 rounded-xl text-white focus:outline-none focus:border-violet-500"
-                                    >
-                                        <option value="month">Mensual</option>
-                                        <option value="year">Anual</option>
-                                    </select>
-                                </div>
+                            </div>
+
+                            {/* Intervalo por defecto */}
+                            <div>
+                                <label className="block text-sm font-medium text-neutral-300 mb-2">
+                                    Intervalo por defecto
+                                </label>
+                                <select
+                                    value={editingPlan.interval}
+                                    onChange={(e) => setEditingPlan({ ...editingPlan, interval: e.target.value })}
+                                    className="w-full px-4 py-2.5 bg-neutral-800 border border-neutral-700 rounded-xl text-white focus:outline-none focus:border-violet-500"
+                                >
+                                    <option value="month">Mensual</option>
+                                    <option value="year">Anual</option>
+                                </select>
                             </div>
 
                             {/* Template Comparison */}
@@ -638,7 +748,7 @@ export default function PlansPage() {
                                 />
                                 <span className="text-neutral-300">Plan activo</span>
                             </label>
-                        </div>
+                        </div >
 
                         <div className="flex justify-end gap-3 p-6 border-t border-neutral-800 sticky bottom-0 bg-neutral-900">
                             <button
@@ -659,9 +769,10 @@ export default function PlansPage() {
                                 {isCreating ? "Crear Plan" : "Guardar cambios"}
                             </button>
                         </div>
-                    </div>
-                </div>
-            )}
-        </div>
+                    </div >
+                </div >
+            )
+            }
+        </div >
     );
 }

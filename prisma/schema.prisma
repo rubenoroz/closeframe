@@ -212,9 +212,26 @@ model Plan {
   name        String   @unique // "free", "pro", "studio"
   displayName String   // "Free", "Pro", "Studio"
   description String?
+  
+  // Precios MXN (México)
+  priceMXN         Float    @default(0)      // Precio anual en MXN
+  monthlyPriceMXN  Float?                    // Precio mensual en MXN
+  
+  // Precios USD (Internacional)
+  priceUSD         Float    @default(0)      // Precio anual en USD
+  monthlyPriceUSD  Float?                    // Precio mensual en USD
+  
+  // Legacy fields (mantener por compatibilidad temporal)
   price       Float    @default(0)
-  monthlyPrice Float?  // Price for monthly billing if different
+  monthlyPrice Float?
   currency    String   @default("USD")
+  
+  // Stripe Price IDs por región y período
+  stripePriceIdMXNMonthly  String?
+  stripePriceIdMXNYearly   String?
+  stripePriceIdUSDMonthly  String?
+  stripePriceIdUSDYearly   String?
+  
   interval    String   @default("month") // "month", "year"
   features    String   // JSON array de características (Legacy)
   limits      String   // JSON con límites (Legacy)
