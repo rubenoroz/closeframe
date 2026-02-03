@@ -113,19 +113,31 @@ export async function POST(req: Request) {
 
         } else {
             // Downgrade - no immediate charge
-            const periodEnd = new Date((subscription as any).current_period_end * 1000);
+            const periodEndTimestamp = (subscription as any).current_period_end;
+            let periodEnd: Date;
+            let formattedDate: string;
+
+            if (periodEndTimestamp && !isNaN(periodEndTimestamp)) {
+                periodEnd = new Date(periodEndTimestamp * 1000);
+                formattedDate = periodEnd.toLocaleDateString('es-MX', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                });
+            } else {
+                // Fallback if no period end
+                periodEnd = new Date();
+                periodEnd.setMonth(periodEnd.getMonth() + 1);
+                formattedDate = "al final de tu período actual";
+            }
 
             return NextResponse.json({
                 type: "downgrade",
                 currentPlan: user.plan?.displayName || user.plan?.name || "Free",
                 newPlan: targetPlan.displayName || targetPlan.name,
                 effectiveDate: periodEnd.toISOString(),
-                formattedDate: periodEnd.toLocaleDateString('es-MX', {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric'
-                }),
-                message: `Tu plan cambiará a ${targetPlan.displayName || targetPlan.name} el ${periodEnd.toLocaleDateString('es-MX')}.`,
+                formattedDate,
+                message: `Tu plan cambiará a ${targetPlan.displayName || targetPlan.name} ${formattedDate}.`,
                 requiresConfirmation: true
             });
         }
