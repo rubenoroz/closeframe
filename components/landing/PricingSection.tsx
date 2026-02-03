@@ -45,9 +45,18 @@ export function PricingSection({ plans, region }: PricingSectionProps) {
     const currencySymbol = region === 'MX' ? '$' : '$';
     const currencyCode = region === 'MX' ? 'MXN' : 'USD';
 
+    // State for confirmation modal
+    const [confirmModal, setConfirmModal] = useState<{
+        show: boolean;
+        type: 'upgrade' | 'downgrade' | null;
+        planId: string;
+        priceId: string;
+        message: string;
+        newPlanName: string;
+    } | null>(null);
+
     const handleCheckout = async (planId: string, priceId: string | null | undefined, isFree: boolean) => {
         if (isFree) {
-            // Redirect to register for free plan
             router.push('/register');
             return;
         }
@@ -60,32 +69,78 @@ export function PricingSection({ plans, region }: PricingSectionProps) {
         setLoadingPlanId(planId);
 
         try {
-            const response = await fetch('/api/stripe/checkout', {
+            // Step 1: Preview the change first
+            const previewResponse = await fetch('/api/stripe/preview', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ planId, priceId }),
             });
 
+            const preview = await previewResponse.json();
+
+            if (!preview.requiresConfirmation) {
+                // New subscription - go directly to Stripe
+                const checkoutResponse = await fetch('/api/stripe/checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ planId, priceId }),
+                });
+                const data = await checkoutResponse.json();
+                if (data.url) {
+                    window.location.href = data.url;
+                } else {
+                    router.push('/login?redirect=/pricing');
+                }
+                return;
+            }
+
+            // Show confirmation modal
+            setConfirmModal({
+                show: true,
+                type: preview.type,
+                planId,
+                priceId,
+                message: preview.message,
+                newPlanName: preview.newPlan
+            });
+
+        } catch (error) {
+            console.error('Preview error:', error);
+            alert('Error al procesar. Intenta de nuevo.');
+        } finally {
+            setLoadingPlanId(null);
+        }
+    };
+
+    const confirmPlanChange = async () => {
+        if (!confirmModal) return;
+
+        setLoadingPlanId(confirmModal.planId);
+        setConfirmModal(null);
+
+        try {
+            const response = await fetch('/api/stripe/checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    planId: confirmModal.planId,
+                    priceId: confirmModal.priceId
+                }),
+            });
+
             const data = await response.json();
 
             if (data.url) {
-                // New subscription - redirect to Stripe Checkout
                 window.location.href = data.url;
             } else if (data.success) {
-                // Upgrade or Downgrade processed
                 if (data.type === 'upgrade') {
-                    alert('✅ ¡Plan actualizado! Tu nuevo plan ya está activo con cobro prorrateado.');
-                    window.location.href = '/dashboard/settings?success=true';
+                    alert('✅ ¡Plan actualizado! Tu nuevo plan ya está activo.');
                 } else if (data.type === 'downgrade') {
                     alert(`📅 Cambio de plan programado. ${data.message}`);
-                    window.location.href = '/dashboard/settings?scheduled=true';
                 }
+                window.location.href = '/dashboard/settings?success=true';
             } else if (!response.ok) {
-                // Error from API
                 throw new Error(data.message || 'Error al procesar');
-            } else {
-                // User might not be logged in
-                router.push('/login?redirect=/pricing');
             }
         } catch (error) {
             console.error('Checkout error:', error);
@@ -239,6 +294,51 @@ export function PricingSection({ plans, region }: PricingSectionProps) {
                     );
                 })}
             </div>
+
+            {/* Confirmation Modal */}
+            {confirmModal?.show && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-neutral-900 border border-neutral-700 rounded-2xl w-full max-w-md shadow-2xl">
+                        <div className="p-6 border-b border-neutral-800">
+                            <h2 className="text-xl font-bold">
+                                {confirmModal.type === 'upgrade' ? '⬆️ Confirmar Upgrade' : '⬇️ Confirmar Cambio de Plan'}
+                            </h2>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <p className="text-neutral-300">
+                                {confirmModal.message}
+                            </p>
+                            <div className="bg-neutral-800 rounded-xl p-4">
+                                <p className="text-sm text-neutral-400">Nuevo plan:</p>
+                                <p className="text-lg font-bold text-white">{confirmModal.newPlanName}</p>
+                            </div>
+                            {confirmModal.type === 'upgrade' && (
+                                <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4">
+                                    <p className="text-sm text-amber-400">
+                                        💳 Se realizará un cobro inmediato por la diferencia prorrateada.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex gap-3 p-6 border-t border-neutral-800">
+                            <button
+                                onClick={() => setConfirmModal(null)}
+                                className="flex-1 py-3 px-4 rounded-xl border border-neutral-700 hover:bg-neutral-800 transition font-medium"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={confirmPlanChange}
+                                disabled={loadingPlanId !== null}
+                                className="flex-1 py-3 px-4 rounded-xl bg-violet-600 hover:bg-violet-700 transition font-bold flex items-center justify-center gap-2"
+                            >
+                                {loadingPlanId && <Loader2 className="w-4 h-4 animate-spin" />}
+                                Confirmar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </section>
     );
 }
