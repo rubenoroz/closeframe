@@ -178,6 +178,7 @@ model Project {
   
   // Galería Closer (Premium Studio/Agency)
   isCloserGallery   Boolean      @default(false)
+  isCollaborative   Boolean      @default(false) // [NEW] Flag to enable collaborative features
   musicTrackId      String?
   musicEnabled      Boolean      @default(false)
   momentsOrder      Json?        // Array of strings (folder names) to define order

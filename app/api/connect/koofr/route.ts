@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth"; // path to auth.ts in root
 import { KoofrProvider } from "@/lib/cloud/koofr-provider";
+import { encrypt } from "@/lib/security/encryption";
 
 export async function POST(req: Request) {
     try {
@@ -30,9 +31,10 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Credenciales inválidas o error de conexión con Koofr" }, { status: 401 });
         }
 
+
         // 2. Save to DB
-        // We store the App Password in accessToken (encrypted storage recommended in prod, assuming DB safe for now)
-        // refresh_token isn't used for Basic Auth, but we can store 'basic' to indicate type
+        // SECURITY: Encrypt passwords (AES-256)
+
 
         // Check if exists
         const existing = await prisma.cloudAccount.findFirst({
@@ -43,12 +45,20 @@ export async function POST(req: Request) {
             }
         });
 
+        const encryptedPassword = encrypt(password);
+
         if (existing) {
             // Update
+            // Verify ownership implicitly via the findFirst above (userId check), 
+            // but just to be explicit and safe:
+            if (existing.userId !== session.user.id) {
+                return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+            }
+
             await prisma.cloudAccount.update({
                 where: { id: existing.id },
                 data: {
-                    accessToken: password, // Update password
+                    accessToken: encryptedPassword, // Store Encrypted
                     name: name || existing.name || "Koofr",
                     updatedAt: new Date()
                 }
@@ -62,7 +72,7 @@ export async function POST(req: Request) {
                     providerId: email, // Use email as provider ID for Koofr
                     email: email,
                     name: name || "Koofr",
-                    accessToken: password,
+                    accessToken: encryptedPassword, // Store Encrypted
                     refreshToken: "basic", // Marker
                     expiresAt: null // Never expires (until revoked)
                 }

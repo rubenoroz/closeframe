@@ -2,6 +2,7 @@ import { google } from "googleapis";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
+import { encrypt, decrypt } from "@/lib/security/encryption";
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
@@ -37,10 +38,6 @@ export async function GET(request: Request) {
         oauth2Client.setCredentials(tokens);
 
         console.log("[OAuth Callback] Tokens received. Keys:", Object.keys(tokens));
-        console.log("[OAuth Callback] Refresh Token present:", !!tokens.refresh_token);
-        if (tokens.expiry_date) {
-            console.log("[OAuth Callback] Token expiry:", new Date(tokens.expiry_date));
-        }
 
         // Get basic profile info
         const oauth2 = google.oauth2({ version: "v2", auth: oauth2Client });
@@ -58,18 +55,29 @@ export async function GET(request: Request) {
 
         if (existingAccount) {
             console.log("[OAuth Callback] Updating existing account:", existingAccount.id);
-            // Only update refresh token if we got a new one (it might be null on re-auth without prompt=consent)
-            const newRefreshToken = tokens.refresh_token || existingAccount.refreshToken;
+            // Only update refresh token if we got a new one
+            // SECURITY: Ensure we handle encryption correctly here.
 
-            if (!newRefreshToken) {
-                console.warn("[OAuth Callback] WARNING: No refresh token available to save!");
+            let finalRefreshToken = existingAccount.refreshToken; // DB value (could be encrypted or plain)
+
+            if (tokens.refresh_token) {
+                // New token provided -> Encrypt it
+                finalRefreshToken = encrypt(tokens.refresh_token);
+            } else if (existingAccount.refreshToken) {
+                // No new token, keep existing.
+                // OPTIONAL: Migrate to encrypted if it was plain text?
+                // `decrypt` handles plain text, but good to store encrypted.
+                const rawOld = decrypt(existingAccount.refreshToken);
+                finalRefreshToken = encrypt(rawOld);
             }
+
+            const encryptedAccessToken = encrypt(tokens.access_token || "");
 
             await prisma.cloudAccount.update({
                 where: { id: existingAccount.id },
                 data: {
-                    accessToken: tokens.access_token || "",
-                    refreshToken: newRefreshToken,
+                    accessToken: encryptedAccessToken,
+                    refreshToken: finalRefreshToken,
                     email: userInfo.data.email,
                     expiresAt: tokens.expiry_date ? new Date(tokens.expiry_date) : null,
                 },
@@ -98,13 +106,18 @@ export async function GET(request: Request) {
             if (!tokens.refresh_token) {
                 console.warn("[OAuth Callback] WARNING: Creating account WITHOUT refresh token!");
             }
+
+            // SECURITY: Encrypt tokens
+            const encryptedAccessToken = encrypt(tokens.access_token || "");
+            const encryptedRefreshToken = tokens.refresh_token ? encrypt(tokens.refresh_token) : null;
+
             await prisma.cloudAccount.create({
                 data: {
                     provider: "google",
                     providerId: providerId,
                     email: userInfo.data.email,
-                    accessToken: tokens.access_token || "",
-                    refreshToken: tokens.refresh_token,
+                    accessToken: encryptedAccessToken,
+                    refreshToken: encryptedRefreshToken,
                     expiresAt: tokens.expiry_date ? new Date(tokens.expiry_date) : null,
                     userId: session.user.id,
                 },

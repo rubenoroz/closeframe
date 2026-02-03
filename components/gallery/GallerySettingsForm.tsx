@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { UploadCloud, Folder, Loader2, AlertCircle, ArrowLeft, PlusCircle, Check, Mail, Zap, Info, Cloud, ChevronRight, Layout, Download, ImageIcon, Music, Settings, X, Trash2, Sparkles, Copy, Calendar, Link as LinkIcon, Lock } from "lucide-react";
+import { UploadCloud, Folder, Loader2, AlertCircle, ArrowLeft, PlusCircle, Check, Mail, Zap, Info, Cloud, ChevronRight, Layout, Download, ImageIcon, Music, Settings, X, Trash2, Sparkles, Copy, Calendar, Link as LinkIcon, Lock, Users } from "lucide-react";
 import MusicPicker from "@/components/MusicPicker";
 import FocalPointPicker from "@/components/FocalPointPicker";
 import ZipFilePicker from "@/components/ZipFilePicker";
@@ -30,6 +30,8 @@ export interface GallerySettingsData {
 
     // Features
     isCloserGallery: boolean;
+    isCollaborative?: boolean; // New: Optional for creation
+    moments?: string[]; // New: List of moment names to create folders for
     musicTrackId?: string; // Changed from string | null to string to match dashboard/page.tsx state
     musicEnabled: boolean;
     enableWatermark: boolean;
@@ -124,7 +126,7 @@ export default function GallerySettingsForm({
                             <h3 className={`font-medium ${data.isCloserGallery ? (isLight ? "text-neutral-900" : "text-white") : "text-neutral-500"}`}>
                                 Experiencia Closer
                             </h3>
-                            <p className="text-[10px] text-neutral-500 uppercase tracking-widest">Premium Gallery</p>
+                            <p className="text-[10px] text-neutral-500 uppercase tracking-widest">Galería Premium</p>
                         </div>
                     </div>
 
@@ -161,8 +163,11 @@ export default function GallerySettingsForm({
                                 />
                                 <div className="w-9 h-5 bg-neutral-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
                             </label>
-                            <span className="text-xs text-neutral-400 font-medium">Reproducción automática (Autoplay)</span>
+                            <span className="text-xs text-neutral-400 font-medium">Reproducción automática</span>
                         </div>
+
+
+
                     </div>
                 )}
 
@@ -175,28 +180,144 @@ export default function GallerySettingsForm({
 
             {/* B - COLLABORATIVE GALLERY SECTION (Only for Closer Galleries) */}
             {/* Only show if we have a project ID (Edit Mode) */}
-            {data.isCloserGallery && projectId && (
-                <div className={`p-5 rounded-2xl border-2 transition-all ${isLight ? "bg-neutral-50 border-neutral-100" : "bg-neutral-800/20 border-neutral-800"}`}>
-                    <CollaborativeSettings
-                        projectId={projectId}
-                        isGoogleDrive={isGoogleDrive}
-                    />
-                </div>
-            )}
-            {/* If Create Mode, show a placeholder or nothing */}
-            {data.isCloserGallery && !projectId && (
-                <div className="p-4 bg-neutral-800/30 rounded-xl border border-dashed border-neutral-700 flex items-center gap-4">
-                    <div className="p-2 bg-neutral-700/50 rounded-lg">
-                        <svg className="w-5 h-5 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                        </svg>
+            {
+                data.isCloserGallery && projectId && (
+                    <div className={`p-5 rounded-2xl border-2 transition-all ${isLight ? "bg-neutral-50 border-neutral-100" : "bg-neutral-800/20 border-neutral-800"}`}>
+                        <CollaborativeSettings
+                            projectId={projectId}
+                            isGoogleDrive={isGoogleDrive}
+                        />
                     </div>
-                    <div>
-                        <p className="text-sm font-medium text-neutral-300">Galería Colaborativa & QR</p>
-                        <p className="text-xs text-neutral-500">Podrás configurar los códigos QR y secciones una vez creada la galería.</p>
+                )
+            }
+            {/* If Create Mode, show Collaborative option explicitly if Drive */}
+            {
+                data.isCloserGallery && !projectId && (
+                    <div className={`rounded-2xl p-4 sm:p-6 border transition-all ${data.isCollaborative
+                        ? "bg-gradient-to-br from-violet-500/10 to-indigo-500/10 border-violet-500/20"
+                        : isLight ? "bg-neutral-50 border-neutral-100" : "bg-neutral-800/30 border-neutral-800"
+                        }`}>
+
+                        {/* Header - Matching CollaborativeSettings exactly */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                            <div className="flex items-center gap-3">
+                                <div className={`p-2 rounded-lg ${data.isCollaborative ? "bg-violet-500/20" : "bg-neutral-700/50"}`}>
+                                    <Users className={`w-5 h-5 ${data.isCollaborative ? "text-violet-400" : "text-neutral-500"}`} />
+                                </div>
+                                <div>
+                                    <h2 className={`text-2xl font-bold ${data.isCollaborative ? "bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60" : "text-neutral-500"}`}>
+                                        Galería Colaborativa
+                                    </h2>
+                                    <p className={`${data.isCollaborative ? "text-violet-200/60" : "text-neutral-500"}`}>
+                                        Deja que tus invitados suban fotos vía código QR
+                                    </p>
+                                </div>
+                            </div>
+
+                            {data.isCollaborative ? (
+                                <button
+                                    type="button"
+                                    onClick={() => update('isCollaborative', false)}
+                                    className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-sm font-medium transition-colors w-full sm:w-auto"
+                                >
+                                    Desactivar
+                                </button>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={() => update('isCollaborative', true)}
+                                    disabled={!isGoogleDrive}
+                                    className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2 w-full sm:w-auto"
+                                >
+                                    <Users className="w-4 h-4" />
+                                    Activar Galería
+                                </button>
+                            )}
+                        </div>
+
+                        {!isGoogleDrive && (
+                            <div className="flex items-center gap-2 text-xs text-amber-500 bg-amber-500/10 p-2 rounded-lg">
+                                <AlertCircle className="w-4 h-4" />
+                                Solo disponible con Google Drive.
+                            </div>
+                        )}
+
+                        {data.isCollaborative && isGoogleDrive && (
+                            <>
+                                {/* Stats - Matching CollaborativeSettings */}
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                                    <div className="bg-white/5 rounded-xl p-4">
+                                        <p className="text-slate-400 text-xs mb-1">Total Subidas</p>
+                                        <p className="text-2xl font-bold text-white">0</p>
+                                    </div>
+                                    <div className="bg-white/5 rounded-xl p-4">
+                                        <p className="text-slate-400 text-xs mb-1">Secciones QR</p>
+                                        <p className="text-2xl font-bold text-white">{data.moments?.length || 0}</p>
+                                    </div>
+                                    <div className="bg-white/5 rounded-xl p-4">
+                                        <p className="text-slate-400 text-xs mb-1">Estado</p>
+                                        <p className="text-lg font-medium text-emerald-400">Activo</p>
+                                    </div>
+                                </div>
+
+                                {/* Sections - Matching CollaborativeSettings */}
+                                <div className="space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <h4 className="text-white font-medium">Secciones QR</h4>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const name = prompt('Nombre de la sección (ej: Mesa 1, Zona VIP...)');
+                                                if (name?.trim()) {
+                                                    const current = data.moments || [];
+                                                    update('moments', [...current, name.trim()]);
+                                                }
+                                            }}
+                                            className="flex items-center gap-2 px-3 py-1.5 bg-white/10 hover:bg-white/15 rounded-lg text-sm text-white transition-colors"
+                                        >
+                                            <PlusCircle className="w-4 h-4" />
+                                            Agregar Sección
+                                        </button>
+                                    </div>
+
+                                    {(!data.moments || data.moments.length === 0) ? (
+                                        <div className="bg-white/5 rounded-xl p-6 text-center">
+                                            <div className="w-8 h-8 text-slate-500 mx-auto mb-2 flex items-center justify-center">
+                                                <UploadCloud className="w-8 h-8" />
+                                            </div>
+                                            <p className="text-slate-400 text-sm">No hay secciones aún. Crea una para generar un código QR.</p>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            {data.moments.map((section, idx) => (
+                                                <div key={idx} className="bg-white/5 rounded-xl p-4 flex items-center justify-between">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="p-2 bg-violet-500/20 rounded-lg">
+                                                            <Users className="w-4 h-4 text-violet-400" />
+                                                        </div>
+                                                        <p className="text-white font-medium">{section}</p>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const newMoments = data.moments?.filter((_, i) => i !== idx) || [];
+                                                            update('moments', newMoments);
+                                                        }}
+                                                        className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                                                        title="Eliminar"
+                                                    >
+                                                        <X className="w-4 h-4 text-slate-400" />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </>
+                        )}
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* General Settings */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -214,7 +335,7 @@ export default function GallerySettingsForm({
                     <label className="text-[10px] font-bold uppercase tracking-widest mb-3 flex items-center gap-2 opacity-100">
                         Categoría
                         {planLimits?.lowResDownloads && (
-                            <span className="text-[9px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded opacity-100">Plan Free</span>
+                            <span className="text-[9px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded opacity-100">Plan Gratuito </span>
                         )}
                     </label>
                     <select
@@ -268,21 +389,23 @@ export default function GallerySettingsForm({
             </div>
 
             {/* Password - Only show if password field exists in data (it might be undefined in creating) */}
-            {data.password !== undefined && (
-                <div>
-                    <label className="text-[10px] font-bold uppercase tracking-widest mb-3 block opacity-40">Contraseña (Opcional)</label>
-                    <div className="relative">
-                        <input
-                            type="text"
-                            value={data.password || ""}
-                            onChange={(e) => update('password', e.target.value)}
-                            placeholder="Dejar vacío para acceso público"
-                            className={`w-full border rounded-2xl pl-10 pr-4 py-4 outline-none transition-all ${isLight ? 'bg-neutral-50 border-neutral-100 focus:border-emerald-500' : 'bg-neutral-800 border-neutral-700 focus:border-emerald-500'}`}
-                        />
-                        <Lock className="w-4 h-4 text-neutral-500 absolute left-4 top-1/2 -translate-y-1/2" />
+            {
+                data.password !== undefined && (
+                    <div>
+                        <label className="text-[10px] font-bold uppercase tracking-widest mb-3 block opacity-40">Contraseña (Opcional)</label>
+                        <div className="relative">
+                            <input
+                                type="text"
+                                value={data.password || ""}
+                                onChange={(e) => update('password', e.target.value)}
+                                placeholder="Dejar vacío para acceso público"
+                                className={`w-full border rounded-2xl pl-10 pr-4 py-4 outline-none transition-all ${isLight ? 'bg-neutral-50 border-neutral-100 focus:border-emerald-500' : 'bg-neutral-800 border-neutral-700 focus:border-emerald-500'}`}
+                            />
+                            <Lock className="w-4 h-4 text-neutral-500 absolute left-4 top-1/2 -translate-y-1/2" />
+                        </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Header Customization Section */}
             <div className={`${isLight ? 'bg-neutral-50 border-neutral-100' : 'bg-neutral-800/50 border-neutral-800'} p-4 rounded-2xl border`}>
@@ -308,7 +431,7 @@ export default function GallerySettingsForm({
                             <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-2 flex items-center gap-2">
                                 Tipografía
                                 {planLimits?.lowResDownloads && (
-                                    <span className="text-[9px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">Plan Free</span>
+                                    <span className="text-[9px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">Plan Gratuito</span>
                                 )}
                             </label>
                             {/* Custom Font Selector */}
@@ -601,7 +724,7 @@ export default function GallerySettingsForm({
                                     <div className="flex flex-col">
                                         <span className={`text-sm hover:opacity-100 transition-colors ${isLight ? 'text-neutral-600 hover:text-black' : 'text-neutral-400 hover:text-white'}`}>
                                             {planLimits?.lowResDownloads ? 'JPG (Resolución Web)' : 'JPG (Alta Resolución)'}
-                                            {planLimits?.lowResDownloads && <span className="text-[10px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded ml-2">Plan Free</span>}
+                                            {planLimits?.lowResDownloads && <span className="text-[10px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded ml-2">Plan Gratuito</span>}
                                         </span>
                                     </div>
                                     <input
@@ -616,7 +739,7 @@ export default function GallerySettingsForm({
                                     <div className="flex flex-col">
                                         <span className={`text-sm hover:opacity-100 transition-colors ${isLight ? 'text-neutral-600 hover:text-black' : 'text-neutral-400 hover:text-white'}`}>
                                             Archivos RAW
-                                            {planLimits?.lowResDownloads && <span className="text-[10px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded ml-2">Pro req.</span>}
+                                            {planLimits?.lowResDownloads && <span className="text-[10px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded ml-2">Requiere Pro</span>}
                                         </span>
                                     </div>
                                     <input
@@ -793,52 +916,54 @@ export default function GallerySettingsForm({
             </div>
 
             {/* PICKERS MODALS */}
-            {cloudAccountId && rootFolderId && (
-                <>
-                    {/* Header Image Picker */}
-                    {showHeaderImagePicker && (
-                        <DriveFilePicker
-                            cloudAccountId={cloudAccountId}
-                            folderId={rootFolderId}
-                            selectedFileId={data.headerImage || null}
-                            onSelect={(fileId) => {
-                                update('headerImage', fileId);
-                                setShowHeaderImagePicker(false);
-                            }}
-                            onCancel={() => setShowHeaderImagePicker(false)}
-                        />
-                    )}
+            {
+                cloudAccountId && rootFolderId && (
+                    <>
+                        {/* Header Image Picker */}
+                        {showHeaderImagePicker && (
+                            <DriveFilePicker
+                                cloudAccountId={cloudAccountId}
+                                folderId={rootFolderId}
+                                selectedFileId={data.headerImage || null}
+                                onSelect={(fileId) => {
+                                    update('headerImage', fileId);
+                                    setShowHeaderImagePicker(false);
+                                }}
+                                onCancel={() => setShowHeaderImagePicker(false)}
+                            />
+                        )}
 
-                    {/* Cover Image Picker */}
-                    {showCoverPicker && (
-                        <DriveFilePicker
-                            cloudAccountId={cloudAccountId}
-                            folderId={rootFolderId}
-                            selectedFileId={data.coverImage || null}
-                            onSelect={(fileId) => {
-                                update('coverImage', fileId);
-                                setShowCoverPicker(false);
-                            }}
-                            onCancel={() => setShowCoverPicker(false)}
-                        />
-                    )}
+                        {/* Cover Image Picker */}
+                        {showCoverPicker && (
+                            <DriveFilePicker
+                                cloudAccountId={cloudAccountId}
+                                folderId={rootFolderId}
+                                selectedFileId={data.coverImage || null}
+                                onSelect={(fileId) => {
+                                    update('coverImage', fileId);
+                                    setShowCoverPicker(false);
+                                }}
+                                onCancel={() => setShowCoverPicker(false)}
+                            />
+                        )}
 
-                    {/* Zip File Picker */}
-                    {showZipFilePicker && (
-                        <ZipFilePicker
-                            cloudAccountId={cloudAccountId}
-                            folderId={rootFolderId}
-                            selectedFileId={data.zipFileId || null}
-                            onSelect={(fileId, fileName) => {
-                                update('zipFileId', fileId);
-                                update('zipFileName', fileName);
-                                setShowZipFilePicker(false);
-                            }}
-                            onCancel={() => setShowZipFilePicker(false)}
-                        />
-                    )}
-                </>
-            )}
-        </div>
+                        {/* Zip File Picker */}
+                        {showZipFilePicker && (
+                            <ZipFilePicker
+                                cloudAccountId={cloudAccountId}
+                                folderId={rootFolderId}
+                                selectedFileId={data.zipFileId || null}
+                                onSelect={(fileId, fileName) => {
+                                    update('zipFileId', fileId);
+                                    update('zipFileName', fileName);
+                                    setShowZipFilePicker(false);
+                                }}
+                                onCancel={() => setShowZipFilePicker(false)}
+                            />
+                        )}
+                    </>
+                )
+            }
+        </div >
     );
 }

@@ -1,5 +1,6 @@
 import { google } from "googleapis";
 import { prisma } from "@/lib/db";
+import { encrypt, decrypt } from "@/lib/security/encryption";
 
 /**
  * Gets a fresh, authorized OAuth2 client for a given cloud account.
@@ -18,22 +19,27 @@ export async function getFreshGoogleAuth(cloudAccountId: string) {
         throw new Error("Account is not a Google account");
     }
 
+    // SECURITY: Decrypt tokens before using them
+    const rawAccessToken = decrypt(account.accessToken || '');
+    const rawRefreshToken = decrypt(account.refreshToken || '');
+
     const oauth2Client = new google.auth.OAuth2(
         process.env.GOOGLE_CLIENT_ID,
         process.env.GOOGLE_CLIENT_SECRET
     );
 
     oauth2Client.setCredentials({
-        access_token: account.accessToken,
-        refresh_token: account.refreshToken || undefined,
+        access_token: rawAccessToken,
+        refresh_token: rawRefreshToken || undefined,
         expiry_date: account.expiresAt?.getTime(),
     });
 
     // getAccessToken() automatically uses the refresh_token if the access_token is expired
     const { token } = await oauth2Client.getAccessToken();
 
-    console.log(`[GoogleAuth] getFreshGoogleAuth: Account ${cloudAccountId} - Token refreshed? ${token !== account.accessToken}`);
-    if (account.refreshToken) {
+    // Debug logs sanitized (don't log full tokens)
+    console.log(`[GoogleAuth] getFreshGoogleAuth: Account ${cloudAccountId} - Token refreshed? ${token !== rawAccessToken}`);
+    if (rawRefreshToken) {
         console.log(`[GoogleAuth] Refresh Token Present: YES`);
     } else {
         console.warn(`[GoogleAuth] Refresh Token MISSING for account ${cloudAccountId}`);
@@ -44,12 +50,13 @@ export async function getFreshGoogleAuth(cloudAccountId: string) {
     }
 
     // If the token changed, update the database
-    if (token !== account.accessToken) {
+    // Compare with RAW token
+    if (token !== rawAccessToken) {
         console.log(`[GoogleAuth] Updating DB with new access token for ${cloudAccountId}`);
         await prisma.cloudAccount.update({
             where: { id: account.id },
             data: {
-                accessToken: token,
+                accessToken: encrypt(token),
                 // If the refresh token was rotated, we'd update it here too, 
                 // but Google typically doesn't rotate it unless requested.
             },

@@ -1,9 +1,6 @@
-
 import { NextResponse } from "next/server";
 
 export async function GET() {
-    console.log("Microsoft OAuth Init - ClientID:", process.env.MICROSOFT_CLIENT_ID?.substring(0, 10) + "...");
-
     let baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     if (baseUrl.endsWith('/')) {
         baseUrl = baseUrl.slice(0, -1);
@@ -28,8 +25,6 @@ export async function GET() {
         `&response_mode=query` +
         `&scope=${encodeURIComponent(scopes)}` +
         `&state=12345`; // Should use proper state generation for security
-
-    console.log("FULL AUTH URL:", url);
 
     return NextResponse.redirect(url);
 }

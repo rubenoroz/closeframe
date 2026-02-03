@@ -94,6 +94,9 @@ export async function POST(request: Request) {
             videoFolderId,
             downloadVideoHdEnabled,
             downloadVideoRawEnabled,
+            isCloserGallery,
+            isCollaborative, // [NEW]
+            moments // [NEW]
         } = body;
 
         if (!name || !cloudAccountId || !rootFolderId) {
@@ -167,8 +170,38 @@ export async function POST(request: Request) {
                 videoFolderId: enableVideoTab ? videoFolderId : null,
                 downloadVideoHdEnabled: downloadVideoHdEnabled ?? true,
                 downloadVideoRawEnabled: downloadVideoRawEnabled ?? false,
+                isCloserGallery: isCloserGallery ?? false,
+                isCollaborative: isCollaborative ?? false, // Save collaborative status
             },
         });
+
+        // [NEW] Create "Moment" folders in Drive if requested
+        if (isCloserGallery && moments && Array.isArray(moments) && moments.length > 0) {
+            try {
+                // Get fresh auth for this account
+                const auth = await getFreshGoogleAuth(cloudAccountId);
+                const drive = google.drive({ version: "v3", auth });
+
+                // Create folders in paralell
+                await Promise.all(moments.map(async (momentName: string) => {
+                    if (!momentName || momentName.trim() === "") return;
+                    try {
+                        await drive.files.create({
+                            requestBody: {
+                                name: momentName.trim(),
+                                mimeType: "application/vnd.google-apps.folder",
+                                parents: [rootFolderId]
+                            }
+                        });
+                    } catch (e) {
+                        console.error(`Failed to create folder for moment: ${momentName}`, e);
+                    }
+                }));
+            } catch (err) {
+                console.error("Failed to initialize Drive for creating moments", err);
+                // Non-blocking error
+            }
+        }
 
         return NextResponse.json({ project });
     } catch (error) {
@@ -195,7 +228,7 @@ export async function PATCH(request: NextRequest) {
             coverImage, coverImageFocus,
             zipFileId, zipFileName,
             layoutType, public: isPublic,
-            isCloserGallery, musicTrackId, musicEnabled // [NEW]
+            isCloserGallery, musicTrackId, musicEnabled, isCollaborative // [NEW]
         } = body;
 
         if (!id) {
@@ -237,6 +270,7 @@ export async function PATCH(request: NextRequest) {
         if (isCloserGallery !== undefined) updateData.isCloserGallery = isCloserGallery;
         if (musicTrackId !== undefined) updateData.musicTrackId = musicTrackId;
         if (musicEnabled !== undefined) updateData.musicEnabled = musicEnabled; // [NEW]
+        if (isCollaborative !== undefined) updateData.isCollaborative = isCollaborative;
 
         // Handle public status based on password
         if (password !== undefined && password.trim() !== "") {

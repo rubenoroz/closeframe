@@ -68,10 +68,15 @@ export async function PATCH(request: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
         }
 
+        // Re-verify strictly before write
+        if (account.userId !== session.user.id) {
+            return NextResponse.json({ error: "Forbidden: Ownership mismatch" }, { status: 403 });
+        }
+
         console.log("UPDATING PRISMA...");
         const updated = await prisma.cloudAccount.update({
             where: { id },
-            data: { name } as any
+            data: { name }
         });
         console.log("UPDATE SUCCESSFUL!");
 

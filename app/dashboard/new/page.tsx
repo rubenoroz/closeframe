@@ -48,6 +48,8 @@ export default function NewProjectPage() {
         coverImage: "",
         coverImageFocus: "50,50",
         isCloserGallery: false,
+        isCollaborative: false, // NEW: Allow setting this on creation
+        moments: [], // NEW
         musicTrackId: undefined,
         musicEnabled: false,
         enableWatermark: false,
@@ -168,6 +170,8 @@ export default function NewProjectPage() {
                     musicTrackId: formData.musicTrackId,
                     musicEnabled: formData.musicEnabled,
                     isCloserGallery: formData.isCloserGallery,
+                    isCollaborative: formData.isCollaborative, // Send flag
+                    moments: formData.moments, // Send moments to be created
                     zipFileId: formData.zipFileId,
                     zipFileName: formData.zipFileName,
                     date: formData.date,

@@ -18,8 +18,11 @@ export class GoogleDriveProvider implements CloudProvider {
     async listFiles(folderId: string, authSource: string | any): Promise<CloudFile[]> {
         const drive = this.getDriveClient(authSource);
 
+        // Sanitize folderId (prevent query injection)
+        const safeFolderId = folderId.replace(/'/g, "\\'");
+
         const res = await drive.files.list({
-            q: `'${folderId}' in parents and mimeType != 'application/vnd.google-apps.folder' and trashed = false`,
+            q: `'${safeFolderId}' in parents and mimeType != 'application/vnd.google-apps.folder' and trashed = false`,
             fields: "files(id, name, mimeType, thumbnailLink, webContentLink, imageMediaMetadata, videoMediaMetadata, size, modifiedTime)",
             pageSize: 1000, // Increased page size for flattening efficiency
         });
@@ -53,8 +56,10 @@ export class GoogleDriveProvider implements CloudProvider {
     async listFolders(folderId: string, authSource: string | any): Promise<CloudFolder[]> {
         const drive = this.getDriveClient(authSource);
 
+        const safeFolderId = folderId.replace(/'/g, "\\'");
+
         const res = await drive.files.list({
-            q: `'${folderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
+            q: `'${safeFolderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
             fields: "files(id, name)",
             pageSize: 100,
         });

@@ -137,7 +137,8 @@ export async function POST(
 
     // [NEW] Dynamic check from Plan Configuration (Matrix)
     try {
-        const planConfig = project.user.plan?.config as any;
+        const { parsePlanConfig } = await import('@/lib/types/plan-schema');
+        const planConfig = parsePlanConfig(project.user.plan?.config);
         const planLimits = project.user.plan?.limits ? JSON.parse(project.user.plan.limits as string) : null;
 
         if (planConfig?.features?.collaborativeGalleries === true) {

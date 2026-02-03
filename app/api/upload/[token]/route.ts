@@ -27,7 +27,7 @@ export async function POST(
         }
 
         // Validate before processing
-        const validation = await validateUpload(token, deviceId, file.size, file.type);
+        const validation = await validateUpload(token, file.size, file.type, { deviceId, ipAddress });
 
         if (!validation.valid) {
             return NextResponse.json(
@@ -41,6 +41,18 @@ export async function POST(
         const buffer = Buffer.from(arrayBuffer);
 
         // Process upload
+
+        // SECURITY: Validate File Signature (Magic Numbers)
+        const { validateFileSignature } = await import('@/lib/security/file-validation');
+        const isValidSignature = await validateFileSignature(buffer, file.type);
+
+        if (!isValidSignature) {
+            return NextResponse.json(
+                { error: 'File content does not match its extension. Upload blocked for security.', code: 'INVALID_FILE_CONTENT' },
+                { status: 400 }
+            );
+        }
+
         const result = await processUpload(
             token,
             file.name,

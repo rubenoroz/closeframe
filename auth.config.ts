@@ -22,12 +22,41 @@ export const authConfig = {
     callbacks: {
         authorized({ auth, request: { nextUrl } }) {
             const isLoggedIn = !!auth?.user;
+
+            // Rutas que requieren protección explícita (además del default)
             const isOnDashboard = nextUrl.pathname.startsWith('/dashboard');
 
+            // Whitelist de rutas públicas
+            const isPublicRoute =
+                nextUrl.pathname === '/' ||
+                nextUrl.pathname.startsWith('/login') ||
+                nextUrl.pathname.startsWith('/plan-b') ||
+                nextUrl.pathname.startsWith('/api/upload') || // Guest uploads
+                nextUrl.pathname.startsWith('/api/auth'); // Auth handlers
+
+            // Si es una ruta protegida explícitamente o no es pública, requerir login
             if (isOnDashboard) {
                 if (isLoggedIn) return true;
-                return false; // Redirect unauthenticated users to login page
+                return false; // Redirect to login
+            } else if (isLoggedIn) {
+                // Si el usuario está logueado y va al login, redirigir al dashboard
+                if (nextUrl.pathname.startsWith('/login')) {
+                    return Response.redirect(new URL('/dashboard', nextUrl));
+                }
             }
+
+            // Permitir solo si es pública, logueado, o si no cae en reglas de bloqueo anteriores
+            // Nota: Con el matcher del middleware, esto actúa como barrera.
+            // Para ser estrictos "secure by default":
+            if (!isLoggedIn && !isPublicRoute) {
+                // Permitir acceso a galerías públicas (por ahora asumiendo que /g/* o /p/* son públicas o manejan su propia auth)
+                // Si no, redirigir a login
+                if (nextUrl.pathname.startsWith('/g/') || nextUrl.pathname.startsWith('/p/')) {
+                    return true;
+                }
+                return false;
+            }
+
             return true;
         },
         async jwt({ token, user, trigger }) {

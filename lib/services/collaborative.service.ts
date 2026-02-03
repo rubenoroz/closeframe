@@ -1,5 +1,7 @@
 import { prisma } from '@/lib/db';
 import { GoogleDriveProvider } from '@/lib/cloud/google-drive-provider';
+import crypto from 'crypto';
+import { decrypt } from '@/lib/security/encryption';
 
 // Default limits per plan (only Studio and Agency have access)
 const PLAN_DEFAULTS = {
@@ -87,9 +89,9 @@ export async function getLimitsForGallery(collaborativeGalleryId: string): Promi
  */
 export async function validateUpload(
     qrToken: string,
-    deviceId: string | null,
     fileSize: number,
-    mimeType: string
+    mimeType: string,
+    metadata: { deviceId?: string | null; ipAddress?: string }
 ): Promise<ValidationResult> {
     // Find section by slug
     const section = await prisma.qrSection.findUnique({
@@ -156,13 +158,25 @@ export async function validateUpload(
     }
 
     // Check device limit
-    if (deviceId) {
+    if (metadata.deviceId) {
         const deviceUploads = await prisma.collaborativeUpload.count({
-            where: { collaborativeGalleryId: section.gallery.id, deviceId, status: 'success' }
+            where: { collaborativeGalleryId: section.gallery.id, deviceId: metadata.deviceId, status: 'success' }
         });
         if (deviceUploads >= limits.maxFilesPerDevice) {
             return { valid: false, error: 'You have reached your upload limit.', code: 'LIMIT_DEVICE' };
         }
+    }
+
+    // Check IP limit (Prevent DeviceID spoofing)
+    // We allow a slightly higher limit per IP to account for shared networks (WiFi), 
+    // but cap it to prevent massive abuse from a single location.
+    const ipLimitMultiplier = 2;
+    const ipUploads = await prisma.collaborativeUpload.count({
+        where: { collaborativeGalleryId: section.gallery.id, ipAddress: { equals: metadata.ipAddress }, status: 'success' }
+    });
+
+    if (ipUploads >= (limits.maxFilesPerDevice * ipLimitMultiplier)) {
+        return { valid: false, error: 'Upload limit reached for this network.', code: 'LIMIT_DEVICE' };
     }
 
     return { valid: true };
@@ -194,7 +208,11 @@ export async function enableCollaborativeGallery(projectId: string): Promise<{ i
     }
 
     // Refresh token and create folder
-    const accessToken = await driveProvider.refreshAccessToken(project.cloudAccount.refreshToken || '');
+    // SECURITY: Decrypt token if encrypted
+    const rawRefreshToken = project.cloudAccount.refreshToken || '';
+    const refreshToken = decrypt(rawRefreshToken);
+
+    const accessToken = await driveProvider.refreshAccessToken(refreshToken);
     const folderName = `📷 Uploads - ${project.name}`;
     const driveFolderId = await driveProvider.createFolder(project.rootFolderId, folderName, accessToken);
 
@@ -224,7 +242,10 @@ export async function createQrSection(collaborativeGalleryId: string, name: stri
     if (!gallery.driveFolderId) throw new Error('Gallery Drive folder not set');
 
     // Create subfolder
-    const accessToken = await driveProvider.refreshAccessToken(gallery.project.cloudAccount.refreshToken || '');
+    const rawRefreshToken = gallery.project.cloudAccount.refreshToken || '';
+    const refreshToken = decrypt(rawRefreshToken);
+
+    const accessToken = await driveProvider.refreshAccessToken(refreshToken);
     const folderName = `QR - ${name}`;
     const driveFolderId = await driveProvider.createFolder(gallery.driveFolderId, folderName, accessToken);
 
@@ -269,7 +290,10 @@ export async function processUpload(
 
     try {
         // Upload to Drive
-        const accessToken = await driveProvider.refreshAccessToken(section.gallery.project.cloudAccount.refreshToken || '');
+        const rawRefreshToken = section.gallery.project.cloudAccount.refreshToken || '';
+        const refreshToken = decrypt(rawRefreshToken);
+
+        const accessToken = await driveProvider.refreshAccessToken(refreshToken);
         const driveFileId = await driveProvider.uploadFile(
             section.driveFolderId,
             fileName,
@@ -310,11 +334,9 @@ export async function processUpload(
 /**
  * Generate a random URL-safe slug for QR sections.
  */
-function generateSlug(length = 12): string {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let slug = '';
-    for (let i = 0; i < length; i++) {
-        slug += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return slug;
+/**
+ * Generate a cryptographically secure URL-safe slug.
+ */
+function generateSlug(length = 16): string {
+    return crypto.randomBytes(length).toString('hex').slice(0, length);
 }

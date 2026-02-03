@@ -166,10 +166,21 @@ async function getDropboxAuth(account: any) {
     return account.accessToken;
 }
 
+import { decrypt } from "@/lib/security/encryption";
+
 // Koofr Auth Logic
 function getKoofrAuth(account: any) {
+    let password = account.accessToken;
+    try {
+        // Try to decrypt (Lazy migration support)
+        const decrypted = decrypt(password);
+        if (decrypted) password = decrypted;
+    } catch (e) {
+        // If decryption fails (e.g. legacy plain text), use original
+    }
+
     return {
         email: account.email || account.providerId,
-        password: account.accessToken
+        password: password
     };
 }

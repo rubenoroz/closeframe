@@ -2,11 +2,6 @@ import { google } from "googleapis";
 import { NextResponse } from "next/server";
 
 export async function GET() {
-    console.log("OAuth Init - ClientID:", process.env.GOOGLE_CLIENT_ID?.substring(0, 10) + "...");
-    console.log("OAuth Init - Redirect URI:", `|${process.env.GOOGLE_REDIRECT_URI}|`);
-
-    console.log("OAuth Callback - Redirect URI:", `|${process.env.GOOGLE_REDIRECT_URI}|`);
-
     let baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     if (baseUrl.endsWith('/')) {
         baseUrl = baseUrl.slice(0, -1);
@@ -31,8 +26,6 @@ export async function GET() {
         prompt: "consent", // Force consent screen to ensure we get a refresh_token
         include_granted_scopes: true,
     });
-
-    console.log("FULL AUTH URL:", url);
 
     return NextResponse.redirect(url);
 }
