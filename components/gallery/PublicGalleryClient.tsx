@@ -326,7 +326,7 @@ export default function PublicGalleryClient({ project }: PublicGalleryClientProp
             {!project.planLimits?.hideBranding && (
                 <div className="fixed bottom-4 left-0 right-0 flex justify-center pointer-events-none z-30 opacity-50 hover:opacity-100 transition">
                     <Link
-                        href="/"
+                        href="https://www.closerlens.com"
                         className="pointer-events-auto flex items-center gap-2 px-3 py-1 bg-black/50 backdrop-blur rounded-full text-xs text-white/50 hover:text-white border border-white/5"
                     >
                         <Camera className="w-3 h-3" />
