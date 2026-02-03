@@ -595,7 +595,7 @@ export default function SettingsPage() {
                                 {isRestrictedPlan && <span className="flex items-center gap-1 bg-amber-500/10 text-amber-500 px-1.5 py-0.5 rounded border border-amber-500/20"><Lock className="w-2.5 h-2.5" /> PRO</span>}
                             </label>
                             <div className="flex items-center gap-2">
-                                <span className={`text-sm ${isLight ? 'text-neutral-500' : 'text-neutral-500'}`}>closerlens.co/u/</span>
+                                <span className={`text-sm ${isLight ? 'text-neutral-500' : 'text-neutral-500'}`}>closerlens.com/u/</span>
                                 <div className="relative flex-1">
                                     <input
                                         value={user.username}
@@ -614,7 +614,7 @@ export default function SettingsPage() {
                                 </div>
                             </div>
                             {user.username && (
-                                <p className="text-[10px] text-emerald-500 ml-1">Tu perfil estará en: closerlens.co/u/{user.username}</p>
+                                <p className="text-[10px] text-emerald-500 ml-1">Tu perfil estará en: closerlens.com/u/{user.username}</p>
                             )}
                         </div>
                     </div>
