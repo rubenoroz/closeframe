@@ -173,7 +173,7 @@ export default async function PublicProfilePage({ params }: Props) {
                 )}
 
                 {user.bio && (
-                    <p className={`max-w-xl mx-auto leading-relaxed text-sm md:text-base mb-8 ${isLight ? 'text-neutral-600' : 'text-neutral-400'}`}>
+                    <p className={`max-w-xl mx-auto leading-relaxed text-sm md:text-base mb-8 text-justify ${isLight ? 'text-neutral-600' : 'text-neutral-400'}`}>
                         {user.bio}
                     </p>
                 )}
