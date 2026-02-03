@@ -63,15 +63,27 @@ export default function PricingPage() {
                 }),
             });
 
-            if (!response.ok) throw new Error("Failed to start checkout");
-
             const data = await response.json();
+
             if (data.url) {
+                // New subscription - redirect to Stripe Checkout
                 window.location.href = data.url;
+            } else if (data.success) {
+                // Upgrade or Downgrade processed
+                if (data.type === 'upgrade') {
+                    alert('✅ ¡Plan actualizado! Tu nuevo plan ya está activo con cobro prorrateado.');
+                    window.location.href = '/dashboard/settings?success=true';
+                } else if (data.type === 'downgrade') {
+                    alert(`📅 Cambio de plan programado. ${data.message}`);
+                    window.location.href = '/dashboard/settings?scheduled=true';
+                }
+            } else if (!response.ok) {
+                throw new Error(data.message || "Failed to start checkout");
             }
         } catch (error) {
             console.error(error);
             alert("Error al iniciar el pago. Por favor intenta de nuevo.");
+        } finally {
             setIsLoading(null);
         }
     };

@@ -69,7 +69,20 @@ export function PricingSection({ plans, region }: PricingSectionProps) {
             const data = await response.json();
 
             if (data.url) {
+                // New subscription - redirect to Stripe Checkout
                 window.location.href = data.url;
+            } else if (data.success) {
+                // Upgrade or Downgrade processed
+                if (data.type === 'upgrade') {
+                    alert('✅ ¡Plan actualizado! Tu nuevo plan ya está activo con cobro prorrateado.');
+                    window.location.href = '/dashboard/settings?success=true';
+                } else if (data.type === 'downgrade') {
+                    alert(`📅 Cambio de plan programado. ${data.message}`);
+                    window.location.href = '/dashboard/settings?scheduled=true';
+                }
+            } else if (!response.ok) {
+                // Error from API
+                throw new Error(data.message || 'Error al procesar');
             } else {
                 // User might not be logged in
                 router.push('/login?redirect=/pricing');

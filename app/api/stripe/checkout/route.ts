@@ -16,13 +16,28 @@ export async function POST(req: Request) {
             return new NextResponse("Missing planId or priceId", { status: 400 });
         }
 
-        // Get user details
+        // Get user details with current plan
         const user = await prisma.user.findUnique({
             where: { id: session.user.id },
+            include: {
+                plan: {
+                    select: { id: true, sortOrder: true }
+                }
+            }
         });
 
         if (!user) {
             return new NextResponse("User not found", { status: 404 });
+        }
+
+        // Get target plan to compare
+        const targetPlan = await prisma.plan.findUnique({
+            where: { id: planId },
+            select: { id: true, sortOrder: true }
+        });
+
+        if (!targetPlan) {
+            return new NextResponse("Target plan not found", { status: 404 });
         }
 
         // Identify or create Stripe Customer
@@ -44,27 +59,162 @@ export async function POST(req: Request) {
             });
         }
 
-        // Create Checkout Session
-        const checkoutSession = await stripe.checkout.sessions.create({
-            customer: customerId,
-            line_items: [
-                {
-                    price: priceId,
-                    quantity: 1,
-                },
-            ],
-            mode: "subscription",
-            success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings?success=true`,
-            cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing?canceled=true`,
-            metadata: {
-                userId: user.id,
-                planId: planId,
-            },
-            allow_promotion_codes: true,
-            billing_address_collection: "auto",
-        });
+        // ══════════════════════════════════════════════════════════════════
+        // CASE 1: User has NO active subscription → Create new checkout
+        // ══════════════════════════════════════════════════════════════════
+        if (!user.stripeSubscriptionId) {
+            console.log("[CHECKOUT] New subscription for user:", user.id);
 
-        return NextResponse.json({ url: checkoutSession.url });
+            const checkoutSession = await stripe.checkout.sessions.create({
+                customer: customerId,
+                line_items: [{ price: priceId, quantity: 1 }],
+                mode: "subscription",
+                success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings?success=true`,
+                cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing?canceled=true`,
+                metadata: {
+                    userId: user.id,
+                    planId: planId,
+                },
+                allow_promotion_codes: true,
+                billing_address_collection: "auto",
+            });
+
+            return NextResponse.json({ url: checkoutSession.url });
+        }
+
+        // ══════════════════════════════════════════════════════════════════
+        // CASE 2 & 3: User HAS active subscription → Update it
+        // ══════════════════════════════════════════════════════════════════
+
+        // Verify subscription exists in Stripe
+        let subscription;
+        try {
+            subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
+        } catch (error) {
+            // Subscription doesn't exist in Stripe, create new one
+            console.log("[CHECKOUT] Subscription not found in Stripe, creating new:", user.stripeSubscriptionId);
+
+            // Clear invalid subscription data
+            await prisma.user.update({
+                where: { id: user.id },
+                data: { stripeSubscriptionId: null, stripePriceId: null }
+            });
+
+            const checkoutSession = await stripe.checkout.sessions.create({
+                customer: customerId,
+                line_items: [{ price: priceId, quantity: 1 }],
+                mode: "subscription",
+                success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings?success=true`,
+                cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing?canceled=true`,
+                metadata: {
+                    userId: user.id,
+                    planId: planId,
+                },
+                allow_promotion_codes: true,
+                billing_address_collection: "auto",
+            });
+
+            return NextResponse.json({ url: checkoutSession.url });
+        }
+
+        // Check if subscription is active
+        if (subscription.status !== 'active' && subscription.status !== 'trialing') {
+            console.log("[CHECKOUT] Subscription not active, creating new:", subscription.status);
+
+            const checkoutSession = await stripe.checkout.sessions.create({
+                customer: customerId,
+                line_items: [{ price: priceId, quantity: 1 }],
+                mode: "subscription",
+                success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings?success=true`,
+                cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing?canceled=true`,
+                metadata: {
+                    userId: user.id,
+                    planId: planId,
+                },
+                allow_promotion_codes: true,
+                billing_address_collection: "auto",
+            });
+
+            return NextResponse.json({ url: checkoutSession.url });
+        }
+
+        // Get the subscription item ID to update
+        const subscriptionItemId = subscription.items.data[0]?.id;
+        if (!subscriptionItemId) {
+            return new NextResponse("No subscription item found", { status: 400 });
+        }
+
+        // Determine if this is an UPGRADE or DOWNGRADE
+        const currentPlanOrder = user.plan?.sortOrder ?? 0;
+        const targetPlanOrder = targetPlan.sortOrder ?? 0;
+        const isUpgrade = targetPlanOrder > currentPlanOrder;
+
+        console.log(`[CHECKOUT] Plan change: ${user.plan?.id || 'none'} (${currentPlanOrder}) → ${targetPlan.id} (${targetPlanOrder}) | ${isUpgrade ? 'UPGRADE' : 'DOWNGRADE'}`);
+
+        if (isUpgrade) {
+            // ══════════════════════════════════════════════════════════════════
+            // UPGRADE: Immediate change with prorated billing
+            // ══════════════════════════════════════════════════════════════════
+            console.log("[CHECKOUT] Processing UPGRADE with proration");
+
+            await stripe.subscriptions.update(user.stripeSubscriptionId, {
+                items: [{
+                    id: subscriptionItemId,
+                    price: priceId,
+                }],
+                proration_behavior: 'create_prorations', // Charge difference immediately
+                metadata: {
+                    planId: planId,
+                }
+            });
+
+            // Update user's plan in our database
+            await prisma.user.update({
+                where: { id: user.id },
+                data: {
+                    planId: planId,
+                    stripePriceId: priceId,
+                }
+            });
+
+            return NextResponse.json({
+                success: true,
+                message: "Plan actualizado inmediatamente con cobro prorrateado",
+                type: "upgrade"
+            });
+
+        } else {
+            // ══════════════════════════════════════════════════════════════════
+            // DOWNGRADE: Schedule change at end of billing period
+            // ══════════════════════════════════════════════════════════════════
+            console.log("[CHECKOUT] Processing DOWNGRADE at period end");
+
+            await stripe.subscriptions.update(user.stripeSubscriptionId, {
+                items: [{
+                    id: subscriptionItemId,
+                    price: priceId,
+                }],
+                proration_behavior: 'none', // No proration
+                billing_cycle_anchor: 'unchanged', // Keep current billing date
+                metadata: {
+                    scheduledPlanId: planId, // Track what plan they're moving to
+                }
+            });
+
+            // Note: We DON'T update the user's planId here
+            // The webhook will handle it when the new billing period starts
+            // But we can store metadata to show "Scheduled downgrade"
+
+            const periodEnd = new Date((subscription as any).current_period_end * 1000);
+
+            return NextResponse.json({
+                success: true,
+                message: `Tu plan cambiará a partir del ${periodEnd.toLocaleDateString('es-MX')}`,
+                type: "downgrade",
+                effectiveDate: periodEnd.toISOString()
+            });
+        }
+
     } catch (error: any) {
         console.error("[STRIPE_CHECKOUT]", error);
         return new NextResponse(error.message || "Internal Error", { status: 500 });
