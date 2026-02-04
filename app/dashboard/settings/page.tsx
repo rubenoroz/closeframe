@@ -634,7 +634,8 @@ export default function SettingsPage() {
                         {!isCoverImageAllowed && <LockedOverlay />}
 
                         <div className={cn(
-                            "w-full h-32 md:h-48 rounded-2xl overflow-hidden relative border transition-colors",
+                            "w-full rounded-2xl overflow-hidden relative border transition-all duration-500 ease-in-out",
+                            "aspect-[4/1] min-h-[160px]", // Force wide aspect ratio to mimic banner
                             isLight
                                 ? "bg-neutral-100 border-neutral-200"
                                 : "bg-neutral-900 border-neutral-800",
@@ -648,15 +649,31 @@ export default function SettingsPage() {
                                             value={user.coverImageFocus || "50,50"}
                                             onChange={(val) => setUser({ ...user, coverImageFocus: val })}
                                             className="w-full h-full"
+                                            showMask={true}
                                         />
                                     </div>
                                 ) : (
-                                    <img
-                                        src={user.coverImage}
-                                        className="w-full h-full object-cover"
-                                        alt="Cover"
-                                        style={{ objectPosition: user.coverImageFocus?.replace(',', ' ') || 'center' }}
-                                    />
+                                    <div className="w-full h-full flex items-center justify-center overflow-hidden bg-neutral-900/50">
+                                        <img
+                                            src={user.coverImage}
+                                            className="w-full h-full object-cover transition-transform duration-500 ease-out"
+                                            alt="Cover"
+                                            style={{
+                                                // Default compatible parser
+                                                transform: (() => {
+                                                    const parts = (user.coverImageFocus || "50,50,1").split(",").map(Number);
+                                                    const s = parts[2] || 1;
+                                                    return `scale(${s})`;
+                                                })(),
+                                                objectPosition: (() => {
+                                                    const parts = (user.coverImageFocus || "50,50,1").split(",").map(Number);
+                                                    const x = parts[0] || 50;
+                                                    const y = parts[1] || 50;
+                                                    return `${x}% ${y}%`;
+                                                })()
+                                            }}
+                                        />
+                                    </div>
                                 )
                             ) : (
                                 <div className="absolute inset-0 flex items-center justify-center opacity-20">
@@ -666,7 +683,7 @@ export default function SettingsPage() {
 
                             {/* Buttons only accessible if allowed */}
                             <div className={cn(
-                                "absolute bottom-3 right-3 flex gap-2",
+                                "absolute bottom-3 right-3 flex gap-2 z-20",
                                 !isCoverImageAllowed && "pointer-events-none display-none" // Extra safety
                             )}>
                                 <button

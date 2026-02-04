@@ -1,6 +1,7 @@
 
 import { prisma } from "@/lib/db";
 import { google } from "googleapis";
+import { decrypt } from "@/lib/security/encryption";
 
 export async function getFreshAuth(cloudAccountId: string) {
     const account = await prisma.cloudAccount.findUnique({
@@ -213,8 +214,6 @@ async function getDropboxAuth(account: any) {
 
     return accessToken;
 }
-
-import { decrypt } from "@/lib/security/encryption";
 
 // Koofr Auth Logic
 function getKoofrAuth(account: any) {

@@ -124,12 +124,26 @@ export default async function PublicProfilePage({ params }: Props) {
             {/* COVER IMAGE (PRO) */}
             {user.coverImage && isCoverImageAllowed && (
                 <div className="w-full h-48 md:h-80 lg:h-96 relative overflow-hidden">
-                    <img
-                        src={user.coverImage}
-                        alt="Cover"
-                        className="w-full h-full object-cover"
-                        style={{ objectPosition: user.coverImageFocus?.replace(',', ' ') || 'center' }}
-                    />
+                    <div className="w-full h-full flex items-center justify-center overflow-hidden">
+                        <img
+                            src={user.coverImage}
+                            alt="Cover"
+                            className="w-full h-full object-cover"
+                            style={{
+                                transform: (() => {
+                                    const parts = (user.coverImageFocus || "50,50,1").split(",").map(Number);
+                                    const s = parts[2] || 1;
+                                    return `scale(${s})`;
+                                })(),
+                                objectPosition: (() => {
+                                    const parts = (user.coverImageFocus || "50,50,1").split(",").map(Number);
+                                    const x = parts[0] || 50;
+                                    const y = parts[1] || 50;
+                                    return `${x}% ${y}%`;
+                                })()
+                            }}
+                        />
+                    </div>
                     <div className={`absolute inset-0 bg-gradient-to-t ${isLight ? 'from-[#f6f5f2]' : 'from-neutral-950'} to-transparent opacity-60`} />
                 </div>
             )}
