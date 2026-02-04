@@ -200,7 +200,7 @@ export default function CollaborativeSettings({ projectId, isGoogleDrive }: Prop
     }
 
     return (
-        <div className="bg-gradient-to-br from-violet-500/10 to-indigo-500/10 rounded-2xl p-4 sm:p-6 border border-violet-500/20">
+        <div className="bg-neutral-900 bg-gradient-to-br from-violet-500/10 to-indigo-500/10 rounded-2xl p-4 sm:p-6 border border-violet-500/20">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-violet-500/20 rounded-lg">

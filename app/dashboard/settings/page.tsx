@@ -6,7 +6,7 @@ import {
     Loader2, Camera, X, Check, Copy, ExternalLink,
     Sun, Moon, Monitor, Maximize, MousePointer2, Info, Folder,
     Image as ImageIcon, Link2, Eye, Linkedin, Youtube, Video, AtSign, MapPin,
-    CreditCard, Cloud, Trash2, Calendar, Lock, Facebook, Twitter, Plus, ChevronDownIcon, Upload
+    CreditCard, Cloud, Trash2, Calendar, Lock, Facebook, Twitter, Plus, ChevronDownIcon, Upload, Move
 } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -27,6 +27,7 @@ import {
     rectSortingStrategy
 } from "@dnd-kit/sortable";
 import { SortableProjectItem } from "@/components/dashboard/SortableProjectItem";
+import FocalPointPicker from "@/components/FocalPointPicker";
 
 import { getPlanConfig } from "@/lib/plans.config";
 
@@ -56,6 +57,7 @@ export default function SettingsPage() {
         pronouns: "",
         location: "",
         coverImage: "",
+        coverImageFocus: "50,50",
         callToAction: { label: "", url: "", type: "" },
         bookingWindow: 4, // Default 4 weeks
         bookingLeadTime: 1, // Default 1 day buffer
@@ -157,6 +159,7 @@ export default function SettingsPage() {
                         pronouns: data.user.pronouns || "",
                         location: data.user.location || "",
                         coverImage: data.user.coverImage || "",
+                        coverImageFocus: data.user.coverImageFocus || "50,50",
                         callToAction: data.user.callToAction || { label: "", url: "", type: "" },
                         bookingWindow: data.user.bookingWindow !== undefined ? data.user.bookingWindow : 4,
                         bookingLeadTime: data.user.bookingLeadTime !== undefined ? data.user.bookingLeadTime : 1,
@@ -329,6 +332,7 @@ export default function SettingsPage() {
         }
     };
     const [uploadTarget, setUploadTarget] = useState<'coverImage' | 'businessLogo' | null>(null);
+    const [isRepositioning, setIsRepositioning] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -637,7 +641,23 @@ export default function SettingsPage() {
                             !isCoverImageAllowed && "opacity-40 grayscale"
                         )}>
                             {user.coverImage ? (
-                                <img src={user.coverImage} className="w-full h-full object-cover" alt="Cover" />
+                                isRepositioning ? (
+                                    <div className="absolute inset-0 z-10 bg-black">
+                                        <FocalPointPicker
+                                            imageUrl={user.coverImage}
+                                            value={user.coverImageFocus || "50,50"}
+                                            onChange={(val) => setUser({ ...user, coverImageFocus: val })}
+                                            className="w-full h-full"
+                                        />
+                                    </div>
+                                ) : (
+                                    <img
+                                        src={user.coverImage}
+                                        className="w-full h-full object-cover"
+                                        alt="Cover"
+                                        style={{ objectPosition: user.coverImageFocus?.replace(',', ' ') || 'center' }}
+                                    />
+                                )
                             ) : (
                                 <div className="absolute inset-0 flex items-center justify-center opacity-20">
                                     <ImageIcon className="w-10 h-10" />
@@ -658,6 +678,21 @@ export default function SettingsPage() {
                                     <Upload className="w-3 h-3 md:w-4 md:h-4" />
                                     <span className="hidden md:inline">Subir</span>
                                 </button>
+                                {user.coverImage && isCoverImageAllowed && (
+                                    <>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsRepositioning(!isRepositioning)}
+                                            className={cn(
+                                                "p-2 md:px-4 md:py-2 rounded-lg text-white backdrop-blur-md text-xs font-bold transition flex items-center gap-2",
+                                                isRepositioning ? "bg-emerald-500 hover:bg-emerald-600" : "bg-black/50 hover:bg-black/70"
+                                            )}
+                                        >
+                                            {isRepositioning ? <Check className="w-3 h-3 md:w-4 md:h-4" /> : <Move className="w-3 h-3 md:w-4 md:h-4" />}
+                                            <span className="hidden md:inline">{isRepositioning ? "Listo" : "Mover"}</span>
+                                        </button>
+                                    </>
+                                )}
                                 {user.coverImage && isCoverImageAllowed && (
                                     <button
                                         type="button"
@@ -819,16 +854,17 @@ export default function SettingsPage() {
                                     <Camera className={cn("w-6 h-6 md:w-8 md:h-8", isLight ? "text-neutral-300" : "text-neutral-700")} />
                                 )}
                                 <div className={cn(
-                                    "absolute inset-0 flex items-center justify-center gap-2 bg-black/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity",
+                                    "absolute inset-0 flex items-center justify-center gap-2 bg-black/40 backdrop-blur-[1px] opacity-100 transition-opacity",
                                     !isProfessionalProfile && "hidden"
                                 )}>
                                     <button
                                         type="button"
                                         onClick={() => handleUploadClick('businessLogo')}
                                         disabled={!isProfessionalProfile}
-                                        className="p-1.5 rounded-full bg-black/50 hover:bg-black/70 text-white backdrop-blur-md transition"
+                                        className="px-3 py-1.5 rounded-full bg-emerald-500/90 hover:bg-emerald-500 text-white backdrop-blur-md transition flex items-center gap-1.5 shadow-lg"
                                     >
                                         <Upload className="w-3 h-3" />
+                                        <span className="text-[10px] font-bold">Subir</span>
                                     </button>
                                     {user.businessLogo && (
                                         <button

@@ -627,3 +627,52 @@ export async function removeBookingFromCalendars(userId: string, bookingId: stri
     }
 }
 
+
+/**
+ * Delete an external event directly (used when user deletes an external event from Closerlens)
+ */
+export async function deleteExternalEvent(userId: string, eventId: string): Promise<boolean> {
+    const event = await prisma.externalCalendarEvent.findUnique({
+        where: { id: eventId },
+        include: {
+            calendarAccount: true
+        }
+    });
+
+    if (!event) {
+        throw new Error("Event not found");
+    }
+
+    if (event.calendarAccount.userId !== userId) {
+        throw new Error("Unauthorized");
+    }
+
+    // Delete from provider
+    try {
+        // Refresh token if needed
+        await refreshTokenIfNeeded(event.calendarAccountId);
+
+        // Refetch account to get fresh token
+        const account = await prisma.calendarAccount.findUnique({
+            where: { id: event.calendarAccountId }
+        });
+
+        if (account) {
+            if (account.provider === 'google_calendar') {
+                await GoogleCalendarService.deleteEvent(account.accessToken, event.externalId);
+            } else if (account.provider === 'microsoft_outlook') {
+                await MicrosoftCalendarService.deleteEvent(account.accessToken, event.externalId);
+            }
+        }
+    } catch (error) {
+        console.error("Failed to delete from provider, but removing locally:", error);
+        // Continue to delete locally even if provider fails (e.g. already deleted)
+    }
+
+    // Delete locally
+    await prisma.externalCalendarEvent.delete({
+        where: { id: eventId }
+    });
+
+    return true;
+}

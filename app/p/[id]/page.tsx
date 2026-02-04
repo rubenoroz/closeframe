@@ -40,6 +40,7 @@ export default async function PublicProfilePage({ params }: Props) {
             socialLinks: true,
             username: true,
             coverImage: true,
+            coverImageFocus: true,
             pronouns: true,
             callToAction: true,
             bookingWindow: true,
@@ -115,8 +116,15 @@ export default async function PublicProfilePage({ params }: Props) {
     const showBranding = !planLimits.hideBranding;
     const { callToAction } = user as any;
 
+    // [METRICS] Increment Profile Views (Fire and forget)
+    // We don't await this to avoid slowing down response
+    if (process.env.NODE_ENV === 'production') {
+        const { incrementProfileViews } = await import("@/lib/analytics/actions");
+        incrementProfileViews(user.id).catch(err => console.error("Metrics Error:", err));
+    }
+
     return (
-        <div className={`min-h-screen font-serif ${isLight ? 'bg-[#f6f5f2] text-[#1f1f1f]' : 'bg-neutral-950 text-neutral-100'}`}>
+        <main className={`min-h-screen transition-colors duration-500 ${isLight ? 'bg-[#f6f5f2] text-neutral-900' : 'bg-neutral-950 text-white'}`}>
 
             {/* COVER IMAGE (PRO) */}
             {user.coverImage && isCoverImageAllowed && (
@@ -125,6 +133,7 @@ export default async function PublicProfilePage({ params }: Props) {
                         src={user.coverImage}
                         alt="Cover"
                         className="w-full h-full object-cover"
+                        style={{ objectPosition: user.coverImageFocus?.replace(',', ' ') || 'center' }}
                     />
                     <div className={`absolute inset-0 bg-gradient-to-t ${isLight ? 'from-[#f6f5f2]' : 'from-neutral-950'} to-transparent opacity-60`} />
                 </div>

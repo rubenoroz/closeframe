@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import BookingCalendar, { BookingEvent } from "@/components/booking/BookingCalendar";
 import CalendarSettings from "@/components/booking/CalendarSettings";
-import { X, Loader2, CalendarDays, UserCircle, Mail, FileText, Check, Trash2, Phone, MessageCircle, ExternalLink, Search, LayoutGrid, Settings, RefreshCw, Calendar } from "lucide-react";
+import { X, Loader2, CalendarDays, UserCircle, Mail, FileText, Check, Trash2, Phone, MessageCircle, ExternalLink, Search, LayoutGrid, Settings, RefreshCw, Calendar, Plus } from "lucide-react";
 import { Skeleton } from "@/components/Skeleton";
 import { cn } from "@/lib/utils";
 
@@ -272,21 +272,29 @@ export default function BookingsPage() {
     const handleDelete = async () => {
         if (!selectedEvent) return;
 
-        if (selectedEvent.isExternal) {
-            alert("Para eliminar este evento, hazlo desde tu calendario externo (Google/Outlook) y sincroniza.");
-            return;
-        }
+        // Message changed to confirm deletion from source
+        const confirmMessage = selectedEvent.isExternal
+            ? `¿Eliminar este evento de ${selectedEvent.provider === 'google_calendar' ? 'Google' : 'Outlook'}? Esta acción no se puede deshacer.`
+            : "¿Eliminar esta reserva?";
 
-        if (!confirm("¿Eliminar esta reserva?")) return;
+        if (!confirm(confirmMessage)) return;
 
         try {
-            await fetch(`/api/bookings?id=${selectedEvent.id}`, { method: "DELETE" });
+            if (selectedEvent.isExternal) {
+                await fetch(`/api/calendar/sync/events?id=${selectedEvent.id}`, { method: "DELETE" });
+            } else {
+                await fetch(`/api/bookings?id=${selectedEvent.id}`, { method: "DELETE" });
+            }
             setShowModal(false);
             fetchBookings();
+            if (selectedEvent.isExternal) fetchExternalEvents();
         } catch (error) {
             console.error(error);
+            alert("Error al eliminar el evento");
         }
     };
+
+
 
     if (loading) {
         return (
@@ -305,7 +313,7 @@ export default function BookingsPage() {
 
     return (
         <div className="max-w-7xl mx-auto">
-            <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 md:mb-8">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                 <div>
                     <h1 className="text-xl md:text-3xl font-light mb-1 flex items-center gap-2 md:gap-3">
                         <CalendarDays className="w-5 h-5 md:w-8 md:h-8 text-emerald-500" />
@@ -313,10 +321,31 @@ export default function BookingsPage() {
                     </h1>
                     <p className="text-neutral-500 text-xs md:text-sm">Gestiona tus sesiones.</p>
                 </div>
-                <div className="text-xs md:text-sm text-neutral-400">
-                    {bookings.length} reserva{bookings.length !== 1 ? "s" : ""}
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => {
+                            setFormData({
+                                customerName: "",
+                                customerEmail: "",
+                                customerPhone: "",
+                                date: formatToLocalISO(new Date()),
+                                endDate: formatToLocalISO(new Date()),
+                                notes: "",
+                                status: "confirmed",
+                            });
+                            setSelectedEvent(null); // Ensure it's a new event
+                            setShowModal(true);
+                        }}
+                        className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl transition font-medium"
+                    >
+                        <Plus className="w-4 h-4" />
+                        <span className="hidden md:inline">Nueva Reserva</span>
+                    </button>
+                    <div className="text-xs md:text-sm text-neutral-400">
+                        {bookings.length} reserva{bookings.length !== 1 ? "s" : ""}
+                    </div>
                 </div>
-            </header>
+            </div>
 
             {/* Status Filters / Legend */}
             <div className="flex flex-wrap gap-4 mb-6">
@@ -505,7 +534,7 @@ export default function BookingsPage() {
                                                 value={formData.customerEmail}
                                                 onChange={(e) => setFormData({ ...formData, customerEmail: e.target.value })}
                                                 className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition"
-                                                required
+                                                placeholder="Opcional"
                                             />
                                             {selectedEvent && (
                                                 <a
@@ -620,7 +649,7 @@ export default function BookingsPage() {
                             </div>
 
                             <div className="flex gap-3 pt-4">
-                                {selectedEvent && !selectedEvent.isExternal && (
+                                {selectedEvent && (
                                     <button
                                         type="button"
                                         onClick={handleDelete}
@@ -645,8 +674,8 @@ export default function BookingsPage() {
                                     </button>
                                 )}
                                 {selectedEvent?.isExternal && (
-                                    <div className="w-full text-center text-xs text-neutral-500">
-                                        Sincronizado desde {selectedEvent.provider === 'google_calendar' ? 'Google Calendar' : 'Outlook'}. Gestionar en origen.
+                                    <div className="w-full text-center text-xs text-neutral-500 flex items-center justify-center gap-1">
+                                        Sincronizado desde {selectedEvent.provider === 'google_calendar' ? 'Google' : 'Outlook'}.
                                     </div>
                                 )}
                             </div>

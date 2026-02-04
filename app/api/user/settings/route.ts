@@ -143,6 +143,7 @@ export async function PATCH(req: NextRequest) {
             theme,
             businessLogoScale,
             coverImage,
+            coverImageFocus,
 
             callToAction,
             bookingWindow,
@@ -195,6 +196,7 @@ export async function PATCH(req: NextRequest) {
                 theme: theme || "dark",
                 businessLogoScale: businessLogoScale !== undefined ? Number(businessLogoScale) : 100,
                 coverImage,
+                coverImageFocus,
 
                 callToAction,
                 bookingWindow: bookingWindow !== undefined ? Number(bookingWindow) : 4,
@@ -221,6 +223,7 @@ export async function PATCH(req: NextRequest) {
                 theme: theme || "dark",
                 businessLogoScale: businessLogoScale !== undefined ? Number(businessLogoScale) : 100,
                 coverImage,
+                coverImageFocus,
 
                 callToAction,
                 bookingWindow: bookingWindow !== undefined ? Number(bookingWindow) : 4,

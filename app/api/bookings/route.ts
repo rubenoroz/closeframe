@@ -44,7 +44,7 @@ export async function POST(request: Request) {
         const body = await request.json();
         const { customerName, customerEmail, date, endDate, notes, status } = body;
 
-        if (!customerName || !customerEmail || !date) {
+        if (!customerName || !date) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
         }
 

@@ -46,7 +46,7 @@ export default function GalleryCover({
                 {/* Branding */}
                 <div className="opacity-80">
                     {logo ? (
-                        <img src={logo} alt={studioName} className="h-8 md:h-10 w-auto object-contain brightness-0 invert opacity-90" />
+                        <img src={logo} alt={studioName} className="h-8 md:h-10 w-auto object-contain opacity-90" />
                     ) : (
                         <span className="text-white/70 uppercase tracking-[0.2em] text-xs md:text-sm font-medium">{studioName}</span>
                     )}

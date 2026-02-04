@@ -42,9 +42,9 @@ export function SortableProjectItem({ project, isLight, toggleVisibility }: Prop
                 isDragging && "ring-2 ring-emerald-500 shadow-xl !opacity-90"
             )}
         >
-            <div className="flex items-center gap-4 flex-1">
+            <div className="flex items-center gap-4 flex-1 min-w-0">
                 {/* Drag Handle */}
-                <div {...attributes} {...listeners} className="cursor-grab hover:text-emerald-500 transition-colors text-neutral-500">
+                <div {...attributes} {...listeners} className="cursor-grab hover:text-emerald-500 transition-colors text-neutral-500 shrink-0">
                     <GripVertical className="w-5 h-5" />
                 </div>
 
@@ -62,7 +62,7 @@ export function SortableProjectItem({ project, isLight, toggleVisibility }: Prop
                         <Folder className={cn("w-4 h-4", isLight ? "text-neutral-300" : "text-neutral-600")} />
                     )}
                 </div>
-                <span className={cn("text-sm font-medium truncate max-w-[150px]", isLight ? "text-neutral-900" : "text-white")}>
+                <span className={cn("text-sm font-medium truncate min-w-0 flex-1", isLight ? "text-neutral-900" : "text-white")}>
                     {project.name}
                 </span>
             </div>

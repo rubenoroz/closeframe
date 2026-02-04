@@ -48,6 +48,7 @@ model User {
   
   // Pro Plan / Enhanced Profile
   coverImage        String?
+  coverImageFocus   String?        @default("50,50") // Focal point "x,y" as percentage
   pronouns          String?
   callToAction      Json?          // { text, url, type }
   bookingWindow     Int?           @default(4) // 0 = unlimited, N = weeks
@@ -196,7 +197,7 @@ model Project {
 model Booking {
   id            String   @id @default(cuid())
   customerName  String
-  customerEmail String
+  customerEmail String?
   customerPhone String?
   date          DateTime
   endDate       DateTime?

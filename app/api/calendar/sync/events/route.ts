@@ -39,3 +39,37 @@ export async function GET(request: NextRequest) {
         );
     }
 }
+
+export async function DELETE(request: NextRequest) {
+    try {
+        const session = await auth();
+
+        if (!session?.user?.id) {
+            return NextResponse.json(
+                { error: 'No autorizado' },
+                { status: 401 }
+            );
+        }
+
+        const { searchParams } = new URL(request.url);
+        const eventId = searchParams.get('id');
+
+        if (!eventId) {
+            return NextResponse.json(
+                { error: 'ID de evento requerido' },
+                { status: 400 }
+            );
+        }
+
+        const { deleteExternalEvent } = await import('@/lib/calendar/sync');
+        await deleteExternalEvent(session.user.id, eventId);
+
+        return NextResponse.json({ success: true });
+    } catch (error) {
+        console.error('Error deleting external event:', error);
+        return NextResponse.json(
+            { error: 'Error al eliminar evento' },
+            { status: 500 }
+        );
+    }
+}
