@@ -470,7 +470,7 @@ export async function syncBookingToCalendars(
     booking: {
         id: string;
         customerName: string;
-        customerEmail: string;
+        customerEmail: string | null;
         date: Date;
         endDate: Date;
         notes?: string | null;
@@ -500,7 +500,7 @@ export async function syncBookingToCalendars(
 
         // Prepare booking data for calendar event
         const title = `📅 ${booking.customerName}`;
-        const description = `Reserva de ${booking.customerName}\nEmail: ${booking.customerEmail}${booking.notes ? `\n\nNotas: ${booking.notes}` : ''}`;
+        const description = `Reserva de ${booking.customerName}${booking.customerEmail ? `\nEmail: ${booking.customerEmail}` : ''}${booking.notes ? `\n\nNotas: ${booking.notes}` : ''}`;
 
         console.log('[CalendarSync] Event title:', title);
         console.log('[CalendarSync] Event dates:', booking.date, '->', booking.endDate);
