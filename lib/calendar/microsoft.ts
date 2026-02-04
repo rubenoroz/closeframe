@@ -227,7 +227,12 @@ export class MicrosoftCalendarService {
 
                 const response = await fetch(
                     `${MS_GRAPH_API}/me/calendars/${calId}/calendarView?${params}`,
-                    { headers: { Authorization: `Bearer ${accessToken}` } }
+                    {
+                        headers: {
+                            Authorization: `Bearer ${accessToken}`,
+                            'Prefer': 'outlook.timezone="UTC"'
+                        }
+                    }
                 );
 
                 if (!response.ok) {
@@ -249,7 +254,12 @@ export class MicrosoftCalendarService {
             // Fallback to default calendar view
             const response = await fetch(
                 `${MS_GRAPH_API}/me/calendarView?${params}`,
-                { headers: { Authorization: `Bearer ${accessToken}` } }
+                {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        'Prefer': 'outlook.timezone="UTC"'
+                    }
+                }
             );
             if (!response.ok) return [];
             const data = await response.json();
@@ -371,8 +381,14 @@ export class MicrosoftCalendarService {
      */
     private static mapMicrosoftEvent(event: MicrosoftCalendarEvent): CalendarEvent {
         const isAllDay = event.isAllDay || false;
-        const start = new Date(event.start.dateTime);
-        const end = new Date(event.end.dateTime);
+        // We requested Prefer: outlook.timezone="UTC", so the dateTime is in UTC.
+        // Microsoft often returns it without the 'Z' suffix (e.g. "2023-01-01T12:00:00.0000000").
+        // We append 'Z' to ensure it's parsed as UTC.
+        const startStr = event.start.dateTime.endsWith('Z') ? event.start.dateTime : `${event.start.dateTime}Z`;
+        const endStr = event.end.dateTime.endsWith('Z') ? event.end.dateTime : `${event.end.dateTime}Z`;
+
+        const start = new Date(startStr);
+        const end = new Date(endStr);
 
         return {
             id: event.id,

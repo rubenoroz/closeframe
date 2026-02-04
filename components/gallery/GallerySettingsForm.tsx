@@ -562,11 +562,14 @@ export default function GallerySettingsForm({
                         </div>
                         {data.coverImage ? (
                             <div className="space-y-3">
-                                <FocalPointPicker
-                                    imageUrl={`/api/cloud/thumbnail?c=${cloudAccountId}&f=${data.coverImage}&s=800`}
-                                    value={data.coverImageFocus || "50,50"}
-                                    onChange={(value) => update('coverImageFocus', value)}
-                                />
+                                <div className="w-full h-64 rounded-xl overflow-hidden relative border border-neutral-700/50 group">
+                                    <FocalPointPicker
+                                        imageUrl={`/api/cloud/thumbnail?c=${cloudAccountId}&f=${data.coverImage}&s=800`}
+                                        value={data.coverImageFocus || "50,50"}
+                                        onChange={(value) => update('coverImageFocus', value)}
+                                        className="w-full h-full"
+                                    />
+                                </div>
                                 <button
                                     type="button"
                                     onClick={() => setShowCoverPicker(true)}
@@ -670,11 +673,14 @@ export default function GallerySettingsForm({
                     </div>
                     {data.headerImage ? (
                         <div className="space-y-3">
-                            <FocalPointPicker
-                                imageUrl={`/api/cloud/thumbnail?c=${cloudAccountId}&f=${data.headerImage}&s=800`}
-                                value={data.headerImageFocus || "50,50"}
-                                onChange={(value) => update('headerImageFocus', value)}
-                            />
+                            <div className="w-full h-32 rounded-xl overflow-hidden relative border border-neutral-700/50 group">
+                                <FocalPointPicker
+                                    imageUrl={`/api/cloud/thumbnail?c=${cloudAccountId}&f=${data.headerImage}&s=800`}
+                                    value={data.headerImageFocus || "50,50"}
+                                    onChange={(value) => update('headerImageFocus', value)}
+                                    className="w-full h-full"
+                                />
+                            </div>
                             <button
                                 type="button"
                                 onClick={() => setShowHeaderImagePicker(true)}

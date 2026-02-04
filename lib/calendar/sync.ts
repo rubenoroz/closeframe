@@ -409,6 +409,42 @@ export async function getExternalEvents(
         accountName: string | null;
     }[]
 }> {
+    // [LAZY SYNC] Check for stale accounts and sync if needed
+    try {
+        const accounts = await prisma.calendarAccount.findMany({
+            where: {
+                userId,
+                syncEnabled: true
+            }
+        });
+
+        const now = Date.now();
+        const STALE_THRESHOLD_MS = 15 * 60 * 1000; // 15 minutes
+
+        const syncPromises = accounts
+            .filter(account => {
+                const lastSync = account.lastSyncAt ? account.lastSyncAt.getTime() : 0;
+                // Sync if never synced or older than threshold
+                // Also check if status is not 'syncing' to avoid double-triggering (though race conditions exist, it's better than nothing)
+                // Actually, if it's 'syncing' but explicitly STALE (e.g. stuck for hours), we might want to retry?
+                // For now, let's just respect the time.
+                return (now - lastSync > STALE_THRESHOLD_MS);
+            })
+            .map(account => {
+                console.log(`[LazySync] Triggering sync for account ${account.id} (${account.provider})`);
+                return syncFromExternal(account.id);
+            });
+
+        if (syncPromises.length > 0) {
+            // Wait for all syncs to complete before fetching events to ensure freshness
+            // This might add latency to the first request, but guarantees data.
+            await Promise.all(syncPromises);
+        }
+    } catch (error) {
+        console.error('[LazySync] Error triggering auto-sync:', error);
+        // Continue to fetch what we have even if sync failed
+    }
+
     const events = await prisma.externalCalendarEvent.findMany({
         where: {
             calendarAccount: {

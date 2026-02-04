@@ -646,7 +646,7 @@ export default function SettingsPage() {
                                     <div className="absolute inset-0 z-10 bg-black">
                                         <FocalPointPicker
                                             imageUrl={user.coverImage}
-                                            value={user.coverImageFocus || "50,50"}
+                                            value={user.coverImageFocus || "50,50,1"}
                                             onChange={(val) => setUser({ ...user, coverImageFocus: val })}
                                             className="w-full h-full"
                                             showMask={true}
@@ -659,7 +659,7 @@ export default function SettingsPage() {
                                             className="w-full h-full object-cover transition-transform duration-500 ease-out"
                                             alt="Cover"
                                             style={{
-                                                // Default compatible parser
+                                                // Consistent compatible parser
                                                 transform: (() => {
                                                     const parts = (user.coverImageFocus || "50,50,1").split(",").map(Number);
                                                     const s = parts[2] || 1;
@@ -667,8 +667,8 @@ export default function SettingsPage() {
                                                 })(),
                                                 objectPosition: (() => {
                                                     const parts = (user.coverImageFocus || "50,50,1").split(",").map(Number);
-                                                    const x = parts[0] || 50;
-                                                    const y = parts[1] || 50;
+                                                    const x = parts[0] !== undefined ? parts[0] : 50;
+                                                    const y = parts[1] !== undefined ? parts[1] : 50;
                                                     return `${x}% ${y}%`;
                                                 })()
                                             }}

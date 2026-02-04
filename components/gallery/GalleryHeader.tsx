@@ -49,7 +49,10 @@ export default function GalleryHeader({
         : null;
 
     // Parse focal point for object-position
-    const [focusX, focusY] = (coverImageFocus || "50,50").split(",").map(Number);
+    const parts = (coverImageFocus || "50,50,1").split(",").map(Number);
+    const x = parts[0] !== undefined ? parts[0] : 50;
+    const y = parts[1] !== undefined ? parts[1] : 50;
+    const scale = parts[2] || 1;
 
     // Calculate font size scale
     const fontScale = fontSize / 100;
@@ -62,13 +65,17 @@ export default function GalleryHeader({
             {/* Cover Image Background */}
             {coverImageUrl && (
                 <>
-                    <div
-                        className="absolute inset-0 bg-cover"
-                        style={{
-                            backgroundImage: `url(${coverImageUrl})`,
-                            backgroundPosition: `${focusX}% ${focusY}%`
-                        }}
-                    />
+                    <div className="absolute inset-0 z-0 overflow-hidden">
+                        <img
+                            src={coverImageUrl}
+                            alt="Header Background"
+                            className="w-full h-full object-cover"
+                            style={{
+                                objectPosition: `${x}% ${y}%`,
+                                transform: `scale(${scale})`
+                            }}
+                        />
+                    </div>
                     <div className={`absolute inset-0 ${background === "light"
                         ? "bg-white/70 backdrop-blur-sm"
                         : "bg-black/60 backdrop-blur-sm"

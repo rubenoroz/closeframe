@@ -26,17 +26,23 @@ export default function GalleryCover({
     const coverUrl = `/api/cloud/thumbnail?c=${cloudAccountId}&f=${coverImage}&s=1200`;
 
     // Parse focal point for object-position
-    const [focusX, focusY] = (coverImageFocus || "50,50").split(",").map(Number);
+    const parts = (coverImageFocus || "50,50,1").split(",").map(Number);
+    const x = parts[0] !== undefined ? parts[0] : 50;
+    const y = parts[1] !== undefined ? parts[1] : 50;
+    const scale = parts[2] || 1;
 
     return (
         <div className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center">
             {/* Background Image & Overlay */}
-            <div className="absolute inset-0 z-0 select-none">
+            <div className="absolute inset-0 z-0 select-none overflow-hidden">
                 <img
                     src={coverUrl}
                     alt="Cover"
                     className="w-full h-full object-cover opacity-60 animate-in fade-in duration-1000"
-                    style={{ objectPosition: `${focusX}% ${focusY}%` }}
+                    style={{
+                        objectPosition: `${x}% ${y}%`,
+                        transform: `scale(${scale})`
+                    }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/20" />
             </div>
