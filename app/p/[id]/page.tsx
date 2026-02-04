@@ -328,6 +328,6 @@ export default async function PublicProfilePage({ params }: Props) {
                     © {new Date().getFullYear()} {brandingName}
                 </footer>
             )}
-        </div>
+        </main>
     );
 }
