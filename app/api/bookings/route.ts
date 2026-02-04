@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
+import { syncBookingToCalendars, removeBookingFromCalendars } from "@/lib/calendar/sync";
 
 // GET: List all bookings for the current user
 export async function GET() {
@@ -60,6 +61,17 @@ export async function POST(request: Request) {
             },
         });
 
+        // Sync to connected calendars (non-blocking)
+        syncBookingToCalendars(session.user.id, {
+            id: booking.id,
+            customerName: booking.customerName,
+            customerEmail: booking.customerEmail,
+            date: booking.date,
+            endDate: booking.endDate || new Date(booking.date.getTime() + 60 * 60 * 1000),
+            notes: booking.notes,
+            status: booking.status
+        }).catch(err => console.error('Calendar sync error:', err));
+
         return NextResponse.json({ booking });
     } catch (error) {
         console.error("CREATE Booking Error:", error);
@@ -90,6 +102,9 @@ export async function DELETE(request: Request) {
         if (!booking) {
             return NextResponse.json({ error: "Booking not found" }, { status: 404 });
         }
+
+        // Remove from external calendars first
+        await removeBookingFromCalendars(session.user.id, id);
 
         await prisma.booking.delete({ where: { id } });
 
@@ -135,6 +150,17 @@ export async function PATCH(request: Request) {
                 status,
             },
         });
+
+        // Sync to connected calendars (non-blocking)
+        syncBookingToCalendars(session.user.id, {
+            id: updatedBooking.id,
+            customerName: updatedBooking.customerName,
+            customerEmail: updatedBooking.customerEmail,
+            date: updatedBooking.date,
+            endDate: updatedBooking.endDate || new Date(updatedBooking.date.getTime() + 60 * 60 * 1000),
+            notes: updatedBooking.notes,
+            status: updatedBooking.status
+        }).catch(err => console.error('Calendar sync error:', err));
 
         return NextResponse.json({ booking: updatedBooking });
     } catch (error) {

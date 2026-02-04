@@ -817,6 +817,17 @@ export const FEATURE_POOL: FeatureDefinition[] = [
         type: "boolean",
         defaultValue: false,
         icon: QrCode
+    },
+
+    // --- CALENDAR SYNC (Pro+) ---
+    {
+        id: "calendarSync",
+        label: "Sincronización de Calendario",
+        description: "Conectar Google Calendar o Microsoft Outlook",
+        category: "booking",
+        type: "boolean",
+        defaultValue: false,
+        icon: Calendar
     }
 ];
 

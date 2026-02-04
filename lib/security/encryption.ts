@@ -5,9 +5,9 @@ const ALGORITHM = 'aes-256-gcm';
 // Derive a 32-byte key from the secret.
 // Ideally use a dedicated DATA_ENCRYPTION_KEY, fallback to NEXTAUTH_SECRET.
 function getKey(): Buffer {
-    const secret = process.env.DATA_ENCRYPTION_KEY || process.env.NEXTAUTH_SECRET;
+    const secret = process.env.DATA_ENCRYPTION_KEY || process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
     if (!secret) {
-        throw new Error('Encryption requires DATA_ENCRYPTION_KEY or NEXTAUTH_SECRET to be set.');
+        throw new Error('Encryption requires DATA_ENCRYPTION_KEY, NEXTAUTH_SECRET, or AUTH_SECRET to be set.');
     }
     // Simple key derivation (SHA-256) to ensure 32 bytes
     return crypto.createHash('sha256').update(secret).digest();

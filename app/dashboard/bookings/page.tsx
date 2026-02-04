@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import BookingCalendar, { BookingEvent } from "@/components/booking/BookingCalendar";
-import { X, Loader2, CalendarDays, UserCircle, Mail, FileText, Check, Trash2, Phone, MessageCircle, ExternalLink, Search, LayoutGrid } from "lucide-react";
+import CalendarSettings from "@/components/booking/CalendarSettings";
+import { X, Loader2, CalendarDays, UserCircle, Mail, FileText, Check, Trash2, Phone, MessageCircle, ExternalLink, Search, LayoutGrid, Settings, RefreshCw, Calendar } from "lucide-react";
 import { Skeleton } from "@/components/Skeleton";
 import { cn } from "@/lib/utils";
 
@@ -36,6 +37,8 @@ export default function BookingsPage() {
     const [viewMode, setViewMode] = useState<"calendar" | "list" | "combo">("calendar");
     const [searchTerm, setSearchTerm] = useState("");
     const [userPlan, setUserPlan] = useState<string>("free");
+    const [showCalendarSettings, setShowCalendarSettings] = useState(false);
+    const [externalEvents, setExternalEvents] = useState<BookingEvent[]>([]);
 
     const openWhatsApp = (phone: string) => {
         const cleanPhone = phone.replace(/\D/g, ''); // Remove non-numeric chars
@@ -59,9 +62,73 @@ export default function BookingsPage() {
         }
     }, []);
 
+    const fetchExternalEvents = useCallback(async () => {
+        try {
+            // Fetch events for a wide range (e.g., current month +/- 1 month)
+            // Ideally this should depend on the calendar view date
+            const startStr = new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString();
+            const endStr = new Date(new Date().setMonth(new Date().getMonth() + 2)).toISOString();
+
+            const res = await fetch(`/api/calendar/sync/events?start=${startStr}&end=${endStr}`);
+            const data = await res.json();
+            if (data.events) {
+                setExternalEvents(data.events);
+            }
+        } catch (error) {
+            console.error("Error fetching external events:", error);
+        }
+    }, []);
+
     useEffect(() => {
         fetchBookings();
-    }, [fetchBookings]);
+        fetchExternalEvents(); // Initial fetch
+    }, [fetchBookings, fetchExternalEvents]);
+
+    // Auto-sync logic
+    useEffect(() => {
+        const checkAndSync = async () => {
+            try {
+                // Get all accounts to check their settings
+                const res = await fetch("/api/calendar/accounts");
+                const data = await res.json();
+                const accounts = data.accounts || [];
+
+                for (const account of accounts) {
+                    // Only sync if enabled and autoRefresh is on
+                    if (account.syncEnabled && account.autoRefresh) {
+                        const lastSync = account.lastSyncAt ? new Date(account.lastSyncAt).getTime() : 0;
+                        const now = Date.now();
+                        const intervalMs = (account.refreshInterval || 15) * 60 * 1000;
+
+                        // If time elapsed > interval, trigger sync
+                        if (now - lastSync > intervalMs) {
+                            console.log(`[AutoSync] Triggering sync for account ${account.id}`);
+                            await fetch("/api/calendar/sync", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ accountId: account.id })
+                            });
+                            // Refresh UI after sync
+                            fetchExternalEvents();
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error("[AutoSync] Error checking accounts:", error);
+            }
+        };
+
+        // Check every minute
+        const intervalId = setInterval(checkAndSync, 60 * 1000);
+
+        // Also run once on mount (delayed slightly to let initial load finish)
+        const initialTimer = setTimeout(checkAndSync, 5000);
+
+        return () => {
+            clearInterval(intervalId);
+            clearTimeout(initialTimer);
+        };
+    }, [fetchExternalEvents]);
 
     // Convert bookings to calendar events with search filter
     const events: BookingEvent[] = bookings
@@ -89,6 +156,34 @@ export default function BookingsPage() {
             endDate: b.endDate,
         }));
 
+    // Combine local and external events with filtering
+    const allEvents: BookingEvent[] = [
+        ...events,
+        ...externalEvents
+            .map(e => ({
+                id: e.id,
+                title: e.title || "Ocupado",
+                start: new Date(e.start),
+                end: new Date(e.end),
+                customerName: e.accountName || "Externo",
+                customerEmail: "",
+                customerPhone: "",
+                status: "external",
+                isExternal: true,
+                provider: (e as any).provider,
+                notes: (e as any).description || ""
+            }))
+            .filter(e => {
+                if (!searchTerm) return true;
+                const term = searchTerm.toLowerCase();
+                return (
+                    e.title.toLowerCase().includes(term) ||
+                    e.customerName?.toLowerCase().includes(term) ||
+                    e.notes?.toLowerCase().includes(term)
+                );
+            })
+    ].sort((a, b) => a.start.getTime() - b.start.getTime());
+
     // Helper to format date for datetime-local input (YYYY-MM-DDTHH:mm)
     const formatToLocalISO = (date: Date) => {
         const offset = date.getTimezoneOffset();
@@ -111,21 +206,39 @@ export default function BookingsPage() {
     };
 
     const handleEventSelect = (event: BookingEvent) => {
+        // Prevent editing external events for now, or show read-only modal
+        if (event.isExternal) {
+            // Optional: alert or simple toast, or just open modal in read-only mode.
+            // For now let's just ignore or show a quick alert, 
+            // but opening the modal with disabled fields is better UX.
+            // Let's rely on the form being editable but submission failing? No.
+            // Let's skip for now or better: show modal but disable save.
+            // Since we don't have a "View Only" mode easily, we'll just not open it 
+            // OR open it populated but user can't save.
+            // Actually, let's open it. The user wants to "see" it.
+        }
+
         setSelectedEvent(event);
         setFormData({
-            customerName: event.customerName || "",
+            customerName: event.customerName || event.title || "Evento Externo",
             customerEmail: event.customerEmail || "",
             customerPhone: event.customerPhone || "",
             date: formatToLocalISO(event.start),
             endDate: formatToLocalISO(event.end),
             notes: event.notes || "",
-            status: event.status || "pending",
+            status: event.status || "confirmed",
         });
         setShowModal(true);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (selectedEvent?.isExternal) {
+            alert("No se pueden editar eventos externos desde aquí.");
+            return;
+        }
+
         setSaving(true);
 
         try {
@@ -158,6 +271,12 @@ export default function BookingsPage() {
 
     const handleDelete = async () => {
         if (!selectedEvent) return;
+
+        if (selectedEvent.isExternal) {
+            alert("Para eliminar este evento, hazlo desde tu calendario externo (Google/Outlook) y sincroniza.");
+            return;
+        }
+
         if (!confirm("¿Eliminar esta reserva?")) return;
 
         try {
@@ -270,12 +389,33 @@ export default function BookingsPage() {
                         <LayoutGrid className="w-4 h-4" /> <span className="hidden sm:inline">Ambos</span>
                     </button>
                 </div>
+
+                {/* Calendar Sync Button */}
+                <button
+                    onClick={() => setShowCalendarSettings(!showCalendarSettings)}
+                    className={cn(
+                        "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all border",
+                        showCalendarSettings
+                            ? "bg-emerald-500/10 text-emerald-500 border-emerald-500"
+                            : "bg-neutral-900 text-neutral-400 border-neutral-800 hover:border-neutral-600 hover:text-white"
+                    )}
+                >
+                    <Calendar className="w-4 h-4" />
+                    <span className="hidden sm:inline">Calendarios</span>
+                </button>
             </div>
+
+            {/* Calendar Settings Panel */}
+            {showCalendarSettings && (
+                <div className="mb-6">
+                    <CalendarSettings />
+                </div>
+            )}
 
             {/* Calendar View */}
             {viewMode === "calendar" && (
                 <BookingCalendar
-                    events={events}
+                    events={allEvents}
                     onEventAdd={handleSlotSelect}
                     onEventSelect={handleEventSelect}
                 />
@@ -283,7 +423,7 @@ export default function BookingsPage() {
 
             {/* List View */}
             {viewMode === "list" && (
-                <BookingListTable events={events} onEventSelect={handleEventSelect} />
+                <BookingListTable events={allEvents} onEventSelect={handleEventSelect} />
             )}
 
             {/* Combo View: Calendar + List */}
@@ -292,13 +432,13 @@ export default function BookingsPage() {
                     {/* Compact Calendar */}
                     <div className="max-h-[400px] overflow-hidden rounded-2xl border border-neutral-800">
                         <BookingCalendar
-                            events={events}
+                            events={allEvents}
                             onEventAdd={handleSlotSelect}
                             onEventSelect={handleEventSelect}
                         />
                     </div>
                     {/* List Below */}
-                    <BookingListTable events={events} onEventSelect={handleEventSelect} />
+                    <BookingListTable events={allEvents} onEventSelect={handleEventSelect} />
                 </div>
             )}
 
@@ -335,13 +475,13 @@ export default function BookingsPage() {
                         </button>
 
                         <h2 className="text-xl font-medium mb-6">
-                            {selectedEvent ? "Detalles de Reserva" : "Nueva Reserva"}
+                            {selectedEvent && selectedEvent.isExternal ? "Detalles del Evento Externo" : selectedEvent ? "Detalles de Reserva" : "Nueva Reserva"}
                         </h2>
 
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div>
                                 <label className="text-sm text-neutral-400 flex items-center gap-2 mb-2">
-                                    <UserCircle className="w-4 h-4" /> Nombre del Cliente
+                                    <UserCircle className="w-4 h-4" /> {selectedEvent?.isExternal ? "Título" : "Nombre del Cliente"}
                                 </label>
                                 <input
                                     type="text"
@@ -349,58 +489,63 @@ export default function BookingsPage() {
                                     onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
                                     className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition"
                                     required
+                                    disabled={!!selectedEvent?.isExternal}
                                 />
                             </div>
 
-                            <div>
-                                <label className="text-sm text-neutral-400 flex items-center gap-2 mb-2">
-                                    <Mail className="w-4 h-4" /> Email
-                                </label>
-                                <div className="flex gap-2">
-                                    <input
-                                        type="email"
-                                        value={formData.customerEmail}
-                                        onChange={(e) => setFormData({ ...formData, customerEmail: e.target.value })}
-                                        className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition"
-                                        required
-                                    />
-                                    {selectedEvent && (
-                                        <a
-                                            href={`mailto:${formData.customerEmail}`}
-                                            target="_blank"
-                                            className="px-3 flex items-center justify-center bg-neutral-800 border border-neutral-700 rounded-xl hover:bg-neutral-700 text-white transition"
-                                            title="Enviar correo"
-                                        >
-                                            <ExternalLink className="w-4 h-4" />
-                                        </a>
-                                    )}
-                                </div>
-                            </div>
+                            {!selectedEvent?.isExternal && (
+                                <>
+                                    <div>
+                                        <label className="text-sm text-neutral-400 flex items-center gap-2 mb-2">
+                                            <Mail className="w-4 h-4" /> Email
+                                        </label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="email"
+                                                value={formData.customerEmail}
+                                                onChange={(e) => setFormData({ ...formData, customerEmail: e.target.value })}
+                                                className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition"
+                                                required
+                                            />
+                                            {selectedEvent && (
+                                                <a
+                                                    href={`mailto:${formData.customerEmail}`}
+                                                    target="_blank"
+                                                    className="px-3 flex items-center justify-center bg-neutral-800 border border-neutral-700 rounded-xl hover:bg-neutral-700 text-white transition"
+                                                    title="Enviar correo"
+                                                >
+                                                    <ExternalLink className="w-4 h-4" />
+                                                </a>
+                                            )}
+                                        </div>
+                                    </div>
 
-                            <div>
-                                <label className="text-sm text-neutral-400 flex items-center gap-2 mb-2">
-                                    <Phone className="w-4 h-4" /> Teléfono
-                                </label>
-                                <div className="flex gap-2">
-                                    <input
-                                        type="tel"
-                                        value={formData.customerPhone}
-                                        onChange={(e) => setFormData({ ...formData, customerPhone: e.target.value })}
-                                        className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition"
-                                        placeholder="+52..."
-                                    />
-                                    {selectedEvent && formData.customerPhone && (
-                                        <button
-                                            type="button"
-                                            onClick={() => openWhatsApp(formData.customerPhone)}
-                                            className="px-3 flex items-center justify-center bg-green-600 rounded-xl hover:bg-green-500 text-white transition"
-                                            title="Abrir WhatsApp"
-                                        >
-                                            <MessageCircle className="w-4 h-4" />
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
+                                    <div>
+                                        <label className="text-sm text-neutral-400 flex items-center gap-2 mb-2">
+                                            <Phone className="w-4 h-4" /> Teléfono
+                                        </label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="tel"
+                                                value={formData.customerPhone}
+                                                onChange={(e) => setFormData({ ...formData, customerPhone: e.target.value })}
+                                                className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition"
+                                                placeholder="+52..."
+                                            />
+                                            {selectedEvent && formData.customerPhone && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => openWhatsApp(formData.customerPhone)}
+                                                    className="px-3 flex items-center justify-center bg-green-600 rounded-xl hover:bg-green-500 text-white transition"
+                                                    title="Abrir WhatsApp"
+                                                >
+                                                    <MessageCircle className="w-4 h-4" />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </>
+                            )}
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
@@ -413,6 +558,7 @@ export default function BookingsPage() {
                                         onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                                         className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition"
                                         required
+                                        disabled={!!selectedEvent?.isExternal}
                                     />
                                 </div>
                                 <div>
@@ -425,52 +571,56 @@ export default function BookingsPage() {
                                         onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
                                         className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition"
                                         required
+                                        disabled={!!selectedEvent?.isExternal}
                                     />
                                 </div>
                             </div>
 
-                            <div>
-                                <label className="text-sm text-neutral-400 flex items-center gap-2 mb-2">
-                                    Estado
-                                </label>
-                                <div className="flex gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => setFormData({ ...formData, status: "pending" })}
-                                        className={`flex-1 py-2 px-4 rounded-xl border text-sm transition ${formData.status === "pending"
-                                            ? "bg-amber-500/10 border-amber-500 text-amber-500"
-                                            : "border-neutral-700 text-neutral-400 hover:border-neutral-600"
-                                            }`}
-                                    >
-                                        Pendiente
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setFormData({ ...formData, status: "confirmed" })}
-                                        className={`flex-1 py-2 px-4 rounded-xl border text-sm transition ${formData.status === "confirmed"
-                                            ? "bg-emerald-500/10 border-emerald-500 text-emerald-500"
-                                            : "border-neutral-700 text-neutral-400 hover:border-neutral-600"
-                                            }`}
-                                    >
-                                        Confirmada
-                                    </button>
+                            {!selectedEvent?.isExternal && (
+                                <div>
+                                    <label className="text-sm text-neutral-400 flex items-center gap-2 mb-2">
+                                        Estado
+                                    </label>
+                                    <div className="flex gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setFormData({ ...formData, status: "pending" })}
+                                            className={`flex-1 py-2 px-4 rounded-xl border text-sm transition ${formData.status === "pending"
+                                                ? "bg-amber-500/10 border-amber-500 text-amber-500"
+                                                : "border-neutral-700 text-neutral-400 hover:border-neutral-600"
+                                                }`}
+                                        >
+                                            Pendiente
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setFormData({ ...formData, status: "confirmed" })}
+                                            className={`flex-1 py-2 px-4 rounded-xl border text-sm transition ${formData.status === "confirmed"
+                                                ? "bg-emerald-500/10 border-emerald-500 text-emerald-500"
+                                                : "border-neutral-700 text-neutral-400 hover:border-neutral-600"
+                                                }`}
+                                        >
+                                            Confirmada
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
 
                             <div>
                                 <label className="text-sm text-neutral-400 flex items-center gap-2 mb-2">
-                                    <FileText className="w-4 h-4" /> Notas
+                                    <FileText className="w-4 h-4" /> {selectedEvent?.isExternal ? "Descripción" : "Notas"}
                                 </label>
                                 <textarea
                                     value={formData.notes}
                                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                                     rows={3}
                                     className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition resize-none"
+                                    disabled={!!selectedEvent?.isExternal}
                                 />
                             </div>
 
                             <div className="flex gap-3 pt-4">
-                                {selectedEvent && (
+                                {selectedEvent && !selectedEvent.isExternal && (
                                     <button
                                         type="button"
                                         onClick={handleDelete}
@@ -479,19 +629,26 @@ export default function BookingsPage() {
                                         <Trash2 className="w-4 h-4" /> Eliminar
                                     </button>
                                 )}
-                                <button
-                                    type="submit"
-                                    disabled={saving}
-                                    className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-500 transition font-medium disabled:opacity-50"
-                                >
-                                    {saving ? (
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                    ) : (
-                                        <>
-                                            <Check className="w-4 h-4" /> Guardar
-                                        </>
-                                    )}
-                                </button>
+                                {!selectedEvent?.isExternal && (
+                                    <button
+                                        type="submit"
+                                        disabled={saving}
+                                        className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-500 transition font-medium disabled:opacity-50"
+                                    >
+                                        {saving ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                            <>
+                                                <Check className="w-4 h-4" /> Guardar
+                                            </>
+                                        )}
+                                    </button>
+                                )}
+                                {selectedEvent?.isExternal && (
+                                    <div className="w-full text-center text-xs text-neutral-500">
+                                        Sincronizado desde {selectedEvent.provider === 'google_calendar' ? 'Google Calendar' : 'Outlook'}. Gestionar en origen.
+                                    </div>
+                                )}
                             </div>
                         </form>
                     </div>
@@ -517,7 +674,7 @@ function BookingListTable({
                         <tr className="border-b border-neutral-800 bg-neutral-800/50">
                             <th className="p-4 text-xs font-medium text-neutral-400 uppercase tracking-widest">Estado</th>
                             <th className="p-4 text-xs font-medium text-neutral-400 uppercase tracking-widest">Fecha y Hora</th>
-                            <th className="p-4 text-xs font-medium text-neutral-400 uppercase tracking-widest">Cliente</th>
+                            <th className="p-4 text-xs font-medium text-neutral-400 uppercase tracking-widest">Cliente / Título</th>
                             <th className="p-4 text-xs font-medium text-neutral-400 uppercase tracking-widest hidden md:table-cell">Contacto</th>
                             <th className="p-4 text-xs font-medium text-neutral-400 uppercase tracking-widest hidden lg:table-cell">Notas</th>
                             <th className="p-4 text-xs font-medium text-neutral-400 uppercase tracking-widest text-right">Acciones</th>
@@ -527,7 +684,7 @@ function BookingListTable({
                         {events.length === 0 ? (
                             <tr>
                                 <td colSpan={6} className="p-8 text-center text-neutral-500 text-sm">
-                                    No hay reservas para mostrar.
+                                    No hay reservas ni eventos externos en el rango seleccionado.
                                 </td>
                             </tr>
                         ) : (
@@ -536,15 +693,27 @@ function BookingListTable({
                                 .map((event) => (
                                     <tr key={event.id} className="hover:bg-neutral-800/30 transition-colors group">
                                         <td className="p-4">
-                                            <span className={cn(
-                                                "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border",
-                                                event.status === "confirmed"
-                                                    ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
-                                                    : "bg-amber-500/10 text-amber-500 border-amber-500/20"
-                                            )}>
-                                                <div className={cn("w-1.5 h-1.5 rounded-full", event.status === "confirmed" ? "bg-emerald-500" : "bg-amber-500")} />
-                                                {event.status === "confirmed" ? "Confirmada" : "Pendiente"}
-                                            </span>
+                                            {event.isExternal ? (
+                                                <span className={cn(
+                                                    "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border",
+                                                    event.provider === "google_calendar"
+                                                        ? "bg-red-500/10 text-red-400 border-red-500/20"
+                                                        : "bg-blue-500/10 text-blue-400 border-blue-500/20"
+                                                )}>
+                                                    <div className={cn("w-1.5 h-1.5 rounded-full", event.provider === "google_calendar" ? "bg-red-500" : "bg-blue-500")} />
+                                                    {event.provider === "google_calendar" ? "Google" : "Outlook"}
+                                                </span>
+                                            ) : (
+                                                <span className={cn(
+                                                    "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border",
+                                                    event.status === "confirmed"
+                                                        ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                                                        : "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                                                )}>
+                                                    <div className={cn("w-1.5 h-1.5 rounded-full", event.status === "confirmed" ? "bg-emerald-500" : "bg-amber-500")} />
+                                                    {event.status === "confirmed" ? "Confirmada" : "Pendiente"}
+                                                </span>
+                                            )}
                                         </td>
                                         <td className="p-4">
                                             <div className="flex flex-col">
@@ -559,22 +728,25 @@ function BookingListTable({
                                         <td className="p-4">
                                             <div className="flex items-center gap-2">
                                                 <div className="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center text-neutral-400 shrink-0">
-                                                    <UserCircle className="w-4 h-4" />
+                                                    {event.isExternal ? <CalendarDays className="w-4 h-4" /> : <UserCircle className="w-4 h-4" />}
                                                 </div>
-                                                <span className="text-sm font-medium text-neutral-200">{event.customerName}</span>
+                                                <span className="text-sm font-medium text-neutral-200">{event.customerName || event.title}</span>
                                             </div>
                                         </td>
                                         <td className="p-4 hidden md:table-cell">
                                             <div className="space-y-1">
-                                                {event.customerEmail && (
+                                                {!event.isExternal && event.customerEmail && (
                                                     <a href={`mailto:${event.customerEmail}`} className="flex items-center gap-1.5 text-xs text-neutral-400 hover:text-white transition-colors">
                                                         <Mail className="w-3 h-3" /> {event.customerEmail}
                                                     </a>
                                                 )}
-                                                {event.customerPhone && (
+                                                {!event.isExternal && event.customerPhone && (
                                                     <a href={`https://wa.me/${event.customerPhone.replace(/\D/g, '')}`} target="_blank" className="flex items-center gap-1.5 text-xs text-neutral-400 hover:text-green-500 transition-colors">
                                                         <MessageCircle className="w-3 h-3" /> {event.customerPhone}
                                                     </a>
+                                                )}
+                                                {event.isExternal && (
+                                                    <span className="text-xs text-neutral-500 italic">Externo</span>
                                                 )}
                                             </div>
                                         </td>
@@ -592,7 +764,7 @@ function BookingListTable({
                                                 onClick={() => onEventSelect(event)}
                                                 className="px-3 py-1.5 rounded-lg text-xs font-medium bg-neutral-800 hover:bg-neutral-700 text-white transition-colors border border-neutral-700"
                                             >
-                                                Gestionar
+                                                {event.isExternal ? "Ver" : "Gestionar"}
                                             </button>
                                         </td>
                                     </tr>

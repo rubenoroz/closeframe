@@ -21,6 +21,33 @@ export const PLANS = {
             musicGallery: false,
             videoGallery: false,
             externalVideoAuth: false,
+            calendarSync: false,
+        }
+    },
+    FAMILY: {
+        id: 'family',
+        name: 'Family',
+        limits: {
+            bioMaxLength: 300,
+            maxSocialLinks: 3,
+            bookingWindow: 0,
+            maxProjects: 50,
+            maxCloudAccounts: 2,
+        },
+        features: {
+            advancedSocialNetworks: true,
+            callToAction: true,
+            hideBranding: true,
+            manualOrdering: false,
+            listView: true,
+            bookingConfig: false,
+            zipDownloadsEnabled: 'static_only',
+            closerGallery: true,
+            musicGallery: false,
+            videoGallery: true,
+            externalVideoAuth: false,
+            collaborativeGalleries: true,
+            calendarSync: true,
         }
     },
     PRO: {
@@ -45,6 +72,7 @@ export const PLANS = {
             musicGallery: false,
             videoGallery: false, // Reverted to false
             externalVideoAuth: false,
+            calendarSync: true,
         }
     },
     STUDIO: {
@@ -71,6 +99,7 @@ export const PLANS = {
             videoGallery: true,
             externalVideoAuth: false,
             collaborativeGalleries: true,
+            calendarSync: true,
         }
     },
     AGENCY: {
@@ -97,6 +126,7 @@ export const PLANS = {
             videoGallery: true,
             externalVideoAuth: true,
             collaborativeGalleries: true,
+            calendarSync: true,
         }
     }
 } as const;
@@ -111,6 +141,7 @@ export function getPlanConfig(planName?: string | null) {
     // Handle name variations and suffixes (e.g. 'Agency-Monthly', 'Plan Studio')
     if (normalizedName.includes('AGENCY')) return PLANS.AGENCY;
     if (normalizedName.includes('STUDIO') || normalizedName.includes('ESTUDIO')) return PLANS.STUDIO;
+    if (normalizedName.includes('FAMILY') || normalizedName.includes('FAMILIA')) return PLANS.FAMILY;
     if (normalizedName.includes('PRO') || normalizedName.includes('PROFESIONAL')) return PLANS.PRO;
     if (normalizedName.includes('FREE') || normalizedName.includes('PERSONAL')) return PLANS.FREE;
 

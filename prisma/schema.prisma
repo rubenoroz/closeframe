@@ -41,6 +41,7 @@ model User {
   bookings          Booking[]
   cloudAccounts     CloudAccount[]
   oauthAccounts     OAuthAccount[]
+  calendarAccounts  CalendarAccount[]
   projects          Project[]
   sessions          Session[]
   plan              Plan?          @relation(fields: [planId], references: [id])
@@ -480,5 +481,93 @@ model FeatureOverrideLog {
   
   @@index([userId])
   @@index([adminId])
+  @@index([createdAt])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CALENDAR SYNC (Google Calendar / Microsoft Outlook Integration)
+// ═══════════════════════════════════════════════════════════════════════════
+
+model CalendarAccount {
+  id                String    @id @default(cuid())
+  userId            String
+  provider          String    // "google_calendar" | "microsoft_outlook"
+  providerAccountId String    // Unique calendar ID from provider
+  email             String?   // Email associated with calendar
+  name              String?   // User-defined label
+  
+  accessToken       String
+  refreshToken      String?
+  expiresAt         DateTime?
+  
+  // Sync configuration
+  syncEnabled       Boolean   @default(true)
+  syncDirection     String    @default("bidirectional") // "read_only" | "bidirectional"
+  showEventDetails  Boolean   @default(true)            // true = full details
+  autoRefresh       Boolean   @default(true)
+  refreshInterval   Int       @default(5)               // minutes
+  
+  // Multi-calendar support
+  selectedCalendars Json?     // Array of calendar IDs default to null (primary only)
+  
+  // Sync status
+  lastSyncAt        DateTime?
+  syncStatus        String    @default("pending")       // "pending" | "syncing" | "success" | "error"
+  syncError         String?
+  
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  externalEvents    ExternalCalendarEvent[]
+  syncLogs          CalendarSyncLog[]
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  @@unique([userId, provider, providerAccountId])
+  @@index([userId])
+}
+
+model ExternalCalendarEvent {
+  id                  String   @id @default(cuid())
+  calendarAccountId   String
+  externalId          String   // Event ID in external system
+  
+  title               String?
+  start               DateTime
+  end                 DateTime
+  allDay              Boolean  @default(false)
+  location            String?
+  description         String?
+  
+  // Metadata
+  isRecurring         Boolean  @default(false)
+  recurringEventId    String?
+  
+  // Link to Closerlens booking (if created from sync)
+  linkedBookingId     String?
+  
+  calendarAccount     CalendarAccount @relation(fields: [calendarAccountId], references: [id], onDelete: Cascade)
+  
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  
+  @@unique([calendarAccountId, externalId])
+  @@index([calendarAccountId])
+  @@index([start, end])
+}
+
+model CalendarSyncLog {
+  id                  String   @id @default(cuid())
+  calendarAccountId   String
+  
+  action              String   // "sync_read" | "sync_write" | "oauth_refresh"
+  status              String   // "started" | "success" | "error"
+  eventsProcessed     Int      @default(0)
+  errorMessage        String?
+  
+  calendarAccount     CalendarAccount @relation(fields: [calendarAccountId], references: [id], onDelete: Cascade)
+  
+  createdAt           DateTime @default(now())
+  
+  @@index([calendarAccountId])
   @@index([createdAt])
 }

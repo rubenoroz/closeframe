@@ -28,6 +28,9 @@ export interface BookingEvent {
   customerPhone?: string;
   notes?: string;
   status?: string;
+  isExternal?: boolean;
+  provider?: string;
+  accountName?: string;
 }
 
 const DnDCalendar = withDragAndDrop<BookingEvent>(Calendar);
@@ -75,6 +78,22 @@ export default function BookingCalendar({ events, onEventAdd, onEventDrop, onEve
 
   const eventStyleGetter = useCallback((event: BookingEvent) => {
     let backgroundColor = "#059669"; // green for confirmed
+
+    if (event.isExternal) {
+      return {
+        style: {
+          backgroundColor: event.provider === 'google_calendar' ? '#DB4437' : '#0078D4', // Google Red or Outlook Blue
+          borderRadius: "6px",
+          border: "none",
+          color: "white",
+          fontSize: "12px",
+          padding: "2px 6px",
+          opacity: 0.8,
+          borderLeft: "3px solid white"
+        }
+      };
+    }
+
     if (event.status === "pending") backgroundColor = "#f59e0b"; // yellow
     if (event.status === "cancelled") backgroundColor = "#6b7280"; // gray
 
