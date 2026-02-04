@@ -34,9 +34,19 @@ async function getGoogleAuth(account: any) {
         `${baseUrl}/api/connect/google/callback`
     );
 
+    // Decrypt tokens
+    let accessToken = account.accessToken;
+    let refreshToken = account.refreshToken;
+    try {
+        accessToken = decrypt(accessToken);
+        if (refreshToken) refreshToken = decrypt(refreshToken);
+    } catch (e) {
+        console.warn("Failed to decrypt Google tokens, using raw", e);
+    }
+
     oauth2Client.setCredentials({
-        access_token: account.accessToken,
-        refresh_token: account.refreshToken,
+        access_token: accessToken,
+        refresh_token: refreshToken,
     });
 
     // Refresh if needed
@@ -44,13 +54,18 @@ async function getGoogleAuth(account: any) {
         console.log("Refreshing Google Token for account:", account.id);
         const { credentials } = await oauth2Client.refreshAccessToken();
 
+        // Encrypt new tokens before saving
+        const { encrypt } = await import("@/lib/security/encryption");
+        const newAccessToken = encrypt(credentials.access_token || "");
+        const newRefreshToken = credentials.refresh_token ? encrypt(credentials.refresh_token) : undefined;
+
         await prisma.cloudAccount.update({
             where: { id: account.id },
             data: {
-                accessToken: credentials.access_token || "",
+                accessToken: newAccessToken,
                 expiresAt: credentials.expiry_date ? new Date(credentials.expiry_date) : null,
                 // Only update refresh_token if new one provided
-                refreshToken: credentials.refresh_token || undefined
+                refreshToken: newRefreshToken
             },
         });
 
@@ -76,11 +91,17 @@ async function getMicrosoftAuth(account: any) {
         const tenant = "common";
         const tokenUrl = `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/token`;
 
+        // Decrypt refresh token
+        let refreshToken = account.refreshToken;
+        try {
+            refreshToken = decrypt(refreshToken);
+        } catch (e) { console.warn("Microsoft decrypt failed", e); }
+
         const body = new URLSearchParams();
         body.append('client_id', process.env.MICROSOFT_CLIENT_ID!);
         body.append('client_secret', process.env.MICROSOFT_CLIENT_SECRET!);
         body.append('grant_type', 'refresh_token');
-        body.append('refresh_token', account.refreshToken);
+        body.append('refresh_token', refreshToken);
         body.append('scope', 'User.Read Files.Read Files.Read.All offline_access');
         body.append('redirect_uri', REDIRECT_URI);
 
@@ -99,30 +120,53 @@ async function getMicrosoftAuth(account: any) {
 
         const newExpiry = new Date(Date.now() + tokens.expires_in * 1000);
 
+        // Encrypt new tokens
+        const { encrypt } = await import("@/lib/security/encryption");
+        const newAccessToken = encrypt(tokens.access_token);
+        const newRefreshToken = tokens.refresh_token ? encrypt(tokens.refresh_token) : undefined;
+
         // Update DB
         const updated = await prisma.cloudAccount.update({
             where: { id: account.id },
             data: {
-                accessToken: tokens.access_token,
-                refreshToken: tokens.refresh_token || undefined, // New refresh token (often rotated)
+                accessToken: newAccessToken,
+                refreshToken: newRefreshToken, // New refresh token (often rotated)
                 expiresAt: newExpiry
             }
         });
 
-        return updated.accessToken; // For Microsoft we just return the string token for now
+        // Return DECRYPTED access token for immediate use
+        return tokens.access_token;
     }
 
-    return account.accessToken;
+    // Return decrypted access token if not expired
+    let accessToken = account.accessToken;
+    try {
+        accessToken = decrypt(accessToken);
+    } catch (e) { console.warn("Microsoft access token decrypt failed", e); }
+    return accessToken;
 }
 
 // Dropbox Auth Logic
 async function getDropboxAuth(account: any) {
     // Dropbox short-lived tokens last 4 hours.
+    // Check if processing needed
+
+    // Decrypt tokens
+    let accessToken = account.accessToken;
+    let refreshToken = account.refreshToken;
+    try {
+        accessToken = decrypt(accessToken);
+        if (refreshToken) refreshToken = decrypt(refreshToken);
+    } catch (e) {
+        console.warn("Dropbox decrypt failed", e);
+    }
+
     // Check if expired or about to expire (5 min buffer)
     if (account.expiresAt && new Date(account.expiresAt) < new Date(Date.now() + 5 * 60 * 1000)) {
         console.log("Refreshing Dropbox Token for account:", account.id);
 
-        if (!account.refreshToken) throw new Error("No refresh token available for Dropbox account");
+        if (!refreshToken) throw new Error("No refresh token available for Dropbox account");
 
         const clientId = process.env.DROPBOX_CLIENT_ID;
         const clientSecret = process.env.DROPBOX_CLIENT_SECRET;
@@ -131,7 +175,7 @@ async function getDropboxAuth(account: any) {
 
         const params = new URLSearchParams();
         params.append("grant_type", "refresh_token");
-        params.append("refresh_token", account.refreshToken);
+        params.append("refresh_token", refreshToken);
         params.append("client_id", clientId!);
         params.append("client_secret", clientSecret!);
 
@@ -151,19 +195,23 @@ async function getDropboxAuth(account: any) {
         // Calculate new expiry (tokens.expires_in seconds)
         const newExpiry = new Date(Date.now() + tokens.expires_in * 1000);
 
+        // Encrypt new tokens
+        const { encrypt } = await import("@/lib/security/encryption");
+        const newAccessToken = encrypt(tokens.access_token);
+
         // Update DB
         const updated = await prisma.cloudAccount.update({
             where: { id: account.id },
             data: {
-                accessToken: tokens.access_token,
+                accessToken: newAccessToken,
                 expiresAt: newExpiry
             }
         });
 
-        return updated.accessToken;
+        return tokens.access_token;
     }
 
-    return account.accessToken;
+    return accessToken;
 }
 
 import { decrypt } from "@/lib/security/encryption";
