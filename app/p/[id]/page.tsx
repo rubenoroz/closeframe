@@ -116,12 +116,7 @@ export default async function PublicProfilePage({ params }: Props) {
     const showBranding = !planLimits.hideBranding;
     const { callToAction } = user as any;
 
-    // [METRICS] Increment Profile Views (Fire and forget)
-    // We don't await this to avoid slowing down response
-    if (process.env.NODE_ENV === 'production') {
-        const { incrementProfileViews } = await import("@/lib/analytics/actions");
-        incrementProfileViews(user.id).catch(err => console.error("Metrics Error:", err));
-    }
+
 
     return (
         <main className={`min-h-screen transition-colors duration-500 ${isLight ? 'bg-[#f6f5f2] text-neutral-900' : 'bg-neutral-950 text-white'}`}>
