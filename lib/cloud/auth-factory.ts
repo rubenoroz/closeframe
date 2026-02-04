@@ -29,6 +29,8 @@ async function getGoogleAuth(account: any) {
     let baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     if (baseUrl.endsWith('/')) baseUrl = baseUrl.slice(0, -1);
 
+    console.log(`[GoogleAuth] Initializing for account ${account.id}. BaseURL: ${baseUrl}`);
+
     const oauth2Client = new google.auth.OAuth2(
         process.env.GOOGLE_CLIENT_ID,
         process.env.GOOGLE_CLIENT_SECRET,
@@ -39,8 +41,16 @@ async function getGoogleAuth(account: any) {
     let accessToken = account.accessToken;
     let refreshToken = account.refreshToken;
     try {
+        const originalRefresh = refreshToken;
         accessToken = decrypt(accessToken);
         if (refreshToken) refreshToken = decrypt(refreshToken);
+
+        // DIAGNOSTIC LOG (SAFE)
+        if (refreshToken && refreshToken.includes(':') && (refreshToken.length > 50)) {
+            console.error(`[CRITICAL] Decryption Check Failed: Refresh token still contains ':' after decrypt. This usually implies KEY MISMATCH. Original len: ${originalRefresh?.length}, Decrypted len: ${refreshToken?.length}`);
+        } else if (refreshToken) {
+            console.log(`[GoogleAuth] Decryption seemingly successful. Token starts with: ${refreshToken.substring(0, 3)}...`);
+        }
     } catch (e) {
         console.warn("Failed to decrypt Google tokens, using raw", e);
     }
