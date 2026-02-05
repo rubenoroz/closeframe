@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import { Check, X, Loader2 } from "lucide-react";
+import { Check, X, Loader2, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 interface PlanFeature {
     text: string;
@@ -94,10 +95,21 @@ export default function PricingClient({ plans }: PricingClientProps) {
     };
 
     return (
-        <div className="min-h-screen bg-black text-white py-20 px-6">
-            <div className="max-w-6xl mx-auto space-y-16">
-                <div className="text-center space-y-6">
-                    <h1 className="text-4xl md:text-5xl font-light">Planes y Precios</h1>
+        <div className="min-h-screen bg-black text-white py-10 px-6">
+            <div className="max-w-[1600px] mx-auto space-y-12">
+                <div className="relative text-center space-y-6">
+                    {/* Back Button */}
+                    <div className="absolute left-0 top-0">
+                        <Link
+                            href="/dashboard/billing"
+                            className="flex items-center gap-2 text-neutral-400 hover:text-white transition-colors text-sm font-medium bg-neutral-900/50 px-4 py-2 rounded-full border border-neutral-800 hover:border-neutral-700"
+                        >
+                            <ArrowLeft className="w-4 h-4" />
+                            <span>Volver a Suscripción</span>
+                        </Link>
+                    </div>
+
+                    <h1 className="text-4xl md:text-5xl font-light pt-8 md:pt-0">Planes y Precios</h1>
                     <p className="text-neutral-400 max-w-xl mx-auto">
                         Elige el plan perfecto para potenciar tu carrera profesional.
                     </p>
@@ -118,7 +130,7 @@ export default function PricingClient({ plans }: PricingClientProps) {
                     </div>
                 </div>
 
-                <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mx-auto">
                     {sortedPlans.map((plan) => {
                         let features: string[] = [];
                         try {

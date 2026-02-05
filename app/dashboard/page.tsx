@@ -103,10 +103,41 @@ export default function DashboardPage() {
         }
     }, [selectedProject]);
 
-    const [editData, setEditData] = useState({
+    const [editData, setEditData] = useState<{
+        name: string;
+        coverImage: string;
+        password: string | null;
+        downloadEnabled: boolean;
+        downloadJpgEnabled: boolean;
+        downloadRawEnabled: boolean;
+        downloadVideoHdEnabled: boolean;
+        downloadVideoRawEnabled: boolean;
+        enableVideoTab: boolean;
+        enableWatermark: boolean;
+        category: string;
+        headerTitle: string;
+        headerFontFamily: string;
+        headerFontSize: number;
+        headerColor: string;
+        headerBackground: "dark" | "light" | string; // loose type to match
+        headerImage: string;
+        headerImageFocus: string;
+        coverImageFocus: string;
+        zipFileId: string;
+        zipFileName: string;
+        public: boolean;
+        layoutType: "mosaic" | "grid" | string;
+        isCloserGallery: boolean;
+        musicTrackId: string;
+        musicEnabled: boolean;
+        isCollaborative?: boolean;
+        moments?: string[];
+        date?: string;
+        slug?: string;
+    }>({
         name: "",
         coverImage: "",
-        password: "",
+        password: "" as string | null,
         downloadEnabled: true,
         downloadJpgEnabled: true,
         downloadRawEnabled: false,
@@ -129,7 +160,7 @@ export default function DashboardPage() {
         layoutType: "mosaic",
         isCloserGallery: false,
         musicTrackId: "",
-        musicEnabled: false,    // [NEW]
+        musicEnabled: false,
     });
 
 
