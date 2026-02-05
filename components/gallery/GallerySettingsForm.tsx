@@ -14,8 +14,9 @@ import { cn } from "@/lib/utils";
 export interface GallerySettingsData {
     name: string;
     category?: string;
+
     slug?: string;
-    password?: string;
+    password?: string | null;
     date?: string; // ISO date string or YYYY-MM-DD
 
     // Header & Design
@@ -55,6 +56,7 @@ export interface PlanLimits {
     lowResDownloads?: boolean;
     videoEnabled?: boolean;
     galleryCover?: boolean;
+    passwordProtection?: boolean;
 }
 
 interface GallerySettingsFormProps {
@@ -388,24 +390,7 @@ export default function GallerySettingsForm({
                 </div>
             </div>
 
-            {/* Password - Only show if password field exists in data (it might be undefined in creating) */}
-            {
-                data.password !== undefined && (
-                    <div>
-                        <label className="text-[10px] font-bold uppercase tracking-widest mb-3 block opacity-40">Contraseña (Opcional)</label>
-                        <div className="relative">
-                            <input
-                                type="text"
-                                value={data.password || ""}
-                                onChange={(e) => update('password', e.target.value)}
-                                placeholder="Dejar vacío para acceso público"
-                                className={`w-full border rounded-2xl pl-10 pr-4 py-4 outline-none transition-all ${isLight ? 'bg-neutral-50 border-neutral-100 focus:border-emerald-500' : 'bg-neutral-800 border-neutral-700 focus:border-emerald-500'}`}
-                            />
-                            <Lock className="w-4 h-4 text-neutral-500 absolute left-4 top-1/2 -translate-y-1/2" />
-                        </div>
-                    </div>
-                )
-            }
+
 
             {/* Header Customization Section */}
             <div className={`${isLight ? 'bg-neutral-50 border-neutral-100' : 'bg-neutral-800/50 border-neutral-800'} p-4 rounded-2xl border`}>
@@ -864,8 +849,60 @@ export default function GallerySettingsForm({
                     </div>
                 </div>
 
-                {/* Watermark */}
+                {/* Watermark & Password */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
+                    {/* Password Protection (Moved here) */}
+                    <div className={`${isLight ? 'bg-neutral-50 border-neutral-100' : 'bg-neutral-800/50 border-neutral-800'} p-4 rounded-2xl border`}>
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-3">
+                                <Lock className="w-4 h-4 text-neutral-400" />
+                                <div className="flex flex-col">
+                                    <span className="text-sm">Galería Privada</span>
+                                    <span className="text-[10px] text-neutral-500">Protege el acceso con contraseña.</span>
+                                </div>
+                            </div>
+
+                            {/* Toggle */}
+                            {planLimits?.passwordProtection !== false && (
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        className="sr-only peer"
+                                        checked={data.password !== null && data.password !== undefined}
+                                        onChange={(e) => {
+                                            update('password', e.target.checked ? "" : null);
+                                        }}
+                                    />
+                                    <div className="w-9 h-5 bg-neutral-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                                </label>
+                            )}
+                        </div>
+
+                        {(planLimits?.passwordProtection !== false) && (data.password !== null && data.password !== undefined) && (
+                            <div className="relative mt-3 animate-in fade-in slide-in-from-top-2">
+                                <input
+                                    type="text"
+                                    value={data.password || ""}
+                                    onChange={(e) => update('password', e.target.value)}
+                                    placeholder="Escribe la contraseña..."
+                                    className={`w-full border rounded-xl pl-9 pr-4 py-2 text-sm outline-none transition-all ${isLight
+                                        ? 'bg-white border-neutral-200 focus:border-emerald-500'
+                                        : 'bg-neutral-900 border-neutral-700/50 focus:border-emerald-500'
+                                        }`}
+                                />
+                                <Lock className="w-3.5 h-3.5 text-neutral-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                            </div>
+                        )}
+
+                        {planLimits?.passwordProtection === false && (
+                            <div className="mt-2 text-[10px] text-amber-500 flex items-center gap-2 bg-amber-500/10 p-2 rounded-lg">
+                                <AlertCircle className="w-3 h-3" />
+                                Requiere Plan PRO.
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Watermark */}
                     <div className={`${isLight ? 'bg-neutral-50 border-neutral-100' : 'bg-neutral-800/50 border-neutral-800'} p-4 rounded-2xl border`}>
                         <label className="flex items-center justify-between cursor-pointer">
                             <div className="flex items-center gap-3">

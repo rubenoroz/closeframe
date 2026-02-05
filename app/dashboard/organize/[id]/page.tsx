@@ -6,6 +6,8 @@ import Link from "next/link";
 import { ArrowLeft, Save, Loader2, GripVertical, Folder as FolderIcon, LayoutGrid, Video, Trash2, Plus, QrCode } from "lucide-react";
 import GalleryLoaderGrid from "@/components/gallery/GalleryLoaderGrid";
 import CollaborativeSettings from "@/components/gallery/CollaborativeSettings";
+import GallerySettingsForm, { GallerySettingsData } from "@/components/gallery/GallerySettingsForm";
+import { Settings, X } from "lucide-react";
 
 import {
     DndContext,
@@ -80,6 +82,45 @@ export default function OrganizePage() {
     const [rootFolderId, setRootFolderId] = useState<string | null>(null);
     const [isGoogleDrive, setIsGoogleDrive] = useState(false); // [NEW] Track provider
     const [projectName, setProjectName] = useState("");
+
+    // [NEW] Settings Modal State
+    const [settingsOpen, setSettingsOpen] = useState(false);
+    const [settingsData, setSettingsData] = useState<GallerySettingsData | null>(null);
+    const [isSavingSettings, setIsSavingSettings] = useState(false);
+    const [planLimits, setPlanLimits] = useState<{
+        videoEnabled?: boolean;
+        lowResDownloads?: boolean;
+        passwordProtection?: boolean;
+        galleryCover?: boolean;
+    } | null>(null);
+
+    const handleSaveSettings = async () => {
+        if (!settingsData) return;
+        setIsSavingSettings(true);
+        try {
+            const res = await fetch("/api/projects", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    id: projectId,
+                    ...settingsData
+                })
+            });
+
+            if (res.ok) {
+                setSettingsOpen(false);
+                // Refresh project name in case it changed
+                if (settingsData.name) setProjectName(settingsData.name);
+            } else {
+                alert("Error al guardar configuración");
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Error de conexión");
+        } finally {
+            setIsSavingSettings(false);
+        }
+    };
 
     const sensors = useSensors(
         useSensor(MouseSensor, { activationConstraint: { distance: 10 } }),
@@ -158,6 +199,28 @@ export default function OrganizePage() {
         const fetchInitialStructure = async () => {
             setLoading(true);
             try {
+                // 0. Fetch User Settings (for Plan Limits)
+                const userRes = await fetch("/api/user/settings");
+                const userData = await userRes.json();
+                if (userData.effectiveConfig?.features) {
+                    setPlanLimits({
+                        videoEnabled: userData.effectiveConfig.features.videoGallery,
+                        lowResDownloads: userData.effectiveConfig.features.lowResDownloads,
+                        passwordProtection: userData.effectiveConfig.features.passwordProtection ?? true,
+                        galleryCover: userData.effectiveConfig.features.galleryCover
+                    });
+                } else if (userData.user?.plan?.limits) {
+                    try {
+                        const limits = typeof userData.user.plan.limits === 'string' ? JSON.parse(userData.user.plan.limits) : userData.user.plan.limits;
+                        setPlanLimits({
+                            videoEnabled: limits.videoEnabled,
+                            lowResDownloads: limits.lowResDownloads,
+                            passwordProtection: limits.passwordProtection,
+                            galleryCover: limits.galleryCover
+                        });
+                    } catch { }
+                }
+
                 // 1. Fetch Project
                 const pRes = await fetch(`/api/projects/${projectId}`, { cache: 'no-store' });
                 const pData = await pRes.json();
@@ -171,6 +234,43 @@ export default function OrganizePage() {
                 setIsGoogleDrive(project.cloudAccount?.provider === 'google'); // [NEW]
                 setEnableVideoTab(!!project.enableVideoTab);
                 setFileOrder(project.fileOrder || []);
+
+                // Populate Settings Data for Modal
+                setSettingsData({
+                    name: project.name,
+                    category: project.category,
+                    password: project.password || "", // Keep empty if null
+                    date: project.date,
+                    headerTitle: project.headerTitle || project.name,
+                    headerFontFamily: project.headerFontFamily || "Inter",
+                    headerFontSize: project.headerFontSize || 100,
+                    headerColor: project.headerColor || "#FFFFFF",
+                    headerBackground: project.headerBackground || "dark",
+                    layoutType: (project as any).layoutType || "mosaic",
+                    headerImage: project.headerImage || "",
+                    headerImageFocus: project.headerImageFocus || "50,50",
+                    isCloserGallery: project.isCloserGallery || false,
+                    isCollaborative: !!project.isCollaborative, // Ensure boolean
+                    moments: project.moments, // Pass array directly if exists, API should return it? API projects params might exclude it, need to verify
+                    // Actually moments are derived from validFolders in some logic, but for settings "moments" usually refers to QR sections list if structured that way.
+                    // For now, let's assume project object has what we need or we update it.
+                    // IMPORTANT: The OrganizePage manages folders (moments). The Settings Form manages "QR Sections" as moments for collaborative.
+                    // If they are the same, we should sync. But typically 'moments' in settingsData is for QR sections.
+                    musicTrackId: project.musicTrackId || "",
+                    musicEnabled: project.musicEnabled || false,
+                    enableWatermark: project.enableWatermark || false,
+                    downloadEnabled: project.downloadEnabled !== false,
+                    downloadJpgEnabled: project.downloadJpgEnabled !== false,
+                    downloadRawEnabled: project.downloadRawEnabled === true,
+                    enableVideoTab: project.enableVideoTab === true,
+                    downloadVideoHdEnabled: project.downloadVideoHdEnabled !== false,
+                    downloadVideoRawEnabled: project.downloadVideoRawEnabled === true,
+                    zipFileId: project.zipFileId || "",
+                    zipFileName: project.zipFileName || "",
+                    coverImage: project.coverImage || "",
+                    coverImageFocus: project.coverImageFocus || "50,50",
+                    slug: project.slug // Needed for link display if we add it
+                });
 
                 // 2. Fetch Folders & Root Files in parallel (Only what's immediately needed)
                 // [NEW] Added root files to initial fetch to reduce a 3s delay
@@ -505,6 +605,13 @@ export default function OrganizePage() {
                     </div>
 
                     <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setSettingsOpen(true)}
+                            className="p-2 bg-neutral-800 hover:bg-neutral-700 text-neutral-400 hover:text-white rounded-full transition border border-white/5"
+                            title="Configuración de Galería"
+                        >
+                            <Settings className="w-5 h-5" />
+                        </button>
                         {activeTabId !== 'collaborative' && (
                             <button
                                 onClick={() => setShowVideoPicker(true)}
@@ -600,6 +707,43 @@ export default function OrganizePage() {
                     )}
                 </div>
             </header>
+
+            {/* SETTINGS MODAL */}
+            {settingsOpen && (
+                <div className="fixed inset-0 z-[110] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+                    <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl relative shadow-2xl bg-neutral-900 text-white border border-neutral-800">
+                        <button
+                            onClick={() => setSettingsOpen(false)}
+                            className="absolute top-6 right-6 z-10 p-2 rounded-full bg-neutral-800 text-neutral-500 hover:text-white transition-colors"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+
+                        <div className="p-8">
+                            <div className="mb-8">
+                                <h2 className="text-2xl font-light mb-2">Configuración de Galería</h2>
+                                <p className="text-sm text-neutral-500">Personaliza la apariencia y funcionalidades</p>
+                            </div>
+
+                            <GallerySettingsForm
+                                data={settingsData!}
+                                onChange={(newData) => setSettingsData(prev => ({ ...prev!, ...newData }))}
+                                projectId={projectId}
+                                cloudAccountId={cloudAccountId!}
+                                rootFolderId={rootFolderId!}
+                                isGoogleDrive={isGoogleDrive}
+                                isLight={false}
+                                onSave={handleSaveSettings}
+                                onCancel={() => setSettingsOpen(false)}
+                                saveLabel="Guardar Cambios"
+                                isSaving={isSavingSettings}
+                                planLimits={planLimits}
+                                showDelete={false} // Don't allow delete from here to avoid accidental project deletion in this view
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* --- MAIN CONTENT (Grid) --- */}
             <main className="flex-1 p-6 md:p-10 max-w-[1600px] mx-auto w-full">

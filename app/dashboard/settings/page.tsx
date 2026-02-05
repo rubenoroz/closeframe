@@ -732,7 +732,7 @@ export default function SettingsPage() {
 
                     <div className="space-y-6">
                         {/* List of Added Networks */}
-                        <div className="space-y-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                             {Object.entries(user.socialLinks || {}).map(([key, value]) => {
                                 const platform = SOCIAL_PLATFORMS.find(p => p.id === key);
                                 const Icon = platform ? platform.icon : Link2;
@@ -870,30 +870,37 @@ export default function SettingsPage() {
                                 ) : (
                                     <Camera className={cn("w-6 h-6 md:w-8 md:h-8", isLight ? "text-neutral-300" : "text-neutral-700")} />
                                 )}
-                                <div className={cn(
-                                    "absolute inset-0 flex items-center justify-center gap-2 bg-black/40 backdrop-blur-[1px] opacity-100 transition-opacity",
-                                    !isProfessionalProfile && "hidden"
-                                )}>
+                            </div>
+
+                            {/* Controls outside - No overlay obstruction */}
+                            <div className={cn(
+                                "flex items-center justify-center gap-2 mt-3 transition-opacity",
+                                !isProfessionalProfile && "hidden"
+                            )}>
+                                <button
+                                    type="button"
+                                    onClick={() => handleUploadClick('businessLogo')}
+                                    disabled={!isProfessionalProfile}
+                                    className={cn(
+                                        "px-3 py-1.5 rounded-full text-white backdrop-blur-md transition flex items-center gap-1.5 shadow-sm text-[10px] font-bold",
+                                        isLight
+                                            ? "bg-neutral-900 hover:bg-black"
+                                            : "bg-white text-black hover:bg-neutral-200"
+                                    )}
+                                >
+                                    <Upload className="w-3 h-3" />
+                                    <span>Subir</span>
+                                </button>
+                                {user.businessLogo && (
                                     <button
                                         type="button"
-                                        onClick={() => handleUploadClick('businessLogo')}
+                                        onClick={() => setUser({ ...user, businessLogo: "" })}
                                         disabled={!isProfessionalProfile}
-                                        className="px-3 py-1.5 rounded-full bg-emerald-500/90 hover:bg-emerald-500 text-white backdrop-blur-md transition flex items-center gap-1.5 shadow-lg"
+                                        className="p-1.5 rounded-full bg-red-500/10 hover:bg-red-500/20 text-red-500 transition border border-red-500/20"
                                     >
-                                        <Upload className="w-3 h-3" />
-                                        <span className="text-[10px] font-bold">Subir</span>
+                                        <X className="w-3 h-3" />
                                     </button>
-                                    {user.businessLogo && (
-                                        <button
-                                            type="button"
-                                            onClick={() => setUser({ ...user, businessLogo: "" })}
-                                            disabled={!isProfessionalProfile}
-                                            className="p-1.5 rounded-full bg-red-500/80 hover:bg-red-500 text-white backdrop-blur-md transition"
-                                        >
-                                            <X className="w-3 h-3" />
-                                        </button>
-                                    )}
-                                </div>
+                                )}
                             </div>
                         </div>
 
@@ -936,119 +943,49 @@ export default function SettingsPage() {
                         {!isCTAAllowed && <span className="flex items-center gap-1 bg-amber-500/10 text-amber-500 px-1.5 py-0.5 rounded border border-amber-500/20"><Lock className="w-2.5 h-2.5" /> PRO</span>}
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-4 md:gap-8">
-                        <div className="space-y-3">
-                            <label className="text-[10px] font-bold opacity-40 uppercase tracking-widest ml-1">Texto del botón</label>
-                            <div className="relative">
-                                <input
-                                    type="text"
-                                    value={user.callToAction?.label || ""}
-                                    onChange={(e) => setUser({
-                                        ...user,
-                                        callToAction: { ...user.callToAction, label: e.target.value }
-                                    })}
-                                    disabled={!isCTAAllowed}
-                                    className={cn(
-                                        "w-full border rounded-xl px-5 py-4 outline-none transition-all",
-                                        isLight
-                                            ? "bg-neutral-50 border-neutral-200 text-neutral-900 focus:bg-white focus:border-emerald-500/50"
-                                            : "bg-neutral-900/50 border-neutral-800 text-neutral-100 focus:border-emerald-500/50",
-                                        !isCTAAllowed && "opacity-50 cursor-not-allowed"
-                                    )}
-                                    placeholder={user.callToAction?.type === 'booking' ? "Ej: Agenda tu sesión" : "Ej: Ver portafolio"}
-                                />
-                                {!isCTAAllowed && <LockedOverlay />}
-                            </div>
-                        </div>
-
-                        <div className="space-y-3">
-                            <label className="text-[10px] font-bold opacity-40 uppercase tracking-widest ml-1">Tipo de Acción</label>
-                            <div className="grid grid-cols-2 gap-2 relative">
-                                {!isCTAAllowed && (
-                                    <div className="absolute inset-0 z-20 cursor-not-allowed"></div>
-                                )}
-                                <button
-                                    type="button"
-                                    onClick={() => setUser({ ...user, callToAction: { ...user.callToAction, type: 'link' } })}
-                                    disabled={!isCTAAllowed}
-                                    className={cn(
-                                        "px-4 py-3 rounded-lg text-sm font-medium border transition-all",
-                                        user.callToAction?.type !== 'booking'
-                                            ? (isLight ? "bg-neutral-900 text-white border-neutral-900" : "bg-white text-black border-white")
-                                            : (isLight ? "bg-white text-neutral-600 border-neutral-200 hover:border-neutral-300" : "bg-neutral-900/30 text-neutral-400 border-neutral-800 hover:border-neutral-700"),
-                                        !isCTAAllowed && "opacity-50"
-                                    )}
-                                >
-                                    Enlace Externo
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setUser({ ...user, callToAction: { ...user.callToAction, type: 'booking' } })}
-                                    disabled={!isCTAAllowed}
-                                    className={cn(
-                                        "px-4 py-3 rounded-lg text-sm font-medium border transition-all",
-                                        user.callToAction?.type === 'booking'
-                                            ? (isLight ? "bg-neutral-900 text-white border-neutral-900" : "bg-white text-black border-white")
-                                            : (isLight ? "bg-white text-neutral-600 border-neutral-200 hover:border-neutral-300" : "bg-neutral-900/30 text-neutral-400 border-neutral-800 hover:border-neutral-700"),
-                                        !isCTAAllowed && "opacity-50"
-                                    )}
-                                >
-                                    Formulario de Reserva
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* URL INPUT ONLY FOR LINK TYPE */}
-                        {user.callToAction?.type !== 'booking' && (
-                            <div className="space-y-3">
-                                <label className="text-[10px] font-bold opacity-40 uppercase tracking-widest ml-1">Enlace (URL)</label>
-                                <div className="relative">
-                                    <input
-                                        type="url"
-                                        value={user.callToAction?.url || ""}
-                                        onChange={(e) => setUser({
-                                            ...user,
-                                            callToAction: { ...user.callToAction, url: e.target.value }
-                                        })}
-                                        disabled={!isCTAAllowed}
-                                        className={cn(
-                                            "w-full border rounded-xl px-5 py-4 outline-none transition-all",
-                                            isLight
-                                                ? "bg-neutral-50 border-neutral-200 text-neutral-900 focus:bg-white focus:border-emerald-500/50"
-                                                : "bg-neutral-900/50 border-neutral-800 text-neutral-100 focus:border-emerald-500/50",
-                                            !isCTAAllowed && "opacity-50 cursor-not-allowed"
-                                        )}
-                                        placeholder="https://mysite.com"
-                                    />
-                                    {!isCTAAllowed && <LockedOverlay />}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Booking Window - Only visible for Pro plans (as Free plan has no CTA) */}
-                    {/* Booking Window - Controlled by bookingConfig feature */}
-                    <div className="mt-6 md:mt-8 grid md:grid-cols-2 gap-4 md:gap-8 relative">
-                        {/* BOOKING CONFIG - LINKED TO CTA */}
-                        {/* Lock Overlay if neither booking config nor CTA is allowed */}
-                        {!isBookingConfigAllowed && (
+                    {/* CTA & BOOKING CONFIG - COMPACT SINGLE ROW */}
+                    <div className="grid md:grid-cols-3 gap-4 md:gap-6 relative">
+                        {/* Lock Overlay if neither booking config nor CTA is allowed - simplified check covering mostly all */}
+                        {!isCTAAllowed && !isBookingConfigAllowed && (
                             <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 backdrop-blur-[1px] rounded-xl">
                                 <div className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-full text-xs font-bold border border-white/10 shadow-xl">
                                     <Lock className="w-4 h-4 text-emerald-400" />
-                                    <span>Disponible con Call to Action o Plan Profesional</span>
+                                    <span>Disponible en Plan Profesional</span>
                                 </div>
                             </div>
                         )}
 
+                        {/* 1. BUTTON TEXT */}
+                        <div className="space-y-3">
+                            <label className="text-[10px] font-bold opacity-40 uppercase tracking-widest ml-1">Texto del botón</label>
+                            <input
+                                type="text"
+                                value={user.callToAction?.label || ""}
+                                onChange={(e) => setUser({
+                                    ...user,
+                                    callToAction: { ...user.callToAction, label: e.target.value, type: 'booking' }
+                                })}
+                                disabled={!isCTAAllowed}
+                                className={cn(
+                                    "w-full border rounded-xl px-4 py-3 text-sm outline-none transition-all",
+                                    isLight
+                                        ? "bg-neutral-50 border-neutral-200 text-neutral-900 focus:bg-white focus:border-emerald-500/50"
+                                        : "bg-neutral-900/50 border-neutral-800 text-neutral-100 focus:border-emerald-500/50",
+                                    !isCTAAllowed && "opacity-50"
+                                )}
+                                placeholder="Ej: Agenda tu sesión"
+                            />
+                        </div>
+
+                        {/* 2. BOOKING WINDOW */}
                         <div className={cn("space-y-3", !isBookingConfigAllowed && "opacity-20 pointer-events-none")}>
                             <label className="text-[10px] font-bold opacity-40 uppercase tracking-widest ml-1">Ventana de Reservas</label>
-                            <p className="text-xs text-neutral-500 mb-2">Cuanto tiempo hacia el futuro pueden reservar.</p>
                             <select
                                 value={user.bookingWindow ?? 4}
                                 onChange={(e) => setUser({ ...user, bookingWindow: parseInt(e.target.value) })}
                                 disabled={!isBookingConfigAllowed}
                                 className={cn(
-                                    "w-full border rounded-xl px-5 py-4 outline-none transition-all",
+                                    "w-full border rounded-xl px-4 py-3 text-sm outline-none transition-all",
                                     isLight
                                         ? "bg-neutral-50 border-neutral-200 text-neutral-900 focus:bg-white focus:border-emerald-500/50"
                                         : "bg-neutral-900/50 border-neutral-800 text-neutral-100 focus:border-emerald-500/50"
@@ -1061,9 +998,10 @@ export default function SettingsPage() {
                                 <option value={0}>Sin límite (Todo el calendario)</option>
                             </select>
                         </div>
+
+                        {/* 3. LEAD TIME */}
                         <div className={cn("space-y-3", !isBookingConfigAllowed && "opacity-20 pointer-events-none")}>
                             <label className="text-[10px] font-bold opacity-40 uppercase tracking-widest ml-1">Anticipación Mínima (Días)</label>
-                            <p className="text-xs text-neutral-500 mb-2">Días de buffer antes de la primera fecha disponible.</p>
                             <input
                                 type="number"
                                 min="0"
@@ -1072,7 +1010,7 @@ export default function SettingsPage() {
                                 onChange={(e) => setUser({ ...user, bookingLeadTime: parseInt(e.target.value) })}
                                 disabled={!isBookingConfigAllowed}
                                 className={cn(
-                                    "w-full border rounded-xl px-5 py-4 outline-none transition-all",
+                                    "w-full border rounded-xl px-4 py-3 text-sm outline-none transition-all",
                                     isLight
                                         ? "bg-neutral-50 border-neutral-200 text-neutral-900 focus:bg-white focus:border-emerald-500/50"
                                         : "bg-neutral-900/50 border-neutral-800 text-neutral-100 focus:border-emerald-500/50"
@@ -1120,99 +1058,7 @@ export default function SettingsPage() {
                     </div>
                 </section >
 
-                {/* ACCOUNT & PLAN */}
-                < section >
-                    <div className="flex items-center gap-2 md:gap-3 mb-5 md:mb-8 text-neutral-400 text-[10px] md:text-xs uppercase tracking-widest font-bold">
-                        <CreditCard className="w-3 h-3 md:w-4 md:h-4 text-emerald-500" /> Cuenta y Plan
-                    </div>
-
-                    {/* Current Plan */}
-                    <div className={`p-5 md:p-6 rounded-2xl border mb-6 ${isLight ? 'bg-neutral-50 border-neutral-200' : 'bg-neutral-900/50 border-neutral-800'}`}>
-                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                            <div>
-                                <div className="flex items-center gap-2 mb-2">
-                                    <span className={`text-xl font-medium ${isLight ? 'text-neutral-900' : 'text-white'}`}>
-                                        {user.plan?.displayName || 'Free'}
-                                    </span>
-                                    {user.plan && user.plan.name !== 'free' && (
-                                        <span className="px-2 py-0.5 text-[10px] font-bold bg-emerald-500/20 text-emerald-400 rounded-full uppercase">
-                                            Activo
-                                        </span>
-                                    )}
-                                </div>
-                                <p className={`text-sm ${isLight ? 'text-neutral-600' : 'text-neutral-400'}`}>
-                                    {user.plan?.price ? (
-                                        <>${user.plan.price} {user.plan.currency}/{user.plan.interval === 'month' ? 'mes' : 'año'}</>
-                                    ) : (
-                                        <>Plan gratuito - sin costo</>
-                                    )}
-                                </p>
-                                {user.planExpiresAt && (
-                                    <p className="flex items-center gap-1 text-xs text-neutral-500 mt-2">
-                                        <Calendar className="w-3 h-3" />
-                                        Vence: {new Date(user.planExpiresAt).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })}
-                                    </p>
-                                )}
-                            </div>
-                            <Link
-                                href="/#pricing"
-                                className={`px-5 py-2.5 rounded-full text-sm font-medium transition ${isLight ? 'bg-neutral-900 text-white hover:bg-black' : 'bg-white text-black hover:bg-neutral-200'}`}
-                            >
-                                {user.plan?.name === 'free' || !user.plan ? 'Actualizar Plan' : 'Cambiar Plan'}
-                            </Link>
-                        </div>
-                    </div>
-
-                    {/* Connected Cloud Accounts */}
-                    <div className="mb-4">
-                        <div className="flex items-center justify-between mb-3">
-                            <span className={`text-[10px] font-bold opacity-40 uppercase tracking-widest ${isLight ? 'text-neutral-600' : 'text-neutral-400'}`}>
-                                Cuentas de nube conectadas
-                            </span>
-                            <Link
-                                href="/dashboard/clouds"
-                                className="text-xs text-emerald-500 hover:text-emerald-400 transition"
-                            >
-                                + Conectar
-                            </Link>
-                        </div>
-                        {user.cloudAccounts.length === 0 ? (
-                            <div className={`p-4 rounded-xl border-2 border-dashed text-center ${isLight ? 'border-neutral-200 text-neutral-500' : 'border-neutral-800 text-neutral-600'}`}>
-                                <Cloud className="w-6 h-6 mx-auto mb-2 opacity-50" />
-                                <p className="text-sm">No hay cuentas conectadas</p>
-                                <Link href="/dashboard/clouds" className="text-xs text-emerald-500 hover:underline">
-                                    Conecta Google Drive
-                                </Link>
-                            </div>
-                        ) : (
-                            <div className="space-y-2">
-                                {user.cloudAccounts.map((account: any) => (
-                                    <div
-                                        key={account.id}
-                                        className={`flex items-center justify-between p-3 rounded-xl border ${isLight ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'}`}
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${account.provider === 'google' ? 'bg-sky-500/20' : 'bg-neutral-500/20'}`}>
-                                                <Cloud className={`w-4 h-4 ${account.provider === 'google' ? 'text-sky-400' : 'text-neutral-400'}`} />
-                                            </div>
-                                            <div>
-                                                <p className={`text-sm font-medium ${isLight ? 'text-neutral-900' : 'text-white'}`}>
-                                                    {account.name || account.email || 'Google Drive'}
-                                                </p>
-                                                <p className="text-xs text-neutral-500">
-                                                    {account.email || account.provider}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <span className="text-[10px] text-neutral-500">
-                                            {new Date(account.createdAt).toLocaleDateString('es-MX')}
-                                        </span>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                </section >
+                {/* ACCOUNT & PLAN REMOVED - MOVED TO /billing */}
 
                 {/* ACTIONS */}
                 < footer className={

@@ -157,7 +157,7 @@ export async function generateQRCode(url: string): Promise<Buffer> {
         // Since we are using dots, a circle background looks best for the logo
         const bgSize = LOGO_SIZE;
         const circleBg = Buffer.from(`
-            <svg width="${bgSize}" height="${bgSize}">
+            <svg width="${bgSize}" height="${bgSize}" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="${bgSize / 2}" cy="${bgSize / 2}" r="${bgSize / 2}" fill="white"/>
             </svg>
         `);
@@ -183,7 +183,7 @@ export async function generateQRCode(url: string): Promise<Buffer> {
     const FULL_LOGO_PATH = path.join(process.cwd(), 'public', 'logo-white.svg');
 
     const footerBg = Buffer.from(`
-        <svg width="${QR_SIZE}" height="${FOOTER_HEIGHT}">
+        <svg width="${QR_SIZE}" height="${FOOTER_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
             <rect x="0" y="0" width="${QR_SIZE}" height="${FOOTER_HEIGHT}" fill="white"/>
         </svg>
     `);
@@ -208,7 +208,7 @@ export async function generateQRCode(url: string): Promise<Buffer> {
         console.error("Failed to process footer logo:", e);
         const BRAND_TEXT = "closerlens.com";
         footerOverlay = Buffer.from(`
-            <svg width="${QR_SIZE}" height="${FOOTER_HEIGHT}">
+            <svg width="${QR_SIZE}" height="${FOOTER_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
                 <rect x="0" y="0" width="${QR_SIZE}" height="${FOOTER_HEIGHT}" fill="white"/>
                 <text x="50%" y="55%" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#000000" text-anchor="middle" dominant-baseline="middle" letter-spacing="1px">${BRAND_TEXT}</text>
             </svg>
