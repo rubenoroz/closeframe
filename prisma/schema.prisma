@@ -63,6 +63,7 @@ model User {
   stripeSubscriptionId   String?   @unique
   stripePriceId          String?
   stripeCurrentPeriodEnd DateTime?
+  stripeConnectAccount   StripeConnectAccount? // Relation for Stripe Connect
   
   // Scena Integration
   scenaProjects     ScenaProject[]
@@ -208,6 +209,7 @@ model Booking {
   updatedAt     DateTime @updatedAt
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   scenaProjects ScenaProject[]
+  payment       Payment?
 }
 
 model Plan {
@@ -571,4 +573,65 @@ model CalendarSyncLog {
   
   @@index([calendarAccountId])
   @@index([createdAt])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// STRIPE CONNECT INTEGRATION (Direct Charges)
+// ═══════════════════════════════════════════════════════════════════════════
+
+model StripeConnectAccount {
+  id                String   @id @default(cuid())
+  userId            String   @unique // One account per user preferred
+  stripeAccountId   String   @unique // The "acct_..." ID
+  
+  // Status tracking
+  chargesEnabled    Boolean  @default(false)
+  payoutsEnabled    Boolean  @default(false)
+  detailsSubmitted  Boolean  @default(false)
+  
+  // Platform settings
+  defaultCurrency   String   @default("usd")
+  
+  // Metadata
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payments          Payment[]
+
+  @@index([stripeAccountId])
+}
+
+model Payment {
+  id                String   @id @default(cuid())
+  connectAccountId  String
+  bookingId         String?  @unique // Optional link to a booking
+  
+  // Stripe Data
+  stripePaymentIntentId String @unique
+  stripeSessionId       String? // If using Checkout Sessions
+  
+  // Financials
+  amount            Int      // Lowest denomination (cents)
+  currency          String
+  applicationFee    Int      @default(0) // What Closerlens took
+  stripeFee         Int      @default(0) // Estimated
+  netAmount         Int      @default(0) // What user got (estimated)
+  
+  // Status
+  status            String   // "pending", "succeeded", "failed", "refunded"
+  
+  // Metadata
+  description       String?  // e.g. "Sesión de Fotos Boda"
+  clientEmail       String?
+  clientName        String?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  connectAccount    StripeConnectAccount @relation(fields: [connectAccountId], references: [id])
+  booking           Booking?             @relation(fields: [bookingId], references: [id])
+
+  @@index([connectAccountId])
+  @@index([status])
 }
