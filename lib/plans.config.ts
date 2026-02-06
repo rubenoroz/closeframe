@@ -8,6 +8,7 @@ export const PLANS = {
             bookingWindow: 0, // Disabled
             maxProjects: 3,
             maxCloudAccounts: 1,
+            maxScenaProjects: 0,
         },
         features: {
             advancedSocialNetworks: false,
@@ -22,6 +23,7 @@ export const PLANS = {
             videoGallery: false,
             externalVideoAuth: false,
             calendarSync: false,
+            scenaAccess: true,
         }
     },
     FAMILY: {
@@ -33,6 +35,7 @@ export const PLANS = {
             bookingWindow: 0,
             maxProjects: 50,
             maxCloudAccounts: 2,
+            maxScenaProjects: 3,
         },
         features: {
             advancedSocialNetworks: true,
@@ -59,6 +62,7 @@ export const PLANS = {
             bookingWindow: 4, // Default 4 weeks
             maxProjects: 100,
             maxCloudAccounts: 2,
+            maxScenaProjects: 10,
         },
         features: {
             advancedSocialNetworks: true,
@@ -73,6 +77,7 @@ export const PLANS = {
             videoGallery: false, // Reverted to false
             externalVideoAuth: false,
             calendarSync: true,
+            scenaAccess: true,
         }
     },
     STUDIO: {
@@ -85,6 +90,7 @@ export const PLANS = {
             maxProjects: -1,
             maxCloudAccounts: -1,
             closerGalleryLimit: 10,
+            maxScenaProjects: -1,
         },
         features: {
             advancedSocialNetworks: true,
@@ -100,6 +106,7 @@ export const PLANS = {
             externalVideoAuth: false,
             collaborativeGalleries: true,
             calendarSync: true,
+            scenaAccess: true,
         }
     },
     AGENCY: {
@@ -112,6 +119,7 @@ export const PLANS = {
             maxProjects: -1,
             maxCloudAccounts: -1,
             closerGalleryLimit: -1,
+            maxScenaProjects: -1,
         },
         features: {
             advancedSocialNetworks: true,
@@ -127,6 +135,7 @@ export const PLANS = {
             externalVideoAuth: true,
             collaborativeGalleries: true,
             calendarSync: true,
+            scenaAccess: true,
         }
     }
 } as const;

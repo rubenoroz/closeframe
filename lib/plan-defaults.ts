@@ -76,9 +76,9 @@ export const PLAN_DEFAULTS = {
             castingPayments: false,
             contracts: false,
             store: false,
-            closerGalleries: false,
             collaborativeGalleries: false,
-            calendarSync: false
+            calendarSync: false,
+            scenaAccess: true
         },
         limits: {
             bioMaxLength: 150,
@@ -86,7 +86,8 @@ export const PLAN_DEFAULTS = {
             maxProjects: 1,
             maxImagesPerProject: 20,
             maxCloudAccounts: 1,
-            bookingWindow: 0
+            bookingWindow: 0,
+            maxScenaProjects: 0
         }
     },
     FAMILY: {

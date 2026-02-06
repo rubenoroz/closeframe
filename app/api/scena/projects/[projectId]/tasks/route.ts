@@ -13,14 +13,18 @@ export async function GET(
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
-        // Get tasks through columns that belong to this project
+        // Use helper to check access
+        const { verifyProjectAccess } = await import("@/lib/scena-auth");
+        const { hasAccess } = await verifyProjectAccess(projectId, session.user.id);
+
+        if (!hasAccess) {
+            return new NextResponse("Unauthorized", { status: 403 });
+        }
+
         const tasks = await prisma.task.findMany({
             where: {
                 column: {
-                    projectId: projectId,
-                    project: {
-                        ownerId: session.user.id
-                    }
+                    projectId: projectId
                 }
             },
             include: {
@@ -61,18 +65,22 @@ export async function POST(
             return new NextResponse("Missing required fields", { status: 400 });
         }
 
-        // Verify ownership through column -> project
-        const column = await prisma.column.findUnique({
-            where: { id: columnId },
-            include: { project: true }
-        });
+        // Check Permissions
+        const { verifyProjectAccess } = await import("@/lib/scena-auth");
+        const { hasAccess, role, isOwner } = await verifyProjectAccess(projectId, session.user.id);
 
-        if (!column || column.project.ownerId !== session.user.id) {
-            return new NextResponse("Unauthorized or column not found", { status: 401 });
+        const canEdit = isOwner || role === "EDITOR" || role === "ADMIN";
+
+        if (!hasAccess || !canEdit) {
+            return new NextResponse("Unauthorized", { status: 403 });
         }
 
         // Verify column belongs to the correct project
-        if (column.projectId !== projectId) {
+        const column = await prisma.column.findUnique({
+            where: { id: columnId }
+        });
+
+        if (!column || column.projectId !== projectId) {
             return new NextResponse("Column does not belong to this project", { status: 400 });
         }
 

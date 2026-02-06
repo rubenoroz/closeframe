@@ -69,6 +69,10 @@ model User {
   scenaProjects     ScenaProject[]
   tasks             Task[]         @relation("TaskAssignees")
   filters           Filter[]
+
+  // Scena Collaboration
+  projectMemberships ProjectMember[]
+  sentInvitations    ProjectInvitation[] @relation("SentInvitations")
 }
 
 model SystemSettings {
@@ -266,6 +270,46 @@ model ScenaProject {
   
   @@index([ownerId])
   @@index([bookingId])
+
+
+  members            ProjectMember[]
+  invitations        ProjectInvitation[]
+}
+
+model ProjectMember {
+  id        String       @id @default(cuid())
+  projectId String
+  project   ScenaProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      String       @default("VIEWER") // VIEWER, EDITOR, ADMIN
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+}
+
+model ProjectInvitation {
+  id        String       @id @default(cuid())
+  projectId String
+  project   ScenaProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  email     String
+  token     String       @unique
+  role      String       @default("VIEWER")
+  status    String       @default("PENDING") // PENDING, ACCEPTED, EXPIRED
+  
+  senderId  String
+  sender    User         @relation("SentInvitations", fields: [senderId], references: [id], onDelete: Cascade)
+
+  expiresAt DateTime
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@index([projectId])
+  @@index([email])
+  @@index([token])
 }
 
 model Column {

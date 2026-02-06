@@ -13,16 +13,27 @@ export async function PUT(
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
-        // Verify ownership
-        const project = await prisma.scenaProject.findUnique({
-            where: {
-                id: projectId,
-                ownerId: session.user.id
-            }
+        // Check Permissions
+        const { verifyProjectAccess } = await import("@/lib/scena-auth");
+        const { hasAccess, role, isOwner } = await verifyProjectAccess(projectId, session.user.id);
+
+        const canEdit = isOwner || role === "EDITOR" || role === "ADMIN";
+
+        if (!hasAccess || !canEdit) {
+            return new NextResponse("Unauthorized", { status: 403 });
+        }
+
+        // Verify column exists
+        const columnCheck = await prisma.column.findUnique({
+            where: { id: columnId },
         });
 
-        if (!project) {
-            return new NextResponse("Project not found", { status: 404 });
+        if (!columnCheck) {
+            return new NextResponse("Column not found", { status: 404 });
+        }
+
+        if (columnCheck.projectId !== projectId) {
+            return new NextResponse("Column does not belong to project", { status: 400 });
         }
 
         const body = await req.json();
@@ -55,16 +66,26 @@ export async function DELETE(
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
-        // Verify ownership
-        const project = await prisma.scenaProject.findUnique({
-            where: {
-                id: projectId,
-                ownerId: session.user.id
-            }
+        // Check Permissions
+        const { verifyProjectAccess } = await import("@/lib/scena-auth");
+        const { hasAccess, role, isOwner } = await verifyProjectAccess(projectId, session.user.id);
+
+        const canEdit = isOwner || role === "EDITOR" || role === "ADMIN";
+
+        if (!hasAccess || !canEdit) {
+            return new NextResponse("Unauthorized", { status: 403 });
+        }
+
+        const columnCheck = await prisma.column.findUnique({
+            where: { id: columnId },
         });
 
-        if (!project) {
-            return new NextResponse("Project not found", { status: 404 });
+        if (!columnCheck) {
+            return new NextResponse("Column not found", { status: 404 });
+        }
+
+        if (columnCheck.projectId !== projectId) {
+            return new NextResponse("Column does not belong to project", { status: 400 });
         }
 
         await prisma.column.delete({

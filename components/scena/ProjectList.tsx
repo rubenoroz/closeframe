@@ -19,6 +19,7 @@ interface Project {
     name: string;
     description: string | null;
     isArchived: boolean;
+    ownerId: string;
     booking?: {
         customerName: string;
         date: string;
@@ -33,6 +34,17 @@ export function ProjectList() {
     const [view, setView] = useState<'active' | 'archived'>('active');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
+    const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+    useEffect(() => {
+        // Fetch current user id
+        fetch("/api/auth/session")
+            .then(res => res.json())
+            .then(data => {
+                if (data?.user?.id) setCurrentUserId(data.user.id);
+            })
+            .catch(err => console.error("Error fetching session", err));
+    }, []);
 
     // Filter projects by search term
     const filteredProjects = projects.filter(p => {
@@ -57,7 +69,9 @@ export function ProjectList() {
     const fetchProjects = async () => {
         setLoading(true);
         try {
-            const res = await fetch(`/api/scena/projects?archived=${view === 'archived'}`);
+            const res = await fetch(`/api/scena/projects?archived=${view === 'archived'}`, {
+                cache: 'no-store'
+            });
             if (res.ok) {
                 const data = await res.json();
                 setProjects(data);
@@ -238,29 +252,34 @@ export function ProjectList() {
                                                 <FolderOpen className="mr-2 h-4 w-4" /> Abrir
                                             </DropdownMenuItem>
 
-                                            {view === 'active' ? (
+                                            {/* Only Owner can Archive/Delete */}
+                                            {currentUserId === project.ownerId && (
                                                 <>
-                                                    <DropdownMenuItem onClick={() => handleArchive(project.id, true)}>
-                                                        <Archive className="mr-2 h-4 w-4" /> Archivar
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem
-                                                        onClick={() => handleDelete(project.id)}
-                                                        className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-900/10"
-                                                    >
-                                                        <Trash2 className="mr-2 h-4 w-4" /> Eliminar
-                                                    </DropdownMenuItem>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <DropdownMenuItem onClick={() => handleArchive(project.id, false)}>
-                                                        <Undo2 className="mr-2 h-4 w-4" /> Desarchivar
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem
-                                                        onClick={() => handleDelete(project.id)}
-                                                        className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-900/10"
-                                                    >
-                                                        <Trash2 className="mr-2 h-4 w-4" /> Eliminar
-                                                    </DropdownMenuItem>
+                                                    {view === 'active' ? (
+                                                        <>
+                                                            <DropdownMenuItem onClick={() => handleArchive(project.id, true)}>
+                                                                <Archive className="mr-2 h-4 w-4" /> Archivar
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem
+                                                                onClick={() => handleDelete(project.id)}
+                                                                className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-900/10"
+                                                            >
+                                                                <Trash2 className="mr-2 h-4 w-4" /> Eliminar
+                                                            </DropdownMenuItem>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <DropdownMenuItem onClick={() => handleArchive(project.id, false)}>
+                                                                <Undo2 className="mr-2 h-4 w-4" /> Desarchivar
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem
+                                                                onClick={() => handleDelete(project.id)}
+                                                                className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-900/10"
+                                                            >
+                                                                <Trash2 className="mr-2 h-4 w-4" /> Eliminar
+                                                            </DropdownMenuItem>
+                                                        </>
+                                                    )}
                                                 </>
                                             )}
                                         </DropdownMenuContent>

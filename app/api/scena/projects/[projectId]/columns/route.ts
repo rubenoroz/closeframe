@@ -17,16 +17,17 @@ export async function GET(
             return new NextResponse("Project ID required", { status: 400 });
         }
 
+        // Use helper to check access
+        const { verifyProjectAccess } = await import("@/lib/scena-auth");
+        const { hasAccess } = await verifyProjectAccess(projectId, session.user.id);
+
+        if (!hasAccess) {
+            return new NextResponse("Unauthorized", { status: 403 });
+        }
+
         const columns = await prisma.column.findMany({
-            where: {
-                projectId: projectId,
-                project: {
-                    ownerId: session.user.id
-                }
-            },
-            orderBy: {
-                order: 'asc',
-            }
+            where: { projectId },
+            orderBy: { order: 'asc' }
         });
 
         return NextResponse.json(columns);
@@ -54,16 +55,15 @@ export async function POST(
             return new NextResponse("Name is required", { status: 400 });
         }
 
-        // Verify ownership
-        const project = await prisma.scenaProject.findUnique({
-            where: {
-                id: projectId,
-                ownerId: session.user.id
-            }
-        });
+        // Use helper to check access & permissions
+        const { verifyProjectAccess } = await import("@/lib/scena-auth");
+        const { hasAccess, role, isOwner } = await verifyProjectAccess(projectId, session.user.id);
 
-        if (!project) {
-            return new NextResponse("Project not found", { status: 404 });
+        // Owners and Editors/Admins can create columns
+        const canEdit = isOwner || role === "EDITOR" || role === "ADMIN";
+
+        if (!hasAccess || !canEdit) {
+            return new NextResponse("Unauthorized", { status: 403 });
         }
 
         // Get max order

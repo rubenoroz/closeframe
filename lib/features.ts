@@ -698,6 +698,25 @@ export const FEATURE_POOL: FeatureDefinition[] = [
         icon: Users
     },
     {
+        id: "scenaAccess",
+        label: "Acceso Scena Board",
+        description: "Acceso al gestor de proyectos",
+        category: "collaboration",
+        type: "boolean",
+        defaultValue: false,
+        icon: LayoutGrid
+    },
+    {
+        id: "maxScenaProjects",
+        label: "Proyectos Scena",
+        description: "Límite de proyectos propios (0 = Solo invitado)",
+        category: "collaboration",
+        type: "number",
+        defaultValue: 0,
+        icon: Folder
+    },
+
+    {
         id: "imageSelection",
         label: "Selección de Imágenes",
         description: "Cliente selecciona favoritas",

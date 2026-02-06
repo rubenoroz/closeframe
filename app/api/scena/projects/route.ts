@@ -1,6 +1,9 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { getPlanConfig } from "@/lib/plans.config";
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
     try {
@@ -14,13 +17,19 @@ export async function GET(req: Request) {
 
         const projects = await prisma.scenaProject.findMany({
             where: {
-                ownerId: session.user.id,
+                OR: [
+                    { ownerId: session.user.id },
+                    { members: { some: { userId: session.user.id } } }
+                ],
                 isArchived: archived,
             },
-            orderBy: {
-                updatedAt: 'desc',
-            },
-            include: {
+            select: {
+                id: true,
+                name: true,
+                description: true,
+                isArchived: true,
+                updatedAt: true,
+                ownerId: true,
                 booking: {
                     select: {
                         id: true,
@@ -34,7 +43,10 @@ export async function GET(req: Request) {
                         tasks: true
                     }
                 },
-            }
+            },
+            orderBy: {
+                updatedAt: 'desc',
+            },
         });
 
         return NextResponse.json(projects);
@@ -56,6 +68,33 @@ export async function POST(req: Request) {
 
         if (!name) {
             return new NextResponse("Missing required fields", { status: 400 });
+        }
+
+        // Get User Plan & Check Limits
+        const user = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            include: { plan: true }
+        });
+
+        const config = getPlanConfig(user?.plan?.name);
+
+        // 1. Check Access
+        if (!config.features.scenaAccess) {
+            return NextResponse.json({ error: "Your plan does not have access to Scena Projects." }, { status: 403 });
+        }
+
+        // 2. Check Limits
+        const limit = config.limits.maxScenaProjects; // 0 for Free
+        if (limit !== -1) {
+            const count = await prisma.scenaProject.count({
+                where: { ownerId: session.user.id }
+            });
+
+            if (count >= limit) {
+                return NextResponse.json({
+                    error: `You have reached the limit of ${limit} projects for your plan.`
+                }, { status: 403 });
+            }
         }
 
         const project = await prisma.scenaProject.create({

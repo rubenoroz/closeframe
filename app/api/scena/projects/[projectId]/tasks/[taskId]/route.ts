@@ -13,7 +13,17 @@ export async function PUT(
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
-        // Verify the task exists and belongs to a project owned by user
+        // Check Permissions
+        const { verifyProjectAccess } = await import("@/lib/scena-auth");
+        const { hasAccess, role, isOwner } = await verifyProjectAccess(projectId, session.user.id);
+
+        const canEdit = isOwner || role === "EDITOR" || role === "ADMIN";
+
+        if (!hasAccess || !canEdit) {
+            return new NextResponse("Unauthorized", { status: 403 });
+        }
+
+        // Verify task exists
         const task = await prisma.task.findUnique({
             where: { id: taskId },
             include: {
@@ -25,9 +35,9 @@ export async function PUT(
 
         if (!task) return new NextResponse("Task not found", { status: 404 });
 
-        // Verify ownership through column -> project
-        if (task.column.project.ownerId !== session.user.id) {
-            return new NextResponse("Unauthorized", { status: 401 });
+        // Verify task belongs to project
+        if (task.column.projectId !== projectId) {
+            return new NextResponse("Task does not belong to project", { status: 400 });
         }
 
         const body = await req.json();
@@ -95,7 +105,17 @@ export async function DELETE(
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
-        // Verify task exists and ownership through column -> project
+        // Check Permissions
+        const { verifyProjectAccess } = await import("@/lib/scena-auth");
+        const { hasAccess, role, isOwner } = await verifyProjectAccess(projectId, session.user.id);
+
+        const canEdit = isOwner || role === "EDITOR" || role === "ADMIN";
+
+        if (!hasAccess || !canEdit) {
+            return new NextResponse("Unauthorized", { status: 403 });
+        }
+
+        // Verify task exists
         const task = await prisma.task.findUnique({
             where: { id: taskId },
             include: {
@@ -108,8 +128,8 @@ export async function DELETE(
 
         if (!task) return new NextResponse("Task not found", { status: 404 });
 
-        if (task.column.project.ownerId !== session.user.id) {
-            return new NextResponse("Unauthorized", { status: 401 });
+        if (task.column.projectId !== projectId) {
+            return new NextResponse("Task does not belong to project", { status: 400 });
         }
 
         // Recursive function to delete all descendants

@@ -9,6 +9,7 @@ import { ScenaIcon } from "@/components/icons/ScenaIcon";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useTheme } from "@/components/ThemeProvider";
+import { getPlanConfig } from "@/lib/plans.config";
 
 export default function DashboardLayout({
     children,
@@ -23,7 +24,10 @@ export default function DashboardLayout({
 
     const userPlan = ((session?.user as any)?.planName || '').toLowerCase();
     const userRole = (session?.user as any)?.role;
-    const showScena = ['studio', 'agency'].includes(userPlan) || userRole === 'SUPERADMIN' || userRole === 'ADMIN';
+
+    // Check feature flag instead of hardcoded plans
+    const config = getPlanConfig(userPlan);
+    const showScena = config.features.scenaAccess || userRole === 'SUPERADMIN' || userRole === 'ADMIN';
 
     const navItems = [
         { href: "/dashboard/settings", label: "Perfil público", icon: <User className="w-5 h-5" /> },
