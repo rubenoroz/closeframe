@@ -211,92 +211,90 @@ export default async function PublicProfilePage({ params }: Props) {
                 )}
 
                 {/* Social Links - Dynamic */}
-                <div className={`flex justify-center flex-wrap gap-5 md:gap-6 mt-8 md:mt-10 ${isLight ? 'text-neutral-600' : 'text-neutral-400'}`}>
-                    {/* Legacy Instagram */}
-                    {user.businessInstagram && (
-                        <a
-                            href={`https://instagram.com/${user.businessInstagram.replace('@', '')}`}
-                            target="_blank"
-                            className={`transition-colors ${isLight ? 'hover:text-black' : 'hover:text-white'}`}
-                            title="Instagram"
-                        >
-                            <Instagram className="w-5 h-5" />
-                        </a>
-                    )}
-                    {/* SocialLinks Instagram (si no hay legacy) */}
-                    {!user.businessInstagram && (user.socialLinks as any)?.instagram && (
-                        <a
-                            href={`https://instagram.com/${((user.socialLinks as any).instagram as string).replace('@', '')}`}
-                            target="_blank"
-                            className={`transition-colors ${isLight ? 'hover:text-black' : 'hover:text-white'}`}
-                            title="Instagram"
-                        >
-                            <Instagram className="w-5 h-5" />
-                        </a>
-                    )}
-                    {/* LinkedIn */}
-                    {(user.socialLinks as any)?.linkedin && (
-                        <a
-                            href={(user.socialLinks as any).linkedin.startsWith('http') ? (user.socialLinks as any).linkedin : `https://${(user.socialLinks as any).linkedin}`}
-                            target="_blank"
-                            className={`transition-colors ${isLight ? 'hover:text-black' : 'hover:text-white'}`}
-                            title="LinkedIn"
-                        >
-                            <Linkedin className="w-5 h-5" />
-                        </a>
-                    )}
-                    {/* YouTube */}
-                    {(user.socialLinks as any)?.youtube && (
-                        <a
-                            href={(user.socialLinks as any).youtube.startsWith('http') ? (user.socialLinks as any).youtube : `https://${(user.socialLinks as any).youtube}`}
-                            target="_blank"
-                            className={`transition-colors ${isLight ? 'hover:text-black' : 'hover:text-white'}`}
-                            title="YouTube"
-                        >
-                            <Youtube className="w-5 h-5" />
-                        </a>
-                    )}
-                    {/* Vimeo */}
-                    {(user.socialLinks as any)?.vimeo && (
-                        <a
-                            href={(user.socialLinks as any).vimeo.startsWith('http') ? (user.socialLinks as any).vimeo : `https://${(user.socialLinks as any).vimeo}`}
-                            target="_blank"
-                            className={`transition-colors ${isLight ? 'hover:text-black' : 'hover:text-white'}`}
-                            title="Vimeo"
-                        >
-                            <Video className="w-5 h-5" />
-                        </a>
-                    )}
-                    {/* Website from socialLinks */}
-                    {(user.socialLinks as any)?.website && (
-                        <a
-                            href={(user.socialLinks as any).website.startsWith('http') ? (user.socialLinks as any).website : `https://${(user.socialLinks as any).website}`}
-                            target="_blank"
-                            className={`transition-colors ${isLight ? 'hover:text-black' : 'hover:text-white'}`}
-                            title="Sitio web"
-                        >
-                            <Globe className="w-5 h-5" />
-                        </a>
-                    )}
-                    {/* Legacy Website (si no hay socialLinks.website) */}
-                    {!(user.socialLinks as any)?.website && user.businessWebsite && (
-                        <a
-                            href={user.businessWebsite}
-                            target="_blank"
-                            className={`transition-colors ${isLight ? 'hover:text-black' : 'hover:text-white'}`}
-                            title="Sitio web"
-                        >
-                            <Globe className="w-5 h-5" />
-                        </a>
-                    )}
-                    <a
-                        href={`mailto:${user.email}`}
-                        className={`transition-colors ${isLight ? 'hover:text-black' : 'hover:text-white'}`}
-                        title="Email"
-                    >
-                        <Mail className="w-5 h-5" />
-                    </a>
-                </div>
+                {/* Social Links - Dynamic with Plan Enforcement */}
+                {(() => {
+                    // 1. Determine Limits
+                    const maxSocialLinks = effectiveConfig.limits?.maxSocialLinks ?? 1;
+                    const advancedSocialAllowed = effectiveConfig.features?.advancedSocialNetworks ?? false;
+
+                    // 2. Collect All Potential Links
+                    const links = [];
+
+                    // Instagram (Always allowed as 'Basic' social, usually)
+                    // If strict "Advanced Social Networks" means NO social networks except Instagram?
+                    // Yes, based on SettingsPage logic: only Instagram if !advancedSocialAllowed.
+                    let hasInstagram = false;
+                    if (user.businessInstagram) {
+                        links.push({
+                            id: 'instagram',
+                            icon: Instagram,
+                            url: `https://instagram.com/${user.businessInstagram.replace('@', '')}`,
+                            label: 'Instagram'
+                        });
+                        hasInstagram = true;
+                    } else if ((user.socialLinks as any)?.instagram) {
+                        links.push({
+                            id: 'instagram',
+                            icon: Instagram,
+                            url: `https://instagram.com/${((user.socialLinks as any).instagram as string).replace('@', '')}`,
+                            label: 'Instagram'
+                        });
+                        hasInstagram = true;
+                    }
+
+                    // Other Networks (Only if Advanced allowed)
+                    if (advancedSocialAllowed) {
+                        const sl = (user.socialLinks as any) || {};
+
+                        if (sl.linkedin) links.push({ id: 'linkedin', icon: Linkedin, url: sl.linkedin.startsWith('http') ? sl.linkedin : `https://${sl.linkedin}`, label: 'LinkedIn' });
+                        if (sl.youtube) links.push({ id: 'youtube', icon: Youtube, url: sl.youtube.startsWith('http') ? sl.youtube : `https://${sl.youtube}`, label: 'YouTube' });
+                        if (sl.vimeo) links.push({ id: 'vimeo', icon: Video, url: sl.vimeo.startsWith('http') ? sl.vimeo : `https://${sl.vimeo}`, label: 'Vimeo' });
+
+                        // Facebook & Twitter (X) - Add support as they are in SettingsPage
+                        if (sl.facebook) links.push({ id: 'facebook', icon: Globe, url: sl.facebook.startsWith('http') ? sl.facebook : `https://${sl.facebook}`, label: 'Facebook' }); // Using Globe as generic if icon imported? importing below
+                        // Note: I need to ensure I have icons imported or fallback. 
+                        // The existing file imports: Instagram, Globe, Mail, Camera, Linkedin, Youtube, Video, ExternalLink
+                        // It does NOT import Facebook, Twitter. I should check imports or use Globe.
+
+                        if (sl.twitter) links.push({ id: 'twitter', icon: Globe, url: sl.twitter.startsWith('http') ? sl.twitter : `https://${sl.twitter}`, label: 'X / Twitter' });
+
+                        // Website
+                        if (sl.website) {
+                            links.push({ id: 'website', icon: Globe, url: sl.website.startsWith('http') ? sl.website : `https://${sl.website}`, label: 'Sitio web' });
+                        } else if (user.businessWebsite) {
+                            links.push({ id: 'website', icon: Globe, url: user.businessWebsite, label: 'Sitio web' });
+                        }
+                    }
+
+                    // 3. Apply Limit
+                    const visibleLinks = maxSocialLinks === -1 ? links : links.slice(0, maxSocialLinks);
+
+                    return (
+                        <div className={`flex justify-center flex-wrap gap-5 md:gap-6 mt-8 md:mt-10 ${isLight ? 'text-neutral-600' : 'text-neutral-400'}`}>
+                            {visibleLinks.map((link, idx) => (
+                                <a
+                                    key={`${link.id}-${idx}`}
+                                    href={link.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={`transition-colors ${isLight ? 'hover:text-black' : 'hover:text-white'}`}
+                                    title={link.label}
+                                >
+                                    <link.icon className="w-5 h-5" />
+                                </a>
+                            ))}
+
+                            {/* Email - Always visible as contact info */}
+                            <a
+                                href={`mailto:${user.email}`}
+                                className={`transition-colors ${isLight ? 'hover:text-black' : 'hover:text-white'}`}
+                                title="Email"
+                            >
+                                <Mail className="w-5 h-5" />
+                            </a>
+                        </div>
+                    );
+                })()}
             </section>
 
             {/* DIVIDER */}

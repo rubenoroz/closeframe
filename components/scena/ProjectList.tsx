@@ -27,7 +27,8 @@ interface Project {
     updatedAt: string;
 }
 
-export function ProjectList() {
+
+export function ProjectList({ canCreate = true }: { canCreate?: boolean }) {
     const router = useRouter();
     const [projects, setProjects] = useState<Project[]>([]);
     const [loading, setLoading] = useState(true);
@@ -137,13 +138,24 @@ export function ProjectList() {
                             </button>
                         )}
                     </div>
-                    <Button
-                        onClick={() => setIsCreateModalOpen(true)}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 whitespace-nowrap"
-                    >
-                        <Plus className="w-4 h-4" />
-                        <span className="hidden sm:inline">Nuevo Proyecto</span>
-                    </Button>
+                    {canCreate ? (
+                        <Button
+                            onClick={() => setIsCreateModalOpen(true)}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 whitespace-nowrap"
+                        >
+                            <Plus className="w-4 h-4" />
+                            <span className="hidden sm:inline">Nuevo Proyecto</span>
+                        </Button>
+                    ) : (
+                        <Button
+                            disabled
+                            className="bg-neutral-200 dark:bg-neutral-800 text-neutral-400 cursor-not-allowed gap-2 whitespace-nowrap"
+                            title="Límite de proyectos alcanzado"
+                        >
+                            <Plus className="w-4 h-4" />
+                            <span className="hidden sm:inline">Límite Alcanzado</span>
+                        </Button>
+                    )}
                 </div>
             </div>
 
@@ -203,12 +215,18 @@ export function ProjectList() {
                                     : 'Los proyectos que archives aparecerán aquí.'}
                         </p>
                         {view === 'active' && !searchTerm && (
-                            <Button
-                                onClick={() => setIsCreateModalOpen(true)}
-                                variant="outline"
-                            >
-                                Crear proyecto
-                            </Button>
+                            canCreate ? (
+                                <Button
+                                    onClick={() => setIsCreateModalOpen(true)}
+                                    variant="outline"
+                                >
+                                    Crear proyecto
+                                </Button>
+                            ) : (
+                                <p className="text-sm text-amber-600 dark:text-amber-500 font-medium">
+                                    Has alcanzado el límite de proyectos de tu plan.
+                                </p>
+                            )
                         )}
                     </div>
                 ) : (

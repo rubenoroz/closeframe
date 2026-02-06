@@ -6,6 +6,7 @@ import CalendarSettings from "@/components/booking/CalendarSettings";
 import { X, Loader2, CalendarDays, UserCircle, Mail, FileText, Check, Trash2, Phone, MessageCircle, ExternalLink, Search, LayoutGrid, Settings, RefreshCw, Calendar, Plus } from "lucide-react";
 import { Skeleton } from "@/components/Skeleton";
 import { cn } from "@/lib/utils";
+import { useFeatures } from "@/hooks/useFeatures";
 
 interface Booking {
     id: string;
@@ -19,6 +20,7 @@ interface Booking {
 }
 
 export default function BookingsPage() {
+    const { canUse } = useFeatures();
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -419,19 +421,21 @@ export default function BookingsPage() {
                     </button>
                 </div>
 
-                {/* Calendar Sync Button */}
-                <button
-                    onClick={() => setShowCalendarSettings(!showCalendarSettings)}
-                    className={cn(
-                        "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all border",
-                        showCalendarSettings
-                            ? "bg-emerald-500/10 text-emerald-500 border-emerald-500"
-                            : "bg-neutral-900 text-neutral-400 border-neutral-800 hover:border-neutral-600 hover:text-white"
-                    )}
-                >
-                    <Calendar className="w-4 h-4" />
-                    <span className="hidden sm:inline">Calendarios</span>
-                </button>
+                {/* Calendar Sync Button - Only if enabled */}
+                {canUse('calendarSync') && (
+                    <button
+                        onClick={() => setShowCalendarSettings(!showCalendarSettings)}
+                        className={cn(
+                            "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all border",
+                            showCalendarSettings
+                                ? "bg-emerald-500/10 text-emerald-500 border-emerald-500"
+                                : "bg-neutral-900 text-neutral-400 border-neutral-800 hover:border-neutral-600 hover:text-white"
+                        )}
+                    >
+                        <Calendar className="w-4 h-4" />
+                        <span className="hidden sm:inline">Calendarios</span>
+                    </button>
+                )}
             </div>
 
             {/* Calendar Settings Panel */}

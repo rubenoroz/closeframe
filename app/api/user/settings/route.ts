@@ -87,10 +87,10 @@ export async function GET() {
         }
 
         // Calculate Effective Config server-side
-        // Check types: user.plan?.config is Json value
-        const effectiveConfig = getEffectivePlanConfig(user.plan?.config || user.plan?.name, user.featureOverrides);
+        // Note: Client can now use the /api/features/me endpoint for detailed matrix
+        // but we can still return a summary here for convenience if needed.
 
-        return new NextResponse(JSON.stringify({ user, effectiveConfig }), {
+        return new NextResponse(JSON.stringify({ user }), {
             status: 200,
             headers: {
                 'Content-Type': 'application/json',
@@ -103,7 +103,7 @@ export async function GET() {
     }
 }
 
-import { getPlanConfig, getEffectivePlanConfig } from "@/lib/plans.config";
+import { getFeatureLimit } from "@/lib/features/service";
 
 export async function PATCH(req: NextRequest) {
     try {
@@ -113,22 +113,12 @@ export async function PATCH(req: NextRequest) {
         }
 
         const body = await req.json();
-        console.log("PATCH Settings Body:", JSON.stringify(body, null, 2));
+        const userId = session.user.id;
 
-        // Fetch current user plan to enforce limits
-        const currentUser = await prisma.user.findUnique({
-            where: { id: session.user.id },
-            select: {
-                plan: { select: { name: true } },
-                featureOverrides: true
-            }
-        });
-
-        const planConfig = getEffectivePlanConfig(currentUser?.plan?.name, currentUser?.featureOverrides);
-
-        // Enforce Bio Limit
-        if (body.bio && body.bio.length > planConfig.limits.bioMaxLength) {
-            body.bio = body.bio.slice(0, planConfig.limits.bioMaxLength);
+        // Enforce Bio Limit via DB Matrix
+        const bioMaxLength = await getFeatureLimit(userId, 'bioMaxLength') || 150;
+        if (body.bio && body.bio.length > bioMaxLength) {
+            body.bio = body.bio.slice(0, bioMaxLength);
         }
 
         const {

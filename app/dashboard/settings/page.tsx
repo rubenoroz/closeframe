@@ -29,14 +29,16 @@ import {
 import { SortableProjectItem } from "@/components/dashboard/SortableProjectItem";
 import FocalPointPicker from "@/components/FocalPointPicker";
 
-import { getPlanConfig } from "@/lib/plans.config";
+import { useFeatures } from "@/hooks/useFeatures";
 
 export default function SettingsPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [planConfig, setPlanConfig] = useState<any>(null); // Store effective config
     const [copied, setCopied] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // New Centralized Feature Hook
+    const { canUse, getLimit, role: userRole, isLoading: loadingFeatures } = useFeatures();
 
     const [user, setUser] = useState({
         id: "",
@@ -68,20 +70,19 @@ export default function SettingsPage() {
         featureOverrides: null as any,
         planExpiresAt: null as string | null,
         cloudAccounts: [] as any[],
-        projects: [] as any[],
-        effectiveConfig: null as any // Add this for typing if needed
+        projects: [] as any[]
     });
 
-    // Derived state for UI locks
-    const bioMaxLength = planConfig?.limits?.bioMaxLength || 150;
-    const maxSocialLinks = planConfig?.limits?.maxSocialLinks || 1;
-    const advancedSocialAllowed = planConfig?.features?.advancedSocialNetworks || false;
-    const isProfessionalProfile = planConfig?.features?.professionalProfile || false;
-    const isCoverImageAllowed = planConfig?.features?.coverImage ?? isProfessionalProfile; // Specific or fallback to bundle
-    const isCTAAllowed = planConfig?.features?.callToAction ?? isProfessionalProfile; // Specific or fallback to bundle
-    const isBookingConfigAllowed = (planConfig?.features?.bookingConfig ?? isProfessionalProfile) || isCTAAllowed; // Booking config is linked to CTA or Pro logic
-    const isCustomFieldsAllowed = planConfig?.features?.customFields ?? isProfessionalProfile; // Headline, Location, etc.
-    const isRestrictedPlan = !advancedSocialAllowed; // Keep legacy variable for social, but use logic above
+    // Derived state for UI locks via the new hook
+    const bioMaxLength = getLimit('bioMaxLength') || 150;
+    const maxSocialLinks = getLimit('maxSocialLinks') || 1;
+    const advancedSocialAllowed = canUse('advancedSocialNetworks');
+    const isProfessionalProfile = canUse('professionalProfile');
+    const isCoverImageAllowed = canUse('coverImage') || isProfessionalProfile;
+    const isCTAAllowed = canUse('callToAction') || isProfessionalProfile;
+    const isBookingConfigAllowed = canUse('bookingConfig') || isProfessionalProfile || isCTAAllowed;
+    const isCustomFieldsAllowed = canUse('customFields') || isProfessionalProfile;
+    const isRestrictedPlan = !advancedSocialAllowed;
 
     // Helper for locked inputs
     const LockedOverlay = ({ label = "Plan Profesional" }: { label?: string }) => (
@@ -90,10 +91,7 @@ export default function SettingsPage() {
         </div>
     );
 
-    // Note: isRestrictedPlan logic is tricky with overrides. 
-    // If we override advancedSocialAllowed=true, then they are effectively not restricted functionality-wise, 
-    // but their "Plan Name" is still 'free'. 
-    // We should trust the 'advancedSocialAllowed' flag for UI locks.
+    // Note: isRestrictedPlan logic is now driven by the 'advancedSocialNetworks' feature key.
 
     // Dynamic Social Links State
     const [selectedNetwork, setSelectedNetwork] = useState("instagram");
@@ -170,12 +168,8 @@ export default function SettingsPage() {
                         featureOverrides: data.user.featureOverrides || null,
                         planExpiresAt: data.user.planExpiresAt || null,
                         cloudAccounts: data.user.cloudAccounts || [],
-                        projects: data.user.projects || [],
-                        effectiveConfig: data.effectiveConfig || null
+                        projects: data.user.projects || []
                     });
-                    if (data.effectiveConfig) {
-                        setPlanConfig(data.effectiveConfig);
-                    }
                 }
                 setLoading(false);
             })
@@ -728,6 +722,17 @@ export default function SettingsPage() {
                 <section>
                     <div className="flex items-center gap-2 md:gap-3 mb-5 md:mb-8 text-neutral-400 text-[10px] md:text-xs uppercase tracking-widest font-bold">
                         <Link2 className="w-3 h-3 md:w-4 md:h-4 text-emerald-500" /> Redes Sociales
+                        {maxSocialLinks !== -1 && (
+                            <span className={cn(
+                                "ml-2 px-1.5 py-0.5 rounded text-[9px] border",
+                                Object.keys(user.socialLinks || {}).length >= maxSocialLinks
+                                    ? "bg-red-500/10 text-red-500 border-red-500/20"
+                                    : "bg-neutral-800 text-neutral-500 border-neutral-700"
+                            )}>
+                                {Object.keys(user.socialLinks || {}).length}/{maxSocialLinks}
+                            </span>
+                        )}
+                        {maxSocialLinks === -1 && <span className="ml-2 text-[9px] text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">Ilimitado</span>}
                     </div>
 
                     <div className="space-y-6">
@@ -783,8 +788,7 @@ export default function SettingsPage() {
                                                     : "bg-neutral-900 border border-neutral-800 text-neutral-100 focus:border-emerald-500"
                                             )}
                                         >
-
-                                            {SOCIAL_PLATFORMS.map(p => (
+                                            {SOCIAL_PLATFORMS.filter(p => advancedSocialAllowed || p.id === 'instagram').map(p => (
                                                 <option key={p.id} value={p.id}>
                                                     {p.label}
                                                 </option>

@@ -25,14 +25,15 @@ import {
     Search,
     Zap,
     QrCode,
-    Smartphone
+    Smartphone,
+    Copy
 } from "lucide-react";
 
 export interface FeatureDefinition {
     id: string;
     label: string;
     description: string;
-    category: 'profile' | 'gallery' | 'booking' | 'system' | 'analytics' | 'collaboration' | 'monetization';
+    category: 'profile' | 'gallery' | 'booking' | 'system' | 'analytics' | 'collaboration' | 'monetization' | 'scena' | 'video' | 'payments';
     type: 'boolean' | 'number' | 'select';
     icon?: any;
     defaultValue?: any;
@@ -117,6 +118,7 @@ export const FEATURE_POOL: FeatureDefinition[] = [
         defaultValue: false,
         icon: Globe
     },
+
 
     // --- GALLERY ---
     {
@@ -262,6 +264,15 @@ export const FEATURE_POOL: FeatureDefinition[] = [
         type: "boolean",
         defaultValue: true,
         icon: Download
+    },
+    {
+        id: "lowResThumbnails",
+        label: "Miniaturas Baja Res.",
+        description: "Carga más rápida con calidad de previsualización",
+        category: "gallery",
+        type: "boolean",
+        defaultValue: true,
+        icon: ImageIcon
     },
     {
         id: "highResDownloads",
@@ -432,13 +443,14 @@ export const FEATURE_POOL: FeatureDefinition[] = [
     },
     {
         id: "duplicateGallery",
-        label: "Duplicar Galerías",
-        description: "Templates / clonar proyectos",
+        label: "Duplicar Galería",
+        description: "Permitir duplicar proyectos existentes",
         category: "gallery",
         type: "boolean",
         defaultValue: false,
-        icon: Folder
+        icon: Copy
     },
+
     {
         id: "collections",
         label: "Colecciones",
@@ -452,7 +464,7 @@ export const FEATURE_POOL: FeatureDefinition[] = [
     // --- SYSTEM / LIMITS ---
     {
         id: "maxProjects",
-        label: "Límite de Proyectos",
+        label: "Límite de Galerías",
         description: "Galerías activas (-1 = Ilimitado)",
         category: "system",
         type: "number",
@@ -701,16 +713,16 @@ export const FEATURE_POOL: FeatureDefinition[] = [
         id: "scenaAccess",
         label: "Acceso Scena Board",
         description: "Acceso al gestor de proyectos",
-        category: "collaboration",
+        category: "scena",
         type: "boolean",
         defaultValue: false,
         icon: LayoutGrid
     },
     {
         id: "maxScenaProjects",
-        label: "Proyectos Scena",
-        description: "Límite de proyectos propios (0 = Solo invitado)",
-        category: "collaboration",
+        label: "Límite Proyectos Scena",
+        description: "Límite de tableros propios (0 = Solo invitado)",
+        category: "scena",
         type: "number",
         defaultValue: 0,
         icon: Folder

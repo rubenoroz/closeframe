@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { NextResponse } from "next/server";
-import { getPlanConfig } from "@/lib/plans.config";
+import { canUseFeature, getFeatureLimit } from "@/lib/features/service";
 
 export const dynamic = 'force-dynamic';
 
@@ -64,28 +64,21 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { name, description, bookingId } = body;
+        const { name, description, bookingId, externalEventId } = body;
 
         if (!name) {
             return new NextResponse("Missing required fields", { status: 400 });
         }
 
-        // Get User Plan & Check Limits
-        const user = await prisma.user.findUnique({
-            where: { id: session.user.id },
-            include: { plan: true }
-        });
-
-        const config = getPlanConfig(user?.plan?.name);
-
         // 1. Check Access
-        if (!config.features.scenaAccess) {
+        const hasAccess = await canUseFeature(session.user.id, 'scenaAccess');
+        if (!hasAccess) {
             return NextResponse.json({ error: "Your plan does not have access to Scena Projects." }, { status: 403 });
         }
 
         // 2. Check Limits
-        const limit = config.limits.maxScenaProjects; // 0 for Free
-        if (limit !== -1) {
+        const limit = await getFeatureLimit(session.user.id, 'maxScenaProjects');
+        if (limit !== null && limit !== -1) {
             const count = await prisma.scenaProject.count({
                 where: { ownerId: session.user.id }
             });
@@ -97,12 +90,48 @@ export async function POST(req: Request) {
             }
         }
 
+        // 3. Determine Booking ID
+        let finalBookingId = bookingId;
+
+        // If no direct bookingId provided but externalEventId is, we need to resolve it
+        if (!finalBookingId && externalEventId) {
+            const externalEvent = await prisma.externalCalendarEvent.findUnique({
+                where: { id: externalEventId }
+            });
+
+            if (externalEvent) {
+                // If already linked, use the existing booking
+                if (externalEvent.linkedBookingId) {
+                    finalBookingId = externalEvent.linkedBookingId;
+                } else {
+                    // Create a new local booking mirroring the external event
+                    const newBooking = await prisma.booking.create({
+                        data: {
+                            userId: session.user.id,
+                            customerName: externalEvent.title || "Evento Externo",
+                            date: externalEvent.start,
+                            endDate: externalEvent.end,
+                            notes: externalEvent.description,
+                            status: "confirmed", // External events effectively occupy the slot
+                        }
+                    });
+
+                    // Link the External Event to this new Booking
+                    await prisma.externalCalendarEvent.update({
+                        where: { id: externalEventId },
+                        data: { linkedBookingId: newBooking.id }
+                    });
+
+                    finalBookingId = newBooking.id;
+                }
+            }
+        }
+
         const project = await prisma.scenaProject.create({
-            // Force rebuild comment
             data: {
                 name,
                 description,
-                bookingId: bookingId || null,
+                bookingId: finalBookingId || null,
                 ownerId: session.user.id,
                 columns: {
                     createMany: {

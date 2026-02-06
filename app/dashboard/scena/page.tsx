@@ -10,27 +10,11 @@ export default async function ScenaPage() {
         redirect("/dashboard");
     }
 
-    // Check plan permissions
-    const user = await prisma.user.findUnique({
-        where: { id: session.user.id },
-        include: { plan: true }
-    });
+    // Check plan permissions via database matrix
+    const { canUseFeature, getFeatureLimit } = await import("@/lib/features/service");
+    const isAllowed = await canUseFeature(session.user.id, 'scenaAccess') || (session.user.role as any) === 'SUPERADMIN' || (session.user.role as any) === 'ADMIN';
 
-    const userPlan = (user?.plan?.name || '').toLowerCase();
-    const userRole = user?.role;
-
-    // Get effective plan config (handles overrides if any exists implementation)
-    // For now we check the static config based on plan name, or we can use a helper if available
-    // Ideally: const flags = getEffectivePlanConfig(user.plan.name);
-    // But let's import the helper if needed or just use the logic here.
-
-    // Since we don't have the full features loaded here easily without importing the config:
-    const { getPlanConfig } = await import("@/lib/plans.config");
-    const config = getPlanConfig(user?.plan?.name);
-
-    const isAllowed = config.features.scenaAccess || userRole === 'SUPERADMIN' || userRole === 'ADMIN';
-
-    if (!user || !isAllowed) {
+    if (!isAllowed) {
         return (
             <div className="flex flex-col items-center justify-center h-full gap-4">
                 <h1 className="text-2xl font-bold">Acceso Restringido</h1>
@@ -41,9 +25,16 @@ export default async function ScenaPage() {
         );
     }
 
-    // No auto-creation anymore. Just redirect to list.
-    // Actually, this IS the list page now. 
-    // We render the ProjectList component which handles fetching.
+    // Check project creation limits
+    const limit = await getFeatureLimit(session.user.id, 'maxScenaProjects');
+    const ownedProjectsCount = await prisma.scenaProject.count({
+        where: { ownerId: session.user.id }
+    });
+
+    // Superadmins can always create. Others depend on limit.
+    // limit -1 means unlimited.
+    const isSuperAdmin = (session.user.role as any) === 'SUPERADMIN';
+    const canCreate = isSuperAdmin || (limit === -1) || ((limit !== null) && (ownedProjectsCount < limit));
 
     // Fetch pending invitations
     const prismaAny = prisma as any;
@@ -73,7 +64,7 @@ export default async function ScenaPage() {
                     <InvitationList initialInvitations={invitations} />
                 </div>
             )}
-            <ProjectList />
+            <ProjectList canCreate={canCreate} />
         </div>
     );
 }

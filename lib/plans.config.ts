@@ -24,6 +24,9 @@ export const PLANS = {
             externalVideoAuth: false,
             calendarSync: false,
             scenaAccess: true,
+            lowResDownloads: false, // Updated to match user request (disabled for free)
+            highResDownloads: false,
+            selectiveDownload: true,
         }
     },
     FAMILY: {
@@ -52,6 +55,9 @@ export const PLANS = {
             collaborativeGalleries: true,
             calendarSync: true,
             scenaAccess: true,
+            lowResDownloads: true,
+            highResDownloads: true,
+            selectiveDownload: true,
         }
     },
     PRO: {
@@ -79,6 +85,9 @@ export const PLANS = {
             externalVideoAuth: false,
             calendarSync: true,
             scenaAccess: true,
+            lowResDownloads: true,
+            highResDownloads: true,
+            selectiveDownload: true,
         }
     },
     STUDIO: {
@@ -108,6 +117,9 @@ export const PLANS = {
             collaborativeGalleries: true,
             calendarSync: true,
             scenaAccess: true,
+            lowResDownloads: true,
+            highResDownloads: true,
+            selectiveDownload: true,
         }
     },
     AGENCY: {
@@ -137,6 +149,9 @@ export const PLANS = {
             collaborativeGalleries: true,
             calendarSync: true,
             scenaAccess: true,
+            lowResDownloads: true,
+            highResDownloads: true,
+            selectiveDownload: true,
         }
     }
 } as const;

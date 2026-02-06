@@ -9,7 +9,7 @@ import { ScenaIcon } from "@/components/icons/ScenaIcon";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useTheme } from "@/components/ThemeProvider";
-import { getPlanConfig } from "@/lib/plans.config";
+import { useFeatures } from "@/hooks/useFeatures";
 
 export default function DashboardLayout({
     children,
@@ -22,24 +22,37 @@ export default function DashboardLayout({
     const [showUserMenu, setShowUserMenu] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
-    const userPlan = ((session?.user as any)?.planName || '').toLowerCase();
-    const userRole = (session?.user as any)?.role;
+    // New Centralized Feature Hook
+    const { canUse, role: userRole, isLoading: loadingFeatures } = useFeatures();
 
-    // Check feature flag instead of hardcoded plans
-    const config = getPlanConfig(userPlan);
-    const showScena = config.features.scenaAccess || userRole === 'SUPERADMIN' || userRole === 'ADMIN';
+    // Use specific feature keys from the database matrix
+    const showScena = canUse('scenaAccess');
+    const showAgenda = canUse('bookingConfig');
+    const showPayments = canUse('stripeIntegration') || canUse('paypalIntegration');
 
     const navItems = [
         { href: "/dashboard/settings", label: "Perfil público", icon: <User className="w-5 h-5" /> },
         { href: "/dashboard", label: "Mis Galerías", icon: <LayoutGrid className="w-5 h-5" /> },
-        { href: "/dashboard/bookings", label: "Mi Agenda", icon: <CalendarDays className="w-5 h-5" /> },
+
+        // Conditional Agenda Link
+        ...(showAgenda
+            ? [{ href: "/dashboard/bookings", label: "Mi Agenda", icon: <CalendarDays className="w-5 h-5" /> }]
+            : []),
+
         // Conditional Scena Link
         ...(showScena
             ? [{ href: "/dashboard/scena", label: "Scena", icon: <ScenaIcon className="w-5 h-5" /> }]
             : []),
+
         { href: "/dashboard/clouds", label: "Nubes conectadas", icon: <Settings className="w-5 h-5" /> },
-        { href: "/dashboard/payments", label: "Ingresos", icon: <Wallet className="w-5 h-5" /> },
+
+        // Conditional Payments Link
+        ...(showPayments
+            ? [{ href: "/dashboard/payments", label: "Ingresos", icon: <Wallet className="w-5 h-5" /> }]
+            : []),
+
         { href: "/dashboard/billing", label: "Suscripción", icon: <CreditCard className="w-5 h-5" /> },
+
         // Conditional Superadmin Link
         ...(userRole === 'SUPERADMIN'
             ? [{ href: "/superadmin", label: "Superadmin", icon: <Shield className="w-5 h-5" /> }]

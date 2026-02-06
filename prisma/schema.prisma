@@ -9,76 +9,62 @@ datasource db {
 }
 
 model User {
-  id                String         @id @default(cuid())
-  name              String?
-  email             String         @unique
-  emailVerified     DateTime?
-  image             String?
-  businessName      String?
-  businessLogo      String?
-  businessWebsite   String?
-  businessInstagram String?
-  businessPhone     String?
-  bio               String?
-  specialty         String?        // Tagline/especialidad (ej: "Fotografía de bodas & retrato")
-  theme             String         @default("dark")
-  businessLogoScale Int            @default(100)
-  
-  // Perfil expandido (CloserLens v2)
-  profileType       String?        // "photographer" | "model" | "creative" | "agency" | "brand"
-  headline          String?        // "Director de Fotografía | CDMX"
-  location          String?        // "Ciudad de México, México"
-  socialLinks       Json?          // { instagram, linkedin, website, imdb, vimeo, etc }
-  profileViews      Int            @default(0)
-  username          String?        @unique // Vanity URL: /u/username
-  
-  role              String         @default("USER") // USER, ADMIN, SUPERADMIN
-  planId            String?
-  planExpiresAt     DateTime?
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
-  accounts          Account[]
-  bookings          Booking[]
-  cloudAccounts     CloudAccount[]
-  oauthAccounts     OAuthAccount[]
-  calendarAccounts  CalendarAccount[]
-  projects          Project[]
-  sessions          Session[]
-  plan              Plan?          @relation(fields: [planId], references: [id])
-  
-  // Pro Plan / Enhanced Profile
-  coverImage        String?
-  coverImageFocus   String?        @default("50,50") // Focal point "x,y" as percentage
-  pronouns          String?
-  callToAction      Json?          // { text, url, type }
-  bookingWindow     Int?           @default(4) // 0 = unlimited, N = weeks
-  bookingLeadTime   Int?           @default(1) // Minimum days notice required
-  
-  // Feature Overrides (Allow temporary unlocks)
-  featureOverrides  Json?          // { "bioMaxLength": 500, "advancedSocialNetworks": true }
-  
-  
-  // Stripe Integration
-  stripeCustomerId       String?   @unique
-  stripeSubscriptionId   String?   @unique
-  stripePriceId          String?
+  id                     String                @id @default(cuid())
+  name                   String?
+  email                  String                @unique
+  emailVerified          DateTime?
+  image                  String?
+  businessName           String?
+  businessLogo           String?
+  businessWebsite        String?
+  businessInstagram      String?
+  businessPhone          String?
+  bio                    String?
+  theme                  String                @default("dark")
+  businessLogoScale      Int                   @default(100)
+  role                   String                @default("USER")
+  planId                 String?
+  planExpiresAt          DateTime?
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @updatedAt
+  specialty              String?
+  headline               String?
+  location               String?
+  profileType            String?
+  profileViews           Int                   @default(0)
+  socialLinks            Json?
+  username               String?               @unique
+  callToAction           Json?
+  coverImage             String?
+  pronouns               String?
   stripeCurrentPeriodEnd DateTime?
-  stripeConnectAccount   StripeConnectAccount? // Relation for Stripe Connect
-  
-  // Scena Integration
-  scenaProjects     ScenaProject[]
-  tasks             Task[]         @relation("TaskAssignees")
-  filters           Filter[]
-
-  // Scena Collaboration
-  projectMemberships ProjectMember[]
-  sentInvitations    ProjectInvitation[] @relation("SentInvitations")
+  stripeCustomerId       String?               @unique
+  stripePriceId          String?
+  stripeSubscriptionId   String?               @unique
+  bookingWindow          Int?                  @default(4)
+  bookingLeadTime        Int?                  @default(1)
+  featureOverrides       Json?
+  coverImageFocus        String?               @default("50,50")
+  accounts               Account[]
+  bookings               Booking[]
+  calendarAccounts       CalendarAccount[]
+  cloudAccounts          CloudAccount[]
+  filters                Filter[]
+  oauthAccounts          OAuthAccount[]
+  projects               Project[]
+  sentInvitations        ProjectInvitation[]   @relation("SentInvitations")
+  projectMemberships     ProjectMember[]
+  scenaProjects          ScenaProject[]
+  sessions               Session[]
+  stripeConnectAccount   StripeConnectAccount?
+  plan                   Plan?                 @relation(fields: [planId], references: [id])
+  tasks                  Task[]                @relation("TaskAssignees")
 }
 
 model SystemSettings {
   id        String   @id @default("global")
   key       String   @unique
-  value     String   // JSON string
+  value     String
   updatedAt DateTime @updatedAt
 }
 
@@ -120,7 +106,7 @@ model CloudAccount {
   id           String    @id @default(cuid())
   provider     String
   providerId   String
-  name         String?   // Etiqueta personalizada (ej: "Drive Bodas")
+  name         String?
   accessToken  String
   refreshToken String?
   email        String?
@@ -133,158 +119,153 @@ model CloudAccount {
 }
 
 model Project {
-  id                String       @id @default(cuid())
-  name              String
-  slug              String       @unique
-  description       String?
-  coverImage        String?
-  coverImageFocus   String?      @default("50,50") // Focal point "x,y" as percentage
-  cloudAccountId    String
-  rootFolderId      String
-  passwordProtected Boolean      @default(false)
-  passwordHash      String?
-  downloadEnabled   Boolean      @default(true) // Master switch
-  downloadJpgEnabled Boolean     @default(true)
-  downloadRawEnabled Boolean     @default(false)
-  public            Boolean      @default(true)  // Galería accesible sin contraseña
-  showInProfile     Boolean      @default(false) // Aparece en perfil público del fotógrafo
-  profileOrder      Int          @default(0)     // Orden en el perfil público (drag & drop)
-  category          String?      // "editorial" | "commercial" | "wedding" | "portrait" | "test" | etc
-  layoutType        String       @default("grid")
-  userId            String
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
-    
-  // Gallery Header Customization
-  headerTitle       String?      // Custom title (e.g., "Boda de Ana & Carlos")
-  headerFontFamily  String       @default("Inter")
-  headerFontSize    Int          @default(100)     // Font size as percentage (50-200)
-  headerColor       String       @default("#FFFFFF")
-  headerBackground  String       @default("dark") // "dark" | "light"
-  headerImage       String?      // Image ID for header background
-  headerImageFocus  String?      @default("50,50") // Focal point "x,y" as percentage
-  
-  // Video Tab
-  videoFolderId     String?      // Drive folder ID for videos
-  enableVideoTab    Boolean      @default(false)
-  
-  // Video Download Options (similar to photo proxies)
-  downloadVideoHdEnabled  Boolean @default(true)
-  downloadVideoRawEnabled Boolean @default(false)
-  
-  // Watermark
-  enableWatermark   Boolean      @default(false) // Overlay con logo del fotógrafo
-  
-  // ZIP Download File (Explicit selection by user)
-  zipFileId         String?      // Google Drive file ID of the ZIP archive
-  zipFileName       String?      // Display name of the ZIP file
-  
-  // Pro Features
-  fileOrder         Json?        // Array of file IDs describing custom order
-  isTemplate        Boolean      @default(false) // If true, can be duplicated
-  callToAction      Json?        // Project-specific CTA
-  
-  // Galería Closer (Premium Studio/Agency)
-  isCloserGallery   Boolean      @default(false)
-  isCollaborative   Boolean      @default(false) // [NEW] Flag to enable collaborative features
-  musicTrackId      String?
-  musicEnabled      Boolean      @default(false)
-  momentsOrder      Json?        // Array of strings (folder names) to define order
-  
-  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  cloudAccount      CloudAccount @relation(fields: [cloudAccountId], references: [id])
-  externalVideos    ExternalVideo[]
-  
-  // Collaborative Gallery (QR Uploads)
-  collaborativeGallery CollaborativeGallery?
+  id                      String                @id @default(cuid())
+  name                    String
+  slug                    String                @unique
+  description             String?
+  coverImage              String?
+  cloudAccountId          String
+  rootFolderId            String
+  passwordProtected       Boolean               @default(false)
+  passwordHash            String?
+  downloadEnabled         Boolean               @default(true)
+  downloadJpgEnabled      Boolean               @default(true)
+  downloadRawEnabled      Boolean               @default(false)
+  public                  Boolean               @default(true)
+  layoutType              String                @default("grid")
+  userId                  String
+  createdAt               DateTime              @default(now())
+  updatedAt               DateTime              @updatedAt
+  headerTitle             String?
+  headerFontFamily        String                @default("Inter")
+  headerColor             String                @default("#FFFFFF")
+  headerBackground        String                @default("dark")
+  videoFolderId           String?
+  enableVideoTab          Boolean               @default(false)
+  downloadVideoHdEnabled  Boolean               @default(true)
+  downloadVideoRawEnabled Boolean               @default(false)
+  showInProfile           Boolean               @default(false)
+  enableWatermark         Boolean               @default(false)
+  category                String?
+  callToAction            Json?
+  fileOrder               Json?
+  isTemplate              Boolean               @default(false)
+  headerImage             String?
+  coverImageFocus         String?               @default("50,50")
+  headerImageFocus        String?               @default("50,50")
+  headerFontSize          Int                   @default(100)
+  zipFileId               String?
+  zipFileName             String?
+  isCloserGallery         Boolean               @default(false)
+  momentsOrder            Json?
+  musicEnabled            Boolean               @default(false)
+  musicTrackId            String?
+  isCollaborative         Boolean               @default(false)
+  profileOrder            Int                   @default(0)
+  collaborativeGallery    CollaborativeGallery?
+  externalVideos          ExternalVideo[]
+  cloudAccount            CloudAccount          @relation(fields: [cloudAccountId], references: [id])
+  user                    User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Booking {
-  id            String   @id @default(cuid())
+  id            String         @id @default(cuid())
   customerName  String
   customerEmail String?
-  customerPhone String?
   date          DateTime
-  endDate       DateTime?
   notes         String?
-  status        String   @default("pending")
+  status        String         @default("pending")
   userId        String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  scenaProjects ScenaProject[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  customerPhone String?
+  endDate       DateTime?
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   payment       Payment?
+  scenaProjects ScenaProject[]
 }
 
 model Plan {
-  id          String   @id @default(cuid())
-  name        String   @unique // "free", "pro", "studio"
-  displayName String   // "Free", "Pro", "Studio"
-  description String?
-  
-  // Precios MXN (México)
-  priceMXN         Float    @default(0)      // Precio anual en MXN
-  monthlyPriceMXN  Float?                    // Precio mensual en MXN
-  
-  // Precios USD (Internacional)
-  priceUSD         Float    @default(0)      // Precio anual en USD
-  monthlyPriceUSD  Float?                    // Precio mensual en USD
-  
-  // Legacy fields (mantener por compatibilidad temporal)
-  price       Float    @default(0)
-  monthlyPrice Float?
-  currency    String   @default("USD")
-  
-  // Stripe Price IDs por región y período
-  stripePriceIdMXNMonthly  String?
-  stripePriceIdMXNYearly   String?
-  stripePriceIdUSDMonthly  String?
-  stripePriceIdUSDYearly   String?
-  
-  interval    String   @default("month") // "month", "year"
-  features    String   // JSON array de características (Legacy)
-  limits      String   // JSON con límites (Legacy)
-  config      Json?    // New Modular Configuration
-  isActive    Boolean  @default(true)
-  sortOrder   Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  users       User[]
+  id                      String        @id @default(cuid())
+  name                    String        @unique
+  displayName             String
+  description             String?
+  price                   Float         @default(0)
+  currency                String        @default("USD")
+  interval                String        @default("month")
+  features                String
+  limits                  String
+  isActive                Boolean       @default(true)
+  sortOrder               Int           @default(0)
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+  config                  Json?
+  monthlyPrice            Float?
+  monthlyPriceMXN         Float?
+  monthlyPriceUSD         Float?
+  priceMXN                Float         @default(0)
+  priceUSD                Float         @default(0)
+  stripePriceIdMXNMonthly String?
+  stripePriceIdMXNYearly  String?
+  stripePriceIdUSDMonthly String?
+  stripePriceIdUSDYearly  String?
+  planFeatures            PlanFeature[]
+  users                   User[]
 }
 
-// Scena Kanban Board Models
-model ScenaProject {
-  id        String   @id @default(cuid())
-  name      String
-  ownerId   String
-  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  columns   Column[] // One-to-many relation
-  description String?
-  
-  bookingId   String?
-  booking     Booking? @relation(fields: [bookingId], references: [id])
+model Feature {
+  id           String        @id @default(cuid())
+  key          String        @unique
+  description  String?
+  category     String
+  defaultValue Boolean       @default(false)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  planFeatures PlanFeature[]
+}
 
-  isArchived Boolean @default(false)
+model PlanFeature {
+  id        String   @id @default(cuid())
+  planId    String
+  featureId String
+  enabled   Boolean  @default(false)
+  limit     Int?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+  feature   Feature  @relation(fields: [featureId], references: [id], onDelete: Cascade)
+  plan      Plan     @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@unique([planId, featureId])
+}
+
+model ScenaProject {
+  id          String              @id @default(cuid())
+  name        String
+  ownerId     String
+  isArchived  Boolean             @default(false)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  bookingId   String?
+  description String?
+  columns     Column[]
+  invitations ProjectInvitation[]
+  members     ProjectMember[]
+  booking     Booking?            @relation(fields: [bookingId], references: [id])
+  owner       User                @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
   @@index([ownerId])
   @@index([bookingId])
-
-
-  members            ProjectMember[]
-  invitations        ProjectInvitation[]
 }
 
 model ProjectMember {
   id        String       @id @default(cuid())
   projectId String
-  project   ScenaProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
   userId    String
-  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role      String       @default("VIEWER") // VIEWER, EDITOR, ADMIN
+  role      String       @default("VIEWER")
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
+  project   ScenaProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([projectId, userId])
   @@index([projectId])
@@ -294,18 +275,16 @@ model ProjectMember {
 model ProjectInvitation {
   id        String       @id @default(cuid())
   projectId String
-  project   ScenaProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
   email     String
   token     String       @unique
   role      String       @default("VIEWER")
-  status    String       @default("PENDING") // PENDING, ACCEPTED, EXPIRED
-  
+  status    String       @default("PENDING")
   senderId  String
-  sender    User         @relation("SentInvitations", fields: [senderId], references: [id], onDelete: Cascade)
-
   expiresAt DateTime
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
+  project   ScenaProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sender    User         @relation("SentInvitations", fields: [senderId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
   @@index([email])
@@ -315,53 +294,43 @@ model ProjectInvitation {
 model Column {
   id        String       @id @default(cuid())
   name      String
-  color     String?      @default("#E0F7FA")
-  cardColor String?      @default("#FFFFFF")
   order     Int          @default(0)
   projectId String
-  project   ScenaProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  tasks     Task[]
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
+  cardColor String?      @default("#FFFFFF")
+  color     String?      @default("#E0F7FA")
+  project   ScenaProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tasks     Task[]
 
   @@index([projectId])
 }
 
 model Task {
-  id          String   @id @default(cuid())
-  title       String
-  description String?
-  order       Int      @default(0)
-  priority    String?  @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
-  columnId    String
-  column      Column   @relation(fields: [columnId], references: [id], onDelete: Cascade)
-  assignees   User[]   @relation("TaskAssignees")
-  
-  // Gantt chart fields
-  startDate     DateTime?
-  endDate       DateTime?
-  toleranceDate DateTime?
-  progress      Int       @default(0) // 0-100
-  
-  // Customization
-  color       String?  // Custom hex color
-  
-  // JSON fields for rich content
-  links       String?  // JSON array of {title, url}
-  attachments String?  // JSON array of {name, url, size, uploadedAt}
-  images      String?  // JSON array of {name, url, uploadedAt}
-  tags        String?  // JSON array of {name, color}
-  checklist   String?  // JSON array of {id, text, completed}
-  
-  // Hierarchical tasks (subtasks)
-  parentId    String?
-  parent      Task?    @relation("TaskHierarchy", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  children    Task[]   @relation("TaskHierarchy")
-  
-  isHiddenInGantt Boolean @default(false)
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              String    @id @default(cuid())
+  description     String?
+  order           Int       @default(0)
+  priority        String?   @default("MEDIUM")
+  columnId        String
+  tags            String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  attachments     String?
+  checklist       String?
+  color           String?
+  endDate         DateTime?
+  images          String?
+  isHiddenInGantt Boolean   @default(false)
+  links           String?
+  parentId        String?
+  progress        Int       @default(0)
+  startDate       DateTime?
+  title           String
+  toleranceDate   DateTime?
+  column          Column    @relation(fields: [columnId], references: [id], onDelete: Cascade)
+  parent          Task?     @relation("TaskHierarchy", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  children        Task[]    @relation("TaskHierarchy")
+  assignees       User[]    @relation("TaskAssignees")
 
   @@index([columnId])
   @@index([parentId])
@@ -374,307 +343,223 @@ model Task {
 model Filter {
   id        String   @id @default(cuid())
   name      String
-  criteria  String   // JSON with filter criteria
-  isDefault Boolean  @default(false)
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  projectId String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+  criteria  String
+  isDefault Boolean  @default(false)
+  projectId String?
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
   @@index([projectId])
 }
 
-// Closer Gallery Models
-
 model OAuthAccount {
   id                String    @id @default(cuid())
   userId            String
-  provider          String    // "youtube", "vimeo"
+  provider          String
   providerAccountId String
   accessToken       String
   refreshToken      String?
   expiresAt         DateTime?
-  name              String?
-  email             String?
-  image             String?
-  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
+  email             String?
+  image             String?
+  name              String?
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
 
 model ExternalVideo {
-  id          String   @id @default(cuid())
-  projectId   String
-  provider    String   // "youtube", "vimeo"
-  externalId  String   // Video ID
-  title       String?
-  thumbnail   String?
-  duration    Int?
-  momentName  String?  // The "Momento" this video belongs to
-  order       Int      @default(0)
-  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(cuid())
+  projectId  String
+  provider   String
+  externalId String
+  title      String?
+  thumbnail  String?
+  duration   Int?
+  momentName String?
+  order      Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// COLLABORATIVE GALLERIES (QR UPLOADS)
-// ═══════════════════════════════════════════════════════════════════════════
-
 model CollaborativeGallery {
-  id              String   @id @default(cuid())
-  projectId       String   @unique
-  isActive        Boolean  @default(false)
-  
-  // Limit Overrides (null = use plan defaults)
-  maxFilesTotal       Int?     // Max files for entire gallery
-  maxFilesPerSection  Int?     // Max files per QR section
-  maxFilesPerDevice   Int?     // Max files per device fingerprint
-  maxFileSizeBytes    Int?     // Max single file size
-  allowVideo          Boolean  @default(false)  // Only enabled by Super Admin
-  
-  // Google Drive folder for collaborative uploads
-  driveFolderId   String?
-  
-  // Relations
-  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  sections        QrSection[]
-  uploads         CollaborativeUpload[]
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                 String                @id @default(cuid())
+  projectId          String                @unique
+  isActive           Boolean               @default(false)
+  maxFilesTotal      Int?
+  maxFilesPerSection Int?
+  maxFilesPerDevice  Int?
+  maxFileSizeBytes   Int?
+  allowVideo         Boolean               @default(false)
+  driveFolderId      String?
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  project            Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  uploads            CollaborativeUpload[]
+  sections           QrSection[]
 }
 
 model QrSection {
-  id                      String   @id @default(cuid())
-  collaborativeGalleryId  String
-  
-  name            String   // "Mesa 1", "VIP", "Día 1"
-  slug            String   @unique  // Public token for URL (e.g., "abc123xyz")
-  
-  // Google Drive subfolder
-  driveFolderId   String
-  
-  isActive        Boolean  @default(true)
-  
-  // Stats
-  accessCount     Int      @default(0)
-  
-  // Relations
-  gallery         CollaborativeGallery @relation(fields: [collaborativeGalleryId], references: [id], onDelete: Cascade)
-  uploads         CollaborativeUpload[]
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
+  id                     String                @id @default(cuid())
+  collaborativeGalleryId String
+  name                   String
+  slug                   String                @unique
+  driveFolderId          String
+  isActive               Boolean               @default(true)
+  accessCount            Int                   @default(0)
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @updatedAt
+  uploads                CollaborativeUpload[]
+  gallery                CollaborativeGallery  @relation(fields: [collaborativeGalleryId], references: [id], onDelete: Cascade)
+
   @@index([collaborativeGalleryId])
 }
 
 model CollaborativeUpload {
-  id                      String   @id @default(cuid())
-  collaborativeGalleryId  String
-  qrSectionId             String
-  
-  // File info
-  driveFileId     String
-  fileName        String
-  mimeType        String
-  sizeBytes       Int
-  
-  // Device tracking (for limits and audit)
-  deviceId        String?  // Browser fingerprint hash
-  ipAddress       String?
-  userAgent       String?
-  
-  status          String   @default("success")  // success, failed_limit, failed_type, failed_size
-  
-  // Relations
-  gallery         CollaborativeGallery @relation(fields: [collaborativeGalleryId], references: [id], onDelete: Cascade)
-  section         QrSection @relation(fields: [qrSectionId], references: [id], onDelete: Cascade)
-  
-  createdAt       DateTime @default(now())
-  
+  id                     String               @id @default(cuid())
+  collaborativeGalleryId String
+  qrSectionId            String
+  driveFileId            String
+  fileName               String
+  mimeType               String
+  sizeBytes              Int
+  deviceId               String?
+  ipAddress              String?
+  userAgent              String?
+  status                 String               @default("success")
+  createdAt              DateTime             @default(now())
+  gallery                CollaborativeGallery @relation(fields: [collaborativeGalleryId], references: [id], onDelete: Cascade)
+  section                QrSection            @relation(fields: [qrSectionId], references: [id], onDelete: Cascade)
+
   @@index([collaborativeGalleryId])
   @@index([qrSectionId])
   @@index([deviceId])
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// FEATURE OVERRIDE AUDIT LOG (Super Admin)
-// ═══════════════════════════════════════════════════════════════════════════
-
 model FeatureOverrideLog {
-  id          String   @id @default(cuid())
-  userId      String   // User who received the override
-  adminId     String   // SuperAdmin who made the change
-  adminEmail  String?  // SuperAdmin email for easy reference
-  
-  // What changed
-  action      String   // "override_updated" | "override_cleared"
-  changes     Json     // { features: { videoGallery: true }, limits: { maxProjects: 50 } }
-  previousValue Json?  // Previous featureOverrides value (for rollback reference)
-  
-  // Optional metadata
-  reason      String?  // "Prueba para cliente VIP", "Promoción temporal"
-  
-  createdAt   DateTime @default(now())
-  
+  id            String   @id @default(cuid())
+  userId        String
+  adminId       String
+  adminEmail    String?
+  action        String
+  changes       Json
+  previousValue Json?
+  reason        String?
+  createdAt     DateTime @default(now())
+
   @@index([userId])
   @@index([adminId])
   @@index([createdAt])
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// CALENDAR SYNC (Google Calendar / Microsoft Outlook Integration)
-// ═══════════════════════════════════════════════════════════════════════════
-
 model CalendarAccount {
-  id                String    @id @default(cuid())
+  id                String                  @id @default(cuid())
   userId            String
-  provider          String    // "google_calendar" | "microsoft_outlook"
-  providerAccountId String    // Unique calendar ID from provider
-  email             String?   // Email associated with calendar
-  name              String?   // User-defined label
-  
+  provider          String
+  providerAccountId String
+  email             String?
+  name              String?
   accessToken       String
   refreshToken      String?
   expiresAt         DateTime?
-  
-  // Sync configuration
-  syncEnabled       Boolean   @default(true)
-  syncDirection     String    @default("bidirectional") // "read_only" | "bidirectional"
-  showEventDetails  Boolean   @default(true)            // true = full details
-  autoRefresh       Boolean   @default(true)
-  refreshInterval   Int       @default(5)               // minutes
-  
-  // Multi-calendar support
-  selectedCalendars Json?     // Array of calendar IDs default to null (primary only)
-  
-  // Sync status
+  syncEnabled       Boolean                 @default(true)
+  syncDirection     String                  @default("bidirectional")
+  showEventDetails  Boolean                 @default(true)
+  autoRefresh       Boolean                 @default(true)
+  refreshInterval   Int                     @default(5)
   lastSyncAt        DateTime?
-  syncStatus        String    @default("pending")       // "pending" | "syncing" | "success" | "error"
+  syncStatus        String                  @default("pending")
   syncError         String?
-  
-  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  externalEvents    ExternalCalendarEvent[]
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+  selectedCalendars Json?
+  user              User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
   syncLogs          CalendarSyncLog[]
-  
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  
+  externalEvents    ExternalCalendarEvent[]
+
   @@unique([userId, provider, providerAccountId])
   @@index([userId])
 }
 
 model ExternalCalendarEvent {
-  id                  String   @id @default(cuid())
-  calendarAccountId   String
-  externalId          String   // Event ID in external system
-  
-  title               String?
-  start               DateTime
-  end                 DateTime
-  allDay              Boolean  @default(false)
-  location            String?
-  description         String?
-  
-  // Metadata
-  isRecurring         Boolean  @default(false)
-  recurringEventId    String?
-  
-  // Link to Closerlens booking (if created from sync)
-  linkedBookingId     String?
-  
-  calendarAccount     CalendarAccount @relation(fields: [calendarAccountId], references: [id], onDelete: Cascade)
-  
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-  
+  id                String          @id @default(cuid())
+  calendarAccountId String
+  externalId        String
+  title             String?
+  start             DateTime
+  end               DateTime
+  allDay            Boolean         @default(false)
+  location          String?
+  description       String?
+  isRecurring       Boolean         @default(false)
+  recurringEventId  String?
+  linkedBookingId   String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  calendarAccount   CalendarAccount @relation(fields: [calendarAccountId], references: [id], onDelete: Cascade)
+
   @@unique([calendarAccountId, externalId])
   @@index([calendarAccountId])
   @@index([start, end])
 }
 
 model CalendarSyncLog {
-  id                  String   @id @default(cuid())
-  calendarAccountId   String
-  
-  action              String   // "sync_read" | "sync_write" | "oauth_refresh"
-  status              String   // "started" | "success" | "error"
-  eventsProcessed     Int      @default(0)
-  errorMessage        String?
-  
-  calendarAccount     CalendarAccount @relation(fields: [calendarAccountId], references: [id], onDelete: Cascade)
-  
-  createdAt           DateTime @default(now())
-  
+  id                String          @id @default(cuid())
+  calendarAccountId String
+  action            String
+  status            String
+  eventsProcessed   Int             @default(0)
+  errorMessage      String?
+  createdAt         DateTime        @default(now())
+  calendarAccount   CalendarAccount @relation(fields: [calendarAccountId], references: [id], onDelete: Cascade)
+
   @@index([calendarAccountId])
   @@index([createdAt])
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// STRIPE CONNECT INTEGRATION (Direct Charges)
-// ═══════════════════════════════════════════════════════════════════════════
-
 model StripeConnectAccount {
-  id                String   @id @default(cuid())
-  userId            String   @unique // One account per user preferred
-  stripeAccountId   String   @unique // The "acct_..." ID
-  
-  // Status tracking
-  chargesEnabled    Boolean  @default(false)
-  payoutsEnabled    Boolean  @default(false)
-  detailsSubmitted  Boolean  @default(false)
-  
-  // Platform settings
-  defaultCurrency   String   @default("usd")
-  
-  // Metadata
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  payments          Payment[]
+  id               String    @id @default(cuid())
+  userId           String    @unique
+  stripeAccountId  String    @unique
+  chargesEnabled   Boolean   @default(false)
+  payoutsEnabled   Boolean   @default(false)
+  detailsSubmitted Boolean   @default(false)
+  defaultCurrency  String    @default("usd")
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  payments         Payment[]
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([stripeAccountId])
 }
 
 model Payment {
-  id                String   @id @default(cuid())
-  connectAccountId  String
-  bookingId         String?  @unique // Optional link to a booking
-  
-  // Stripe Data
-  stripePaymentIntentId String @unique
-  stripeSessionId       String? // If using Checkout Sessions
-  
-  // Financials
-  amount            Int      // Lowest denomination (cents)
-  currency          String
-  applicationFee    Int      @default(0) // What Closerlens took
-  stripeFee         Int      @default(0) // Estimated
-  netAmount         Int      @default(0) // What user got (estimated)
-  
-  // Status
-  status            String   // "pending", "succeeded", "failed", "refunded"
-  
-  // Metadata
-  description       String?  // e.g. "Sesión de Fotos Boda"
-  clientEmail       String?
-  clientName        String?
-  
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  
-  connectAccount    StripeConnectAccount @relation(fields: [connectAccountId], references: [id])
-  booking           Booking?             @relation(fields: [bookingId], references: [id])
+  id                    String               @id @default(cuid())
+  connectAccountId      String
+  bookingId             String?              @unique
+  stripePaymentIntentId String               @unique
+  stripeSessionId       String?
+  amount                Int
+  currency              String
+  applicationFee        Int                  @default(0)
+  stripeFee             Int                  @default(0)
+  netAmount             Int                  @default(0)
+  status                String
+  description           String?
+  clientEmail           String?
+  clientName            String?
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+  booking               Booking?             @relation(fields: [bookingId], references: [id])
+  connectAccount        StripeConnectAccount @relation(fields: [connectAccountId], references: [id])
 
   @@index([connectAccountId])
   @@index([status])

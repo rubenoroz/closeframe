@@ -53,7 +53,8 @@ export interface GallerySettingsData {
 }
 
 export interface PlanLimits {
-    lowResDownloads?: boolean;
+    allowedLowRes?: boolean;
+    allowedHighRes?: boolean;
     videoEnabled?: boolean;
     galleryCover?: boolean;
     passwordProtection?: boolean;
@@ -336,15 +337,15 @@ export default function GallerySettingsForm({
                 <div>
                     <label className="text-[10px] font-bold uppercase tracking-widest mb-3 flex items-center gap-2 opacity-100">
                         Categoría
-                        {planLimits?.lowResDownloads && (
+                        {!planLimits?.allowedHighRes && (
                             <span className="text-[9px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded opacity-100">Plan Gratuito </span>
                         )}
                     </label>
                     <select
-                        value={planLimits?.lowResDownloads ? "personal" : data.category || ""}
-                        disabled={!!planLimits?.lowResDownloads}
+                        value={!planLimits?.allowedHighRes ? "personal" : data.category || ""}
+                        disabled={!planLimits?.allowedHighRes}
                         onChange={(e) => update('category', e.target.value)}
-                        className={`w-full border rounded-2xl px-6 py-4 outline-none transition-all ${isLight ? 'bg-neutral-50 border-neutral-100 focus:border-emerald-500' : 'bg-neutral-800 border-neutral-700 focus:border-emerald-500'} ${planLimits?.lowResDownloads ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        className={`w-full border rounded-2xl px-6 py-4 outline-none transition-all ${isLight ? 'bg-neutral-50 border-neutral-100 focus:border-emerald-500' : 'bg-neutral-800 border-neutral-700 focus:border-emerald-500'} ${!planLimits?.allowedHighRes ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                         <option value="">Sin categoría</option>
                         <option value="editorial">📸 Editorial</option>
@@ -415,7 +416,7 @@ export default function GallerySettingsForm({
                         <div>
                             <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-2 flex items-center gap-2">
                                 Tipografía
-                                {planLimits?.lowResDownloads && (
+                                {!planLimits?.allowedHighRes && (
                                     <span className="text-[9px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">Plan Gratuito</span>
                                 )}
                             </label>
@@ -423,10 +424,10 @@ export default function GallerySettingsForm({
                             <div className="relative">
                                 <button
                                     type="button"
-                                    disabled={!!planLimits?.lowResDownloads}
+                                    disabled={!planLimits?.allowedHighRes}
                                     onClick={() => setIsFontDropdownOpen(!isFontDropdownOpen)}
                                     className={`w-full text-left border rounded-xl px-4 py-2.5 text-sm transition-all flex items-center justify-between ${isLight ? 'bg-white border-neutral-200 hover:border-emerald-500' : 'bg-neutral-900 border-neutral-700 hover:border-emerald-500'
-                                        } ${planLimits?.lowResDownloads ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                        } ${!planLimits?.allowedHighRes ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                                     style={{
                                         fontFamily: data.headerFontFamily !== "Inter" ? `'${data.headerFontFamily}', sans-serif` : "inherit"
                                     }}
@@ -443,7 +444,7 @@ export default function GallerySettingsForm({
                                 </button>
 
                                 {/* Dropdown */}
-                                {!planLimits?.lowResDownloads && (
+                                {planLimits?.allowedHighRes && (
                                     <div className={`absolute left-0 right-0 top-full mt-1 rounded-xl border shadow-xl overflow-hidden z-[60] p-1 transition-all ${isFontDropdownOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'} ${isLight ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'}`}>
                                         {[
                                             { val: "Inter", label: "Inter (Profesional)", font: "Inter, sans-serif" },
@@ -698,24 +699,31 @@ export default function GallerySettingsForm({
                     </div>
 
                     <div className="space-y-3 pl-0 md:pl-7">
-                        <label className="flex items-center justify-between cursor-pointer">
-                            <span className={`text-sm ${data.downloadEnabled ? (isLight ? 'text-neutral-900' : 'text-white') : 'text-neutral-500'}`}>Activar Descargas</span>
-                            <input
-                                type="checkbox"
-                                checked={data.downloadEnabled}
-                                onChange={(e) => update('downloadEnabled', e.target.checked)}
-                                className="w-5 h-5 accent-emerald-500 rounded bg-neutral-700"
-                            />
-                        </label>
+                        {(planLimits?.allowedLowRes || planLimits?.allowedHighRes) ? (
+                            <label className="flex items-center justify-between cursor-pointer">
+                                <span className={`text-sm ${data.downloadEnabled ? (isLight ? 'text-neutral-900' : 'text-white') : 'text-neutral-500'}`}>Activar Descargas</span>
+                                <input
+                                    type="checkbox"
+                                    checked={data.downloadEnabled}
+                                    onChange={(e) => update('downloadEnabled', e.target.checked)}
+                                    className="w-5 h-5 accent-emerald-500 rounded bg-neutral-700"
+                                />
+                            </label>
+                        ) : (
+                            <div className="p-3 rounded-lg border border-dashed border-neutral-800 bg-neutral-900/50 text-neutral-500 text-xs flex items-center gap-3">
+                                <Lock className="w-4 h-4 text-neutral-600" />
+                                <span>Las descargas no están incluidas en tu plan actual.</span>
+                            </div>
+                        )}
 
-                        {data.downloadEnabled && (
+                        {data.downloadEnabled && (planLimits?.allowedLowRes || planLimits?.allowedHighRes) && (
                             <div className={`animate-in slide-in-from-top-2 fade-in duration-300 space-y-3 pt-2 border-t border-dashed ${isLight ? 'border-neutral-200' : 'border-neutral-700/50'}`}>
                                 {/* JPG */}
                                 <label className="flex items-center justify-between cursor-pointer group">
                                     <div className="flex flex-col">
                                         <span className={`text-sm hover:opacity-100 transition-colors ${isLight ? 'text-neutral-600 hover:text-black' : 'text-neutral-400 hover:text-white'}`}>
-                                            {planLimits?.lowResDownloads ? 'JPG (Resolución Web)' : 'JPG (Alta Resolución)'}
-                                            {planLimits?.lowResDownloads && <span className="text-[10px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded ml-2">Plan Gratuito</span>}
+                                            {planLimits?.allowedHighRes ? 'JPG (Alta Resolución)' : 'JPG (Resolución Web)'}
+                                            {!planLimits?.allowedHighRes && <span className="text-[10px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded ml-2">Plan Gratuito</span>}
                                         </span>
                                     </div>
                                     <input
@@ -726,19 +734,19 @@ export default function GallerySettingsForm({
                                     />
                                 </label>
                                 {/* RAW */}
-                                <label className={`flex items-center justify-between ${planLimits?.lowResDownloads ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'} group`}>
+                                <label className={`flex items-center justify-between ${!planLimits?.allowedHighRes ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'} group`}>
                                     <div className="flex flex-col">
                                         <span className={`text-sm hover:opacity-100 transition-colors ${isLight ? 'text-neutral-600 hover:text-black' : 'text-neutral-400 hover:text-white'}`}>
                                             Archivos RAW
-                                            {planLimits?.lowResDownloads && <span className="text-[10px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded ml-2">Requiere Pro</span>}
+                                            {!planLimits?.allowedHighRes && <span className="text-[10px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded ml-2">Requiere Pro</span>}
                                         </span>
                                     </div>
                                     <input
                                         type="checkbox"
-                                        checked={planLimits?.lowResDownloads ? false : data.downloadRawEnabled}
-                                        disabled={!!planLimits?.lowResDownloads}
+                                        checked={!planLimits?.allowedHighRes ? false : data.downloadRawEnabled}
+                                        disabled={!planLimits?.allowedHighRes}
                                         onChange={(e) => {
-                                            if (planLimits?.lowResDownloads) return;
+                                            if (!planLimits?.allowedHighRes) return;
                                             update('downloadRawEnabled', e.target.checked);
                                         }}
                                         className="w-5 h-5 accent-emerald-500 rounded bg-neutral-700 disabled:opacity-50"

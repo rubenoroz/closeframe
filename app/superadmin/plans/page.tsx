@@ -66,7 +66,7 @@ interface Plan {
     };
 }
 
-import PlansMatrixTable from "@/components/plans/PlansMatrixTable";
+
 import { PLAN_DEFAULTS } from "@/lib/plan-defaults";
 import { FEATURE_POOL } from "@/lib/features";
 
@@ -107,7 +107,7 @@ const emptyPlan: Omit<Plan, "id" | "_count"> = {
 export default function PlansPage() {
     const [plans, setPlans] = useState<Plan[]>([]);
     const [loading, setLoading] = useState(true);
-    const [viewMode, setViewMode] = useState<'cards' | 'matrix'>('cards'); // New state
+
     const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
     const [isCreating, setIsCreating] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -278,7 +278,6 @@ export default function PlansPage() {
 
     return (
         <div className="space-y-6">
-            {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-bold">Planes</h1>
@@ -287,191 +286,166 @@ export default function PlansPage() {
                     </p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-1 flex">
-                        <button
-                            onClick={() => setViewMode('cards')}
-                            className={cn(
-                                "px-4 py-2 rounded-lg text-sm font-medium transition",
-                                viewMode === 'cards' ? "bg-neutral-800 text-white" : "text-neutral-400 hover:text-white"
-                            )}
-                        >
-                            Tarjetas
-                        </button>
-                        <button
-                            onClick={() => setViewMode('matrix')}
-                            className={cn(
-                                "px-4 py-2 rounded-lg text-sm font-medium transition",
-                                viewMode === 'matrix' ? "bg-neutral-800 text-white" : "text-neutral-400 hover:text-white"
-                            )}
-                        >
-                            Matriz Detallada
-                        </button>
-                    </div>
-                    {viewMode === 'cards' && (
-                        <button
-                            onClick={() => {
-                                setEditingPlan({ ...emptyPlan, id: "" } as Plan);
-                                setIsCreating(true);
-                            }}
-                            className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-500 rounded-xl font-medium transition"
-                        >
-                            <Plus className="w-5 h-5" />
-                            Nuevo Plan
-                        </button>
-                    )}
+                    <button
+                        onClick={() => {
+                            setEditingPlan({ ...emptyPlan, id: "" } as Plan);
+                            setIsCreating(true);
+                        }}
+                        className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-500 rounded-xl font-medium transition"
+                    >
+                        <Plus className="w-5 h-5" />
+                        Nuevo Plan
+                    </button>
                 </div>
             </div>
 
-            {viewMode === 'matrix' ? (
-                <PlansMatrixTable onUpdate={fetchPlans} />
-            ) : (
-                /* Plans Grid */
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {plans.map((plan, index) => (
-                        <div
-                            key={plan.id}
-                            draggable
-                            onDragStart={(e) => handleDragStart(e, plan.id)}
-                            onDragEnd={handleDragEnd}
-                            onDragOver={(e) => handleDragOver(e, plan.id)}
-                            onDragLeave={handleDragLeave}
-                            onDrop={(e) => handleDrop(e, plan.id)}
-                            className={cn(
-                                "bg-neutral-900/50 border rounded-2xl p-6 relative cursor-grab active:cursor-grabbing transition-all duration-200",
-                                plan.isActive ? "border-neutral-800" : "border-neutral-800/50 opacity-60",
-                                draggedPlan === plan.id && "opacity-50 scale-95",
-                                dragOverPlan === plan.id && draggedPlan !== plan.id && "border-violet-500 border-2 scale-105"
-                            )}
-                        >
-                            {/* Actions */}
-                            <div className="absolute top-4 right-4 flex gap-2">
-                                <button
-                                    onClick={() => {
-                                        setEditingPlan(plan);
-                                        setIsCreating(false);
-                                    }}
-                                    className="p-2 hover:bg-neutral-800 rounded-lg transition"
-                                >
-                                    <Edit2 className="w-4 h-4 text-neutral-400" />
-                                </button>
-                                <button
-                                    onClick={() => handleDelete(plan.id)}
-                                    className="p-2 hover:bg-neutral-800 rounded-lg transition"
-                                >
-                                    <Trash2 className="w-4 h-4 text-red-400" />
-                                </button>
-                            </div>
+            {/* Plans Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {plans.map((plan, index) => (
+                    <div
+                        key={plan.id}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, plan.id)}
+                        onDragEnd={handleDragEnd}
+                        onDragOver={(e) => handleDragOver(e, plan.id)}
+                        onDragLeave={handleDragLeave}
+                        onDrop={(e) => handleDrop(e, plan.id)}
+                        className={cn(
+                            "bg-neutral-900/50 border rounded-2xl p-6 relative cursor-grab active:cursor-grabbing transition-all duration-200",
+                            plan.isActive ? "border-neutral-800" : "border-neutral-800/50 opacity-60",
+                            draggedPlan === plan.id && "opacity-50 scale-95",
+                            dragOverPlan === plan.id && draggedPlan !== plan.id && "border-violet-500 border-2 scale-105"
+                        )}
+                    >
+                        {/* Actions */}
+                        <div className="absolute top-4 right-4 flex gap-2">
+                            <button
+                                onClick={() => {
+                                    setEditingPlan(plan);
+                                    setIsCreating(false);
+                                }}
+                                className="p-2 hover:bg-neutral-800 rounded-lg transition"
+                            >
+                                <Edit2 className="w-4 h-4 text-neutral-400" />
+                            </button>
+                            <button
+                                onClick={() => handleDelete(plan.id)}
+                                className="p-2 hover:bg-neutral-800 rounded-lg transition"
+                            >
+                                <Trash2 className="w-4 h-4 text-red-400" />
+                            </button>
+                        </div>
 
-                            {/* Order indicator - Drag handle */}
-                            <div className="absolute top-3 left-3 cursor-grab opacity-40 hover:opacity-100 transition">
-                                <GripVertical className="w-5 h-5 text-neutral-400" />
-                            </div>
+                        {/* Order indicator - Drag handle */}
+                        <div className="absolute top-3 left-3 cursor-grab opacity-40 hover:opacity-100 transition">
+                            <GripVertical className="w-5 h-5 text-neutral-400" />
+                        </div>
 
-                            {/* Plan Info */}
-                            <div className="mb-4 pt-2">
-                                <h3 className="text-xl font-bold">{plan.displayName}</h3>
-                                <span className="text-xs text-neutral-500 uppercase tracking-wider">
-                                    {plan.name}
-                                </span>
-                                {plan.description && (
-                                    <p className="text-neutral-400 text-sm mt-1">{plan.description}</p>
-                                )}
-                            </div>
-
-                            {/* Price - Show both regions */}
-                            <div className="flex flex-col gap-1 mb-4">
-                                <div className="flex items-baseline gap-1">
-                                    <span className="text-2xl font-bold text-emerald-400">
-                                        MXN{plan.priceMXN ?? 0}
-                                    </span>
-                                    <span className="text-neutral-500 text-sm">/mes</span>
-                                </div>
-                                <div className="flex items-baseline gap-1">
-                                    <span className="text-lg font-medium text-blue-400">
-                                        ${plan.priceUSD ?? 0}
-                                    </span>
-                                    <span className="text-neutral-500 text-xs">USD/mes</span>
-                                </div>
-                            </div>
-
-                            {/* Users Count */}
-                            <div className="flex items-center gap-2 text-sm text-neutral-400 mb-4">
-                                <Users className="w-4 h-4" />
-                                <span>{plan._count?.users || 0} usuarios</span>
-                            </div>
-
-                            {/* Features (Dynamic from Matrix) */}
-                            <ul className="space-y-2">
-                                {FEATURE_POOL.filter(f => {
-                                    // Logic to determine if feature should be shown
-                                    const config = plan.config || {};
-                                    const group = config.features || {};
-                                    const limitGroup = config.limits || {};
-
-                                    const val = f.type === 'number' ? limitGroup[f.id] : group[f.id];
-                                    const finalVal = val !== undefined ? val : f.defaultValue;
-
-                                    if (f.type === 'boolean') return finalVal === true;
-                                    if (f.type === 'number') return true; // Always show limits? Or only if not -1/0? Let's show all for now or filter.
-                                    return !!finalVal;
-                                }).slice(0, 6).map((feature, index) => {
-                                    const config = plan.config || {};
-                                    const group = config.features || {};
-                                    const limitGroup = config.limits || {};
-                                    const val = feature.type === 'number' ? limitGroup[feature.id] : group[feature.id];
-                                    const finalVal = val !== undefined ? val : feature.defaultValue;
-
-                                    return (
-                                        <li key={index} className="flex items-center gap-2 text-sm">
-                                            <Check className="w-4 h-4 text-green-400 shrink-0" />
-                                            <span className="text-neutral-300">
-                                                {feature.type === 'number'
-                                                    ? `${feature.label}: ${finalVal === -1 ? 'Ilimitado' : finalVal}`
-                                                    : feature.label}
-                                            </span>
-                                        </li>
-                                    )
-                                })}
-
-                                {FEATURE_POOL.filter(f => {
-                                    const config = plan.config || {};
-                                    const group = config.features || {};
-                                    const limitGroup = config.limits || {};
-                                    const val = f.type === 'number' ? limitGroup[f.id] : group[f.id];
-                                    const finalVal = val !== undefined ? val : f.defaultValue;
-                                    if (f.type === 'boolean') return finalVal === true;
-                                    if (f.type === 'number') return true;
-                                    return !!finalVal;
-                                }).length > 6 && (
-                                        <li className="text-sm text-neutral-500">
-                                            +{FEATURE_POOL.filter(f => {
-                                                const config = plan.config || {};
-                                                const group = config.features || {};
-                                                const limitGroup = config.limits || {};
-                                                const val = f.type === 'number' ? limitGroup[f.id] : group[f.id];
-                                                const finalVal = val !== undefined ? val : f.defaultValue;
-                                                if (f.type === 'boolean') return finalVal === true;
-                                                if (f.type === 'number') return true;
-                                                return !!finalVal;
-                                            }).length - 6} más...
-                                        </li>
-                                    )}
-                            </ul>
-
-                            {/* Status Badge */}
-                            {!plan.isActive && (
-                                <div className="absolute top-12 left-4">
-                                    <span className="px-2 py-1 bg-neutral-700 text-neutral-300 text-xs rounded-md">
-                                        Inactivo
-                                    </span>
-                                </div>
+                        {/* Plan Info */}
+                        <div className="mb-4 pt-2">
+                            <h3 className="text-xl font-bold">{plan.displayName}</h3>
+                            <span className="text-xs text-neutral-500 uppercase tracking-wider">
+                                {plan.name}
+                            </span>
+                            {plan.description && (
+                                <p className="text-neutral-400 text-sm mt-1">{plan.description}</p>
                             )}
                         </div>
-                    ))}
-                </div>
-            )}
 
-            {viewMode === 'cards' && plans.length === 0 && (
+                        {/* Price - Show both regions */}
+                        <div className="flex flex-col gap-1 mb-4">
+                            <div className="flex items-baseline gap-1">
+                                <span className="text-2xl font-bold text-emerald-400">
+                                    MXN{plan.priceMXN ?? 0}
+                                </span>
+                                <span className="text-neutral-500 text-sm">/mes</span>
+                            </div>
+                            <div className="flex items-baseline gap-1">
+                                <span className="text-lg font-medium text-blue-400">
+                                    ${plan.priceUSD ?? 0}
+                                </span>
+                                <span className="text-neutral-500 text-xs">USD/mes</span>
+                            </div>
+                        </div>
+
+                        {/* Users Count */}
+                        <div className="flex items-center gap-2 text-sm text-neutral-400 mb-4">
+                            <Users className="w-4 h-4" />
+                            <span>{plan._count?.users || 0} usuarios</span>
+                        </div>
+
+                        {/* Features (Dynamic from Matrix) */}
+                        <ul className="space-y-2">
+                            {FEATURE_POOL.filter(f => {
+                                // Logic to determine if feature should be shown
+                                const config = plan.config || {};
+                                const group = config.features || {};
+                                const limitGroup = config.limits || {};
+
+                                const val = f.type === 'number' ? limitGroup[f.id] : group[f.id];
+                                const finalVal = val !== undefined ? val : f.defaultValue;
+
+                                if (f.type === 'boolean') return finalVal === true;
+                                if (f.type === 'number') return true; // Always show limits? Or only if not -1/0? Let's show all for now or filter.
+                                return !!finalVal;
+                            }).slice(0, 6).map((feature, index) => {
+                                const config = plan.config || {};
+                                const group = config.features || {};
+                                const limitGroup = config.limits || {};
+                                const val = feature.type === 'number' ? limitGroup[feature.id] : group[feature.id];
+                                const finalVal = val !== undefined ? val : feature.defaultValue;
+
+                                return (
+                                    <li key={index} className="flex items-center gap-2 text-sm">
+                                        <Check className="w-4 h-4 text-green-400 shrink-0" />
+                                        <span className="text-neutral-300">
+                                            {feature.type === 'number'
+                                                ? `${feature.label}: ${finalVal === -1 ? 'Ilimitado' : finalVal}`
+                                                : feature.label}
+                                        </span>
+                                    </li>
+                                )
+                            })}
+
+                            {FEATURE_POOL.filter(f => {
+                                const config = plan.config || {};
+                                const group = config.features || {};
+                                const limitGroup = config.limits || {};
+                                const val = f.type === 'number' ? limitGroup[f.id] : group[f.id];
+                                const finalVal = val !== undefined ? val : f.defaultValue;
+                                if (f.type === 'boolean') return finalVal === true;
+                                if (f.type === 'number') return true;
+                                return !!finalVal;
+                            }).length > 6 && (
+                                    <li className="text-sm text-neutral-500">
+                                        +{FEATURE_POOL.filter(f => {
+                                            const config = plan.config || {};
+                                            const group = config.features || {};
+                                            const limitGroup = config.limits || {};
+                                            const val = f.type === 'number' ? limitGroup[f.id] : group[f.id];
+                                            const finalVal = val !== undefined ? val : f.defaultValue;
+                                            if (f.type === 'boolean') return finalVal === true;
+                                            if (f.type === 'number') return true;
+                                            return !!finalVal;
+                                        }).length - 6} más...
+                                    </li>
+                                )}
+                        </ul>
+
+                        {/* Status Badge */}
+                        {!plan.isActive && (
+                            <div className="absolute top-12 left-4">
+                                <span className="px-2 py-1 bg-neutral-700 text-neutral-300 text-xs rounded-md">
+                                    Inactivo
+                                </span>
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+
+
+            {plans.length === 0 && (
                 <div className="text-center py-20 text-neutral-400">
                     <DollarSign className="w-12 h-12 mx-auto mb-4 opacity-50" />
                     <p>No hay planes configurados</p>

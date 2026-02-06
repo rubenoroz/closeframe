@@ -27,28 +27,41 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ file
         }
 
         // [SECURE] Validate Plan Limits
-        const { getEffectivePlanConfig } = await import("@/lib/plans.config");
+        const { canUseFeature } = await import("@/lib/features/service");
 
-        // Fetch full user plan details
-        const user = await prisma.user.findUnique({
-            where: { id: account.userId },
-            include: {
-                plan: true
-            }
-        });
+        const userId = account.userId;
+        const size = searchParams.get("s");
+        const resizeWidth = size ? parseInt(size) : null;
 
-        const effectiveConfig = getEffectivePlanConfig(
-            user?.plan?.config || user?.plan?.name,
-            user?.featureOverrides
-        );
-
-        // Only allow if explicitly enabled (true). 'static_only' or false should be blocked here.
-        if (effectiveConfig.features?.zipDownloadsEnabled !== true) {
-            console.warn(`[Security] Blocked dynamic ZIP generation for user ${user?.email} (Plan: ${user?.plan?.name}, Feature: ${effectiveConfig.features?.zipDownloadsEnabled})`);
+        // 1. Check ZIP Generation Access
+        const hasZipAccess = await canUseFeature(userId, 'zipDownloadsEnabled');
+        if (!hasZipAccess) {
+            console.warn(`[Security] Blocked dynamic ZIP generation for userId ${userId}`);
             return NextResponse.json({
                 error: "Tu plan actual no soporta la generación de ZIPs dinámicos.",
                 code: "UPGRADE_REQUIRED"
             }, { status: 403 });
+        }
+
+        // 2. Check Resolution Permission
+        if (resizeWidth === null) {
+            // High Res
+            const hasHighResAccess = await canUseFeature(userId, 'highResDownloads');
+            if (!hasHighResAccess) {
+                return NextResponse.json({
+                    error: "Tu plan no permite descargas en alta resolución.",
+                    code: "UPGRADE_REQUIRED"
+                }, { status: 403 });
+            }
+        } else {
+            // Low Res (Web)
+            const hasLowResAccess = await canUseFeature(userId, 'lowResDownloads');
+            if (!hasLowResAccess) {
+                return NextResponse.json({
+                    error: "Tu plan no permite descargas en baja resolución.",
+                    code: "UPGRADE_REQUIRED"
+                }, { status: 403 });
+            }
         }
 
         // 2. Get Fresh Auth Client
@@ -108,9 +121,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ file
 
         const filesData = JSON.parse(filesJson);
         const zip = new JSZip();
-
-        const size = searchParams.get("s");
-        const resizeWidth = size ? parseInt(size) : null;
 
         // Procesar archivos
         await Promise.all(filesData.map(async (file: any) => {

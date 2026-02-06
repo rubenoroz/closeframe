@@ -74,6 +74,11 @@ export default function SuperadminLayout({ children }: SuperadminLayoutProps) {
             icon: <CreditCard className="w-5 h-5" />
         },
         {
+            href: "/superadmin/features",
+            label: "Features (Matriz)",
+            icon: <Shield className="w-5 h-5" />
+        },
+        {
             href: "/superadmin/audit-logs",
             label: "Auditoría",
             icon: <History className="w-5 h-5" />

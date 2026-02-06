@@ -5,6 +5,7 @@ import { nanoid } from "nanoid";
 import bcrypt from "bcryptjs";
 import { google } from "googleapis";
 import { getFreshGoogleAuth } from "@/lib/cloud/google-auth";
+import { canUseFeature, getFeatureAccess, getEffectiveFeatures } from "@/lib/features/service"; // [SECURE]
 
 // GET: List all projects for the current user
 export async function GET() {
@@ -138,6 +139,42 @@ export async function POST(request: Request) {
             }, { status: 403 });
         }
 
+        // [SECURE] Enforce Feature Limits on Creation
+        // We check effective features (considering overrides)
+        const features = await getEffectiveFeatures(session.user.id);
+
+        // Enforce Low Res Downloads
+        // If plan doesn't allow lowResDownloads, forcing it to false is safer
+        let finalDownloadJpgEnabled = downloadJpgEnabled ?? true;
+        if (features.lowResDownloads === false) {
+            finalDownloadJpgEnabled = false;
+        }
+
+        // Enforce High Res / RAW
+        let finalDownloadRawEnabled = downloadRawEnabled ?? false;
+        // Check 'highResDownloads' feature key
+        if (features.highResDownloads === false) {
+            finalDownloadRawEnabled = false;
+        }
+
+        // Enforce Video
+        let finalEnableVideoTab = enableVideoTab || false;
+        if (features.videoEnabled === false) {
+            finalEnableVideoTab = false;
+        }
+
+        // Also enforce video downloads if video is disabled entirely
+        let finalDownloadVideoHdEnabled = downloadVideoHdEnabled ?? true;
+        let finalDownloadVideoRawEnabled = downloadVideoRawEnabled ?? false;
+
+        if (!finalEnableVideoTab) {
+            // If tab is disabled, downloads logic might still be checked, but effectively hidden.
+            // But let's be strict:
+            // finalDownloadVideoHdEnabled = false; // Optional strictness
+        }
+
+
+
         // Verify Cloud Account belongs to user
         const account = await prisma.cloudAccount.findFirst({
             where: { id: cloudAccountId, userId: session.user.id },
@@ -170,8 +207,8 @@ export async function POST(request: Request) {
                 passwordProtected,
                 passwordHash,
                 downloadEnabled: downloadEnabled ?? true,
-                downloadJpgEnabled: downloadJpgEnabled ?? true,
-                downloadRawEnabled: downloadRawEnabled ?? false,
+                downloadJpgEnabled: finalDownloadJpgEnabled,
+                downloadRawEnabled: finalDownloadRawEnabled,
                 // Header customization
                 headerTitle: headerTitle || name, // Fallback to project name
                 headerFontFamily: headerFontFamily || "Inter",
@@ -183,10 +220,10 @@ export async function POST(request: Request) {
                 coverImage: coverImage || null,
                 coverImageFocus: coverImageFocus || "50,50",
                 // Video tab
-                enableVideoTab: enableVideoTab || false,
-                videoFolderId: enableVideoTab ? videoFolderId : null,
-                downloadVideoHdEnabled: downloadVideoHdEnabled ?? true,
-                downloadVideoRawEnabled: downloadVideoRawEnabled ?? false,
+                enableVideoTab: finalEnableVideoTab,
+                videoFolderId: finalEnableVideoTab ? videoFolderId : null,
+                downloadVideoHdEnabled: finalDownloadVideoHdEnabled,
+                downloadVideoRawEnabled: finalDownloadVideoRawEnabled,
                 isCloserGallery: isCloserGallery ?? false,
                 isCollaborative: isCollaborative ?? false, // Save collaborative status
                 // Zip file
@@ -258,6 +295,9 @@ export async function PATCH(request: NextRequest) {
             return NextResponse.json({ error: "Project ID is required" }, { status: 400 });
         }
 
+        // [SECURE] Check Permissions for Updates
+        const features = await getEffectiveFeatures(session.user.id);
+
         // Verify project belongs to user
         const existingProject = await prisma.project.findFirst({
             where: { id, userId: session.user.id },
@@ -270,11 +310,39 @@ export async function PATCH(request: NextRequest) {
         const updateData: any = {};
         if (name !== undefined) updateData.name = name;
         if (downloadEnabled !== undefined) updateData.downloadEnabled = downloadEnabled;
-        if (downloadJpgEnabled !== undefined) updateData.downloadJpgEnabled = downloadJpgEnabled;
-        if (downloadRawEnabled !== undefined) updateData.downloadRawEnabled = downloadRawEnabled;
+
+        if (downloadJpgEnabled !== undefined) {
+            // Enforce restriction
+            if (features.lowResDownloads === false && downloadJpgEnabled === true) {
+                // User trying to enable restricted feature
+                updateData.downloadJpgEnabled = false;
+            } else {
+                updateData.downloadJpgEnabled = downloadJpgEnabled;
+            }
+        }
+
+        if (downloadRawEnabled !== undefined) {
+            // Enforce restriction
+            if (features.highResDownloads === false && downloadRawEnabled === true) {
+                updateData.downloadRawEnabled = false;
+            } else {
+                updateData.downloadRawEnabled = downloadRawEnabled;
+            }
+        }
+
+        // Video and other fields...
+        if (enableVideoTab !== undefined) {
+            if (features.videoEnabled === false && enableVideoTab === true) {
+                updateData.enableVideoTab = false;
+            } else {
+                updateData.enableVideoTab = enableVideoTab;
+            }
+        }
+
+        // Pass through video download settings (could be stricter here too)
         if (downloadVideoHdEnabled !== undefined) updateData.downloadVideoHdEnabled = downloadVideoHdEnabled;
         if (downloadVideoRawEnabled !== undefined) updateData.downloadVideoRawEnabled = downloadVideoRawEnabled;
-        if (enableVideoTab !== undefined) updateData.enableVideoTab = enableVideoTab;
+
         if (showInProfile !== undefined) updateData.showInProfile = showInProfile;
         if (enableWatermark !== undefined) updateData.enableWatermark = enableWatermark;
         if (category !== undefined) updateData.category = category;

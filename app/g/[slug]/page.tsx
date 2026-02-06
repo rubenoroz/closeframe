@@ -5,7 +5,6 @@ import PublicGalleryClient from "@/components/gallery/PublicGalleryClient";
 import GalleryBlocked from "@/components/gallery/GalleryBlocked";
 import { GoogleDriveProvider } from "@/lib/cloud/google-drive-provider";
 import { getFreshGoogleAuth } from "@/lib/cloud/google-auth";
-import { getEffectivePlanConfig } from "@/lib/plans.config";
 import { Metadata } from "next";
 
 interface Props {
@@ -98,14 +97,13 @@ export default async function PublicGalleryPage({ params }: Props) {
         where: { projectId: project.id }
     });
 
-    // Calculate Effective Config server-side
-    const effectiveConfig = getEffectivePlanConfig(
-        project.user?.plan?.config || project.user?.plan?.name,
-        project.user?.featureOverrides
-    );
+    // Calculate Effective Features server-side
+    const { getEffectiveFeatures } = await import("@/lib/features/service");
+    const features = await getEffectiveFeatures(project.userId);
 
     // Check if this project exceeds the user's plan limit
-    const maxProjects = effectiveConfig.limits?.maxProjects ?? -1;
+    const val = features.maxProjects;
+    const maxProjects = typeof val === 'number' ? val : -1;
     if (maxProjects > 0) {
         // Get the oldest N projects that are allowed (by creation date)
         const allowedProjects = await prisma.project.findMany({
@@ -128,7 +126,7 @@ export default async function PublicGalleryPage({ params }: Props) {
     }
 
     // Check if video is enabled by plan
-    const planAllowsVideo = effectiveConfig.features?.videoGallery ?? false;
+    const planAllowsVideo = !!features.videoGallery;
 
     // Use the user's explicit configuration
     // But only if the plan allows video
@@ -176,7 +174,7 @@ export default async function PublicGalleryPage({ params }: Props) {
     let collaborativeGalleryId = null;
     let debugMessage = "Init";
 
-    const isCollaborativeEnabled = effectiveConfig.features?.collaborativeGalleries;
+    const isCollaborativeEnabled = !!features.collaborativeGalleries;
     debugMessage += ` | Enabled: ${isCollaborativeEnabled} | ${Date.now()}`;
 
     try {
@@ -216,21 +214,21 @@ export default async function PublicGalleryPage({ params }: Props) {
         collaborativeGalleryId,
         enableWatermark: project.enableWatermark || false,
         planLimits: {
-            maxImagesPerProject: effectiveConfig.limits?.maxImagesPerProject ?? null,
-            videoEnabled: effectiveConfig.features?.videoGallery ?? false,
-            lowResDownloads: effectiveConfig.features?.lowResDownloads ?? false,
-            lowResThumbnails: effectiveConfig.features?.lowResThumbnails ?? false,
-            zipDownloadsEnabled: effectiveConfig.features?.zipDownloadsEnabled ?? true,
-            lowResMaxWidth: effectiveConfig.limits?.lowResMaxWidth ?? 0,
-            watermarkText: effectiveConfig.limits?.watermarkText ?? null,
-            hideBranding: effectiveConfig.features?.hideBranding ?? false,
-            galleryCover: effectiveConfig.features?.galleryCover ?? false,
+            maxImagesPerProject: features.maxImagesPerProject ?? null,
+            videoEnabled: !!features.videoGallery,
+            lowResDownloads: !!features.lowResDownloads,
+            lowResThumbnails: !!features.lowResThumbnails,
+            zipDownloadsEnabled: features.zipDownloadsEnabled ?? true,
+            lowResMaxWidth: features.lowResMaxWidth ?? 0,
+            watermarkText: features.watermarkText ?? null,
+            hideBranding: !!features.hideBranding,
+            galleryCover: !!features.galleryCover,
         }
     };
 
     // [CLOSER GALLERY LOGIC]
     // If project is marked as Closer Gallery AND plan allows it
-    if (project.isCloserGallery && effectiveConfig.features?.closerGallery) {
+    if (project.isCloserGallery && features.closerGallery) {
         // Fetch Closer Gallery Structure (Momentos)
         const { GalleryIndexer } = await import("@/lib/gallery/indexer");
         const indexer = new GalleryIndexer();

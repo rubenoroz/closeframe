@@ -18,6 +18,8 @@ import MusicPicker from "@/components/MusicPicker";
 import CollaborativeSettings from "@/components/gallery/CollaborativeSettings";
 import GallerySettingsForm, { GallerySettingsData } from "@/components/gallery/GallerySettingsForm";
 
+
+
 interface Project {
     id: string;
     name: string;
@@ -74,15 +76,18 @@ export default function DashboardPage() {
     const [profileViews, setProfileViews] = useState<number>(0);
     const [username, setUsername] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
+
+
     const [isFontDropdownOpen, setIsFontDropdownOpen] = useState(false);
     const filteredProjects = projects.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
     const [planLimits, setPlanLimits] = useState<{
         videoEnabled?: boolean;
-        lowResDownloads?: boolean;
+        allowedLowRes?: boolean;
+        allowedHighRes?: boolean;
         passwordProtection?: boolean;
         galleryCover?: boolean;
-        closerGalleries?: boolean; // [NEW] Feature flag
-        collaborativeGalleries?: boolean; // [NEW] Feature flag
+        closerGalleries?: boolean;
+        collaborativeGalleries?: boolean;
     } | null>(null);
     const [showZipFilePicker, setShowZipFilePicker] = useState(false);
     const isLight = theme === "light";
@@ -170,22 +175,44 @@ export default function DashboardPage() {
         const projectsPromise = fetch("/api/projects").then(res => res.json());
         // Fetch user settings (for ID)
         const settingsPromise = fetch("/api/user/settings").then(res => res.json());
+        // Fetch features (New System)
+        const featuresPromise = fetch("/api/features/me", { cache: 'no-store', headers: { 'Pragma': 'no-cache' } }).then(res => res.json());
 
-        Promise.all([projectsPromise, settingsPromise])
-            .then(([projectsData, settingsData]) => {
+        Promise.all([projectsPromise, settingsPromise, featuresPromise])
+            .then(([projectsData, settingsData, featuresData]) => {
                 if (projectsData.projects) setProjects(projectsData.projects);
                 if (settingsData.user) {
                     setUserId(settingsData.user.id);
                     setTheme(settingsData.user.theme || "dark");
                     setProfileViews(settingsData.user.profileViews || 0);
                     setUsername(settingsData.user.username || null);
-                    // Use Effective Config from Server (Modular System)
-                    if (settingsData.effectiveConfig?.features) {
+                    setProfileViews(settingsData.user.profileViews || 0);
+                    setUsername(settingsData.user.username || null);
+
+                    // Use Features from /api/features/me (Modular System)
+                    if (featuresData.features) {
+                        const f = featuresData.features;
+                        console.log("DEBUG: Features from API:", f);
+                        setPlanLimits({
+                            videoEnabled: f.videoGallery ?? f.videoEnabled ?? false,
+                            allowedLowRes: f.lowResDownloads ?? false,
+                            allowedHighRes: f.highResDownloads ?? false,
+                            passwordProtection: f.passwordProtection ?? true,
+                            galleryCover: f.galleryCover ?? f.coverImage ?? false,
+                            closerGalleries: f.closerGalleries ?? f.zipDownloadsEnabled === true,
+                            collaborativeGalleries: f.collaborativeGalleries ?? false
+                        });
+                        console.log("DEBUG: Plan Limits Set (API):", {
+                            low: f.lowResDownloads,
+                            high: f.highResDownloads
+                        });
+                    } else if (settingsData.effectiveConfig?.features) {
                         const features = settingsData.effectiveConfig.features;
                         setPlanLimits({
                             // New names OR legacy names from DB
                             videoEnabled: features.videoGallery ?? features.videoEnabled ?? false,
-                            lowResDownloads: features.lowResDownloads ?? false,
+                            allowedLowRes: features.lowResDownloads ?? false,
+                            allowedHighRes: features.highResDownloads ?? false,
                             passwordProtection: features.passwordProtection ?? true,
                             galleryCover: features.galleryCover ?? features.coverImage ?? false,
                             closerGalleries: features.closerGalleries ?? features.zipDownloadsEnabled === true, // Proxy for Studio
@@ -199,7 +226,8 @@ export default function DashboardPage() {
                             // Map legacy field names from DB to what dashboard expects
                             setPlanLimits({
                                 videoEnabled: limits.videoEnabled ?? false,
-                                lowResDownloads: limits.lowResDownloads ?? false,
+                                allowedLowRes: limits.lowResDownloads ?? false,
+                                allowedHighRes: limits.highResDownloads ?? false,
                                 passwordProtection: limits.passwordProtection ?? true,
                                 galleryCover: limits.coverImage ?? limits.galleryCover ?? false,
                                 closerGalleries: limits.closerGalleries ?? limits.zipDownloadsEnabled === true,
@@ -280,16 +308,18 @@ export default function DashboardPage() {
                     id: selectedProject.id,
                     name: editData.name,
                     password: editData.password,
-                    downloadEnabled: editData.downloadEnabled,
+                    // Force downloadEnabled to false if NO downloads are allowed
+                    downloadEnabled: (!planLimits?.allowedHighRes && !planLimits?.allowedLowRes) ? false : editData.downloadEnabled,
                     downloadJpgEnabled: editData.downloadJpgEnabled,
                     downloadRawEnabled: editData.downloadRawEnabled,
                     downloadVideoHdEnabled: editData.downloadVideoHdEnabled,
                     downloadVideoRawEnabled: editData.downloadVideoRawEnabled,
                     enableVideoTab: editData.enableVideoTab,
                     enableWatermark: editData.enableWatermark,
-                    category: planLimits?.lowResDownloads ? "personal" : editData.category,
+                    // Force Personal/Inter if High Res is NOT allowed (Free plan restriction)
+                    category: !planLimits?.allowedHighRes ? "personal" : editData.category,
                     headerTitle: editData.headerTitle,
-                    headerFontFamily: planLimits?.lowResDownloads ? "Inter" : editData.headerFontFamily,
+                    headerFontFamily: !planLimits?.allowedHighRes ? "Inter" : editData.headerFontFamily,
                     headerFontSize: editData.headerFontSize,
                     headerColor: editData.headerColor,
                     headerBackground: editData.headerBackground,
@@ -334,16 +364,17 @@ export default function DashboardPage() {
                     id: selectedProject.id,
                     name: editData.name,
                     password: editData.password,
-                    downloadEnabled: editData.downloadEnabled,
+                    // Force downloadEnabled to false if NO downloads are allowed
+                    downloadEnabled: (!planLimits?.allowedHighRes && !planLimits?.allowedLowRes) ? false : editData.downloadEnabled,
                     downloadJpgEnabled: editData.downloadJpgEnabled,
                     downloadRawEnabled: editData.downloadRawEnabled,
                     downloadVideoHdEnabled: editData.downloadVideoHdEnabled,
                     downloadVideoRawEnabled: editData.downloadVideoRawEnabled,
                     enableVideoTab: editData.enableVideoTab,
                     enableWatermark: editData.enableWatermark,
-                    category: planLimits?.lowResDownloads ? "personal" : editData.category,
+                    category: !planLimits?.allowedHighRes ? "personal" : editData.category,
                     headerTitle: editData.headerTitle,
-                    headerFontFamily: planLimits?.lowResDownloads ? "Inter" : editData.headerFontFamily,
+                    headerFontFamily: !planLimits?.allowedHighRes ? "Inter" : editData.headerFontFamily,
                     headerFontSize: editData.headerFontSize,
                     headerColor: editData.headerColor,
                     headerBackground: editData.headerBackground,
@@ -532,20 +563,20 @@ export default function DashboardPage() {
                 ) : (
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredProjects.map(project => (
-                            <div key={project.id} className={`group border rounded-2xl p-5 transition-all duration-300 flex flex-col min-h-[220px] relative overflow-hidden ${isLight ? "bg-white border-neutral-100 hover:border-emerald-500 hover:shadow-xl hover:shadow-neutral-200/50" : "bg-neutral-900 border-neutral-800 hover:border-neutral-700"
+                            <div key={project.id} className={`group border rounded-2xl p-5 transition-all duration-300 flex flex-col min-h-[220px] relative ${isLight ? "bg-white border-neutral-100 hover:border-emerald-500 hover:shadow-xl hover:shadow-neutral-200/50" : "bg-neutral-900 border-neutral-800 hover:border-neutral-700"
                                 }`}>
                                 {project.passwordProtected ? (
-                                    <div className="absolute top-0 right-0 p-1.5 bg-emerald-600 text-white rounded-bl-lg shadow-lg z-10 flex items-center gap-1 px-2.5">
+                                    <div className="absolute top-0 right-0 p-1.5 bg-emerald-600 text-white rounded-bl-lg rounded-tr-2xl shadow-lg z-10 flex items-center gap-1 px-2.5">
                                         <Shield className="w-3 h-3" />
                                         <span className="text-[10px] font-bold uppercase tracking-tighter">Protegida</span>
                                     </div>
                                 ) : project.public ? (
-                                    <div className="absolute top-0 right-0 p-1.5 bg-blue-500 text-white rounded-bl-lg shadow-lg z-10 flex items-center gap-1 px-2.5">
+                                    <div className="absolute top-0 right-0 p-1.5 bg-blue-500 text-white rounded-bl-lg rounded-tr-2xl shadow-lg z-10 flex items-center gap-1 px-2.5">
                                         <ExternalLink className="w-3 h-3" />
                                         <span className="text-[10px] font-bold uppercase tracking-tighter">Pública</span>
                                     </div>
                                 ) : (
-                                    <div className="absolute top-0 right-0 p-1.5 bg-neutral-500 text-white rounded-bl-lg shadow-lg z-10 flex items-center gap-1 px-2.5 opacity-50">
+                                    <div className="absolute top-0 right-0 p-1.5 bg-neutral-500 text-white rounded-bl-lg rounded-tr-2xl shadow-lg z-10 flex items-center gap-1 px-2.5 opacity-50">
                                         <Shield className="w-3 h-3 grayscale" />
                                         <span className="text-[10px] font-bold uppercase tracking-tighter">Privada</span>
                                     </div>
@@ -650,6 +681,7 @@ export default function DashboardPage() {
                                                 >
                                                     <Layout className="w-4 h-4" /> Organizar Fotos y Videos
                                                 </button>
+
                                                 <div className={`h-px my-1 ${isLight ? 'bg-neutral-100' : 'bg-neutral-800'}`}></div>
                                                 <button
                                                     onClick={() => {
@@ -726,7 +758,7 @@ export default function DashboardPage() {
                                 </div>
 
                                 {(project as any).isCloserGallery && (
-                                    <div className={`absolute bottom-0 right-0 p-1.5 rounded-tl-lg shadow-lg z-10 flex items-center gap-1.5 px-3 border-t border-l ${isLight
+                                    <div className={`absolute bottom-0 right-0 p-1.5 rounded-tl-lg rounded-br-2xl shadow-lg z-10 flex items-center gap-1.5 px-3 border-t border-l ${isLight
                                         ? "bg-neutral-100 border-neutral-200 text-emerald-600"
                                         : "bg-neutral-900 border-neutral-800 text-emerald-500"
                                         }`}>
@@ -773,6 +805,8 @@ export default function DashboardPage() {
                         </div>
                     </div>
                 )}
+
+
 
                 {/* Settings Modal */}
                 {selectedProject && (
