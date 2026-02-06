@@ -15,9 +15,9 @@ export function useKanbanData(projectId: string) {
         `/api/scena/projects/${projectId}/columns`,
         fetcher,
         {
-            revalidateOnFocus: false,
+            revalidateOnFocus: true, // Update when window gets focus
             revalidateOnReconnect: true,
-            refreshInterval: 30000,
+            refreshInterval: 3000, // Poll every 3 seconds for near real-time updates
         }
     );
 
@@ -25,9 +25,9 @@ export function useKanbanData(projectId: string) {
         `/api/scena/projects/${projectId}/tasks`,
         fetcher,
         {
-            revalidateOnFocus: false,
+            revalidateOnFocus: true,
             revalidateOnReconnect: true,
-            refreshInterval: 30000,
+            refreshInterval: 3000,
         }
     );
 
