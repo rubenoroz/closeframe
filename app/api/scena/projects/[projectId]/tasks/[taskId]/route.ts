@@ -99,7 +99,7 @@ export async function DELETE(
     { params }: { params: Promise<{ projectId: string; taskId: string }> }
 ) {
     try {
-        const { taskId } = await params;
+        const { projectId, taskId } = await params;
         const session = await auth();
         if (!session?.user?.id) {
             return new NextResponse("Unauthorized", { status: 401 });
