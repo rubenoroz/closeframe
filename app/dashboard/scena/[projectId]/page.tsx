@@ -13,6 +13,8 @@ export default async function ProjectPage({ params }: { params: Promise<{ projec
         redirect("/dashboard");
     }
 
+    const userId = session.user.id;
+
     const project = await prisma.scenaProject.findUnique({
         where: { id: projectId },
         include: { members: true }
@@ -22,15 +24,15 @@ export default async function ProjectPage({ params }: { params: Promise<{ projec
         notFound();
     }
 
-    const isMember = project.members.some(m => m.userId === session.user.id);
-    const isOwner = project.ownerId === session.user.id;
+    const isMember = project.members.some(m => m.userId === userId);
+    const isOwner = project.ownerId === userId;
 
     if (!isOwner && !isMember) {
         redirect("/dashboard/scena");
     }
 
     // Determine if can share (Owner or Admin member)
-    const isAdmin = isOwner || project.members.find(m => m.userId === session.user.id)?.role === "ADMIN";
+    const isAdmin = isOwner || project.members.find(m => m.userId === userId)?.role === "ADMIN";
 
     return (
         <div className="flex flex-col h-full overflow-hidden">
