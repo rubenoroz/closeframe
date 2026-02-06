@@ -51,6 +51,7 @@ export const PLANS = {
             externalVideoAuth: false,
             collaborativeGalleries: true,
             calendarSync: true,
+            scenaAccess: true,
         }
     },
     PRO: {

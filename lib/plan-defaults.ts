@@ -170,7 +170,8 @@ export const PLAN_DEFAULTS = {
             store: false,
             closerGalleries: true,
             collaborativeGalleries: true,
-            calendarSync: true
+            calendarSync: true,
+            scenaAccess: true
         },
         limits: {
             bioMaxLength: 300,
@@ -178,7 +179,8 @@ export const PLAN_DEFAULTS = {
             maxProjects: 50,
             maxImagesPerProject: 0,
             maxCloudAccounts: 2,
-            bookingWindow: 0
+            bookingWindow: 0,
+            maxScenaProjects: 3
         }
     },
     PRO: {
@@ -262,7 +264,8 @@ export const PLAN_DEFAULTS = {
             store: false,
             closerGalleries: false,
             collaborativeGalleries: false,
-            calendarSync: true
+            calendarSync: true,
+            scenaAccess: true
         },
         limits: {
             bioMaxLength: 500,
@@ -270,7 +273,8 @@ export const PLAN_DEFAULTS = {
             maxProjects: 100,
             maxImagesPerProject: 0,
             maxCloudAccounts: 2,
-            bookingWindow: 4
+            bookingWindow: 4,
+            maxScenaProjects: 10
         }
     },
     STUDIO: {
@@ -331,6 +335,7 @@ export const PLAN_DEFAULTS = {
             closerGalleries: true,
             collaborativeGalleries: true,
             calendarSync: true,
+            scenaAccess: true,
 
             // False defaults to ensure type safety
             customDomain: false,
@@ -361,7 +366,8 @@ export const PLAN_DEFAULTS = {
             maxProjects: -1,
             maxImagesPerProject: 0,
             maxCloudAccounts: 5,
-            bookingWindow: 0
+            bookingWindow: 0,
+            maxScenaProjects: -1
         }
     },
     AGENCY: {
@@ -443,6 +449,7 @@ export const PLAN_DEFAULTS = {
             closerGalleries: true,
             collaborativeGalleries: true,
             calendarSync: true,
+            scenaAccess: true,
 
             // False defaults
             lowResThumbnails: false
