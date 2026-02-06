@@ -9,9 +9,12 @@ export async function DELETE(
 ) {
     try {
         const session = await auth();
-        if (!session?.user?.id) {
+        if (!session?.user?.id || !session.user.email) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
+
+        const userId = session.user.id;
+        const userEmail = session.user.email;
 
         const { invitationId } = await params;
         const prismaAny = prisma as any;
@@ -26,7 +29,7 @@ export async function DELETE(
 
         // Only the recipient OR the project owner/admin can delete (reject/cancel)
         // Check if user is the recipient
-        const isRecipient = invitation.email === session.user.email;
+        const isRecipient = invitation.email === userEmail;
 
         if (!isRecipient) {
             // Check if user is project admin/owner
@@ -35,8 +38,8 @@ export async function DELETE(
                 include: { members: true }
             });
 
-            const isOwner = project.ownerId === session.user.id;
-            const isAdmin = project.members.some((m: any) => m.userId === session.user.id && m.role === "ADMIN");
+            const isOwner = project.ownerId === userId;
+            const isAdmin = project.members.some((m: any) => m.userId === userId && m.role === "ADMIN");
 
             if (!isOwner && !isAdmin) {
                 return new NextResponse("Forbidden", { status: 403 });
