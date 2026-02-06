@@ -602,37 +602,32 @@ export default function OrganizePage() {
                                 <h1 className="text-sm font-medium tracking-tight line-clamp-1">{projectName}</h1>
                             </div>
                         </div>
-                    </div>
 
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => setSettingsOpen(true)}
-                            className="p-2 bg-neutral-800 hover:bg-neutral-700 text-neutral-400 hover:text-white rounded-full transition border border-white/5"
-                            title="Configuración de Galería"
-                        >
-                            <Settings className="w-5 h-5" />
-                        </button>
-                        {activeTabId !== 'collaborative' && (
+                        <div className="flex items-center gap-2">
+                            {/* [MODIFIED] Settings button removed */}
+
+                            {activeTabId !== 'collaborative' && (
+                                <button
+                                    onClick={() => setShowVideoPicker(true)}
+                                    className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-neutral-800 hover:bg-neutral-700 text-white rounded-full text-xs sm:text-sm font-medium transition border border-white/5 whitespace-nowrap"
+                                    title="Agregar video de YouTube o Vimeo"
+                                >
+                                    <Plus className="w-4 h-4" />
+                                    <span className="hidden sm:inline">Agregar Video</span>
+                                    <span className="sm:hidden">Video</span>
+                                </button>
+                            )}
+
                             <button
-                                onClick={() => setShowVideoPicker(true)}
-                                className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-neutral-800 hover:bg-neutral-700 text-white rounded-full text-xs sm:text-sm font-medium transition border border-white/5 whitespace-nowrap"
-                                title="Agregar video de YouTube o Vimeo"
+                                onClick={handleSave}
+                                disabled={saving}
+                                className="flex items-center gap-2 px-4 sm:px-6 py-2 bg-white text-black hover:bg-neutral-200 rounded-full text-xs sm:text-sm font-medium transition disabled:opacity-50 shadow-[0_0_15px_rgba(255,255,255,0.1)]"
                             >
-                                <Plus className="w-4 h-4" />
-                                <span className="hidden sm:inline">Agregar Video</span>
-                                <span className="sm:hidden">Video</span>
+                                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                <span className="hidden sm:inline">Guardar Cambios</span>
+                                <span className="sm:hidden">Guardar</span>
                             </button>
-                        )}
-
-                        <button
-                            onClick={handleSave}
-                            disabled={saving}
-                            className="flex items-center gap-2 px-4 sm:px-6 py-2 bg-white text-black hover:bg-neutral-200 rounded-full text-xs sm:text-sm font-medium transition disabled:opacity-50 shadow-[0_0_15px_rgba(255,255,255,0.1)]"
-                        >
-                            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                            <span className="hidden sm:inline">Guardar Cambios</span>
-                            <span className="sm:hidden">Guardar</span>
-                        </button>
+                        </div>
                     </div>
                 </div>
 
@@ -689,24 +684,9 @@ export default function OrganizePage() {
                         </>
                     )}
 
-                    {showCollaborativeTab && (
-                        <>
-                            <div className="w-px h-6 bg-neutral-800 mx-2 shrink-0" />
-                            <button
-                                onClick={() => setActiveTabId('collaborative')}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium transition whitespace-nowrap uppercase tracking-wider ${activeTabId === 'collaborative'
-                                    ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white border-transparent shadow-[0_0_15px_rgba(139,92,246,0.3)]'
-                                    : 'bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-white hover:border-neutral-700'
-                                    }`}
-                            >
-                                <QrCode className="w-3.5 h-3.5" />
-                                <span className="hidden sm:inline">Galería Colaborativa</span>
-                                <span className="sm:hidden">QR / Invitados</span>
-                            </button>
-                        </>
-                    )}
                 </div>
             </header>
+
 
             {/* SETTINGS MODAL */}
             {settingsOpen && (
@@ -758,18 +738,6 @@ export default function OrganizePage() {
                         <div className="col-span-full py-32 flex flex-col items-center justify-center">
                             <GalleryLoaderGrid />
                             <p className="mt-4 text-neutral-500 text-xs tracking-widest uppercase animate-pulse">Cargando momento...</p>
-                        </div>
-                    ) : activeTabId === 'collaborative' ? (
-                        /* COLLABORATIVE VIEW */
-                        <div className="col-span-full max-w-4xl mx-auto w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <div className="mb-8 text-center sm:text-left">
-                                <h2 className="text-2xl font-light mb-2">Galería Colaborativa</h2>
-                                <p className="text-neutral-400 text-sm">Gestiona los códigos QR para que tus invitados suban fotos directamente.</p>
-                            </div>
-                            <CollaborativeSettings
-                                projectId={projectId}
-                                isGoogleDrive={isGoogleDrive}
-                            />
                         </div>
                     ) : activeTabId === 'videos' ? (
                         /* VIDEO GRID */

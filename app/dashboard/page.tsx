@@ -659,21 +659,7 @@ export default function DashboardPage() {
                                                 >
                                                     <Settings className="w-4 h-4" /> Ajustes de Galería
                                                 </button>
-                                                <button
-                                                    onClick={() => copyPublicLink(project.slug, project.id)}
-                                                    className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 transition ${isLight ? "text-neutral-700 hover:bg-neutral-50" : "text-neutral-300 hover:bg-white/5"
-                                                        }`}
-                                                >
-                                                    <Copy className="w-4 h-4" /> Copiar Link Público
-                                                </button>
-                                                <a
-                                                    href={`/g/${project.slug}`}
-                                                    target="_blank"
-                                                    className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 transition ${isLight ? "text-neutral-700 hover:bg-neutral-50" : "text-neutral-300 hover:bg-white/5"
-                                                        }`}
-                                                >
-                                                    <ExternalLink className="w-4 h-4" /> Abrir Galería
-                                                </a>
+
                                                 <button
                                                     onClick={() => router.push(`/dashboard/organize/${project.id}`)}
                                                     className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 transition ${isLight ? "text-neutral-700 hover:bg-neutral-50" : "text-neutral-300 hover:bg-white/5"
@@ -810,9 +796,14 @@ export default function DashboardPage() {
 
                 {/* Settings Modal */}
                 {selectedProject && (
-                    <div className="fixed inset-0 z-[110] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
-                        <div className={`w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl relative shadow-2xl ${isLight ? "bg-white text-neutral-900" : "bg-neutral-900 text-white"
-                            }`}>
+                    <div
+                        className="fixed inset-0 z-[110] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
+                        onClick={() => setSelectedProject(null)}
+                    >
+                        <div
+                            className={`w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl relative shadow-2xl ${isLight ? "bg-white text-neutral-900" : "bg-neutral-900 text-white"}`}
+                            onClick={(e) => e.stopPropagation()}
+                        >
                             <button
                                 onClick={() => setSelectedProject(null)}
                                 className="absolute top-6 right-6 z-10 p-2 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-500 hover:text-black dark:hover:text-white transition-colors"
