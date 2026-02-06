@@ -12,7 +12,7 @@ declare module "next-auth" {
     }
 
     interface User {
-        role: UserRole
+        role?: UserRole
     }
 }
 
