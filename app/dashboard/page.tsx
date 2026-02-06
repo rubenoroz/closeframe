@@ -239,7 +239,7 @@ export default function DashboardPage() {
         setSelectedProject(project);
         setEditData({
             name: project.name,
-            password: "",
+            password: project.passwordProtected ? "" : null,
             downloadEnabled: project.downloadEnabled,
             downloadJpgEnabled: project.downloadJpgEnabled !== false,
             downloadRawEnabled: project.downloadRawEnabled === true,
@@ -311,9 +311,9 @@ export default function DashboardPage() {
                 setSelectedProject(null);
                 fetchData();
             } else {
-                const errorData = await res.json();
-                console.error("Server error:", errorData);
-                alert("Error al guardar cambios: " + (errorData.error || "Error desconocido"));
+                const errorData = await res.json().catch(() => ({}));
+                console.error("Server error:", res.status, errorData);
+                alert(`Error al guardar cambios (${res.status}): ` + (errorData.error || "Error desconocido"));
             }
         } catch (error) {
             console.error("Network error:", error);
@@ -532,7 +532,7 @@ export default function DashboardPage() {
                 ) : (
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredProjects.map(project => (
-                            <div key={project.id} className={`group border rounded-2xl p-5 transition-all duration-300 flex flex-col min-h-[220px] relative ${isLight ? "bg-white border-neutral-100 hover:border-emerald-500 hover:shadow-xl hover:shadow-neutral-200/50" : "bg-neutral-900 border-neutral-800 hover:border-neutral-700"
+                            <div key={project.id} className={`group border rounded-2xl p-5 transition-all duration-300 flex flex-col min-h-[220px] relative overflow-hidden ${isLight ? "bg-white border-neutral-100 hover:border-emerald-500 hover:shadow-xl hover:shadow-neutral-200/50" : "bg-neutral-900 border-neutral-800 hover:border-neutral-700"
                                 }`}>
                                 {project.passwordProtected ? (
                                     <div className="absolute top-0 right-0 p-1.5 bg-emerald-600 text-white rounded-bl-lg shadow-lg z-10 flex items-center gap-1 px-2.5">
@@ -575,99 +575,93 @@ export default function DashboardPage() {
                                             )}
                                         </Link>
 
-                                        {(project as any).isCloserGallery && (
-                                            <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-neutral-800/50 border border-neutral-700/50 rounded-lg backdrop-blur-sm">
-                                                <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-                                                <span className="text-[10px] font-bold text-emerald-400 monitoring-tighter">[CLOSER]</span>
-                                            </div>
-                                        )}
                                     </div>
+                                </div>
 
-                                    <div className="flex items-center gap-1 mt-8">
-                                        {/* Visit gallery button */}
-                                        <Link
-                                            href={`/g/${project.slug}`}
-                                            target="_blank"
-                                            className={`p-2.5 rounded-full transition ${isLight ? 'bg-neutral-50 text-neutral-400 hover:bg-emerald-500 hover:text-white' : 'bg-white/5 text-neutral-400 hover:text-white hover:bg-white/10'}`}
-                                            title="Visitar galería"
-                                        >
-                                            <ExternalLink className="w-4 h-4" />
-                                        </Link>
+                                <div className="absolute top-12 right-5 flex items-center gap-1">
+                                    {/* Visit gallery button */}
+                                    <Link
+                                        href={`/g/${project.slug}`}
+                                        target="_blank"
+                                        className={`p-2.5 rounded-full transition ${isLight ? 'bg-neutral-50 text-neutral-400 hover:bg-emerald-500 hover:text-white' : 'bg-white/5 text-neutral-400 hover:text-white hover:bg-white/10'}`}
+                                        title="Visitar galería"
+                                    >
+                                        <ExternalLink className="w-4 h-4" />
+                                    </Link>
 
-                                        {/* Copy link button */}
+                                    {/* Copy link button */}
+                                    <button
+                                        onClick={() => copyPublicLink(project.slug, project.id)}
+                                        className={`p-2.5 rounded-full transition relative ${copiedId === project.id
+                                            ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30'
+                                            : isLight ? 'bg-neutral-50 text-neutral-400 hover:bg-emerald-500 hover:text-white' : 'bg-white/5 text-neutral-400 hover:text-white'
+                                            }`}
+                                        title="Copiar enlace público"
+                                    >
+                                        {copiedId === project.id ? <Check className="w-4 h-4" /> : <LinkIcon className="w-4 h-4" />}
+                                    </button>
+
+                                    <div className="relative">
                                         <button
-                                            onClick={() => copyPublicLink(project.slug, project.id)}
-                                            className={`p-2.5 rounded-full transition relative ${copiedId === project.id
-                                                ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30'
-                                                : isLight ? 'bg-neutral-50 text-neutral-400 hover:bg-emerald-500 hover:text-white' : 'bg-white/5 text-neutral-400 hover:text-white'
-                                                }`}
-                                            title="Copiar enlace público"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setActiveMenu(activeMenu === project.id ? null : project.id);
+                                            }}
+                                            className="p-2 rounded-full hover:bg-white/5 text-neutral-500 hover:text-white transition"
                                         >
-                                            {copiedId === project.id ? <Check className="w-4 h-4" /> : <LinkIcon className="w-4 h-4" />}
+                                            <MoreVertical className="w-5 h-5" />
                                         </button>
 
-                                        <div className="relative">
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setActiveMenu(activeMenu === project.id ? null : project.id);
-                                                }}
-                                                className="p-2 rounded-full hover:bg-white/5 text-neutral-500 hover:text-white transition"
+                                        {activeMenu === project.id && (
+                                            <div
+                                                className={`absolute right-0 mt-2 w-56 border rounded-xl shadow-2xl z-[100] py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 ${isLight ? "bg-white border-neutral-200 shadow-neutral-200" : "bg-neutral-900 border-neutral-800 shadow-black"
+                                                    }`}
+                                                onClick={(e) => e.stopPropagation()}
                                             >
-                                                <MoreVertical className="w-5 h-5" />
-                                            </button>
-
-                                            {activeMenu === project.id && (
-                                                <div
-                                                    className={`absolute right-0 mt-2 w-56 border rounded-xl shadow-2xl z-[100] py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 ${isLight ? "bg-white border-neutral-200 shadow-neutral-200" : "bg-neutral-900 border-neutral-800 shadow-black"
-                                                        }`}
-                                                    onClick={(e) => e.stopPropagation()}
-                                                >
-                                                    <div className={`px-4 py-2 text-[10px] uppercase tracking-widest border-b mb-1 opacity-50 ${isLight ? 'border-neutral-100' : 'border-white/5'}`}>
-                                                        Gestión
-                                                    </div>
-                                                    <button
-                                                        onClick={() => openSettings(project)}
-                                                        className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 transition ${isLight ? "text-neutral-700 hover:bg-neutral-50" : "text-neutral-300 hover:bg-white/5"
-                                                            }`}
-                                                    >
-                                                        <Settings className="w-4 h-4" /> Ajustes de Galería
-                                                    </button>
-                                                    <button
-                                                        onClick={() => copyPublicLink(project.slug, project.id)}
-                                                        className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 transition ${isLight ? "text-neutral-700 hover:bg-neutral-50" : "text-neutral-300 hover:bg-white/5"
-                                                            }`}
-                                                    >
-                                                        <Copy className="w-4 h-4" /> Copiar Link Público
-                                                    </button>
-                                                    <a
-                                                        href={`/g/${project.slug}`}
-                                                        target="_blank"
-                                                        className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 transition ${isLight ? "text-neutral-700 hover:bg-neutral-50" : "text-neutral-300 hover:bg-white/5"
-                                                            }`}
-                                                    >
-                                                        <ExternalLink className="w-4 h-4" /> Abrir Galería
-                                                    </a>
-                                                    <button
-                                                        onClick={() => router.push(`/dashboard/organize/${project.id}`)}
-                                                        className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 transition ${isLight ? "text-neutral-700 hover:bg-neutral-50" : "text-neutral-300 hover:bg-white/5"
-                                                            }`}
-                                                    >
-                                                        <Layout className="w-4 h-4" /> Organizar Fotos y Videos
-                                                    </button>
-                                                    <div className={`h-px my-1 ${isLight ? 'bg-neutral-100' : 'bg-neutral-800'}`}></div>
-                                                    <button
-                                                        onClick={() => {
-                                                            setDeleteConfirm(project.id);
-                                                            setActiveMenu(null);
-                                                        }}
-                                                        className="w-full px-4 py-2.5 text-left text-sm text-red-500 hover:bg-red-500/10 flex items-center gap-3 transition font-medium"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" /> Eliminar Galería
-                                                    </button>
+                                                <div className={`px-4 py-2 text-[10px] uppercase tracking-widest border-b mb-1 opacity-50 ${isLight ? 'border-neutral-100' : 'border-white/5'}`}>
+                                                    Gestión
                                                 </div>
-                                            )}
-                                        </div>
+                                                <button
+                                                    onClick={() => openSettings(project)}
+                                                    className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 transition ${isLight ? "text-neutral-700 hover:bg-neutral-50" : "text-neutral-300 hover:bg-white/5"
+                                                        }`}
+                                                >
+                                                    <Settings className="w-4 h-4" /> Ajustes de Galería
+                                                </button>
+                                                <button
+                                                    onClick={() => copyPublicLink(project.slug, project.id)}
+                                                    className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 transition ${isLight ? "text-neutral-700 hover:bg-neutral-50" : "text-neutral-300 hover:bg-white/5"
+                                                        }`}
+                                                >
+                                                    <Copy className="w-4 h-4" /> Copiar Link Público
+                                                </button>
+                                                <a
+                                                    href={`/g/${project.slug}`}
+                                                    target="_blank"
+                                                    className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 transition ${isLight ? "text-neutral-700 hover:bg-neutral-50" : "text-neutral-300 hover:bg-white/5"
+                                                        }`}
+                                                >
+                                                    <ExternalLink className="w-4 h-4" /> Abrir Galería
+                                                </a>
+                                                <button
+                                                    onClick={() => router.push(`/dashboard/organize/${project.id}`)}
+                                                    className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 transition ${isLight ? "text-neutral-700 hover:bg-neutral-50" : "text-neutral-300 hover:bg-white/5"
+                                                        }`}
+                                                >
+                                                    <Layout className="w-4 h-4" /> Organizar Fotos y Videos
+                                                </button>
+                                                <div className={`h-px my-1 ${isLight ? 'bg-neutral-100' : 'bg-neutral-800'}`}></div>
+                                                <button
+                                                    onClick={() => {
+                                                        setDeleteConfirm(project.id);
+                                                        setActiveMenu(null);
+                                                    }}
+                                                    className="w-full px-4 py-2.5 text-left text-sm text-red-500 hover:bg-red-500/10 flex items-center gap-3 transition font-medium"
+                                                >
+                                                    <Trash2 className="w-4 h-4" /> Eliminar Galería
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 
@@ -724,12 +718,22 @@ export default function DashboardPage() {
                                             </div>
                                         </div>
 
-                                        <div className={`ml-auto flex items-center gap-2 text-[10px] font-medium ${isLight ? 'text-neutral-400' : 'text-neutral-500'}`}>
+                                        <div className={`flex items-center gap-2 text-[10px] font-medium ${isLight ? 'text-neutral-400' : 'text-neutral-500'}`}>
                                             <Calendar className="w-3 h-3" />
                                             {new Date(project.createdAt).toLocaleDateString()}
                                         </div>
                                     </div>
                                 </div>
+
+                                {(project as any).isCloserGallery && (
+                                    <div className={`absolute bottom-0 right-0 p-1.5 rounded-tl-lg shadow-lg z-10 flex items-center gap-1.5 px-3 border-t border-l ${isLight
+                                        ? "bg-neutral-100 border-neutral-200 text-emerald-600"
+                                        : "bg-neutral-900 border-neutral-800 text-emerald-500"
+                                        }`}>
+                                        <Sparkles className="w-3.5 h-3.5" />
+                                        <span className="text-[10px] font-bold uppercase tracking-tighter">Closer</span>
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>

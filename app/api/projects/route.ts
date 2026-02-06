@@ -296,20 +296,30 @@ export async function PATCH(request: NextRequest) {
         if (isCollaborative !== undefined) updateData.isCollaborative = isCollaborative;
 
         // Handle public status based on password
-        if (password !== undefined && password.trim() !== "") {
+        if (typeof password === 'string' && password.trim() !== "") {
             updateData.public = false; // If password is set, project must be private
+        } else if (password === null) {
+            // If password is removed, we force public=true.
+            // The frontend sends the previous 'public' state (which might be false), 
+            // but removing the password in this UI context implies making it public.
+            updateData.public = true;
         } else if (isPublic !== undefined) {
-            updateData.public = isPublic; // Otherwise, use the provided public status
+            updateData.public = isPublic;
         }
 
-        if (password !== undefined) {
-            if (password === "") {
-                updateData.passwordProtected = false;
-                updateData.passwordHash = null;
-            } else {
+        // Handle Password Update
+        if (password === null) {
+            // Explicitly remove password
+            updateData.passwordProtected = false;
+            updateData.passwordHash = null;
+        } else if (typeof password === 'string') {
+            if (password.trim() !== "") {
+                // Set new password
                 updateData.passwordProtected = true;
                 updateData.passwordHash = await bcrypt.hash(password, 10);
             }
+            // If password is "" (empty string), we DO NOTHING. 
+            // This preserves the existing password/hash in the database.
         }
 
         const updatedProject = await prisma.project.update({
