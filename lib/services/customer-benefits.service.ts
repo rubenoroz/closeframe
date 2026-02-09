@@ -190,7 +190,7 @@ export async function applyReferredBenefit(
                     await stripe.subscriptions.list({ customer: stripeCustomerId }).then(async (subs) => {
                         if (subs.data.length > 0) {
                             await stripe.subscriptions.update(subs.data[0].id, {
-                                coupon: couponId
+                                discounts: [{ coupon: couponId }]
                             });
                         }
                     });
@@ -297,7 +297,7 @@ export async function applyReferrerBenefit(
                     await stripe.subscriptions.list({ customer: referrerUser.stripeCustomerId }).then(async (subs) => {
                         if (subs.data.length > 0) {
                             await stripe.subscriptions.update(subs.data[0].id, {
-                                coupon: couponId
+                                discounts: [{ coupon: couponId }]
                             });
                         }
                     });
@@ -366,7 +366,7 @@ export async function applyReferrerBenefit(
                     await stripe.subscriptions.list({ customer: referrerUser.stripeCustomerId }).then(async (subs) => {
                         if (subs.data.length > 0) {
                             await stripe.subscriptions.update(subs.data[0].id, {
-                                coupon: couponId
+                                discounts: [{ coupon: couponId }]
                             });
                         }
                     });
