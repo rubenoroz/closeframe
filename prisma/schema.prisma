@@ -59,6 +59,7 @@ model User {
   stripeConnectAccount   StripeConnectAccount?
   plan                   Plan?                 @relation(fields: [planId], references: [id])
   tasks                  Task[]                @relation("TaskAssignees")
+  projectNotes           ProjectNote[]
 }
 
 model SystemSettings {
@@ -250,6 +251,7 @@ model ScenaProject {
   columns     Column[]
   invitations ProjectInvitation[]
   members     ProjectMember[]
+  notes       ProjectNote[]
   booking     Booking?            @relation(fields: [bookingId], references: [id])
   owner       User                @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
@@ -563,4 +565,18 @@ model Payment {
 
   @@index([connectAccountId])
   @@index([status])
+}
+
+model ProjectNote {
+  id        String       @id @default(cuid())
+  content   String
+  projectId String
+  userId    String
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  project   ScenaProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([userId])
 }

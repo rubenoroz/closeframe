@@ -18,8 +18,9 @@ import { Task } from "./Task";
 import { TaskDetailModal } from "./TaskDetailModal";
 import { GanttChart } from "./GanttChart";
 import { Button } from "@/components/ui/button";
-import { Loader2, BarChart3, FileSpreadsheet, PieChart, Plus, Eye, EyeOff, Search, X } from "lucide-react";
+import { Loader2, BarChart3, FileSpreadsheet, PieChart, Plus, Eye, EyeOff, Search, X, MessageSquare } from "lucide-react";
 import { FetchedTask } from "@/types/scena";
+import { ProjectNotesModal } from "./ProjectNotesModal";
 
 const ProjectStatisticsModal = dynamic(
     () => import("./ProjectStatisticsModal").then((mod) => mod.ProjectStatisticsModal),
@@ -383,6 +384,8 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
                         <PieChart className="w-4 h-4" />
                         <span className="hidden sm:inline">Estadísticas</span>
                     </button>
+
+                    <ProjectNotesModal projectId={projectId} />
                 </div>
             </div>
 
