@@ -398,7 +398,7 @@ export async function calculateCommissionOnPayment(
 
             if (previousCommission) {
                 console.log(`[REFERRAL] Commission already exists for referral ${referral.id}, skipping subsequent payment commission for CUSTOMER`);
-                return { success: true, commissionId: null };
+                return { success: true, commissionId: undefined };
             }
 
             // Create commission record with PENDING status (will be processed by batch cron)
