@@ -3,6 +3,13 @@ import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/db";
 import Stripe from "stripe";
+import {
+    calculateCommissionOnPayment,
+    handleRefund,
+    handleChargeback,
+    autoAssignReferralCode
+} from "@/lib/services/referral.service";
+import { applyReferrerBenefit } from "@/lib/services/customer-benefits.service";
 
 const getFreePlan = async () => {
     return await prisma.plan.findUnique({ where: { name: "free" } });
@@ -91,15 +98,24 @@ export async function POST(req: Request) {
                     },
                 });
                 console.log(`[STRIPE_WEBHOOK] User ${userId} subscribed to plan ${plan.name}`);
+
+                // Auto-assign referral code to paying customers
+                if (plan.name !== "free") {
+                    const referralResult = await autoAssignReferralCode(userId);
+                    if (referralResult.success) {
+                        console.log(`[STRIPE_WEBHOOK] Auto-assigned referral code ${referralResult.referralCode} to user ${userId}`);
+                    }
+                }
             } else {
                 console.error(`[STRIPE_WEBHOOK] No plan found for priceId: ${priceId}`);
             }
         }
 
-        // Handle invoice.payment_succeeded (for renewals)
+        // Handle invoice.payment_succeeded (for renewals and commission tracking)
         if (event.type === "invoice.payment_succeeded") {
             const invoice = event.data.object as Stripe.Invoice;
             const subscriptionId = (invoice as any).subscription as string;
+            const customerId = invoice.customer as string;
 
             if (!subscriptionId) {
                 // This might be a one-time payment, skip
@@ -122,6 +138,55 @@ export async function POST(req: Request) {
                     }
                 });
                 console.log(`[STRIPE_WEBHOOK] Updated period end for subscription ${subscriptionId}`);
+            }
+
+            // Calculate referral commission if applicable
+            const paymentIntent = (invoice as any).payment_intent as string | null;
+            if (paymentIntent && invoice.amount_paid > 0) {
+                const userId = (subscription.metadata as any)?.userId;
+                const referralCode = (subscription.metadata as any)?.referralCode;
+
+                const result = await calculateCommissionOnPayment(
+                    customerId,
+                    paymentIntent,
+                    invoice.id,
+                    invoice.amount_paid,
+                    invoice.currency,
+                    referralCode,
+                    userId
+                );
+                if (result.success && result.commissionId) {
+                    console.log(`[STRIPE_WEBHOOK] Referral commission handled: ${result.commissionId}`);
+                }
+            }
+        }
+
+        // Handle charge.refunded
+        if (event.type === "charge.refunded") {
+            const charge = event.data.object as Stripe.Charge;
+            const paymentIntentId = charge.payment_intent as string;
+
+            if (paymentIntentId) {
+                const isFullRefund = charge.refunded;
+                const refundedAmount = charge.amount_refunded;
+
+                await handleRefund(paymentIntentId, refundedAmount, isFullRefund);
+                console.log(`[STRIPE_WEBHOOK] Handled refund for payment: ${paymentIntentId}`);
+            }
+        }
+
+        // Handle charge.dispute.created (chargeback)
+        if (event.type === "charge.dispute.created") {
+            const dispute = event.data.object as Stripe.Dispute;
+            const chargeId = dispute.charge as string;
+
+            // Get the charge to find the payment intent
+            const charge = await stripe.charges.retrieve(chargeId);
+            const paymentIntentId = charge.payment_intent as string;
+
+            if (paymentIntentId) {
+                await handleChargeback(paymentIntentId);
+                console.log(`[STRIPE_WEBHOOK] Handled chargeback for payment: ${paymentIntentId}`);
             }
         }
 
@@ -156,3 +221,4 @@ export async function POST(req: Request) {
 
     return new NextResponse(null, { status: 200 });
 }
+

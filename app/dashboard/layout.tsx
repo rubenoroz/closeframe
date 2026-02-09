@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { Camera, LayoutGrid, Plus, Settings, LogOut, CalendarDays, ChevronDown, User, Monitor, CreditCard, Menu, X, Sun, Moon, Shield, Wallet } from "lucide-react";
+import { Camera, LayoutGrid, Plus, Settings, LogOut, CalendarDays, ChevronDown, User, Users, Monitor, CreditCard, Menu, X, Sun, Moon, Shield, Wallet } from "lucide-react";
 import Image from "next/image";
 import { ScenaIcon } from "@/components/icons/ScenaIcon";
 import { cn } from "@/lib/utils";
@@ -50,6 +50,8 @@ export default function DashboardLayout({
         ...(showPayments
             ? [{ href: "/dashboard/payments", label: "Ingresos", icon: <Wallet className="w-5 h-5" /> }]
             : []),
+
+        { href: "/dashboard/referrals", label: "Referidos", icon: <Users className="w-5 h-5" /> },
 
         { href: "/dashboard/billing", label: "Suscripción", icon: <CreditCard className="w-5 h-5" /> },
 

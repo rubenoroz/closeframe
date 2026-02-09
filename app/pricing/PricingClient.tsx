@@ -126,7 +126,7 @@ export default function PricingClient({ plans }: PricingClientProps) {
                                 billingInterval === "year" ? "translate-x-6" : "translate-x-0"
                             )} />
                         </div>
-                        <span className={cn("text-sm cursor-pointer", billingInterval === "year" ? "text-white font-bold" : "text-neutral-500")} onClick={() => setBillingInterval("year")}>Anual <span className="text-emerald-400 text-xs ml-1">(Ahorra 2 meses)</span></span>
+                        <span className={cn("text-sm cursor-pointer", billingInterval === "year" ? "text-white font-bold" : "text-neutral-500")} onClick={() => setBillingInterval("year")}>Anual <span className="text-emerald-400 text-xs ml-1">(Mejor precio)</span></span>
                     </div>
                 </div>
 

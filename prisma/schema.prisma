@@ -54,12 +54,14 @@ model User {
   projects               Project[]
   sentInvitations        ProjectInvitation[]   @relation("SentInvitations")
   projectMemberships     ProjectMember[]
+  projectNotes           ProjectNote[]
+  referredBy             Referral[]            @relation("ReferredUser")
+  referralAssignments    ReferralAssignment[]
   scenaProjects          ScenaProject[]
   sessions               Session[]
   stripeConnectAccount   StripeConnectAccount?
   plan                   Plan?                 @relation(fields: [planId], references: [id])
   tasks                  Task[]                @relation("TaskAssignees")
-  projectNotes           ProjectNote[]
 }
 
 model SystemSettings {
@@ -579,4 +581,211 @@ model ProjectNote {
 
   @@index([projectId])
   @@index([userId])
+}
+
+model ReferralProfile {
+  id          String               @id @default(cuid())
+  name        String
+  type        ReferralProfileType
+  isDefault   Boolean              @default(false)
+  isActive    Boolean              @default(true)
+  config      Json
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  assignments ReferralAssignment[]
+}
+
+model ReferralAssignment {
+  id              String               @id @default(cuid())
+  userId          String
+  profileId       String
+  referralCode    String               @unique
+  customSlug      String?              @unique
+  status          ReferralStatus       @default(ACTIVE)
+  pausedAt        DateTime?
+  expiresAt       DateTime?
+  configOverride  Json?
+  stripeConnectId String?
+  payoutMethod    PayoutMethod         @default(PLATFORM_CREDIT)
+  totalClicks     Int                  @default(0)
+  totalReferrals  Int                  @default(0)
+  totalConverted  Int                  @default(0)
+  totalEarned     Decimal              @default(0) @db.Decimal(10, 2)
+  totalPaid       Decimal              @default(0) @db.Decimal(10, 2)
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  batchesPaid     Int                  @default(0)
+  referrals       Referral[]
+  profile         ReferralProfile      @relation(fields: [profileId], references: [id])
+  user            User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  auditLogs       ReferralAuditLog[]
+  commissions     ReferralCommission[]
+  payouts         ReferralPayout[]
+
+  @@index([userId])
+  @@index([referralCode])
+}
+
+model Referral {
+  id               String               @id @default(cuid())
+  assignmentId     String
+  referredUserId   String?
+  referredEmail    String
+  sourceIp         String?
+  userAgent        String?
+  utmSource        String?
+  utmMedium        String?
+  utmCampaign      String?
+  landingPage      String?
+  status           ReferredStatus       @default(CLICKED)
+  clickedAt        DateTime             @default(now())
+  registeredAt     DateTime?
+  convertedAt      DateTime?
+  qualifiedAt      DateTime?
+  cancelledAt      DateTime?
+  attributionModel AttributionModel     @default(LAST_CLICK)
+  attributionShare Decimal              @default(100) @db.Decimal(5, 2)
+  benefitApplied   Json?
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  assignment       ReferralAssignment   @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  referredUser     User?                @relation("ReferredUser", fields: [referredUserId], references: [id])
+  commissions      ReferralCommission[]
+
+  @@index([assignmentId])
+  @@index([referredEmail])
+  @@index([status])
+}
+
+model ReferralCommission {
+  id               String             @id @default(cuid())
+  assignmentId     String
+  referralId       String
+  stripePaymentId  String?
+  stripeInvoiceId  String?
+  baseAmount       Decimal            @db.Decimal(10, 2)
+  commissionRate   Decimal            @db.Decimal(5, 4)
+  fixedAmount      Decimal            @default(0) @db.Decimal(10, 2)
+  totalAmount      Decimal            @db.Decimal(10, 2)
+  currency         String             @default("MXN")
+  status           CommissionStatus   @default(PENDING)
+  qualifiesAt      DateTime
+  paidAt           DateTime?
+  adjustedAmount   Decimal?           @db.Decimal(10, 2)
+  adjustmentReason String?
+  payoutId         String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  assignment       ReferralAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  payout           ReferralPayout?    @relation(fields: [payoutId], references: [id])
+  referral         Referral           @relation(fields: [referralId], references: [id], onDelete: Cascade)
+
+  @@index([assignmentId])
+  @@index([status])
+}
+
+model ReferralPayout {
+  id                  String               @id @default(cuid())
+  assignmentId        String
+  amount              Decimal              @db.Decimal(10, 2)
+  currency            String               @default("MXN")
+  method              PayoutMethod
+  stripeTransferId    String?
+  paypalTransactionId String?
+  bankReference       String?
+  status              PayoutStatus         @default(PENDING)
+  requestedAt         DateTime             @default(now())
+  processedAt         DateTime?
+  failedAt            DateTime?
+  failureReason       String?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  commissions         ReferralCommission[]
+  assignment          ReferralAssignment   @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  @@index([assignmentId])
+}
+
+model ReferralAuditLog {
+  id            String              @id @default(cuid())
+  assignmentId  String?
+  action        String
+  actorId       String
+  actorType     String
+  previousValue Json?
+  newValue      Json?
+  metadata      Json?
+  createdAt     DateTime            @default(now())
+  assignment    ReferralAssignment? @relation(fields: [assignmentId], references: [id])
+
+  @@index([assignmentId])
+  @@index([createdAt])
+}
+
+model ReferralClick {
+  id           String   @id @default(cuid())
+  referralCode String
+  ip           String
+  userAgent    String?
+  referer      String?
+  landingPage  String
+  fingerprint  String?
+  createdAt    DateTime @default(now())
+
+  @@index([referralCode])
+  @@index([ip])
+  @@index([createdAt])
+}
+
+enum ReferralProfileType {
+  AFFILIATE
+  CUSTOMER
+}
+
+enum ReferralStatus {
+  ACTIVE
+  PAUSED
+  EXPIRED
+  LIMIT_REACHED
+  SUSPENDED
+}
+
+enum PayoutMethod {
+  STRIPE_CONNECT
+  PAYPAL
+  BANK_TRANSFER
+  PLATFORM_CREDIT
+}
+
+enum ReferredStatus {
+  CLICKED
+  REGISTERED
+  CONVERTED
+  QUALIFIED
+  CANCELLED
+  REFUNDED
+  FRAUDULENT
+}
+
+enum AttributionModel {
+  FIRST_CLICK
+  LAST_CLICK
+  LINEAR
+  MANUAL
+}
+
+enum CommissionStatus {
+  PENDING
+  QUALIFIED
+  PAID
+  ADJUSTED
+  CANCELLED
+  CREDITED
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
 }

@@ -173,7 +173,7 @@ export function PricingSection({ plans, region }: PricingSectionProps) {
                             : "text-white/40 hover:text-white"
                             }`}
                     >
-                        Anual
+                        Anual <span className="text-[8px] text-emerald-400 block -mt-1 font-black leading-none uppercase tracking-tighter">Mejor precio</span>
                     </button>
                 </div>
 
