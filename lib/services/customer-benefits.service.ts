@@ -87,7 +87,7 @@ export async function applyReferredBenefit(
             return { success: false, error: "Invalid or inactive referral" };
         }
 
-        const config = (assignment.configOverride || assignment.profile.config) as CustomerProfileConfig;
+        const config = (assignment.configOverride || assignment.profile.config) as unknown as CustomerProfileConfig;
         const benefit = config.referredBenefit;
 
         if (!benefit) {

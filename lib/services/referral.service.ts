@@ -132,7 +132,7 @@ export async function findActiveAssignment(code: string) {
 export function getEffectiveConfig(
     assignment: ReferralAssignment & { profile: ReferralProfile }
 ): AffiliateProfileConfig {
-    const baseConfig = assignment.profile.config as AffiliateProfileConfig;
+    const baseConfig = assignment.profile.config as unknown as AffiliateProfileConfig;
     const override = assignment.configOverride as Partial<AffiliateProfileConfig> | null;
 
     if (!override) return baseConfig;
