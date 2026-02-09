@@ -288,7 +288,7 @@ export function PricingSection({ plans, region }: PricingSectionProps) {
                                     } ${loadingPlanId === plan.id ? "opacity-70 cursor-wait" : ""}`}
                             >
                                 {loadingPlanId === plan.id && <Loader2 className="w-4 h-4 animate-spin" />}
-                                {priceToShow === 0 ? "Registrarse" : isRecommended ? "Experiencia" : "Elegir " + plan.displayName}
+                                {priceToShow === 0 ? "Registrarse" : isRecommended ? "Elegir Studio" : "Elegir " + plan.displayName}
                             </button>
                         </div>
                     );

@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { prisma } from "@/lib/db";
 import { PlanBNavbar } from "@/components/landing/PlanBNavbar";
 import { PricingSection } from "@/components/landing/PricingSection";
+import { FAQModal } from "@/components/landing/FAQModal";
 import { getRegionFromHeaders } from "@/lib/geo";
 // We don't use next/image yet to keep compatibility with provided external URLs for the prototype
 /* eslint-disable @next/next/no-img-element */
@@ -11,9 +12,16 @@ import { getRegionFromHeaders } from "@/lib/geo";
 
 import Image from "next/image";
 
+import { redirect } from "next/navigation";
+import { auth } from "@/auth";
+
 export const dynamic = "force-dynamic";
 
 export default async function PlanBPage() {
+    const session = await auth();
+    if (session?.user) {
+        redirect("/dashboard");
+    }
     // Detect visitor region from Vercel's geo headers
     const headersList = await headers();
     const region = getRegionFromHeaders(headersList);
@@ -480,6 +488,7 @@ export default async function PlanBPage() {
                                 <li><a className="hover:text-[#cdb8e1] transition-colors" href="#">Scena</a></li>
                                 <li><a className="hover:text-[#cdb8e1] transition-colors" href="#">Galerías Closer</a></li>
                                 <li><a className="hover:text-[#cdb8e1] transition-colors" href="#">Galerías Colaborativas</a></li>
+                                <li><FAQModal /></li>
                             </ul>
                         </div>
                         <div>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import React from "react";
+import { UserNavButton } from "./UserNavButton";
 
 export function PlanBNavbar() {
     const [isMenuOpen, setIsMenuOpen] = React.useState(false);
@@ -66,14 +67,10 @@ export function PlanBNavbar() {
                         >
                             Precios
                         </a>
-                        <Link href="/login">
-                            <button className="bg-white text-black px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest hover:bg-[#cdb8e1] transition-all">
-                                Login
-                            </button>
-                        </Link>
+                        <UserNavButton />
                     </nav>
                 </div>
-            </header>
+            </header >
 
             {/* Mobile Menu - Separate from header */}
             {/* Overlay - Click to close */}
