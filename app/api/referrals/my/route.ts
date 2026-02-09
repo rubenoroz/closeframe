@@ -121,7 +121,7 @@ export async function GET() {
     let batchProgress = null;
 
     if (customerAssignment) {
-        const config = customerAssignment.config as any;
+        const config = (customerAssignment.config as any);
         const minReferrals = config?.qualification?.minReferrals || 5;
 
         // Count active referrals for batch

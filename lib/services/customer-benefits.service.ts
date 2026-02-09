@@ -251,7 +251,7 @@ export async function applyReferrerBenefit(
         }
 
         const config = (referral.assignment.configOverride ||
-            referral.assignment.profile.config) as CustomerProfileConfig;
+            referral.assignment.profile.config) as unknown as CustomerProfileConfig;
         const benefit = config.referrerBenefit;
 
         if (!benefit) {
@@ -452,7 +452,7 @@ export async function getCheckoutBenefits(
         return { hasReferral: false };
     }
 
-    const config = (assignment.configOverride || assignment.profile.config) as CustomerProfileConfig;
+    const config = (assignment.configOverride || assignment.profile.config) as unknown as CustomerProfileConfig;
     const benefit = config.referredBenefit;
 
     if (!benefit) {

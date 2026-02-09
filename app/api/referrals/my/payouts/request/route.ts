@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
         }, 0);
 
         // Get config for threshold check
-        const config = (assignment.configOverride || assignment.profile.config) as any;
+        const config = (assignment.configOverride as any) || (assignment.profile.config as any);
         const minThreshold = config?.payoutSettings?.minThreshold || 500;
 
         if (totalAmount < minThreshold) {
@@ -247,7 +247,7 @@ export async function GET() {
         return sum + Number(c.totalAmount);
     }, 0);
 
-    const config = (assignment.configOverride || assignment.profile.config) as any;
+    const config = (assignment.configOverride as any) || (assignment.profile.config as any);
 
     return NextResponse.json({
         availableBalance,

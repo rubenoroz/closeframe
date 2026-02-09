@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
         for (const assignment of assignments) {
             try {
                 // Get configuration for batch size
-                const config = assignment.configOverride as any || assignment.profile.config as any;
+                const config = (assignment.configOverride as any) || (assignment.profile.config as any);
                 const minReferrals = config?.qualification?.minReferrals || 5; // Default to 5 if not set
 
                 if (minReferrals <= 0) continue; // Should not happen with new config, but safety check
