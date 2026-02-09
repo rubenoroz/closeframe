@@ -10,6 +10,7 @@ export interface CloudFile {
     imageMediaMetadata?: {
         width: number;
         height: number;
+        rotation?: number;
     };
     videoMediaMetadata?: {
         width: number;

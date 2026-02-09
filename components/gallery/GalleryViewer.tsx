@@ -35,6 +35,7 @@ interface Props {
     onVideoPlay?: () => void;
     onVideoPause?: () => void;
     layoutType?: "mosaic" | "grid";
+    profileUrl?: string; // [NEW]
 }
 
 // ... CloudFile interface ...
@@ -64,7 +65,8 @@ export default function GalleryViewer({
     onSelectionChange,
     preloadedFiles,
     onVideoPlay,
-    onVideoPause
+    onVideoPause,
+    profileUrl
 }: Props) {
     const [files, setFiles] = useState<CloudFile[]>(preloadedFiles || []);
     // [FIX] If preloadedFiles are provided, we don't need to load
@@ -382,17 +384,36 @@ export default function GalleryViewer({
                 <div className="flex items-center gap-3 text-lg font-light pointer-events-auto">
                     {/* ... Logo/Name ... */}
                     {studioLogo ? (
-                        <div
-                            className="h-8 flex items-center justify-center overflow-hidden transition-transform duration-300 origin-left"
-                            style={{ transform: `scale(${studioLogoScale / 100})` }}
-                        >
-                            <img src={studioLogo} alt={studioName} className="h-full w-auto object-contain max-w-none" />
-                        </div>
+                        profileUrl ? (
+                            <a
+                                href={profileUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="h-8 flex items-center justify-center overflow-hidden transition-transform duration-300 origin-left hover:opacity-80"
+                                style={{ transform: `scale(${studioLogoScale / 100})` }}
+                            >
+                                <img src={studioLogo} alt={studioName} className="h-full w-auto object-contain max-w-none" />
+                            </a>
+                        ) : (
+                            <div
+                                className="h-8 flex items-center justify-center overflow-hidden transition-transform duration-300 origin-left"
+                                style={{ transform: `scale(${studioLogoScale / 100})` }}
+                            >
+                                <img src={studioLogo} alt={studioName} className="h-full w-auto object-contain max-w-none" />
+                            </div>
+                        )
                     ) : (
-                        <>
-                            <Camera className={`w-5 h-5 ${theme === 'light' ? 'text-emerald-600' : 'text-emerald-500'}`} />
-                            <span className={`tracking-tight font-medium ${theme === 'light' ? 'text-neutral-900' : 'text-white'}`}>{studioName}</span>
-                        </>
+                        profileUrl ? (
+                            <a href={profileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                                <Camera className={`w-5 h-5 ${theme === 'light' ? 'text-emerald-600' : 'text-emerald-500'}`} />
+                                <span className={`tracking-tight font-medium ${theme === 'light' ? 'text-neutral-900' : 'text-white'}`}>{studioName}</span>
+                            </a>
+                        ) : (
+                            <>
+                                <Camera className={`w-5 h-5 ${theme === 'light' ? 'text-emerald-600' : 'text-emerald-500'}`} />
+                                <span className={`tracking-tight font-medium ${theme === 'light' ? 'text-neutral-900' : 'text-white'}`}>{studioName}</span>
+                            </>
+                        )
                     )}
                 </div>
                 <div className="flex items-center gap-3 pointer-events-auto">
@@ -693,6 +714,7 @@ function MediaCard({
 }) {
     const [loaded, setLoaded] = useState(false);
     const [error, setError] = useState(false);
+    const [realAspectRatio, setRealAspectRatio] = useState<number | null>(null); // [NEW] Client-side correction
     // [FIX] Detect external videos by mimeType 'video/external' OR prefix, or explicit prop
     const isVideo = item.mimeType?.startsWith('video/') || item.isExternal;
     // [FIX] If external, assume loaded once rendered or use simple onLoad
@@ -735,7 +757,7 @@ function MediaCard({
                 style={{
                     aspectRatio: layoutType === "grid"
                         ? (isVideo ? 1.77 : 1.5)
-                        : aspectRatio
+                        : (realAspectRatio || aspectRatio) // Use detected ratio if available
                 }}
             >
                 <div onClick={onView} className="absolute inset-0">
@@ -769,7 +791,20 @@ function MediaCard({
                         }
                         alt={item.name}
                         className={`absolute inset-0 w-full h-full object-cover transform group-hover:scale-105 transition duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
-                        onLoad={() => setLoaded(true)}
+                        onLoad={(e) => {
+                            setLoaded(true);
+                            if (!isVideo) {
+                                const img = e.currentTarget;
+                                if (img.naturalWidth && img.naturalHeight) {
+                                    const naturalRatio = img.naturalWidth / img.naturalHeight;
+                                    // If difference is significant (> 10%), assume metadata was wrong (e.g. rotation issue)
+                                    if (Math.abs(naturalRatio - aspectRatio) > 0.1) {
+                                        // console.log(`[Fix] Correcting aspect ratio for ${item.name}: ${aspectRatio.toFixed(2)} -> ${naturalRatio.toFixed(2)}`);
+                                        setRealAspectRatio(naturalRatio);
+                                    }
+                                }
+                            }
+                        }}
                         onError={() => setError(true)}
                         referrerPolicy="no-referrer"
                         loading={loadingStrategy}

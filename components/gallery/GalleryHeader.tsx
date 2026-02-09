@@ -12,6 +12,7 @@ interface GalleryHeaderProps {
     coverImage?: string | null;
     coverImageFocus?: string | null; // "x,y" format (0-100)
     cloudAccountId?: string;
+    profileUrl?: string; // [NEW] Optional profile link
 }
 
 export default function GalleryHeader({
@@ -24,6 +25,7 @@ export default function GalleryHeader({
     coverImage,
     coverImageFocus,
     cloudAccountId,
+    profileUrl,
 }: GalleryHeaderProps) {
     useEffect(() => {
         // Dynamically load Google Font if not Inter (default system font)
@@ -88,13 +90,23 @@ export default function GalleryHeader({
                 {/* Logo Logic: Client Logo OR Default Closeframe Logo */}
                 {logo ? (
                     // Client Logo
-                    <div className="relative h-16 w-auto max-w-[200px]">
-                        <img
-                            src={logo}
-                            alt="Studio Logo"
-                            className="h-full w-auto object-contain"
-                        />
-                    </div>
+                    profileUrl ? (
+                        <a href={profileUrl} target="_blank" rel="noopener noreferrer" className="relative h-16 w-auto max-w-[200px] hover:opacity-80 transition-opacity">
+                            <img
+                                src={logo}
+                                alt="Studio Logo"
+                                className="h-full w-auto object-contain"
+                            />
+                        </a>
+                    ) : (
+                        <div className="relative h-16 w-auto max-w-[200px]">
+                            <img
+                                src={logo}
+                                alt="Studio Logo"
+                                className="h-full w-auto object-contain"
+                            />
+                        </div>
+                    )
                 ) : (
                     // Default Closerlens Logo (Fallback)
                     <div className="relative h-8 w-auto opacity-80">

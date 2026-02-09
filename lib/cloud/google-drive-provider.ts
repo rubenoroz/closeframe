@@ -39,6 +39,17 @@ export class GoogleDriveProvider implements CloudProvider {
                 thumbnailLink = `https://drive.google.com/thumbnail?id=${file.id}&sz=w400`;
             }
 
+            let width = isVideo ? file.videoMediaMetadata?.width : file.imageMediaMetadata?.width;
+            let height = isVideo ? file.videoMediaMetadata?.height : file.imageMediaMetadata?.height;
+            const rotation = file.imageMediaMetadata?.rotation;
+
+            // [FIX] Swap dimensions if rotated 90 or 270 degrees
+            if (rotation === 90 || rotation === 270) {
+                const temp = width;
+                width = height;
+                height = temp;
+            }
+
             return {
                 id: file.id || "",
                 name: file.name || "Untitled",
@@ -46,8 +57,8 @@ export class GoogleDriveProvider implements CloudProvider {
                 thumbnailLink: thumbnailLink || undefined,
                 previewLink: file.webContentLink || undefined,
                 downloadLink: file.webContentLink || undefined,
-                width: isVideo ? file.videoMediaMetadata?.width : file.imageMediaMetadata?.width || undefined,
-                height: isVideo ? file.videoMediaMetadata?.height : file.imageMediaMetadata?.height || undefined,
+                width: width || undefined,
+                height: height || undefined,
                 lastModified: file.modifiedTime || undefined,
             };
         });

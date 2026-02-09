@@ -64,6 +64,7 @@ interface PublicGalleryClientProps {
             theme?: string | null;
             businessLogoScale?: number | null;
             plan?: { name: string; config: any; } | null; // [DEBUG] Added for troubleshooting
+            username?: string | null;
         } | null;
     };
 }
@@ -81,6 +82,7 @@ export default function PublicGalleryClient({ project }: PublicGalleryClientProp
                 theme={project.user?.theme}
                 businessLogoScale={project.user?.businessLogoScale}
                 plan={project.user?.plan}
+                profileUrl={project.user?.username ? `/u/${project.user.username}` : undefined}
             />
         );
     }
@@ -234,6 +236,7 @@ export default function PublicGalleryClient({ project }: PublicGalleryClientProp
                 color={headerColor}
                 background={headerBackground}
                 logo={project.user?.businessLogo}
+                profileUrl={project.user?.username ? `/u/${project.user.username}` : undefined}
                 coverImage={project.headerImage}
                 coverImageFocus={project.headerImageFocus}
                 cloudAccountId={project.cloudAccountId}

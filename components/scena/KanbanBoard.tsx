@@ -350,7 +350,7 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
                             }`}
                     >
                         <BarChart3 className="w-4 h-4" />
-                        <span className="hidden sm:inline">{viewMode === 'kanban' ? 'Ver Gantt' : 'Ver Kanban'}</span>
+                        <span className="hidden sm:inline">{viewMode === 'kanban' ? 'Gantt' : 'Kanban'}</span>
                     </button>
 
                     <button

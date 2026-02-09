@@ -23,6 +23,7 @@ interface CloserGalleryClientProps {
     collaborativeSections?: { id: string; name: string; driveFolderId: string }[];
     debugMessage?: string;
     structure?: any;
+    profileUrl?: string; // [NEW]
 }
 
 export default function CloserGalleryClient({
@@ -34,7 +35,8 @@ export default function CloserGalleryClient({
     businessLogoScale,
     plan,
     collaborativeSections,
-    debugMessage
+    debugMessage,
+    profileUrl
 }: CloserGalleryClientProps) {
     const [isLocked, setIsLocked] = useState(project.passwordProtected);
     const [showCover, setShowCover] = useState(true);
@@ -321,6 +323,7 @@ export default function CloserGalleryClient({
                 onEnter={handleEnter}
                 cloudAccountId={project.cloudAccountId}
                 fontSize={project.headerFontSize}
+                profileUrl={profileUrl}
             />
         );
     }
@@ -344,6 +347,7 @@ export default function CloserGalleryClient({
                 // but Closer usually is clean. Let's start clean or use headerImage if set.
                 coverImage={project.headerImage}
                 coverImageFocus={project.headerImageFocus}
+                profileUrl={profileUrl}
             />
 
             {/* Single Merged Navigation Bar */}
@@ -408,6 +412,7 @@ export default function CloserGalleryClient({
                     studioName={businessName || "Closer"}
                     studioLogo={businessLogo || ""}
                     studioLogoScale={businessLogoScale || 100}
+                    profileUrl={profileUrl}
                     downloadEnabled={effectiveDownloadEnabled}
                     downloadJpgEnabled={project.downloadJpgEnabled}
                     downloadRawEnabled={project.downloadRawEnabled}

@@ -95,7 +95,7 @@ export function Column({
         >
             {/* Header */}
             <div className="flex items-center justify-between p-3 border-b border-neutral-200/50">
-                <div className="flex items-center gap-2 flex-1">
+                <div className="flex items-center gap-2 flex-1 min-w-0">
                     <button
                         {...listeners}
                         className="cursor-grab text-neutral-500 hover:text-neutral-800 transition-colors active:cursor-grabbing"
@@ -121,7 +121,7 @@ export function Column({
                         />
                     ) : (
                         <h2
-                            className="text-sm font-semibold text-neutral-800 cursor-pointer hover:text-black truncate"
+                            className="text-sm font-semibold text-neutral-800 cursor-pointer hover:text-black line-clamp-2 break-words"
                             onDoubleClick={() => setIsEditingTitle(true)}
                         >
                             {name}

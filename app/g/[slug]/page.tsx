@@ -82,7 +82,8 @@ export default async function PublicGalleryPage({ params }: Props) {
                             name: true,
                             config: true
                         }
-                    }
+                    },
+                    username: true
                 }
             }
         },
