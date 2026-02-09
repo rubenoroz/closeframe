@@ -5,8 +5,9 @@ import { prisma } from "@/lib/db";
 
 export async function GET(
     request: Request,
-    { params }: { params: { projectId: string } }
+    props: { params: Promise<{ projectId: string }> }
 ) {
+    const params = await props.params;
     try {
         const session = await auth();
         if (!session?.user?.email) {
@@ -68,8 +69,9 @@ export async function GET(
 
 export async function POST(
     request: Request,
-    { params }: { params: { projectId: string } }
+    props: { params: Promise<{ projectId: string }> }
 ) {
+    const params = await props.params;
     try {
         const session = await auth();
         if (!session?.user?.email) {

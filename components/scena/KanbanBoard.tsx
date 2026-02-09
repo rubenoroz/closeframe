@@ -22,6 +22,7 @@ import { Loader2, BarChart3, FileSpreadsheet, PieChart, Plus, Eye, EyeOff, Searc
 import { FetchedTask } from "@/types/scena";
 import { ProjectNotesModal } from "./ProjectNotesModal";
 
+
 const ProjectStatisticsModal = dynamic(
     () => import("./ProjectStatisticsModal").then((mod) => mod.ProjectStatisticsModal),
     { ssr: false }
