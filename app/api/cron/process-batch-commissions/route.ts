@@ -131,7 +131,7 @@ export async function GET(req: NextRequest) {
                         await prisma.referralAssignment.update({
                             where: { id: assignment.id },
                             data: {
-                                batchesPaid: batchesPaid + batchesToPay,
+                                batchesPaid: assignment.batchesPaid + batchesToPay,
                                 totalEarned: { increment: totalReward }
                             }
                         });
