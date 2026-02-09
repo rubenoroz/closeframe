@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
 
         // Build response based on profile type
         if (profileType === "CUSTOMER") {
-            const customerConfig = config as CustomerProfileConfig;
+            const customerConfig = config as unknown as CustomerProfileConfig;
             return NextResponse.json({
                 valid: true,
                 referralCode: assignment.referralCode,
