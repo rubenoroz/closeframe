@@ -36,8 +36,9 @@ const ClosseAssistant = () => {
         setMessages((prev) => [...prev, { role: "user", text: userMsg }]);
         setIsLoading(true);
 
+        const apiUrl = process.env.NEXT_PUBLIC_CHATBOT_URL || "https://rubenoroz-closse-api.hf.space/chat";
         try {
-            const response = await fetch("http://localhost:8000/chat", {
+            const response = await fetch(apiUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ message: userMsg }),
