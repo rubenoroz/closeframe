@@ -9,10 +9,11 @@ export default async function ScenaPage() {
     if (!session?.user?.id) {
         redirect("/dashboard");
     }
+    const userId = session.user.id;
 
     // Check plan permissions via database matrix
     const { canUseFeature, getFeatureLimit } = await import("@/lib/features/service");
-    const isAllowed = await canUseFeature(session.user.id, 'scenaAccess') || (session.user.role as any) === 'SUPERADMIN' || (session.user.role as any) === 'ADMIN';
+    const isAllowed = await canUseFeature(userId, 'scenaAccess') || (session.user.role as any) === 'SUPERADMIN' || (session.user.role as any) === 'ADMIN';
 
     if (!isAllowed) {
         return (
@@ -26,9 +27,9 @@ export default async function ScenaPage() {
     }
 
     // Check project creation limits
-    const limit = await getFeatureLimit(session.user.id, 'maxScenaProjects');
+    const limit = await getFeatureLimit(userId, 'maxScenaProjects');
     const ownedProjectsCount = await prisma.scenaProject.count({
-        where: { ownerId: session.user.id }
+        where: { ownerId: userId }
     });
 
     // Superadmins can always create. Others depend on limit.

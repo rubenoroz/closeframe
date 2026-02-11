@@ -15,10 +15,11 @@ export default async function PaymentsPage({
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
     const session = await auth();
-    if (!session?.user) redirect("/login");
+    if (!session?.user?.id) redirect("/login");
+    const userId = session.user.id;
 
     const user = await prisma.user.findUnique({
-        where: { id: session.user.id },
+        where: { id: userId },
         include: { stripeConnectAccount: true },
     });
 
@@ -27,7 +28,7 @@ export default async function PaymentsPage({
 
     // [New] Soft Lock: Check if user has access to payments
     const { canUseFeature } = await import("@/lib/features/service");
-    const canAccessPayments = await canUseFeature(session.user.id, 'bookingPayments');
+    const canAccessPayments = await canUseFeature(userId, 'bookingPayments');
 
     if (!canAccessPayments) {
         return (

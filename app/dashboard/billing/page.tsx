@@ -10,9 +10,10 @@ export default async function BillingPage() {
     if (!session?.user?.id) {
         redirect("/login");
     }
+    const userId = session.user.id;
 
     const user = await prisma.user.findUnique({
-        where: { id: session.user.id },
+        where: { id: userId },
         select: {
             name: true,
             email: true,
@@ -31,10 +32,10 @@ export default async function BillingPage() {
     // Parallel data fetching for performance
     const [projectCount, cloudCount] = await Promise.all([
         prisma.project.count({
-            where: { userId: session.user.id }
+            where: { userId: userId }
         }),
         prisma.cloudAccount.count({
-            where: { userId: session.user.id }
+            where: { userId: userId }
         })
     ]);
 
