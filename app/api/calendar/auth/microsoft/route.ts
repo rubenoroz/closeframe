@@ -34,12 +34,13 @@ export async function GET(request: NextRequest) {
         }
 
         // Verify plan allows calendarSync
-        const planName = user.plan?.name?.toUpperCase() || 'FREE';
-        const allowedPlans = ['PRO', 'STUDIO', 'AGENCY', 'FAMILY'];
+        // [SECURE] Use dynamic feature check instead of hardcoded plans
+        const { canUseFeature } = await import("@/lib/features/service");
+        const allowed = await canUseFeature(session.user.id, 'calendarSync');
 
-        if (!allowedPlans.some(p => planName.includes(p))) {
+        if (!allowed) {
             return NextResponse.json(
-                { error: 'Esta función requiere un plan Pro o superior' },
+                { error: 'Esta función requiere un plan superior' },
                 { status: 403 }
             );
         }

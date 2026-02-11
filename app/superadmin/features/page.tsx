@@ -134,18 +134,21 @@ export default function FeaturesMatrixPage() {
 
     if (loading) return <div className="flex justify-center p-10"><Loader2 className="animate-spin" /></div>;
 
-    // Enhance features with local metadata and categories
-    const enhancedFeatures = features.map(f => {
-        const featureDef = FEATURE_POOL.find(fp => fp.id === f.key);
-        return {
-            ...f,
-            category: featureDef?.category || f.category,
-            label: featureDef?.label || f.key,
-            description: featureDef?.description || f.description,
-            icon: featureDef?.icon,
-            type: featureDef?.type
-        };
-    });
+    // Only show features that are defined in the code's FEATURE_POOL
+    const poolKeys = new Set(FEATURE_POOL.map(fp => fp.id));
+    const enhancedFeatures = features
+        .filter(f => poolKeys.has(f.key))
+        .map(f => {
+            const featureDef = FEATURE_POOL.find(fp => fp.id === f.key);
+            return {
+                ...f,
+                category: featureDef?.category || f.category,
+                label: featureDef?.label || f.key,
+                description: featureDef?.description || f.description,
+                icon: featureDef?.icon,
+                type: featureDef?.type
+            };
+        });
 
     // Ordered list of categories as requested
     const categoryOrder = ['profile', 'gallery', 'booking', 'scena', 'collaboration', 'monetization', 'analytics', 'system'];

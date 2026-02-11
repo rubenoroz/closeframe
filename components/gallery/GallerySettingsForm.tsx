@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { UploadCloud, Folder, Loader2, AlertCircle, ArrowLeft, PlusCircle, Check, Mail, Zap, Info, Cloud, ChevronRight, Layout, Download, ImageIcon, Music, Settings, X, Trash2, Sparkles, Copy, Calendar, Link as LinkIcon, Lock, Users } from "lucide-react";
 import MusicPicker from "@/components/MusicPicker";
 import FocalPointPicker from "@/components/FocalPointPicker";
@@ -58,6 +58,10 @@ export interface PlanLimits {
     videoEnabled?: boolean;
     galleryCover?: boolean;
     passwordProtection?: boolean;
+    customFonts?: boolean;
+    closerGalleries?: boolean;
+    collaborativeGalleries?: boolean;
+    zipDownloadsEnabled?: boolean;
 }
 
 interface GallerySettingsFormProps {
@@ -107,6 +111,14 @@ export default function GallerySettingsForm({
     const [showZipFilePicker, setShowZipFilePicker] = useState(false);
 
     // Handlers for updating a single field
+    // [DEBUG] Check what limits are arriving
+    useEffect(() => {
+        console.log("--- GallerySettingsForm DEBUG ---");
+        console.log("Plan Limits:", planLimits);
+        console.log("Closer Enabled in Plan?", planLimits?.closerGalleries);
+        console.log("Current Form Data isCloserGallery:", data.isCloserGallery);
+    }, [planLimits, data.isCloserGallery]);
+
     const update = (field: keyof GallerySettingsData, value: any) => {
         onChange({ ...data, [field]: value });
     };
@@ -138,11 +150,22 @@ export default function GallerySettingsForm({
                             type="checkbox"
                             className="sr-only peer"
                             checked={data.isCloserGallery}
-                            onChange={(e) => update('isCloserGallery', e.target.checked)}
+                            disabled={!planLimits?.closerGalleries}
+                            onChange={(e) => {
+                                if (!planLimits?.closerGalleries) return;
+                                update('isCloserGallery', e.target.checked);
+                            }}
                         />
-                        <div className="w-11 h-6 bg-neutral-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                        <div className="w-11 h-6 bg-neutral-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500 peer-disabled:opacity-50"></div>
                     </label>
                 </div>
+
+                {!planLimits?.closerGalleries && (
+                    <div className="mt-2 text-[10px] text-amber-500 flex items-center gap-2 bg-amber-500/10 p-2 rounded-lg">
+                        <AlertCircle className="w-3 h-3" />
+                        La Experiencia Closer requiere un Plan Superior.
+                    </div>
+                )}
 
                 {data.isCloserGallery && (
                     <div className="mt-6 space-y-6 animate-in slide-in-from-top-2 fade-in duration-300">
@@ -228,8 +251,11 @@ export default function GallerySettingsForm({
                             ) : (
                                 <button
                                     type="button"
-                                    onClick={() => update('isCollaborative', true)}
-                                    disabled={!isGoogleDrive}
+                                    onClick={() => {
+                                        if (!planLimits?.collaborativeGalleries) return;
+                                        update('isCollaborative', true);
+                                    }}
+                                    disabled={!isGoogleDrive || !planLimits?.collaborativeGalleries}
                                     className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2 w-full sm:w-auto"
                                 >
                                     <Users className="w-4 h-4" />
@@ -238,12 +264,20 @@ export default function GallerySettingsForm({
                             )}
                         </div>
 
+                        {!planLimits?.collaborativeGalleries && (
+                            <div className="flex items-center gap-2 text-xs text-amber-500 bg-amber-500/10 p-2 rounded-lg mb-4">
+                                <AlertCircle className="w-4 h-4" />
+                                Las Galerías Colaborativas requieren un Plan Superior.
+                            </div>
+                        )}
+
                         {!isGoogleDrive && (
                             <div className="flex items-center gap-2 text-xs text-amber-500 bg-amber-500/10 p-2 rounded-lg">
                                 <AlertCircle className="w-4 h-4" />
                                 Solo disponible con Google Drive.
                             </div>
                         )}
+
 
                         {data.isCollaborative && isGoogleDrive && (
                             <>
@@ -416,18 +450,18 @@ export default function GallerySettingsForm({
                         <div>
                             <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-2 flex items-center gap-2">
                                 Tipografía
-                                {!planLimits?.allowedHighRes && (
-                                    <span className="text-[9px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">Plan Gratuito</span>
+                                {!planLimits?.customFonts && (
+                                    <span className="text-[9px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">Requiere Pro</span>
                                 )}
                             </label>
                             {/* Custom Font Selector */}
                             <div className="relative">
                                 <button
                                     type="button"
-                                    disabled={!planLimits?.allowedHighRes}
+                                    disabled={!planLimits?.customFonts}
                                     onClick={() => setIsFontDropdownOpen(!isFontDropdownOpen)}
                                     className={`w-full text-left border rounded-xl px-4 py-2.5 text-sm transition-all flex items-center justify-between ${isLight ? 'bg-white border-neutral-200 hover:border-emerald-500' : 'bg-neutral-900 border-neutral-700 hover:border-emerald-500'
-                                        } ${!planLimits?.allowedHighRes ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                        } ${!planLimits?.customFonts ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                                     style={{
                                         fontFamily: data.headerFontFamily !== "Inter" ? `'${data.headerFontFamily}', sans-serif` : "inherit"
                                     }}
@@ -444,7 +478,7 @@ export default function GallerySettingsForm({
                                 </button>
 
                                 {/* Dropdown */}
-                                {planLimits?.allowedHighRes && (
+                                {planLimits?.customFonts && (
                                     <div className={`absolute left-0 right-0 top-full mt-1 rounded-xl border shadow-xl overflow-hidden z-[60] p-1 transition-all ${isFontDropdownOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'} ${isLight ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'}`}>
                                         {[
                                             { val: "Inter", label: "Inter (Profesional)", font: "Inter, sans-serif" },
@@ -477,7 +511,7 @@ export default function GallerySettingsForm({
 
                             {/* Font Preview Block */}
                             <div
-                                className={`mt-3 p-4 rounded-xl border text-center transition-all ${isLight ? 'bg-neutral-50 border-neutral-100' : 'bg-white/5 border-white/5'}`}
+                                className={`mt-3 p-4 rounded-xl border text-center transition-all min-h-[60px] flex items-center justify-center ${isLight ? 'bg-neutral-50 border-neutral-100' : 'bg-white/5 border-white/5'}`}
                                 style={{
                                     fontFamily: data.headerFontFamily !== "Inter" ? `'${data.headerFontFamily}', sans-serif` : "inherit",
                                     color: data.headerColor,
@@ -767,9 +801,9 @@ export default function GallerySettingsForm({
                                         <input
                                             type="checkbox"
                                             checked={data.enableVideoTab}
-                                            disabled={planLimits?.videoEnabled === false}
+                                            disabled={!planLimits?.videoEnabled}
                                             onChange={(e) => {
-                                                if (planLimits?.videoEnabled === false) return;
+                                                if (!planLimits?.videoEnabled) return;
                                                 update('enableVideoTab', e.target.checked);
                                             }}
                                             className="w-5 h-5 accent-emerald-500 rounded bg-neutral-700 disabled:opacity-50"
@@ -817,42 +851,51 @@ export default function GallerySettingsForm({
                         <span className="text-sm font-medium">Archivo ZIP de Descarga</span>
                     </div>
                     <div className="space-y-3 pl-0 md:pl-7">
-                        <p className={`text-xs ${isLight ? 'text-neutral-500' : 'text-neutral-400'}`}>
-                            Vincula un archivo ZIP de tu Google Drive.
-                        </p>
-                        {data.zipFileId ? (
-                            <div className="flex items-center gap-3">
-                                <div className={`flex-1 flex items-center gap-2 px-3 py-2 rounded-xl ${isLight ? 'bg-white border border-neutral-200' : 'bg-neutral-900 border border-neutral-700'}`}>
-                                    <Download className="w-4 h-4 text-blue-500" />
-                                    <span className="text-sm truncate">{data.zipFileName || 'Archivo seleccionado'}</span>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => setShowZipFilePicker(true)}
-                                    className="text-xs text-neutral-400 hover:text-white transition"
-                                >
-                                    Cambiar
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => onChange({ ...data, zipFileId: '', zipFileName: '' })}
-                                    className="text-xs text-red-400 hover:text-red-300 transition"
-                                >
-                                    Quitar
-                                </button>
-                            </div>
+                        {planLimits?.zipDownloadsEnabled ? (
+                            <>
+                                <p className={`text-xs ${isLight ? 'text-neutral-500' : 'text-neutral-400'}`}>
+                                    Vincula un archivo ZIP de tu Google Drive.
+                                </p>
+                                {data.zipFileId ? (
+                                    <div className="flex items-center gap-3">
+                                        <div className={`flex-1 flex items-center gap-2 px-3 py-2 rounded-xl ${isLight ? 'bg-white border border-neutral-200' : 'bg-neutral-900 border border-neutral-700'}`}>
+                                            <Download className="w-4 h-4 text-blue-500" />
+                                            <span className="text-sm truncate">{data.zipFileName || 'Archivo seleccionado'}</span>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowZipFilePicker(true)}
+                                            className="text-xs text-neutral-400 hover:text-white transition"
+                                        >
+                                            Cambiar
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => onChange({ ...data, zipFileId: '', zipFileName: '' })}
+                                            className="text-xs text-red-400 hover:text-red-300 transition"
+                                        >
+                                            Quitar
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowZipFilePicker(true)}
+                                        className={`w-full py-3 px-4 border border-dashed rounded-xl flex items-center justify-center gap-2 transition-colors ${isLight
+                                            ? 'border-neutral-300 hover:border-blue-400 text-neutral-500 hover:text-blue-600 hover:bg-blue-50'
+                                            : 'border-neutral-700 hover:border-blue-500 text-neutral-400 hover:text-blue-400 hover:bg-blue-500/5'
+                                            }`}
+                                    >
+                                        <Download className="w-4 h-4" />
+                                        <span className="text-sm">Seleccionar archivo ZIP de Drive</span>
+                                    </button>
+                                )}
+                            </>
                         ) : (
-                            <button
-                                type="button"
-                                onClick={() => setShowZipFilePicker(true)}
-                                className={`w-full py-3 px-4 border border-dashed rounded-xl flex items-center justify-center gap-2 transition-colors ${isLight
-                                    ? 'border-neutral-300 hover:border-blue-400 text-neutral-500 hover:text-blue-600 hover:bg-blue-50'
-                                    : 'border-neutral-700 hover:border-blue-500 text-neutral-400 hover:text-blue-400 hover:bg-blue-500/5'
-                                    }`}
-                            >
-                                <Download className="w-4 h-4" />
-                                <span className="text-sm">Seleccionar archivo ZIP de Drive</span>
-                            </button>
+                            <div className="p-3 rounded-lg border border-dashed border-neutral-800 bg-neutral-900/50 text-neutral-500 text-xs flex items-center gap-3">
+                                <Lock className="w-4 h-4 text-neutral-600" />
+                                <span>Las descargas ZIP requieren un Plan Superior.</span>
+                            </div>
                         )}
                     </div>
                 </div>
@@ -871,7 +914,7 @@ export default function GallerySettingsForm({
                             </div>
 
                             {/* Toggle */}
-                            {planLimits?.passwordProtection !== false && (
+                            {planLimits?.passwordProtection && (
                                 <label className="relative inline-flex items-center cursor-pointer">
                                     <input
                                         type="checkbox"
@@ -886,7 +929,7 @@ export default function GallerySettingsForm({
                             )}
                         </div>
 
-                        {(planLimits?.passwordProtection !== false) && (data.password !== null && data.password !== undefined) && (
+                        {planLimits?.passwordProtection && (data.password !== null && data.password !== undefined) && (
                             <div className="relative mt-3 animate-in fade-in slide-in-from-top-2">
                                 <input
                                     type="text"
@@ -902,7 +945,7 @@ export default function GallerySettingsForm({
                             </div>
                         )}
 
-                        {planLimits?.passwordProtection === false && (
+                        {!planLimits?.passwordProtection && (
                             <div className="mt-2 text-[10px] text-amber-500 flex items-center gap-2 bg-amber-500/10 p-2 rounded-lg">
                                 <AlertCircle className="w-3 h-3" />
                                 Requiere Plan PRO.

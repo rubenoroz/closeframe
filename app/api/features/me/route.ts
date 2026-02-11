@@ -29,38 +29,20 @@ export async function GET() {
             return new NextResponse("User not found", { status: 404 });
         }
 
-        // Superadmins have all features
-        if (user.role === 'SUPERADMIN') {
-            // We could return a flag, but for consistency we return all features as true
-            const allFeatures = await prisma.feature.findMany({ select: { key: true } });
-            const featuresMap = allFeatures.reduce((acc, f) => ({ ...acc, [f.key]: true }), {});
-            return NextResponse.json({ features: featuresMap, role: user.role });
-        }
+        // Use centralized service logic (Handles Superadmin, Plans and Overrides correctly)
+        const { getEffectiveFeatures } = await import("@/lib/features/service");
+        const featuresMap = await getEffectiveFeatures(userId);
 
-        // 2. Fetch Plan Features
-        let featuresMap: Record<string, any> = {};
-
-        if (user.planId) {
-            const planFeatures = await prisma.planFeature.findMany({
-                where: { planId: user.planId },
-                include: { feature: true }
-            });
-
-            planFeatures.forEach(pf => {
-                featuresMap[pf.feature.key] = pf.enabled || pf.limit;
-            });
-        }
-
-        // 3. Apply Overrides
-        if (user.featureOverrides && typeof user.featureOverrides === 'object') {
-            const overrides = user.featureOverrides as Record<string, any>;
-            Object.assign(featuresMap, overrides);
-        }
+        // Fetch user basic info for response context
+        const userData = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { planId: true, role: true }
+        });
 
         return NextResponse.json({
             features: featuresMap,
-            planId: user.planId,
-            role: user.role
+            planId: userData?.planId,
+            role: userData?.role
         });
 
     } catch (error) {

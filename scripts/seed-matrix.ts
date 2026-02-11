@@ -35,13 +35,11 @@ const MATRIX = {
             rightClickProtection: false,
             baseThemes: false,
             customFonts: false,
-            colorPalettes: false,
             customLogo: false,
             smoothTransitions: false,
             premiumAnimations: false,
             storytelling: false,
             editorialDescription: false,
-            aiCuration: false,
             viewOnlyGalleries: false,
             qrCode: false,
             duplicateGallery: false,
@@ -130,11 +128,9 @@ const MATRIX = {
             zipDownloadsEnabled: false,
             rightClickProtection: false,
             baseThemes: false, // "Temas base" is Studio
-            colorPalettes: false,
             customLogo: false,
             premiumAnimations: false,
             storytelling: false,
-            aiCuration: false,
             qrCode: false,
             collections: false,
             prioritySupport: false, // "Soporte estándar" listed in Pro, Priority in Studio
@@ -176,7 +172,7 @@ const MATRIX = {
             bioMaxLength: 500, // Bio extendida
             maxSocialLinks: -1,
             maxProjects: 100,
-            maxImagesPerProject: 0, // Unlimited? text doesn't say limit
+            maxImagesPerProject: -1, // Unlimited
             maxCloudAccounts: 2,
             bookingWindow: 4
         }
@@ -212,7 +208,6 @@ const MATRIX = {
             whiteLabel: true,
             customUrl: true, // closerlens.com/usuario
             store: true, // "Galerías descargables" (Paid?)
-            aiCuration: true,
             manualOrdering: true,
             storytelling: true,
             collections: true,
@@ -222,7 +217,6 @@ const MATRIX = {
             embeddedVideos: true,
             videoCover: true,
             baseThemes: true,
-            colorPalettes: true,
             customLogo: true, // "Logo propio"
             premiumAnimations: true,
             temporaryLinks: true,
@@ -250,7 +244,7 @@ const MATRIX = {
             bioMaxLength: 1000,
             maxSocialLinks: -1,
             maxProjects: -1, // Ilimitadas
-            maxImagesPerProject: 0,
+            maxImagesPerProject: -1,
             maxCloudAccounts: 5,
             bookingWindow: 0
         }
@@ -284,7 +278,6 @@ const MATRIX = {
             whiteLabel: true,
             customUrl: true,
             store: true,
-            aiCuration: true,
             manualOrdering: true,
             storytelling: true,
             collections: true,
@@ -294,7 +287,6 @@ const MATRIX = {
             embeddedVideos: true,
             videoCover: true,
             baseThemes: true,
-            colorPalettes: true,
             customLogo: true,
             premiumAnimations: true,
             temporaryLinks: true,
@@ -342,7 +334,7 @@ const MATRIX = {
             bioMaxLength: 2000,
             maxSocialLinks: -1,
             maxProjects: -1,
-            maxImagesPerProject: 0,
+            maxImagesPerProject: -1,
             maxCloudAccounts: -1, // Ilimitado
             bookingWindow: 0
         }

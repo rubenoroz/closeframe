@@ -79,6 +79,8 @@ export async function POST(request: Request) {
     }
 }
 
+export const dynamic = "force-dynamic";
+
 // DELETE: Remove a booking
 export async function DELETE(request: Request) {
     try {
@@ -94,19 +96,30 @@ export async function DELETE(request: Request) {
             return NextResponse.json({ error: "Missing booking ID" }, { status: 400 });
         }
 
+        console.log(`[DELETE Booking] Request to delete booking ${id} for user ${session.user.id}`);
+
         // Verify ownership
         const booking = await prisma.booking.findFirst({
             where: { id, userId: session.user.id },
         });
 
         if (!booking) {
+            console.log(`[DELETE Booking] Booking ${id} not found or unauthorized`);
             return NextResponse.json({ error: "Booking not found" }, { status: 404 });
         }
 
         // Remove from external calendars first
-        await removeBookingFromCalendars(session.user.id, id);
+        console.log(`[DELETE Booking] Removing from external calendars...`);
+        try {
+            await removeBookingFromCalendars(session.user.id, id);
+            console.log(`[DELETE Booking] Sync removal complete.`);
+        } catch (syncError) {
+            console.error(`[DELETE Booking] Sync removal failed (ignoring):`, syncError);
+        }
 
+        console.log(`[DELETE Booking] Deleting from DB...`);
         await prisma.booking.delete({ where: { id } });
+        console.log(`[DELETE Booking] DB deletion successful.`);
 
         return NextResponse.json({ success: true });
     } catch (error) {

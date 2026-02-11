@@ -30,6 +30,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import VideoPicker from "@/components/VideoPicker";
+import { useFeatures } from "@/hooks/useFeatures";
 
 interface FileItem {
     id: string;
@@ -93,6 +94,10 @@ export default function OrganizePage() {
         passwordProtection?: boolean;
         galleryCover?: boolean;
     } | null>(null);
+
+    // Feature flags
+    const { canUse } = useFeatures();
+    const isEmbeddedVideosAllowed = canUse('embeddedVideos');
 
     const handleSaveSettings = async () => {
         if (!settingsData) return;
@@ -576,7 +581,7 @@ export default function OrganizePage() {
 
     return (
         <div className="min-h-screen bg-neutral-950 text-white flex flex-col">
-            {showVideoPicker && (
+            {showVideoPicker && isEmbeddedVideosAllowed && (
                 <VideoPicker
                     onClose={() => setShowVideoPicker(false)}
                     onSelect={handleAddVideo}
@@ -606,14 +611,14 @@ export default function OrganizePage() {
                         <div className="flex items-center gap-2">
                             {/* [MODIFIED] Settings button removed */}
 
-                            {activeTabId !== 'collaborative' && (
+                            {activeTabId !== 'collaborative' && isEmbeddedVideosAllowed && (
                                 <button
                                     onClick={() => setShowVideoPicker(true)}
                                     className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-neutral-800 hover:bg-neutral-700 text-white rounded-full text-xs sm:text-sm font-medium transition border border-white/5 whitespace-nowrap"
                                     title="Agregar video de YouTube o Vimeo"
                                 >
                                     <Plus className="w-4 h-4" />
-                                    <span className="hidden sm:inline">Agregar Video</span>
+                                    <span className="hidden sm:inline">Agregar Video (YouTube/Vimeo)</span>
                                     <span className="sm:hidden">Video</span>
                                 </button>
                             )}
@@ -749,12 +754,14 @@ export default function OrganizePage() {
                                     </div>
                                     <h3 className="text-lg font-medium text-neutral-300 mb-2">No tienes videos</h3>
                                     <p className="text-neutral-500 text-sm max-w-sm mx-auto mb-6">Agrega videos de YouTube o Vimeo a tu galería.</p>
-                                    <button
-                                        onClick={() => setShowVideoPicker(true)}
-                                        className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-medium transition"
-                                    >
-                                        Agregar Video
-                                    </button>
+                                    {isEmbeddedVideosAllowed && (
+                                        <button
+                                            onClick={() => setShowVideoPicker(true)}
+                                            className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-medium transition"
+                                        >
+                                            Agregar Video (YouTube/Vimeo)
+                                        </button>
+                                    )}
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">

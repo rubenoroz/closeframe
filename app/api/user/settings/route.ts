@@ -87,10 +87,13 @@ export async function GET() {
         }
 
         // Calculate Effective Config server-side
-        // Note: Client can now use the /api/features/me endpoint for detailed matrix
-        // but we can still return a summary here for convenience if needed.
+        const { getEffectiveFeatures } = await import("@/lib/features/service");
+        const features = await getEffectiveFeatures(session.user.id);
 
-        return new NextResponse(JSON.stringify({ user }), {
+        return new NextResponse(JSON.stringify({
+            user,
+            effectiveConfig: { features }
+        }), {
             status: 200,
             headers: {
                 'Content-Type': 'application/json',
@@ -147,6 +150,17 @@ export async function PATCH(req: NextRequest) {
             username: rawUsername
         } = body;
 
+        // [SECURE] Enforce Booking Window Limit
+        // Calculate enforced limit before saving
+        const enforcedBookingWindow = await (async () => {
+            const bw = bookingWindow !== undefined ? Number(bookingWindow) : 4;
+            const limit = await getFeatureLimit(userId, 'bookingWindow');
+            if (limit !== null && limit > 0 && bw > limit) {
+                return limit;
+            }
+            return bw;
+        })();
+
         // Normalizar username: vacío => null
         const username = rawUsername && rawUsername.trim() !== '' ? rawUsername.trim() : null;
 
@@ -189,7 +203,7 @@ export async function PATCH(req: NextRequest) {
                 coverImageFocus,
 
                 callToAction,
-                bookingWindow: bookingWindow !== undefined ? Number(bookingWindow) : 4,
+                bookingWindow: enforcedBookingWindow,
                 bookingLeadTime: bookingLeadTime !== undefined ? Number(bookingLeadTime) : 1,
 
                 // Perfil expandido
@@ -216,7 +230,7 @@ export async function PATCH(req: NextRequest) {
                 coverImageFocus,
 
                 callToAction,
-                bookingWindow: bookingWindow !== undefined ? Number(bookingWindow) : 4,
+                bookingWindow: enforcedBookingWindow,
                 bookingLeadTime: bookingLeadTime !== undefined ? Number(bookingLeadTime) : 1,
 
                 // Perfil expandido

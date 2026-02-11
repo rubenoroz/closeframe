@@ -113,6 +113,53 @@ export async function PUT(req: NextRequest) {
             data: updateData
         });
 
+        // [NEW] Sync PlanFeature table to match Config
+        // This ensures compatibility with legacy checks and the PlanFeature table priority
+        if (config && (config.features || config.limits)) {
+            const allFeatures = await prisma.feature.findMany();
+            const featureMap = new Map(allFeatures.map(f => [f.key, f.id]));
+
+            const upsertOperations = [];
+
+            // 1. Sync Booleans (Features)
+            if (config.features) {
+                for (const [key, value] of Object.entries(config.features)) {
+                    const featureId = featureMap.get(key);
+                    if (featureId) {
+                        upsertOperations.push(
+                            prisma.planFeature.upsert({
+                                where: { planId_featureId: { planId: targetId, featureId } },
+                                update: { enabled: value === true }, // Keep limit if exists? safely just update enabled
+                                create: { planId: targetId, featureId, enabled: value === true }
+                            })
+                        );
+                    }
+                }
+            }
+
+            // 2. Sync Limits (Numbers)
+            if (config.limits) {
+                for (const [key, value] of Object.entries(config.limits)) {
+                    const featureId = featureMap.get(key);
+                    if (featureId) {
+                        const limitVal = typeof value === 'number' ? value : null;
+                        upsertOperations.push(
+                            prisma.planFeature.upsert({
+                                where: { planId_featureId: { planId: targetId, featureId } },
+                                update: { enabled: true, limit: limitVal },
+                                create: { planId: targetId, featureId, enabled: true, limit: limitVal }
+                            })
+                        );
+                    }
+                }
+            }
+
+            if (upsertOperations.length > 0) {
+                await prisma.$transaction(upsertOperations);
+                console.log(`Synced ${upsertOperations.length} PlanFeature records for plan ${updatedPlan.name}`);
+            }
+        }
+
         // Purge cache
         const { revalidatePath } = await import("next/cache");
         revalidatePath("/superadmin/plans"); // Admin page

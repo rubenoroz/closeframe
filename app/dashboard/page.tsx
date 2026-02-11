@@ -88,6 +88,8 @@ export default function DashboardPage() {
         galleryCover?: boolean;
         closerGalleries?: boolean;
         collaborativeGalleries?: boolean;
+        zipDownloadsEnabled?: boolean;
+        customFonts?: boolean;
     } | null>(null);
     const [showZipFilePicker, setShowZipFilePicker] = useState(false);
     const isLight = theme === "light";
@@ -199,8 +201,10 @@ export default function DashboardPage() {
                             allowedHighRes: f.highResDownloads ?? false,
                             passwordProtection: f.passwordProtection ?? true,
                             galleryCover: f.galleryCover ?? f.coverImage ?? false,
-                            closerGalleries: f.closerGalleries ?? f.zipDownloadsEnabled === true,
-                            collaborativeGalleries: f.collaborativeGalleries ?? false
+                            closerGalleries: f.closerGalleries ?? false,
+                            collaborativeGalleries: f.collaborativeGalleries ?? false,
+                            zipDownloadsEnabled: f.zipDownloadsEnabled ?? false,
+                            customFonts: f.customFonts ?? false
                         });
                         console.log("DEBUG: Plan Limits Set (API):", {
                             low: f.lowResDownloads,
@@ -215,8 +219,10 @@ export default function DashboardPage() {
                             allowedHighRes: features.highResDownloads ?? false,
                             passwordProtection: features.passwordProtection ?? true,
                             galleryCover: features.galleryCover ?? features.coverImage ?? false,
-                            closerGalleries: features.closerGalleries ?? features.zipDownloadsEnabled === true, // Proxy for Studio
-                            collaborativeGalleries: features.collaborativeGalleries ?? false
+                            closerGalleries: features.closerGalleries ?? false,
+                            collaborativeGalleries: features.collaborativeGalleries ?? false,
+                            zipDownloadsEnabled: features.zipDownloadsEnabled ?? false,
+                            customFonts: features.customFonts ?? false
                         });
                     } else if (settingsData.user.plan?.limits) {
                         try {
@@ -230,8 +236,10 @@ export default function DashboardPage() {
                                 allowedHighRes: limits.highResDownloads ?? false,
                                 passwordProtection: limits.passwordProtection ?? true,
                                 galleryCover: limits.coverImage ?? limits.galleryCover ?? false,
-                                closerGalleries: limits.closerGalleries ?? limits.zipDownloadsEnabled === true,
-                                collaborativeGalleries: limits.collaborativeGalleries ?? false
+                                closerGalleries: limits.closerGalleries ?? false,
+                                collaborativeGalleries: limits.collaborativeGalleries ?? false,
+                                zipDownloadsEnabled: limits.zipDownloadsEnabled ?? false,
+                                customFonts: limits.customFonts ?? false
                             });
                         } catch { }
                     }
@@ -319,7 +327,7 @@ export default function DashboardPage() {
                     // Force Personal/Inter if High Res is NOT allowed (Free plan restriction)
                     category: !planLimits?.allowedHighRes ? "personal" : editData.category,
                     headerTitle: editData.headerTitle,
-                    headerFontFamily: !planLimits?.allowedHighRes ? "Inter" : editData.headerFontFamily,
+                    headerFontFamily: !planLimits?.customFonts ? "Inter" : editData.headerFontFamily,
                     headerFontSize: editData.headerFontSize,
                     headerColor: editData.headerColor,
                     headerBackground: editData.headerBackground,
@@ -374,7 +382,7 @@ export default function DashboardPage() {
                     enableWatermark: editData.enableWatermark,
                     category: !planLimits?.allowedHighRes ? "personal" : editData.category,
                     headerTitle: editData.headerTitle,
-                    headerFontFamily: !planLimits?.allowedHighRes ? "Inter" : editData.headerFontFamily,
+                    headerFontFamily: !planLimits?.customFonts ? "Inter" : editData.headerFontFamily,
                     headerFontSize: editData.headerFontSize,
                     headerColor: editData.headerColor,
                     headerBackground: editData.headerBackground,

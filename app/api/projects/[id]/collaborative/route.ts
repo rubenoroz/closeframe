@@ -41,30 +41,11 @@ export async function GET(
         return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    // Only show feature for Google Drive AND eligible plans (Studio, Agency)
+    // Check plan eligibility using Modular System
+    const { canUseFeature } = await import('@/lib/features/service');
+    const isEligible = await canUseFeature(session.user.id, 'collaborativeGalleries');
+
     const isGoogleDrive = project.cloudAccount.provider === 'google';
-    // Check plan eligibility
-    let isEligible = isPlanEligible(project.user.plan?.name);
-
-    // [NEW] Dynamic check from Plan Configuration (Matrix)
-    try {
-        const planConfig = project.user.plan?.config as any;
-        const planLimits = project.user.plan?.limits ? JSON.parse(project.user.plan.limits as string) : null;
-
-
-        if (planConfig?.features?.collaborativeGalleries === true) {
-            isEligible = true;
-        } else if (planConfig?.features?.collaborativeGalleries === false) {
-            isEligible = false;
-        } else if (planLimits?.collaborativeGalleries === true) {
-            isEligible = true;
-        } else if (planLimits?.collaborativeGalleries === false) {
-            isEligible = false;
-        }
-    } catch (e) {
-        console.error("Error parsing plan config for eligibility check", e);
-    }
-
     const hasEligiblePlan = isEligible;
     const featureAvailable = isGoogleDrive && hasEligiblePlan;
 
@@ -132,27 +113,9 @@ export async function POST(
         );
     }
 
-    // Check plan eligibility
-    let isEligible = isPlanEligible(project.user.plan?.name);
-
-    // [NEW] Dynamic check from Plan Configuration (Matrix)
-    try {
-        const { parsePlanConfig } = await import('@/lib/types/plan-schema');
-        const planConfig = parsePlanConfig(project.user.plan?.config);
-        const planLimits = project.user.plan?.limits ? JSON.parse(project.user.plan.limits as string) : null;
-
-        if (planConfig?.features?.collaborativeGalleries === true) {
-            isEligible = true;
-        } else if (planConfig?.features?.collaborativeGalleries === false) {
-            isEligible = false;
-        } else if (planLimits?.collaborativeGalleries === true) {
-            isEligible = true;
-        } else if (planLimits?.collaborativeGalleries === false) {
-            isEligible = false;
-        }
-    } catch (e) {
-        console.error("Error parsing plan config for eligibility check", e);
-    }
+    // Check plan eligibility using Modular System
+    const { canUseFeature } = await import('@/lib/features/service');
+    const isEligible = await canUseFeature(session.user.id, 'collaborativeGalleries');
 
     if (!isEligible) {
         return NextResponse.json(

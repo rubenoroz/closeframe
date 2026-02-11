@@ -67,6 +67,58 @@ export async function PUT(req: Request) {
             }
         });
 
+        // [NEW] Sync Plan.config (JSON) to match PlanFeature
+        // This ensures that the JSON config (used by new system) stays in sync with the DB table
+        const plan = await prisma.plan.findUnique({ where: { id: planId } });
+        if (plan) {
+            const config = (plan.config as any) || {};
+            const features = config.features || {};
+            const limits = config.limits || {};
+
+            // Update JSON config
+            // If feature has keys related to features (boolean) update features object
+            // If feature has keys related to limits (number) update limits object
+            // For now simplest approach: if it has a limit, update limit. If not, update boolean.
+
+            // Get feature key from DB to be sure
+            const featureDef = await prisma.feature.findUnique({ where: { id: featureId } });
+
+            if (featureDef) {
+                if (limit !== undefined && limit !== null) {
+                    limits[featureDef.key] = limit;
+                    // Ensure enabled is also set if limit > 0? Or just trust enabled flag?
+                    // The UI sends enabled + limit together.
+                }
+
+                // Always sync enabled status if provided
+                if (enabled !== undefined) {
+                    features[featureDef.key] = enabled;
+                }
+
+                // If this is a limit-type feature, ensure it's in limits too
+                // We infer it from the category or if a limit value was explicitly provided
+                if (limit !== undefined && limit !== null) {
+                    limits[featureDef.key] = limit;
+                }
+
+                await prisma.plan.update({
+                    where: { id: planId },
+                    data: {
+                        config: {
+                            ...config,
+                            features,
+                            limits
+                        }
+                    }
+                });
+            }
+        }
+
+        const { revalidatePath } = await import("next/cache");
+        revalidatePath('/superadmin/features');
+        revalidatePath('/api/features/me'); // Clear client cache
+        revalidatePath('/'); // Clear general cache
+
         return NextResponse.json(updated);
 
     } catch (error) {

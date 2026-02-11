@@ -361,15 +361,6 @@ export const FEATURE_POOL: FeatureDefinition[] = [
         icon: FileText
     },
     {
-        id: "colorPalettes",
-        label: "Paletas de Colores",
-        description: "Personalizar colores de la galería",
-        category: "gallery",
-        type: "boolean",
-        defaultValue: false,
-        icon: Palette
-    },
-    {
         id: "customLogo",
         label: "Logo Propio",
         description: "Subir logo de estudio/agencia",
@@ -413,15 +404,6 @@ export const FEATURE_POOL: FeatureDefinition[] = [
         type: "boolean",
         defaultValue: false,
         icon: FileText
-    },
-    {
-        id: "aiCuration",
-        label: "Curaduría IA",
-        description: "Selección asistida de mejores tomas",
-        category: "gallery",
-        type: "boolean",
-        defaultValue: false,
-        icon: Zap
     },
     {
         id: "viewOnlyGalleries",
@@ -721,7 +703,7 @@ export const FEATURE_POOL: FeatureDefinition[] = [
     {
         id: "maxScenaProjects",
         label: "Límite Proyectos Scena",
-        description: "Límite de tableros propios (0 = Solo invitado)",
+        description: "Límite de tableros propios (0 = Solo invitado, -1 = Ilimitado)",
         category: "scena",
         type: "number",
         defaultValue: 0,

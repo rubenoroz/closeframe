@@ -675,7 +675,7 @@ export default function PlansPage() {
                                     Podrás editarlas individualmente después.
                                 </p>
                                 <div className="grid grid-cols-2 gap-3">
-                                    {['FREE', 'PRO', 'STUDIO', 'AGENCY'].map((template) => (
+                                    {['FREE', 'FAMILY', 'PRO', 'STUDIO', 'AGENCY'].map((template) => (
                                         <button
                                             key={template}
                                             onClick={() => {
@@ -694,6 +694,7 @@ export default function PlansPage() {
                                             <div className="font-bold text-sm text-neutral-200">{template}</div>
                                             <div className="text-xs text-neutral-400 mt-1">
                                                 {template === 'FREE' && 'Básico personal'}
+                                                {template === 'FAMILY' && 'Familiar'}
                                                 {template === 'PRO' && 'Profesional'}
                                                 {template === 'STUDIO' && 'Negocio'}
                                                 {template === 'AGENCY' && 'Equipos'}

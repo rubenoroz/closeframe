@@ -25,6 +25,39 @@ export default async function PaymentsPage({
     const sp = await searchParams;
     let account = user?.stripeConnectAccount;
 
+    // [New] Soft Lock: Check if user has access to payments
+    const { canUseFeature } = await import("@/lib/features/service");
+    const canAccessPayments = await canUseFeature(session.user.id, 'bookingPayments');
+
+    if (!canAccessPayments) {
+        return (
+            <div className="max-w-4xl mx-auto py-16 px-4 text-center">
+                <div className="w-20 h-20 bg-neutral-900 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-neutral-800">
+                    <CreditCard className="w-10 h-10 text-neutral-600" />
+                </div>
+                <h1 className="text-3xl font-bold text-white mb-3">Pagos e Ingresos</h1>
+                <p className="text-neutral-400 max-w-lg mx-auto mb-8 text-lg">
+                    Acepta pagos con tarjeta de crédito/débito directamente en tus reservas y recibe el dinero en tu cuenta bancaria.
+                </p>
+
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                    <Link
+                        href="/dashboard/billing"
+                        className="px-8 py-3 bg-white text-black font-medium rounded-full hover:bg-neutral-200 transition"
+                    >
+                        Ver Planes Disponibles
+                    </Link>
+                    <Link
+                        href="/dashboard"
+                        className="px-8 py-3 text-neutral-400 hover:text-white transition"
+                    >
+                        Volver al inicio
+                    </Link>
+                </div>
+            </div>
+        );
+    }
+
     // Check real-time status if we have an account ID locally
     let chargesEnabled = account?.chargesEnabled;
     let detailsSubmitted = false;
@@ -178,8 +211,8 @@ export default async function PaymentsPage({
                                                     {(payment.amount / 100).toLocaleString('en-US', { style: 'currency', currency: payment.currency })}
                                                 </p>
                                                 <span className={`text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider ${payment.status === 'succeeded' ? 'bg-emerald-500/10 text-emerald-500' :
-                                                        payment.status === 'pending' ? 'bg-amber-500/10 text-amber-500' :
-                                                            'bg-red-500/10 text-red-500'
+                                                    payment.status === 'pending' ? 'bg-amber-500/10 text-amber-500' :
+                                                        'bg-red-500/10 text-red-500'
                                                     }`}>
                                                     {payment.status === 'succeeded' ? 'Pagado' : payment.status}
                                                 </span>

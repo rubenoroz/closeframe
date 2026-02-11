@@ -82,6 +82,8 @@ export default function SettingsPage() {
     const isCTAAllowed = canUse('callToAction') || isProfessionalProfile;
     const isBookingConfigAllowed = canUse('bookingConfig') || isProfessionalProfile || isCTAAllowed;
     const isCustomFieldsAllowed = canUse('customFields') || isProfessionalProfile;
+    const isCustomLogoAllowed = canUse('customLogo');
+    const isCustomUrlAllowed = canUse('customUrl');
     const isRestrictedPlan = !advancedSocialAllowed;
 
     // Helper for locked inputs
@@ -590,7 +592,7 @@ export default function SettingsPage() {
                         <div className="md:col-span-2 space-y-3">
                             <label className="flex items-center gap-2 text-[10px] font-bold opacity-40 uppercase tracking-widest ml-1">
                                 Username (URL personalizada)
-                                {isRestrictedPlan && <span className="flex items-center gap-1 bg-amber-500/10 text-amber-500 px-1.5 py-0.5 rounded border border-amber-500/20"><Lock className="w-2.5 h-2.5" /> PRO</span>}
+                                {!isCustomUrlAllowed && <span className="flex items-center gap-1 bg-amber-500/10 text-amber-500 px-1.5 py-0.5 rounded border border-amber-500/20"><Lock className="w-2.5 h-2.5" /> PRO</span>}
                             </label>
                             <div className="flex items-center gap-2">
                                 <span className={`text-sm ${isLight ? 'text-neutral-500' : 'text-neutral-500'}`}>closerlens.com/u/</span>
@@ -598,17 +600,17 @@ export default function SettingsPage() {
                                     <input
                                         value={user.username}
                                         onChange={(e) => setUser({ ...user, username: e.target.value.toLowerCase().replace(/[^a-z0-9-_]/g, '') })}
-                                        disabled={isRestrictedPlan}
+                                        disabled={!isCustomUrlAllowed}
                                         className={cn(
                                             "w-full border rounded-xl px-5 py-4 outline-none transition-all font-mono",
                                             isLight
                                                 ? "bg-neutral-50 border-neutral-200 text-neutral-900 focus:bg-white focus:border-emerald-500/50"
                                                 : "bg-neutral-900/50 border-neutral-800 text-neutral-100 focus:border-emerald-500/50",
-                                            isRestrictedPlan && "opacity-50 cursor-not-allowed"
+                                            !isCustomUrlAllowed && "opacity-50 cursor-not-allowed"
                                         )}
-                                        placeholder={isRestrictedPlan ? "Solo disponible en planes PRO" : "tu-nombre"}
+                                        placeholder={!isCustomUrlAllowed ? "Solo disponible en planes PRO" : "tu-nombre"}
                                     />
-                                    {isRestrictedPlan && <Lock className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500" />}
+                                    {!isCustomUrlAllowed && <Lock className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500" />}
                                 </div>
                             </div>
                             {user.username && (
@@ -856,13 +858,13 @@ export default function SettingsPage() {
                     <div className="flex flex-col md:flex-row gap-6 md:gap-10">
                         {/* Logo Upload */}
                         <div className="relative">
-                            {!isProfessionalProfile && <LockedOverlay />}
+                            {!isCustomLogoAllowed && <LockedOverlay />}
                             <div className={cn(
                                 "w-24 h-24 md:w-32 md:h-32 rounded-full flex items-center justify-center relative overflow-hidden shrink-0 border transition-all",
                                 isLight
                                     ? "bg-neutral-100 border-neutral-200"
                                     : "bg-neutral-900 border-neutral-800",
-                                !isProfessionalProfile && "opacity-40 grayscale"
+                                !isCustomLogoAllowed && "opacity-40 grayscale"
                             )}>
                                 {user.businessLogo ? (
                                     <img
@@ -879,12 +881,12 @@ export default function SettingsPage() {
                             {/* Controls outside - No overlay obstruction */}
                             <div className={cn(
                                 "flex items-center justify-center gap-2 mt-3 transition-opacity",
-                                !isProfessionalProfile && "hidden"
+                                !isCustomLogoAllowed && "hidden"
                             )}>
                                 <button
                                     type="button"
                                     onClick={() => handleUploadClick('businessLogo')}
-                                    disabled={!isProfessionalProfile}
+                                    disabled={!isCustomLogoAllowed}
                                     className={cn(
                                         "px-3 py-1.5 rounded-full text-white backdrop-blur-md transition flex items-center gap-1.5 shadow-sm text-[10px] font-bold",
                                         isLight
@@ -899,7 +901,7 @@ export default function SettingsPage() {
                                     <button
                                         type="button"
                                         onClick={() => setUser({ ...user, businessLogo: "" })}
-                                        disabled={!isProfessionalProfile}
+                                        disabled={!isCustomLogoAllowed}
                                         className="p-1.5 rounded-full bg-red-500/10 hover:bg-red-500/20 text-red-500 transition border border-red-500/20"
                                     >
                                         <X className="w-3 h-3" />
@@ -924,14 +926,14 @@ export default function SettingsPage() {
                                         max="200"
                                         value={user.businessLogoScale || 100}
                                         onChange={(e) => setUser({ ...user, businessLogoScale: parseInt(e.target.value) })}
-                                        disabled={!isProfessionalProfile}
+                                        disabled={!isCustomLogoAllowed}
                                         className={cn(
                                             "w-full h-2 rounded-lg appearance-none cursor-pointer",
                                             isLight ? "bg-neutral-200 accent-neutral-900" : "bg-neutral-800 accent-white",
-                                            !isProfessionalProfile && "opacity-50 cursor-not-allowed"
+                                            !isCustomLogoAllowed && "opacity-50 cursor-not-allowed"
                                         )}
                                     />
-                                    {!isProfessionalProfile && (
+                                    {!isCustomLogoAllowed && (
                                         <div className="absolute inset-0 z-20 cursor-not-allowed"></div>
                                     )}
                                 </div>
@@ -999,8 +1001,18 @@ export default function SettingsPage() {
                                 <option value={2}>2 Semanas</option>
                                 <option value={3}>3 Semanas</option>
                                 <option value={4}>4 Semanas</option>
-                                <option value={0}>Sin límite (Todo el calendario)</option>
+                                {(!getLimit('bookingWindow') || getLimit('bookingWindow')! >= 6) && <option value={6}>6 Semanas</option>}
+                                {(!getLimit('bookingWindow') || getLimit('bookingWindow')! >= 8) && <option value={8}>8 Semanas</option>}
+                                {(!getLimit('bookingWindow') || getLimit('bookingWindow')! >= 10) && <option value={10}>10 Semanas</option>}
+                                {(!getLimit('bookingWindow') || getLimit('bookingWindow')! >= 12) && <option value={12}>12 Semanas</option>}
+                                {(!getLimit('bookingWindow') || getLimit('bookingWindow')! >= 24) && <option value={24}>6 Meses</option>}
+                                {(!getLimit('bookingWindow') || getLimit('bookingWindow')! === 0) && <option value={0}>Sin límite (Todo el calendario)</option>}
                             </select>
+                            {getLimit('bookingWindow') && getLimit('bookingWindow')! > 0 && (
+                                <p className="text-[10px] text-neutral-500 pl-1 mt-1">
+                                    Tu plan permite hasta {getLimit('bookingWindow')} semanas de anticipación.
+                                </p>
+                            )}
                         </div>
 
                         {/* 3. LEAD TIME */}

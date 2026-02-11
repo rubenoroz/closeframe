@@ -139,42 +139,6 @@ export async function POST(request: Request) {
             }, { status: 403 });
         }
 
-        // [SECURE] Enforce Feature Limits on Creation
-        // We check effective features (considering overrides)
-        const features = await getEffectiveFeatures(session.user.id);
-
-        // Enforce Low Res Downloads
-        // If plan doesn't allow lowResDownloads, forcing it to false is safer
-        let finalDownloadJpgEnabled = downloadJpgEnabled ?? true;
-        if (features.lowResDownloads === false) {
-            finalDownloadJpgEnabled = false;
-        }
-
-        // Enforce High Res / RAW
-        let finalDownloadRawEnabled = downloadRawEnabled ?? false;
-        // Check 'highResDownloads' feature key
-        if (features.highResDownloads === false) {
-            finalDownloadRawEnabled = false;
-        }
-
-        // Enforce Video
-        let finalEnableVideoTab = enableVideoTab || false;
-        if (features.videoEnabled === false) {
-            finalEnableVideoTab = false;
-        }
-
-        // Also enforce video downloads if video is disabled entirely
-        let finalDownloadVideoHdEnabled = downloadVideoHdEnabled ?? true;
-        let finalDownloadVideoRawEnabled = downloadVideoRawEnabled ?? false;
-
-        if (!finalEnableVideoTab) {
-            // If tab is disabled, downloads logic might still be checked, but effectively hidden.
-            // But let's be strict:
-            // finalDownloadVideoHdEnabled = false; // Optional strictness
-        }
-
-
-
         // Verify Cloud Account belongs to user
         const account = await prisma.cloudAccount.findFirst({
             where: { id: cloudAccountId, userId: session.user.id },
@@ -195,6 +159,37 @@ export async function POST(request: Request) {
             passwordProtected = true;
         }
 
+        // [SECURE] Enforce Feature Limits based on Plan
+        if (isCloserGallery) {
+            const allowed = await canUseFeature(session.user.id, 'closerGalleries');
+            if (!allowed) {
+                return NextResponse.json({
+                    error: "Your plan does not support Closer Galleries. Please upgrade.",
+                    code: "PLAN_LIMIT_REACHED"
+                }, { status: 403 });
+            }
+        }
+
+        if (isCollaborative) {
+            const allowed = await canUseFeature(session.user.id, 'collaborativeGalleries');
+            if (!allowed) {
+                return NextResponse.json({
+                    error: "Your plan does not support Collaborative Galleries. Please upgrade.",
+                    code: "PLAN_LIMIT_REACHED"
+                }, { status: 403 });
+            }
+        }
+
+        if (zipFileId) {
+            const allowed = await canUseFeature(session.user.id, 'zipDownloadsEnabled');
+            if (!allowed) {
+                return NextResponse.json({
+                    error: "Your plan does not support Zip Downloads. Please upgrade.",
+                    code: "PLAN_LIMIT_REACHED"
+                }, { status: 403 });
+            }
+        }
+
         const project = await prisma.project.create({
             data: {
                 name,
@@ -207,8 +202,8 @@ export async function POST(request: Request) {
                 passwordProtected,
                 passwordHash,
                 downloadEnabled: downloadEnabled ?? true,
-                downloadJpgEnabled: finalDownloadJpgEnabled,
-                downloadRawEnabled: finalDownloadRawEnabled,
+                downloadJpgEnabled: downloadJpgEnabled ?? true,
+                downloadRawEnabled: downloadRawEnabled ?? false,
                 // Header customization
                 headerTitle: headerTitle || name, // Fallback to project name
                 headerFontFamily: headerFontFamily || "Inter",
@@ -220,10 +215,10 @@ export async function POST(request: Request) {
                 coverImage: coverImage || null,
                 coverImageFocus: coverImageFocus || "50,50",
                 // Video tab
-                enableVideoTab: finalEnableVideoTab,
-                videoFolderId: finalEnableVideoTab ? videoFolderId : null,
-                downloadVideoHdEnabled: finalDownloadVideoHdEnabled,
-                downloadVideoRawEnabled: finalDownloadVideoRawEnabled,
+                enableVideoTab: enableVideoTab ?? false,
+                videoFolderId: enableVideoTab ? videoFolderId : null,
+                downloadVideoHdEnabled: downloadVideoHdEnabled ?? true,
+                downloadVideoRawEnabled: downloadVideoRawEnabled ?? false,
                 isCloserGallery: isCloserGallery ?? false,
                 isCollaborative: isCollaborative ?? false, // Save collaborative status
                 // Zip file
@@ -231,7 +226,6 @@ export async function POST(request: Request) {
                 zipFileName: zipFileName || null,
                 // Music
                 musicTrackId: musicTrackId || null,
-                musicEnabled: musicEnabled ?? false,
             },
         });
 
@@ -295,9 +289,6 @@ export async function PATCH(request: NextRequest) {
             return NextResponse.json({ error: "Project ID is required" }, { status: 400 });
         }
 
-        // [SECURE] Check Permissions for Updates
-        const features = await getEffectiveFeatures(session.user.id);
-
         // Verify project belongs to user
         const existingProject = await prisma.project.findFirst({
             where: { id, userId: session.user.id },
@@ -311,32 +302,32 @@ export async function PATCH(request: NextRequest) {
         if (name !== undefined) updateData.name = name;
         if (downloadEnabled !== undefined) updateData.downloadEnabled = downloadEnabled;
 
-        if (downloadJpgEnabled !== undefined) {
-            // Enforce restriction
-            if (features.lowResDownloads === false && downloadJpgEnabled === true) {
-                // User trying to enable restricted feature
-                updateData.downloadJpgEnabled = false;
-            } else {
-                updateData.downloadJpgEnabled = downloadJpgEnabled;
-            }
-        }
-
-        if (downloadRawEnabled !== undefined) {
-            // Enforce restriction
-            if (features.highResDownloads === false && downloadRawEnabled === true) {
-                updateData.downloadRawEnabled = false;
-            } else {
-                updateData.downloadRawEnabled = downloadRawEnabled;
-            }
-        }
+        if (downloadJpgEnabled !== undefined) updateData.downloadJpgEnabled = downloadJpgEnabled;
+        if (downloadRawEnabled !== undefined) updateData.downloadRawEnabled = downloadRawEnabled;
 
         // Video and other fields...
-        if (enableVideoTab !== undefined) {
-            if (features.videoEnabled === false && enableVideoTab === true) {
-                updateData.enableVideoTab = false;
-            } else {
-                updateData.enableVideoTab = enableVideoTab;
+        if (enableVideoTab !== undefined) updateData.enableVideoTab = enableVideoTab;
+
+        // Enforce Closer Gallery restriction
+        if (isCloserGallery !== undefined) {
+            if (isCloserGallery === true) {
+                const allowed = await canUseFeature(session.user.id, 'closerGalleries');
+                if (!allowed) {
+                    return NextResponse.json({ error: "Your plan does not support Closer Galleries" }, { status: 403 });
+                }
             }
+            updateData.isCloserGallery = isCloserGallery;
+        }
+
+        // Enforce Collaborative Gallery restriction
+        if (isCollaborative !== undefined) {
+            if (isCollaborative === true) {
+                const allowed = await canUseFeature(session.user.id, 'collaborativeGalleries');
+                if (!allowed) {
+                    return NextResponse.json({ error: "Your plan does not support Collaborative Galleries" }, { status: 403 });
+                }
+            }
+            updateData.isCollaborative = isCollaborative;
         }
 
         // Pass through video download settings (could be stricter here too)
@@ -358,10 +349,8 @@ export async function PATCH(request: NextRequest) {
         if (zipFileId !== undefined) updateData.zipFileId = zipFileId || null;
         if (zipFileName !== undefined) updateData.zipFileName = zipFileName || null;
         if (layoutType !== undefined) updateData.layoutType = layoutType;
-        if (isCloserGallery !== undefined) updateData.isCloserGallery = isCloserGallery;
         if (musicTrackId !== undefined) updateData.musicTrackId = musicTrackId;
         if (musicEnabled !== undefined) updateData.musicEnabled = musicEnabled; // [NEW]
-        if (isCollaborative !== undefined) updateData.isCollaborative = isCollaborative;
 
         // Handle public status based on password
         if (typeof password === 'string' && password.trim() !== "") {
@@ -373,6 +362,17 @@ export async function PATCH(request: NextRequest) {
             updateData.public = true;
         } else if (isPublic !== undefined) {
             updateData.public = isPublic;
+        }
+
+        // [SECURE] Enforce Zip Downloads
+        if (zipFileId !== undefined && zipFileId !== null && zipFileId !== "") {
+            const allowed = await canUseFeature(session.user.id, 'zipDownloadsEnabled');
+            if (!allowed) {
+                return NextResponse.json({
+                    error: "Your plan does not support Zip Downloads.",
+                    code: "PLAN_LIMIT_REACHED"
+                }, { status: 403 });
+            }
         }
 
         // Handle Password Update

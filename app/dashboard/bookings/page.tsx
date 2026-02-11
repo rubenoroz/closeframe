@@ -221,6 +221,7 @@ export default function BookingsPage() {
         }
 
         setSelectedEvent(event);
+        setShowDeleteConfirm(false);
         setFormData({
             customerName: event.customerName || event.title || "Evento Externo",
             customerEmail: event.customerEmail || "",
@@ -271,28 +272,46 @@ export default function BookingsPage() {
         }
     };
 
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+    // ... (existing code)
+
+    const [deleting, setDeleting] = useState(false);
+
     const handleDelete = async () => {
         if (!selectedEvent) return;
-
-        // Message changed to confirm deletion from source
-        const confirmMessage = selectedEvent.isExternal
-            ? `¿Eliminar este evento de ${selectedEvent.provider === 'google_calendar' ? 'Google' : 'Outlook'}? Esta acción no se puede deshacer.`
-            : "¿Eliminar esta reserva?";
-
-        if (!confirm(confirmMessage)) return;
+        setDeleting(true);
 
         try {
+            let res;
             if (selectedEvent.isExternal) {
-                await fetch(`/api/calendar/sync/events?id=${selectedEvent.id}`, { method: "DELETE" });
+                res = await fetch(`/api/calendar/sync/events?id=${selectedEvent.id}`, { method: "DELETE" });
             } else {
-                await fetch(`/api/bookings?id=${selectedEvent.id}`, { method: "DELETE" });
+                res = await fetch(`/api/bookings?id=${selectedEvent.id}`, { method: "DELETE" });
             }
+
+            // Treat 404 as success (item already gone)
+            if (res.status === 404) {
+                console.warn("Item already deleted, refreshing list.");
+                setShowModal(false);
+                fetchBookings();
+                if (selectedEvent.isExternal) fetchExternalEvents();
+                return;
+            }
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || "Error al eliminar");
+            }
+
             setShowModal(false);
             fetchBookings();
             if (selectedEvent.isExternal) fetchExternalEvents();
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            alert("Error al eliminar el evento");
+            alert(error.message || "Error al eliminar el evento");
+        } finally {
+            setDeleting(false);
         }
     };
 
@@ -344,7 +363,10 @@ export default function BookingsPage() {
                         <span className="hidden md:inline">Nueva Reserva</span>
                     </button>
                     <div className="text-xs md:text-sm text-neutral-400">
-                        {bookings.length} reserva{bookings.length !== 1 ? "s" : ""}
+                        {(() => {
+                            const upcomingCount = bookings.filter(b => new Date(b.date) >= new Date()).length;
+                            return `${upcomingCount} reserva${upcomingCount !== 1 ? "s" : ""}`;
+                        })()}
                     </div>
                 </div>
             </div>
@@ -652,37 +674,67 @@ export default function BookingsPage() {
                                 />
                             </div>
 
-                            <div className="flex gap-3 pt-4">
-                                {selectedEvent && (
-                                    <button
-                                        type="button"
-                                        onClick={handleDelete}
-                                        className="flex items-center gap-2 px-4 py-3 bg-red-900/30 text-red-400 rounded-xl hover:bg-red-900/50 transition"
-                                    >
-                                        <Trash2 className="w-4 h-4" /> Eliminar
-                                    </button>
-                                )}
-                                {!selectedEvent?.isExternal && (
-                                    <button
-                                        type="submit"
-                                        disabled={saving}
-                                        className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-500 transition font-medium disabled:opacity-50"
-                                    >
-                                        {saving ? (
-                                            <Loader2 className="w-4 h-4 animate-spin" />
-                                        ) : (
-                                            <>
-                                                <Check className="w-4 h-4" /> Guardar
-                                            </>
-                                        )}
-                                    </button>
-                                )}
-                                {selectedEvent?.isExternal && (
-                                    <div className="w-full text-center text-xs text-neutral-500 flex items-center justify-center gap-1">
-                                        Sincronizado desde {selectedEvent.provider === 'google_calendar' ? 'Google' : 'Outlook'}.
+                            {showDeleteConfirm ? (
+                                <div className="space-y-4">
+                                    <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-200 text-sm">
+                                        <p className="font-medium mb-1">¿Estás seguro de eliminar esta reserva?</p>
+                                        <p className="opacity-80">
+                                            {selectedEvent?.isExternal
+                                                ? `Se eliminará de ${selectedEvent.provider === 'google_calendar' ? 'Google' : 'Outlook'}. Esta acción no se puede deshacer.`
+                                                : "Esta acción no se puede deshacer."}
+                                        </p>
                                     </div>
-                                )}
-                            </div>
+                                    <div className="flex gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowDeleteConfirm(false)}
+                                            className="flex-1 py-3 px-4 rounded-xl border border-neutral-700 text-neutral-300 hover:bg-neutral-800 transition"
+                                        >
+                                            Cancelar
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={handleDelete}
+                                            disabled={deleting}
+                                            className="flex-1 py-3 px-4 rounded-xl bg-red-600 text-white hover:bg-red-500 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                        >
+                                            {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Sí, eliminar"}
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex gap-3 pt-4">
+                                    {selectedEvent && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowDeleteConfirm(true)}
+                                            className="flex items-center gap-2 px-4 py-3 bg-red-900/30 text-red-400 rounded-xl hover:bg-red-900/50 transition"
+                                        >
+                                            <Trash2 className="w-4 h-4" /> Eliminar
+                                        </button>
+                                    )}
+                                    {!selectedEvent?.isExternal && (
+                                        <button
+                                            type="submit"
+                                            disabled={saving}
+                                            className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-500 transition font-medium disabled:opacity-50"
+                                        >
+                                            {saving ? (
+                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                            ) : (
+                                                <>
+                                                    <Check className="w-4 h-4" /> Guardar
+                                                </>
+                                            )}
+                                        </button>
+                                    )}
+                                    {selectedEvent?.isExternal && (
+                                        <div className="w-full text-center text-xs text-neutral-500 flex items-center justify-center gap-1">
+                                            Sincronizado desde {selectedEvent.provider === 'google_calendar' ? 'Google' : 'Outlook'}.
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </form>
                     </div>
                 </div>

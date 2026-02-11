@@ -28,7 +28,6 @@ export default function DashboardLayout({
     // Use specific feature keys from the database matrix
     const showScena = canUse('scenaAccess');
     const showAgenda = canUse('bookingConfig');
-    const showPayments = canUse('stripeIntegration') || canUse('paypalIntegration');
 
     const navItems = [
         { href: "/dashboard/settings", label: "Perfil público", icon: <User className="w-5 h-5" /> },
@@ -46,10 +45,7 @@ export default function DashboardLayout({
 
         { href: "/dashboard/clouds", label: "Nubes conectadas", icon: <Settings className="w-5 h-5" /> },
 
-        // Conditional Payments Link
-        ...(showPayments
-            ? [{ href: "/dashboard/payments", label: "Ingresos", icon: <Wallet className="w-5 h-5" /> }]
-            : []),
+        { href: "/dashboard/payments", label: "Ingresos", icon: <Wallet className="w-5 h-5" /> },
 
         { href: "/dashboard/referrals", label: "Referidos", icon: <Users className="w-5 h-5" /> },
 

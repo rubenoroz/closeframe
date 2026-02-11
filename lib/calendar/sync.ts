@@ -628,37 +628,36 @@ export async function removeBookingFromCalendars(userId: string, bookingId: stri
         try {
             // Refresh token if needed
             const tokenValid = await refreshTokenIfNeeded(event.calendarAccountId);
-            if (!tokenValid) continue;
 
-            // Refetch account to get fresh token
-            const account = await prisma.calendarAccount.findUnique({
-                where: { id: event.calendarAccountId }
-            });
+            if (tokenValid) {
+                // Refetch account to get fresh token
+                const account = await prisma.calendarAccount.findUnique({
+                    where: { id: event.calendarAccountId }
+                });
 
-            if (!account) continue;
-
-            if (account.provider === 'google_calendar') {
-                await GoogleCalendarService.deleteEvent(account.accessToken, event.externalId);
-            } else if (account.provider === 'microsoft_outlook') {
-                await MicrosoftCalendarService.deleteEvent(account.accessToken, event.externalId);
+                if (account) {
+                    if (account.provider === 'google_calendar') {
+                        await GoogleCalendarService.deleteEvent(account.accessToken, event.externalId);
+                        console.log('[CalendarSync] Removed external event', event.externalId, 'from', account.provider);
+                    } else if (account.provider === 'microsoft_outlook') {
+                        await MicrosoftCalendarService.deleteEvent(account.accessToken, event.externalId);
+                        console.log('[CalendarSync] Removed external event', event.externalId, 'from', account.provider);
+                    }
+                }
             }
-
-            // Delete local record
-            await prisma.externalCalendarEvent.delete({
-                where: { id: event.id }
-            });
-
-            console.log('[CalendarSync] Removed external event', event.externalId, 'from', account.provider);
-
         } catch (error) {
             console.error('[CalendarSync] Failed to remove event from external calendar:', error);
-            // We still delete the local link so we don't try again forever, 
-            // or we could keep it if we want to retry. For now, let's keep it if it failed,
-            // but in a real system we might want a queue.
-            // If the error is 404/410 (already gone), we should delete local.
-            // The service methods throw, so we'd need to check error type.
-            // But for now, let's assume if it failed, we leave it orphaned or user manually cleans up.
-            // Actually, best to delete local if it's a "Not Found" error.
+            // Continue execution to delete local record
+        } finally {
+            // Always delete local record to avoid orphaned links blocking booking deletion
+            try {
+                await prisma.externalCalendarEvent.delete({
+                    where: { id: event.id }
+                });
+                console.log('[CalendarSync] Deleted local link for event', event.id);
+            } catch (localError) {
+                console.error('[CalendarSync] Failed to delete local external event record:', localError);
+            }
         }
     }
 }

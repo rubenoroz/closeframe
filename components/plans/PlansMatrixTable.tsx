@@ -230,6 +230,11 @@ export default function PlansMatrixTable({ onUpdate }: Props) {
                                                                 {feature.id === 'maxProjects' && (
                                                                     displayVal === -1 ? 'Ilimitados' : 'Proyectos'
                                                                 )}
+                                                                {feature.id === 'maxScenaProjects' && (
+                                                                    displayVal === -1 ? 'Ilimitados' :
+                                                                        displayVal === 0 ? 'Solo Invitado' :
+                                                                            displayVal === 1 ? '1 Tablero' : 'Tableros'
+                                                                )}
                                                             </span>
                                                         </div>
                                                     )}

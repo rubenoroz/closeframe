@@ -68,11 +68,16 @@ export default function NewProjectPage() {
     const [selectedFolder, setSelectedFolder] = useState<{ id: string; name: string } | null>(null);
     const [formData, setFormData] = useState<GallerySettingsData>(DEFAULT_DATA);
 
-    // Plan limits
     const [planLimits, setPlanLimits] = useState<{
         videoEnabled?: boolean;
-        lowResDownloads?: boolean;
+        allowedLowRes?: boolean;
+        allowedHighRes?: boolean;
         galleryCover?: boolean;
+        customFonts?: boolean;
+        passwordProtection?: boolean;
+        closerGalleries?: boolean;
+        collaborativeGalleries?: boolean;
+        zipDownloadsEnabled?: boolean;
     } | null>(null);
 
     useEffect(() => {
@@ -91,23 +96,23 @@ export default function NewProjectPage() {
                 setLoadingAccounts(false);
             });
 
-        // Fetch user plan limits
-        fetch("/api/user/settings")
+        // Fetch user plan limits & features (New Modular System)
+        fetch("/api/features/me")
             .then((res) => res.json())
             .then((data) => {
-                if (data.effectiveConfig) {
+                if (data.features) {
+                    const f = data.features;
                     setPlanLimits({
-                        videoEnabled: data.effectiveConfig.features?.videoGallery,
-                        lowResDownloads: data.effectiveConfig.features?.lowResDownloads,
-                        galleryCover: data.effectiveConfig.features?.galleryCover, // Check if this exists
+                        videoEnabled: f.videoGallery ?? f.videoEnabled ?? false,
+                        allowedLowRes: f.lowResDownloads ?? false,
+                        allowedHighRes: f.highResDownloads ?? false,
+                        galleryCover: f.galleryCover ?? f.coverImage ?? false,
+                        customFonts: f.customFonts ?? false,
+                        passwordProtection: f.passwordProtection ?? true,
+                        closerGalleries: f.closerGalleries ?? false,
+                        collaborativeGalleries: f.collaborativeGalleries ?? false,
+                        zipDownloadsEnabled: f.zipDownloadsEnabled ?? false,
                     });
-                } else if (data.user?.plan?.limits) {
-                    try {
-                        const limits = typeof data.user.plan.limits === 'string'
-                            ? JSON.parse(data.user.plan.limits)
-                            : data.user.plan.limits;
-                        setPlanLimits(limits);
-                    } catch { }
                 }
             })
             .catch(() => { });
