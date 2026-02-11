@@ -157,13 +157,15 @@ export default function SuperadminDashboard() {
 
                             const roleColors: Record<string, string> = {
                                 USER: "bg-blue-500",
-                                ADMIN: "bg-amber-500",
+                                VIP: "bg-amber-500",
+                                STAFF: "bg-teal-500",
                                 SUPERADMIN: "bg-violet-500"
                             };
 
                             const roleLabels: Record<string, string> = {
                                 USER: "Usuarios",
-                                ADMIN: "Administradores",
+                                VIP: "VIP",
+                                STAFF: "Staff",
                                 SUPERADMIN: "Super Admins"
                             };
 

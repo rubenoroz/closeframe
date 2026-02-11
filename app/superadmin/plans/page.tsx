@@ -280,8 +280,8 @@ export default function PlansPage() {
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold">Planes</h1>
-                    <p className="text-neutral-400 mt-1">
+                    <h1 className="text-2xl md:text-3xl font-bold">Planes</h1>
+                    <p className="text-neutral-400 mt-1 text-sm">
                         Gestiona los planes de suscripción y sus características
                     </p>
                 </div>

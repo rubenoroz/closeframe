@@ -262,7 +262,7 @@ export default function UsersPage() {
 
             {/* Filters */}
             <div className="flex flex-wrap gap-4">
-                <form onSubmit={handleSearch} className="flex-1 min-w-[300px]">
+                <form onSubmit={handleSearch} className="flex-1 min-w-0 md:min-w-[300px]">
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-500" />
                         <input
@@ -314,7 +314,8 @@ export default function UsersPage() {
                     </div>
                 ) : (
                     <>
-                        <div className="overflow-x-auto">
+                        {/* Desktop Table */}
+                        <div className="overflow-x-auto hidden md:block">
                             <table className="w-full">
                                 <thead>
                                     <tr className="text-left text-neutral-400 text-sm border-b border-neutral-800 bg-neutral-900/50">
@@ -415,6 +416,63 @@ export default function UsersPage() {
                                     ))}
                                 </tbody>
                             </table>
+                        </div>
+
+                        {/* Mobile Cards */}
+                        <div className="md:hidden divide-y divide-neutral-800/50">
+                            {users.map((user) => (
+                                <div key={user.id} className="p-4 space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3 min-w-0">
+                                            {user.image ? (
+                                                <img src={user.image} alt="" className="w-9 h-9 rounded-full shrink-0" referrerPolicy="no-referrer" />
+                                            ) : (
+                                                <div className="w-9 h-9 rounded-full bg-neutral-800 flex items-center justify-center shrink-0">
+                                                    <span className="text-neutral-400 text-sm font-medium">{(user.name || user.email)[0].toUpperCase()}</span>
+                                                </div>
+                                            )}
+                                            <div className="min-w-0">
+                                                <p className="font-medium text-sm truncate">{user.name || "Sin nombre"}</p>
+                                                <p className="text-neutral-500 text-xs truncate">{user.email}</p>
+                                            </div>
+                                        </div>
+                                        <div className="relative shrink-0">
+                                            <button
+                                                id={`action-btn-m-${user.id}`}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setActionMenu(actionMenu === user.id ? null : user.id);
+                                                }}
+                                                className="p-2 hover:bg-neutral-800 rounded-lg transition"
+                                            >
+                                                <MoreVertical className="w-4 h-4 text-neutral-400" />
+                                            </button>
+                                            {actionMenu === user.id && (
+                                                <ActionDropdown
+                                                    userId={user.id}
+                                                    onEdit={() => { setEditingUser(user); setActionMenu(null); }}
+                                                    onDelete={() => handleDeleteUser(user.id)}
+                                                    onClose={() => setActionMenu(null)}
+                                                />
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2 text-xs">
+                                        <span className={cn(
+                                            "px-2 py-0.5 rounded-md font-medium",
+                                            user.role === "SUPERADMIN" && "bg-violet-500/20 text-violet-400",
+                                            user.role === "STAFF" && "bg-teal-500/20 text-teal-400",
+                                            user.role === "VIP" && "bg-amber-500/20 text-amber-400",
+                                            user.role === "USER" && "bg-blue-500/20 text-blue-400"
+                                        )}>{user.role}</span>
+                                        <span className={cn(
+                                            "px-2 py-0.5 rounded-md font-medium",
+                                            user.plan ? "bg-green-500/20 text-green-400" : "bg-neutral-700/50 text-neutral-400"
+                                        )}>{user.plan?.displayName || "Sin plan"}</span>
+                                        <span className="px-2 py-0.5 rounded-md bg-neutral-800 text-neutral-400">{user._count.projects} proy.</span>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
 
                         {/* Pagination */}

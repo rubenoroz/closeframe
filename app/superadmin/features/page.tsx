@@ -194,10 +194,10 @@ export default function FeaturesMatrixPage() {
     return (
         <div className="p-6 max-w-[1600px] mx-auto">
             <div className="flex flex-col gap-6 mb-8">
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold flex items-center gap-2">
-                            <Shield className="w-6 h-6 text-emerald-500" />
+                        <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
+                            <Shield className="w-5 h-5 md:w-6 md:h-6 text-emerald-500" />
                             Matriz de Features
                         </h1>
                         <p className="text-neutral-400 text-sm">Control centralizado de permisos y límites por plan.</p>
@@ -208,7 +208,7 @@ export default function FeaturesMatrixPage() {
                             placeholder="Buscar característica..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="bg-neutral-900 border border-neutral-800 rounded-lg pl-3 pr-10 py-2 text-sm text-neutral-200 focus:outline-none focus:border-emerald-500/50 w-64 transition-all"
+                            className="bg-neutral-900 border border-neutral-800 rounded-lg pl-3 pr-10 py-2 text-sm text-neutral-200 focus:outline-none focus:border-emerald-500/50 w-full md:w-64 transition-all"
                         />
                         {searchQuery && (
                             <button
@@ -247,7 +247,8 @@ export default function FeaturesMatrixPage() {
                 </div>
             </div>
 
-            <div className="overflow-x-auto bg-neutral-900 rounded-xl border border-neutral-800 shadow-2xl">
+            {/* Desktop Table */}
+            <div className="overflow-x-auto bg-neutral-900 rounded-xl border border-neutral-800 shadow-2xl hidden md:block">
                 <table className="w-full text-sm text-left">
                     <thead className="text-xs uppercase bg-neutral-950 text-neutral-400 sticky top-0 z-10 border-b border-neutral-800">
                         <tr>
@@ -347,6 +348,79 @@ export default function FeaturesMatrixPage() {
                         ))}
                     </tbody>
                 </table>
+            </div>
+
+            {/* Mobile Cards */}
+            <div className="md:hidden space-y-3">
+                {activeCategories.map(category => (
+                    <div key={category}>
+                        <div className="px-1 py-2 mb-2">
+                            <span className="text-emerald-400 uppercase text-[10px] tracking-[0.2em] font-bold">
+                                {categoryLabels[category] || category}
+                            </span>
+                        </div>
+                        {filteredFeatures.filter(f => f.category === category).map(feature => {
+                            const isNumeric = feature.type === 'number' || feature.key.startsWith('max');
+
+                            return (
+                                <div key={feature.id} className="bg-neutral-900 border border-neutral-800 rounded-xl p-4 mb-2">
+                                    <div className="flex items-start gap-2 mb-3">
+                                        {feature.icon && <feature.icon className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" />}
+                                        <div className="min-w-0">
+                                            <p className="font-semibold text-sm text-neutral-200">{feature.label}</p>
+                                            <p className="text-[11px] text-neutral-500 mt-0.5 line-clamp-2">{feature.description}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                                        {plans.map(plan => {
+                                            const pf = plan.planFeatures.find(f => f.featureId === feature.id);
+                                            const isEnabled = pf?.enabled ?? false;
+                                            const limit = pf?.limit ?? null;
+                                            const id = `${plan.id}-${feature.id}`;
+                                            const limitId = `${plan.id}-${feature.id}-limit`;
+
+                                            return (
+                                                <div key={id} className="flex flex-col items-center gap-1 min-w-[60px]">
+                                                    <button
+                                                        onClick={() => handleToggle(plan.id, feature.id, isEnabled, limit)}
+                                                        disabled={updating === id}
+                                                        className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all text-xs ${isEnabled
+                                                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                                            : 'bg-neutral-800 text-neutral-600 border border-neutral-700'
+                                                            }`}
+                                                    >
+                                                        {updating === id ? (
+                                                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                                        ) : isEnabled ? (
+                                                            <Check className="w-3.5 h-3.5" />
+                                                        ) : (
+                                                            <X className="w-3.5 h-3.5" />
+                                                        )}
+                                                    </button>
+                                                    {isNumeric && (
+                                                        <input
+                                                            type="number"
+                                                            defaultValue={limit ?? -1}
+                                                            onBlur={(e) => {
+                                                                const val = parseInt(e.target.value);
+                                                                if (val !== limit) {
+                                                                    handleLimitChange(plan.id, feature.id, isEnabled, val === -1 ? null : val);
+                                                                }
+                                                            }}
+                                                            className="w-14 bg-neutral-950 border border-neutral-800 rounded px-1 py-0.5 text-[10px] text-center text-neutral-400 focus:outline-none focus:border-emerald-500/50 font-mono"
+                                                            placeholder="∞"
+                                                        />
+                                                    )}
+                                                    <span className="text-[9px] text-neutral-500 truncate max-w-[60px]">{plan.displayName}</span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                ))}
             </div>
         </div>
     );

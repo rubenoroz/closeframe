@@ -148,45 +148,45 @@ export default function AuditLogsPage() {
         <div className="space-y-6">
             {/* Header */}
             <div>
-                <h1 className="text-3xl font-bold flex items-center gap-3">
-                    <History className="w-8 h-8 text-violet-500" />
+                <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-3">
+                    <History className="w-6 h-6 md:w-8 md:h-8 text-violet-500" />
                     Logs de Auditoría
                 </h1>
-                <p className="text-neutral-400 mt-1">
+                <p className="text-neutral-400 mt-1 text-sm">
                     Historial completo de acciones administrativas
                 </p>
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
                 <button
                     onClick={() => { setActiveTab("all"); setPagination(p => ({ ...p, page: 1 })); }}
                     className={cn(
-                        "px-4 py-2 rounded-xl text-sm font-medium transition",
+                        "px-3 md:px-4 py-2 rounded-xl text-xs md:text-sm font-medium transition",
                         activeTab === "all" ? "bg-violet-500/20 text-violet-400 border border-violet-500/30" : "bg-neutral-800/50 text-neutral-400 hover:bg-neutral-800 border border-transparent"
                     )}
                 >
-                    <Activity className="w-4 h-4 inline mr-2" />
+                    <Activity className="w-4 h-4 inline mr-1 md:mr-2" />
                     Todos
                 </button>
                 <button
                     onClick={() => { setActiveTab("actions"); setPagination(p => ({ ...p, page: 1 })); }}
                     className={cn(
-                        "px-4 py-2 rounded-xl text-sm font-medium transition",
+                        "px-3 md:px-4 py-2 rounded-xl text-xs md:text-sm font-medium transition",
                         activeTab === "actions" ? "bg-teal-500/20 text-teal-400 border border-teal-500/30" : "bg-neutral-800/50 text-neutral-400 hover:bg-neutral-800 border border-transparent"
                     )}
                 >
-                    <Shield className="w-4 h-4 inline mr-2" />
-                    Acciones Admin
+                    <Shield className="w-4 h-4 inline mr-1 md:mr-2" />
+                    Acciones
                 </button>
                 <button
                     onClick={() => { setActiveTab("overrides"); setPagination(p => ({ ...p, page: 1 })); }}
                     className={cn(
-                        "px-4 py-2 rounded-xl text-sm font-medium transition",
+                        "px-3 md:px-4 py-2 rounded-xl text-xs md:text-sm font-medium transition",
                         activeTab === "overrides" ? "bg-amber-500/20 text-amber-400 border border-amber-500/30" : "bg-neutral-800/50 text-neutral-400 hover:bg-neutral-800 border border-transparent"
                     )}
                 >
-                    <Settings2 className="w-4 h-4 inline mr-2" />
+                    <Settings2 className="w-4 h-4 inline mr-1 md:mr-2" />
                     Overrides
                 </button>
             </div>
@@ -204,7 +204,8 @@ export default function AuditLogsPage() {
                     </div>
                 ) : (
                     <>
-                        <div className="overflow-x-auto">
+                        {/* Desktop Table */}
+                        <div className="overflow-x-auto hidden md:block">
                             <table className="w-full">
                                 <thead>
                                     <tr className="text-left text-neutral-400 text-sm border-b border-neutral-800 bg-neutral-900/50">
@@ -271,6 +272,35 @@ export default function AuditLogsPage() {
                             </table>
                         </div>
 
+                        {/* Mobile Cards */}
+                        <div className="md:hidden divide-y divide-neutral-800/50">
+                            {logs.map((log) => {
+                                const target = getTargetInfo(log);
+                                return (
+                                    <div
+                                        key={log.id}
+                                        onClick={() => setExpandedLog(expandedLog === log.id ? null : log.id)}
+                                        className="p-4 space-y-2 active:bg-neutral-800/30 transition cursor-pointer"
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <span className={cn(
+                                                "px-2 py-0.5 rounded text-[10px] font-medium",
+                                                ACTION_COLORS[log.action] || "bg-neutral-700/50 text-neutral-400"
+                                            )}>
+                                                {ACTION_LABELS[log.action] || log.action}
+                                            </span>
+                                            <span className="text-[11px] text-neutral-500">{formatDate(log.createdAt)}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-xs">
+                                            <Shield className="w-3 h-3 text-violet-500 shrink-0" />
+                                            <span className="text-violet-400 truncate">{log.adminEmail || "Unknown"}</span>
+                                        </div>
+                                        <p className="text-xs text-neutral-400 truncate">{formatChanges(log)}</p>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
                         {/* Pagination */}
                         <div className="flex items-center justify-between px-6 py-4 border-t border-neutral-800">
                             <p className="text-sm text-neutral-400">
@@ -313,7 +343,7 @@ export default function AuditLogsPage() {
                                 if (!log) return null;
                                 return (
                                     <>
-                                        <div className="grid grid-cols-2 gap-4 text-sm">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                             <div>
                                                 <p className="text-xs text-neutral-500 mb-1">Admin</p>
                                                 <p className="text-violet-400">{log.adminEmail || "Unknown"}</p>
