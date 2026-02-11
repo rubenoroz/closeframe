@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireSuperAdmin } from "@/lib/superadmin";
+import { requireSuperAdmin, requireAdminOrAbove, logAdminAction } from "@/lib/superadmin";
 
 // GET - Listar usuarios con paginación y filtros
 export async function GET(request: NextRequest) {
@@ -96,7 +96,7 @@ export async function GET(request: NextRequest) {
 
 // PUT - Actualizar usuario (rol, plan)
 export async function PUT(request: NextRequest) {
-    const authError = await requireSuperAdmin();
+    const { error: authError, role: callerRole, adminId, adminEmail } = await requireAdminOrAbove();
     if (authError) return authError;
 
     try {
@@ -111,18 +111,22 @@ export async function PUT(request: NextRequest) {
         }
 
         // Validar rol
-        if (role && !["USER", "ADMIN", "SUPERADMIN"].includes(role)) {
+        if (role && !["USER", "VIP", "STAFF", "SUPERADMIN"].includes(role)) {
             return NextResponse.json(
                 { error: "Rol inválido" },
                 { status: 400 }
             );
         }
 
-        // Get admin info for audit log
-        const { auth } = await import("@/auth");
-        const session = await auth();
-        const adminId = session?.user?.id || "unknown";
-        const adminEmail = session?.user?.email || "unknown";
+        // STAFF no puede cambiar roles
+        if (callerRole === "STAFF" && role) {
+            return NextResponse.json(
+                { error: "No tienes permiso para cambiar roles de usuarios" },
+                { status: 403 }
+            );
+        }
+
+        // Use caller info from requireAdminOrAbove
 
         // Get previous featureOverrides for audit log
         let previousOverrides = null;
@@ -164,7 +168,7 @@ export async function PUT(request: NextRequest) {
                 await prisma.featureOverrideLog.create({
                     data: {
                         userId,
-                        adminId,
+                        adminId: adminId!,
                         adminEmail,
                         action: Object.keys(featureOverrides?.features || {}).length === 0 &&
                             Object.keys(featureOverrides?.limits || {}).length === 0
@@ -175,9 +179,24 @@ export async function PUT(request: NextRequest) {
                         reason: overrideReason || null
                     }
                 });
-                console.log(`[AUDIT] Admin ${adminEmail} updated overrides for user ${userId}`);
             }
         }
+
+        // Global audit log
+        const auditDetails: any = {};
+        if (role) auditDetails.role = { from: previousOverrides ? undefined : undefined, to: role };
+        if (planId !== undefined) auditDetails.planId = planId;
+        if (featureOverrides !== undefined) auditDetails.featureOverrides = featureOverrides;
+
+        await logAdminAction({
+            adminId: adminId!,
+            adminEmail,
+            adminRole: callerRole,
+            action: featureOverrides !== undefined ? "USER_OVERRIDE_UPDATE" : role ? "USER_ROLE_UPDATE" : "USER_PLAN_UPDATE",
+            resourceType: "User",
+            resourceId: userId,
+            details: auditDetails
+        });
 
         return NextResponse.json(updatedUser);
 
@@ -209,9 +228,32 @@ export async function DELETE(request: NextRequest) {
         // Verificar que no sea el mismo superadmin
         // (esto se maneja en el frontend también)
 
+        // Get admin info for audit
+        const { auth } = await import("@/auth");
+        const session = await auth();
+        const currentAdminId = session?.user?.id || "unknown";
+        const currentAdminEmail = session?.user?.email || "unknown";
+
+        // Fetch user info before deleting for audit
+        const targetUser = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { email: true, name: true, role: true }
+        });
+
         // Eliminar usuario (cascade eliminará relaciones)
         await prisma.user.delete({
             where: { id: userId }
+        });
+
+        // Audit log
+        await logAdminAction({
+            adminId: currentAdminId,
+            adminEmail: currentAdminEmail,
+            adminRole: "SUPERADMIN",
+            action: "USER_DELETE",
+            resourceType: "User",
+            resourceId: userId,
+            details: { deletedUser: targetUser }
         });
 
         return NextResponse.json({ success: true });

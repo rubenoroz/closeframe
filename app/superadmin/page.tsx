@@ -250,7 +250,7 @@ export default function SuperadminDashboard() {
                                         <span className={cn(
                                             "px-2 py-1 rounded-md text-xs font-medium",
                                             user.role === "SUPERADMIN" && "bg-violet-500/20 text-violet-400",
-                                            user.role === "ADMIN" && "bg-amber-500/20 text-amber-400",
+                                            user.role === "VIP" && "bg-amber-500/20 text-amber-400",
                                             user.role === "USER" && "bg-blue-500/20 text-blue-400"
                                         )}>
                                             {user.role}

@@ -1,14 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
+import { requireSuperAdmin } from "@/lib/superadmin";
 
 // GET /api/superadmin/referrals/payouts - List all payout requests
 export async function GET() {
-    const session = await auth();
-
-    if (session?.user?.role !== "ADMIN") {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const authError = await requireSuperAdmin();
+    if (authError) return authError;
 
     try {
         const payouts = await prisma.referralPayout.findMany({
@@ -36,11 +33,8 @@ export async function GET() {
 
 // PATCH /api/superadmin/referrals/payouts/:id - Update payout status
 export async function PATCH(req: NextRequest) {
-    const session = await auth();
-
-    if (session?.user?.role !== "ADMIN") {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const authError = await requireSuperAdmin();
+    if (authError) return authError;
 
     try {
         const body = await req.json();

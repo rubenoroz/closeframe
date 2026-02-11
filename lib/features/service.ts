@@ -54,21 +54,30 @@ export async function getFeatureAccess(userId: string, featureKey: string): Prom
 
     if (!user) return { allowed: false, limit: null };
 
-    // 2. Check Overrides
+    // 2. Check Overrides (supports nested { features: {}, limits: {} } structure)
     if (user.featureOverrides && typeof user.featureOverrides === 'object') {
         const overrides = user.featureOverrides as Record<string, any>;
-        if (featureKey in overrides) {
+
+        // Check nested features object first
+        if (overrides.features && typeof overrides.features === 'object' && featureKey in overrides.features) {
+            const val = overrides.features[featureKey];
+            if (typeof val === 'boolean') return { allowed: val, limit: null };
+            if (typeof val === 'number') return { allowed: true, limit: val };
+            if (val === null) return { allowed: true, limit: null };
+        }
+
+        // Check nested limits object
+        if (overrides.limits && typeof overrides.limits === 'object' && featureKey in overrides.limits) {
+            const val = overrides.limits[featureKey];
+            if (typeof val === 'number') return { allowed: true, limit: val };
+        }
+
+        // Fallback: flat format (legacy)
+        if (featureKey in overrides && featureKey !== 'features' && featureKey !== 'limits') {
             const val = overrides[featureKey];
-            if (typeof val === 'boolean') {
-                return { allowed: val, limit: null };
-            }
-            if (typeof val === 'number') {
-                return { allowed: true, limit: val };
-            }
-            // Explicit null limit override?
-            if (val === null) {
-                return { allowed: true, limit: null };
-            }
+            if (typeof val === 'boolean') return { allowed: val, limit: null };
+            if (typeof val === 'number') return { allowed: true, limit: val };
+            if (val === null) return { allowed: true, limit: null };
         }
     }
 
@@ -142,8 +151,8 @@ export async function getEffectiveFeatures(userId: string): Promise<Record<strin
 
     let featuresMap: Record<string, any> = {};
 
-    // 1. Superadmins / Admins - Restore Total Bypass
-    if (user.role === 'ADMIN' || user.role === 'SUPERADMIN') {
+    // 1. Superadmins / VIP / Staff - Restore Total Bypass
+    if (user.role === 'VIP' || user.role === 'SUPERADMIN' || user.role === 'STAFF') {
         const allFeatures = await prisma.feature.findMany({ select: { key: true } });
         allFeatures.forEach(f => {
             featuresMap[f.key] = true;
@@ -186,10 +195,26 @@ export async function getEffectiveFeatures(userId: string): Promise<Record<strin
         });
     }
 
-    // 3. Apply Overrides
+    // 3. Apply Overrides (supports nested { features: {}, limits: {} } structure)
     if (user.featureOverrides && typeof user.featureOverrides === 'object') {
         const overrides = user.featureOverrides as Record<string, any>;
-        Object.assign(featuresMap, overrides);
+
+        // Nested features
+        if (overrides.features && typeof overrides.features === 'object') {
+            Object.assign(featuresMap, overrides.features);
+        }
+
+        // Nested limits
+        if (overrides.limits && typeof overrides.limits === 'object') {
+            Object.assign(featuresMap, overrides.limits);
+        }
+
+        // Flat legacy keys (skip 'features' and 'limits' meta-keys)
+        for (const [key, val] of Object.entries(overrides)) {
+            if (key !== 'features' && key !== 'limits') {
+                featuresMap[key] = val;
+            }
+        }
     }
 
     return featuresMap;

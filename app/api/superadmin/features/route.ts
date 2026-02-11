@@ -2,11 +2,12 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { logAdminAction } from "@/lib/superadmin";
 
 // Helper to check admin role
 async function checkAdmin() {
     const session = await auth();
-    if (session?.user?.role !== "SUPERADMIN") {
+    if (session?.user?.role !== "SUPERADMIN" && session?.user?.role !== "STAFF") {
         throw new Error("Unauthorized");
     }
     return session;
@@ -40,7 +41,7 @@ export async function GET() {
 
 export async function PUT(req: Request) {
     try {
-        await checkAdmin();
+        const session = await checkAdmin();
         const body = await req.json();
         const { planId, featureId, enabled, limit } = body;
 
@@ -118,6 +119,17 @@ export async function PUT(req: Request) {
         revalidatePath('/superadmin/features');
         revalidatePath('/api/features/me'); // Clear client cache
         revalidatePath('/'); // Clear general cache
+
+        // Audit log
+        await logAdminAction({
+            adminId: session.user?.id || "unknown",
+            adminEmail: session.user?.email,
+            adminRole: session.user?.role,
+            action: "FEATURE_MATRIX_UPDATE",
+            resourceType: "PlanFeature",
+            resourceId: planId,
+            details: { featureId, enabled, limit }
+        });
 
         return NextResponse.json(updated);
 

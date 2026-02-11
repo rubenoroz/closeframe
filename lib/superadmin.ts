@@ -65,6 +65,65 @@ export async function requireSuperAdmin(): Promise<NextResponse | null> {
 }
 
 /**
+ * Middleware para APIs accesibles por STAFF o SUPERADMIN
+ * STAFF puede ver usuarios y realizar ediciones limitadas.
+ * Retorna NextResponse.json con error si no está autorizado.
+ */
+export async function requireAdminOrAbove(): Promise<{ error: NextResponse | null; role: string | null; adminId: string | null; adminEmail: string | null }> {
+    const session = await auth();
+
+    if (!session?.user?.id) {
+        return {
+            error: NextResponse.json({ error: "No autenticado" }, { status: 401 }),
+            role: null, adminId: null, adminEmail: null
+        };
+    }
+
+    const user = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { role: true, email: true }
+    });
+
+    if (!user || (user.role !== "SUPERADMIN" && user.role !== "STAFF")) {
+        return {
+            error: NextResponse.json({ error: "Acceso denegado. Se requiere rol STAFF o SUPERADMIN" }, { status: 403 }),
+            role: null, adminId: null, adminEmail: null
+        };
+    }
+
+    return { error: null, role: user.role, adminId: session.user.id, adminEmail: user.email };
+}
+
+/**
+ * Registra una acción administrativa en AdminActionLog
+ */
+export async function logAdminAction(params: {
+    adminId: string;
+    adminEmail?: string | null;
+    adminRole?: string | null;
+    action: string;
+    resourceType: string;
+    resourceId?: string | null;
+    details?: any;
+}) {
+    try {
+        await prisma.adminActionLog.create({
+            data: {
+                adminId: params.adminId,
+                adminEmail: params.adminEmail || null,
+                adminRole: params.adminRole || null,
+                action: params.action,
+                resourceType: params.resourceType,
+                resourceId: params.resourceId || null,
+                details: params.details || null,
+            }
+        });
+    } catch (err) {
+        console.error("[AUDIT] Error logging admin action:", err);
+    }
+}
+
+/**
  * Helper para parsear JSON de features/limits de Plan
  */
 export function parsePlanFeatures(featuresJson: string): string[] {

@@ -285,7 +285,8 @@ export default function UsersPage() {
                 >
                     <option value="">Todos los roles</option>
                     <option value="USER">Usuario</option>
-                    <option value="ADMIN">Admin</option>
+                    <option value="STAFF">Staff</option>
+                    <option value="VIP">VIP</option>
                     <option value="SUPERADMIN">Super Admin</option>
                 </select>
 
@@ -357,7 +358,8 @@ export default function UsersPage() {
                                                 <span className={cn(
                                                     "px-2.5 py-1 rounded-lg text-xs font-medium",
                                                     user.role === "SUPERADMIN" && "bg-violet-500/20 text-violet-400",
-                                                    user.role === "ADMIN" && "bg-amber-500/20 text-amber-400",
+                                                    user.role === "STAFF" && "bg-teal-500/20 text-teal-400",
+                                                    user.role === "VIP" && "bg-amber-500/20 text-amber-400",
                                                     user.role === "USER" && "bg-blue-500/20 text-blue-400"
                                                 )}>
                                                     {user.role}
@@ -492,7 +494,8 @@ export default function UsersPage() {
                                     className="w-full px-4 py-2.5 bg-neutral-800 border border-neutral-700 rounded-xl text-white focus:outline-none focus:border-violet-500"
                                 >
                                     <option value="USER">Usuario</option>
-                                    <option value="ADMIN">Admin</option>
+                                    <option value="STAFF">Staff</option>
+                                    <option value="VIP">VIP</option>
                                     <option value="SUPERADMIN">Super Admin</option>
                                 </select>
                             </div>

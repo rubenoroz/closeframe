@@ -28,6 +28,8 @@ export default function SuperadminLayout({ children }: SuperadminLayoutProps) {
     // Verificar rol de superadmin
     const userRole = (session?.user as { role?: string })?.role;
     const isSuperAdmin = userRole === "SUPERADMIN";
+    const isStaff = userRole === "STAFF";
+    const isAdmin = isSuperAdmin || isStaff;
 
     useEffect(() => {
         if (status === "loading") return;
@@ -37,10 +39,10 @@ export default function SuperadminLayout({ children }: SuperadminLayoutProps) {
             return;
         }
 
-        if (!isSuperAdmin) {
+        if (!isAdmin) {
             router.push("/dashboard");
         }
-    }, [session, status, isSuperAdmin, router]);
+    }, [session, status, isAdmin, router]);
 
     // Mostrar loading mientras verifica
     if (status === "loading") {
@@ -52,7 +54,7 @@ export default function SuperadminLayout({ children }: SuperadminLayoutProps) {
     }
 
     // No mostrar nada si no es superadmin
-    if (!isSuperAdmin) {
+    if (!isAdmin) {
         return null;
     }
 
@@ -68,16 +70,16 @@ export default function SuperadminLayout({ children }: SuperadminLayoutProps) {
             label: "Usuarios",
             icon: <Users className="w-5 h-5" />
         },
-        {
+        ...(isSuperAdmin ? [{
             href: "/superadmin/plans",
             label: "Planes",
             icon: <CreditCard className="w-5 h-5" />
-        },
-        {
+        }] : []),
+        ...(isSuperAdmin ? [{
             href: "/superadmin/referrals",
             label: "Referidos",
             icon: <Users className="w-5 h-5" />
-        },
+        }] : []),
         {
             href: "/superadmin/features",
             label: "Features (Matriz)",
@@ -88,11 +90,11 @@ export default function SuperadminLayout({ children }: SuperadminLayoutProps) {
             label: "Auditoría",
             icon: <History className="w-5 h-5" />
         },
-        {
+        ...(isSuperAdmin ? [{
             href: "/superadmin/settings",
             label: "Configuración",
             icon: <Settings className="w-5 h-5" />
-        },
+        }] : []),
     ];
 
     return (
@@ -106,8 +108,8 @@ export default function SuperadminLayout({ children }: SuperadminLayoutProps) {
                             <Shield className="w-5 h-5 text-violet-400" />
                         </div>
                         <div>
-                            <span className="font-medium text-lg">Super Admin</span>
-                            <p className="text-xs text-neutral-500">Panel de Control</p>
+                            <span className="font-medium text-lg">{isStaff ? "Staff" : "Super Admin"}</span>
+                            <p className="text-xs text-neutral-500">{isStaff ? "Acceso Limitado" : "Panel de Control"}</p>
                         </div>
                     </div>
                 </div>

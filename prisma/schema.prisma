@@ -464,6 +464,24 @@ model FeatureOverrideLog {
   @@index([createdAt])
 }
 
+model AdminActionLog {
+  id           String   @id @default(cuid())
+  adminId      String
+  adminEmail   String?
+  adminRole    String?
+  action       String
+  resourceType String
+  resourceId   String?
+  details      Json?
+  ipAddress    String?
+  createdAt    DateTime @default(now())
+
+  @@index([adminId])
+  @@index([action])
+  @@index([resourceType])
+  @@index([createdAt])
+}
+
 model CalendarAccount {
   id                String                  @id @default(cuid())
   userId            String

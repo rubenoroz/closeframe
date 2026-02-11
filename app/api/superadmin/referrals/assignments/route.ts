@@ -144,7 +144,7 @@ export async function POST(request: NextRequest) {
                 assignmentId: assignment.id,
                 action: "ASSIGNMENT_CREATED",
                 actorId: session.user.id!,
-                actorType: "ADMIN",
+                actorType: "SUPERADMIN",
                 newValue: {
                     profileId,
                     referralCode,

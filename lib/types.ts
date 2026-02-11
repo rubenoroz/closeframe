@@ -1,6 +1,6 @@
 // Tipos para el sistema de Superadmin
 
-export type UserRole = "USER" | "ADMIN" | "SUPERADMIN";
+export type UserRole = "USER" | "VIP" | "STAFF" | "SUPERADMIN";
 
 export interface Plan {
     id: string;
