@@ -1,0 +1,2 @@
+id,fase,tarea,descripcion,responsable,inicio,fin,duracion,dependencia,padre,entregable,estado,prioridad
+1,Fase 1,Tarea 1,Desc 1,Resp 1,2023-01-01,2023-01-02,1,,,Entregable 1,Pendiente,Alta

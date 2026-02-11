@@ -31,6 +31,16 @@ export async function DELETE(
             return new NextResponse("Unauthorized", { status: 403 });
         }
 
+        // First, nullify all parentId references in the project's tasks
+        // to avoid the self-referential NoAction constraint blocking cascade
+        await prisma.task.updateMany({
+            where: {
+                column: { projectId },
+                parentId: { not: null },
+            },
+            data: { parentId: null },
+        });
+
         await prisma.scenaProject.delete({
             where: { id: projectId },
         });

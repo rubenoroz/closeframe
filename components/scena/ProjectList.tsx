@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Plus, MoreVertical, Archive, Trash2, Undo2, FolderOpen, Calendar, Copy, Search, X } from "lucide-react";
+import { Plus, MoreVertical, Archive, Trash2, Undo2, FolderOpen, Calendar, Copy, Search, X, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -11,6 +11,8 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { CreateProjectModal } from "./CreateProjectModal";
+import { CsvImportModal } from "./CsvImportModal";
+import { ConfirmModal } from "./ConfirmModal";
 import { useRouter } from "next/navigation";
 import { ScenaIcon } from "@/components/icons/ScenaIcon";
 
@@ -34,6 +36,7 @@ export function ProjectList({ canCreate = true }: { canCreate?: boolean }) {
     const [loading, setLoading] = useState(true);
     const [view, setView] = useState<'active' | 'archived'>('active');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
@@ -101,10 +104,24 @@ export function ProjectList({ canCreate = true }: { canCreate?: boolean }) {
         }
     };
 
-    const handleDelete = async (projectId: string) => {
-        if (!confirm("¿Estás seguro de eliminar este proyecto permanentemente? Esta acción no se puede deshacer.")) return;
+    // Confirm Modal State
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
+
+    // ... existing filters ...
+
+    // ... (keep filters and fetchProjects) ...
+
+    const handleDelete = (projectId: string) => {
+        setProjectToDelete(projectId);
+        setIsDeleteModalOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!projectToDelete) return;
+
         try {
-            const res = await fetch(`/api/scena/projects/${projectId}`, { // Fixed URL
+            const res = await fetch(`/api/scena/projects/${projectToDelete}`, {
                 method: "DELETE",
             });
             if (res.ok) fetchProjects();
@@ -138,6 +155,14 @@ export function ProjectList({ canCreate = true }: { canCreate?: boolean }) {
                             </button>
                         )}
                     </div>
+                    <Button
+                        onClick={() => setIsImportModalOpen(true)}
+                        variant="outline"
+                        className="gap-2 whitespace-nowrap border-neutral-300 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                    >
+                        <Upload className="w-4 h-4" />
+                        <span className="hidden sm:inline">Importar CSV</span>
+                    </Button>
                     {canCreate ? (
                         <Button
                             onClick={() => setIsCreateModalOpen(true)}
@@ -312,6 +337,24 @@ export function ProjectList({ canCreate = true }: { canCreate?: boolean }) {
             <CreateProjectModal
                 isOpen={isCreateModalOpen}
                 onClose={() => setIsCreateModalOpen(false)}
+            />
+
+            <CsvImportModal
+                isOpen={isImportModalOpen}
+                onClose={() => {
+                    setIsImportModalOpen(false);
+                    fetchProjects();
+                }}
+            />
+
+            <ConfirmModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={confirmDelete}
+                title="Eliminar Proyecto"
+                description="¿Estás seguro de eliminar este proyecto permanentemente? Esta acción no se puede deshacer."
+                confirmText="Eliminar"
+                isDestructive
             />
         </div>
     );

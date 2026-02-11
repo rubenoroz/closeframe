@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, BarChart3, FileSpreadsheet, PieChart, Plus, Eye, EyeOff, Search, X, MessageSquare } from "lucide-react";
 import { FetchedTask } from "@/types/scena";
 import { ProjectNotesModal } from "./ProjectNotesModal";
+import { InputModal } from "./InputModal";
 
 
 const ProjectStatisticsModal = dynamic(
@@ -199,10 +200,20 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
         }
     };
 
-    const handleAddColumn = async () => {
-        const name = prompt("Nombre de la columna:");
-        if (!name) return;
+    // New State for Custom Modals
+    const [isAddColumnModalOpen, setIsAddColumnModalOpen] = useState(false);
+    const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
+    const [activeColumnId, setActiveColumnId] = useState<string | null>(null);
 
+    // ... existing collapsedTasks logic ...
+
+    // ... (keep collapsedTasks and toggleTaskCollapse) ...
+
+    const handleAddColumn = () => {
+        setIsAddColumnModalOpen(true);
+    };
+
+    const confirmAddColumn = async (name: string) => {
         const tempId = `temp-col-${Date.now()}`;
         const tempColumn = {
             id: tempId,
@@ -235,9 +246,14 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
         }
     };
 
-    const handleAddTask = async (columnId: string) => {
-        const title = prompt("Título de la tarea:");
-        if (!title) return;
+    const handleAddTask = (columnId: string) => {
+        setActiveColumnId(columnId);
+        setIsAddTaskModalOpen(true);
+    };
+
+    const confirmAddTask = async (title: string) => {
+        if (!activeColumnId) return;
+        const columnId = activeColumnId;
 
         const optimisticId = "temp-" + Date.now();
         const optimisticTask: FetchedTask = {
@@ -481,6 +497,25 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
                     onTaskUpdate={handleTaskUpdate}
                 />
             )}
+
+            {/* Custom Modals for Add Column/Task */}
+            <InputModal
+                isOpen={isAddColumnModalOpen}
+                onClose={() => setIsAddColumnModalOpen(false)}
+                onConfirm={confirmAddColumn}
+                title="Nueva Columna"
+                placeholder="Nombre de la columna"
+                confirmText="Crear Columna"
+            />
+
+            <InputModal
+                isOpen={isAddTaskModalOpen}
+                onClose={() => setIsAddTaskModalOpen(false)}
+                onConfirm={confirmAddTask}
+                title="Nueva Tarea"
+                placeholder="Título de la tarea"
+                confirmText="Crear Tarea"
+            />
         </div>
     );
 }

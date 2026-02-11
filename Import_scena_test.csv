@@ -1,0 +1,24 @@
+id,fase,tarea,descripcion,responsable,inicio,fin,duracion,dependencia,entregable,estado,prioridad
+1,Desarrollo,Investigación temática,Investigación del tema principal,Director,2026-03-01,2026-03-07,7,,Dossier de investigación,Pendiente,Alta
+2,Desarrollo,Sinopsis,Redacción de sinopsis del documental,Guionista,2026-03-08,2026-03-10,3,1,Sinopsis aprobada,Pendiente,Alta
+3,Desarrollo,Tratamiento,Desarrollo del tratamiento narrativo,Guionista,2026-03-11,2026-03-15,5,2,Tratamiento final,Pendiente,Alta
+4,Preproducción,Presupuesto,Desglose de costos de producción,Productor,2026-03-16,2026-03-20,5,3,Presupuesto aprobado,Pendiente,Alta
+5,Preproducción,Plan de rodaje,Calendario de grabación,Asistente de dirección,2026-03-21,2026-03-24,4,4,Plan de rodaje,Pendiente,Alta
+6,Preproducción,Scouting de locaciones,Visita y selección de locaciones,Producción,2026-03-25,2026-03-28,4,5,Lista de locaciones,Pendiente,Media
+7,Preproducción,Permisos de grabación,Gestión de permisos y autorizaciones,Producción,2026-03-29,2026-04-02,5,6,Permisos firmados,Pendiente,Alta
+8,Producción,Rodaje día 1,Grabación de entrevistas principales,Equipo completo,2026-04-05,2026-04-05,1,7,Material grabado,Pendiente,Alta
+9,Producción,Rodaje día 2,Grabación de entrevistas secundarias,Equipo completo,2026-04-06,2026-04-06,1,8,Material grabado,Pendiente,Alta
+10,Producción,B-roll locaciones,Tomas de recurso en locaciones,Equipo de cámara,2026-04-07,2026-04-08,2,9,Material B-roll,Pendiente,Media
+11,Producción,Respaldo y organización,Backup y clasificación de material,DIT,2026-04-09,2026-04-10,2,10,Material organizado,Pendiente,Alta
+12,Postproducción,Ingesta de material,Copia y verificación de archivos,Editor,2026-04-11,2026-04-12,2,11,Material listo para edición,Pendiente,Alta
+13,Postproducción,Edición offline,Primer armado narrativo,Editor,2026-04-13,2026-04-25,13,12,Primer corte,Pendiente,Alta
+14,Postproducción,Segundo corte,Ajustes narrativos,Editor,2026-04-26,2026-05-05,10,13,Segundo corte,Pendiente,Alta
+15,Postproducción,Corrección de color,Ajuste de color final,Colorista,2026-05-06,2026-05-10,5,14,Versión colorizada,Pendiente,Media
+16,Postproducción,Diseño sonoro,Limpieza y ambientación sonora,Diseñador de sonido,2026-05-06,2026-05-10,5,14,Sonido editado,Pendiente,Media
+17,Postproducción,Música original,Composición musical,Compositor,2026-05-06,2026-05-12,7,14,Pistas finales,Pendiente,Media
+18,Postproducción,Mezcla final,Mezcla de sonido final,Sonido,2026-05-13,2026-05-15,3,16,Mezcla final,Pendiente,Alta
+19,Postproducción,Gráficos y créditos,Inserción de gráficos y créditos,Post,2026-05-13,2026-05-16,4,15,Créditos finales,Pendiente,Media
+20,Entrega,Master final,Exportación master final,Post,2026-05-17,2026-05-18,2,18,Master final,Pendiente,Alta
+21,Entrega,Versiones de distribución,Exportación para plataformas,Post,2026-05-19,2026-05-21,3,20,Archivos de entrega,Pendiente,Alta
+22,Entrega,Material promocional,Creación de teaser y posters,Marketing,2026-05-22,2026-05-26,5,21,Kit promocional,Pendiente,Media
+23,Entrega,Envío a festivales,Registro en festivales,Producción,2026-05-27,2026-06-05,10,22,Aplicaciones enviadas,Pendiente,Media
