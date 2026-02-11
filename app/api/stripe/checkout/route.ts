@@ -21,21 +21,25 @@ export async function POST(req: NextRequest) {
         const body = await req.json();
         const { planId, priceId, amount, currency, description } = body;
 
+        // Get user once with everything we might need
+        const user = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            include: {
+                plan: true,
+                stripeConnectAccount: true
+            }
+        });
+
+        if (!user) {
+            return NextResponse.json({ error: "User not found" }, { status: 404 });
+        }
+
         // Get Referral Code from cookie
         const cookieStore = await cookies();
         const referralCode = cookieStore.get(REFERRAL_COOKIE_NAME)?.value;
 
         // ---- CASE 1: Plan Subscription (Platform) ----
         if (planId && priceId) {
-            const user = await prisma.user.findUnique({
-                where: { id: session.user.id },
-                include: { plan: true }
-            });
-
-            if (!user) {
-                return NextResponse.json({ error: "User not found" }, { status: 404 });
-            }
-
             // Create Platform Subscription Checkout Session
             const checkoutSession = await stripe.checkout.sessions.create({
                 mode: "subscription",
@@ -72,12 +76,7 @@ export async function POST(req: NextRequest) {
         // ---- CASE 2: Direct Payment (Connect) ----
         if (amount && description) {
             // 1. Get User's Connect Account
-            const user = await prisma.user.findUnique({
-                where: { id: session.user.id },
-                include: { stripeConnectAccount: true },
-            });
-
-            const connectId = user?.stripeConnectAccount?.stripeAccountId;
+            const connectId = user.stripeConnectAccount?.stripeAccountId;
 
             if (!connectId) {
                 return NextResponse.json({ error: "No connected Stripe account found" }, { status: 400 });

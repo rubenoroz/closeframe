@@ -12,6 +12,7 @@ import {
     defaultDropAnimationSideEffects,
     DragStartEvent,
     DragEndEvent,
+    useDroppable,
 } from "@dnd-kit/core";
 import {
     SortableContext,
@@ -52,6 +53,19 @@ interface FeatureDragManagerProps {
     userPlanId: string | null;
     currentOverrides: any;
     onChange: (newOverrides: any) => void;
+}
+
+// Droppable Container Component
+function DroppableContainer({ id, children, className }: { id: string; children: React.ReactNode; className?: string }) {
+    const { setNodeRef, isOver } = useDroppable({ id });
+    return (
+        <div
+            ref={setNodeRef}
+            className={cn(className, isOver && "bg-violet-500/5 border-violet-500/50")}
+        >
+            {children}
+        </div>
+    );
 }
 
 // Draggable Item Component
@@ -211,7 +225,10 @@ export default function FeatureDragManager({ userPlanId, currentOverrides, onCha
             >
                 <div className="grid grid-cols-2 gap-4 h-[300px]">
                     {/* AVAILABLE (Source) */}
-                    <div className="flex flex-col gap-2 p-3 bg-neutral-900/50 rounded-xl border border-neutral-800 overflow-y-auto">
+                    <DroppableContainer
+                        id="available-container"
+                        className="flex flex-col gap-2 p-3 bg-neutral-900/50 rounded-xl border border-neutral-800 overflow-y-auto"
+                    >
                         <div className="text-[10px] uppercase tracking-widest font-bold text-neutral-500 mb-2 flex justify-between">
                             <span>Disponibles</span>
                             <span className="bg-neutral-800 text-neutral-400 px-1.5 rounded">{availableItems.length}</span>
@@ -224,7 +241,7 @@ export default function FeatureDragManager({ userPlanId, currentOverrides, onCha
                                 return <SortableItem key={id} id={id} feature={feature} type="available" />;
                             })}
                             {availableItems.length === 0 && (
-                                <div className="h-full flex items-center justify-center text-neutral-600 text-xs italic">
+                                <div className="h-full min-h-[50px] flex items-center justify-center text-neutral-600 text-xs italic">
                                     No hay más características
                                 </div>
                             )}
@@ -250,10 +267,10 @@ export default function FeatureDragManager({ userPlanId, currentOverrides, onCha
                                 })}
                             </div>
                         )}
-                    </div>
+                    </DroppableContainer>
 
                     {/* ACTIVE (Target) */}
-                    <div
+                    <DroppableContainer
                         id="active-container"
                         className={cn(
                             "flex flex-col gap-2 p-3 bg-neutral-900/50 rounded-xl border border-dashed border-neutral-700 overflow-y-auto transition-colors",
@@ -272,7 +289,7 @@ export default function FeatureDragManager({ userPlanId, currentOverrides, onCha
                                 return <SortableItem key={id} id={id} feature={feature} type="active" />;
                             })}
                             {activeItems.length === 0 && (
-                                <div className="h-full flex flex-col items-center justify-center text-neutral-600 space-y-2">
+                                <div className="h-full min-h-[100px] flex flex-col items-center justify-center text-neutral-600 space-y-2">
                                     <div className="w-10 h-10 rounded-full bg-neutral-800 flex items-center justify-center border border-dashed border-neutral-700">
                                         <Crown className="w-4 h-4 opacity-20" />
                                     </div>
@@ -280,7 +297,7 @@ export default function FeatureDragManager({ userPlanId, currentOverrides, onCha
                                 </div>
                             )}
                         </SortableContext>
-                    </div>
+                    </DroppableContainer>
                 </div>
 
                 <DragOverlay>

@@ -6,9 +6,7 @@ import { syncBookingToCalendars, removeBookingFromCalendars } from "@/lib/calend
 // GET: List all bookings for the current user
 export async function GET() {
     try {
-        console.log("Starting GET /api/bookings");
         const session = await auth();
-        console.log("Session retrieved:", session?.user?.id ? "User ID found" : "No User ID");
 
         if (!session?.user?.id) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -18,13 +16,11 @@ export async function GET() {
             where: { id: session.user.id },
             select: { plan: { select: { name: true } } }
         });
-        console.log("User plan fetched");
 
         const bookings = await prisma.booking.findMany({
             where: { userId: session.user.id },
             orderBy: { date: "asc" },
         });
-        console.log(`Fetched ${bookings.length} bookings`);
 
         return NextResponse.json({ bookings, plan: user?.plan?.name });
     } catch (error) {
@@ -96,8 +92,6 @@ export async function DELETE(request: Request) {
             return NextResponse.json({ error: "Missing booking ID" }, { status: 400 });
         }
 
-        console.log(`[DELETE Booking] Request to delete booking ${id} for user ${session.user.id}`);
-
         // Verify ownership
         const booking = await prisma.booking.findFirst({
             where: { id, userId: session.user.id },
@@ -109,17 +103,13 @@ export async function DELETE(request: Request) {
         }
 
         // Remove from external calendars first
-        console.log(`[DELETE Booking] Removing from external calendars...`);
         try {
             await removeBookingFromCalendars(session.user.id, id);
-            console.log(`[DELETE Booking] Sync removal complete.`);
         } catch (syncError) {
             console.error(`[DELETE Booking] Sync removal failed (ignoring):`, syncError);
         }
 
-        console.log(`[DELETE Booking] Deleting from DB...`);
         await prisma.booking.delete({ where: { id } });
-        console.log(`[DELETE Booking] DB deletion successful.`);
 
         return NextResponse.json({ success: true });
     } catch (error) {

@@ -75,12 +75,10 @@ export async function GET(request: Request) {
             const { MicrosoftGraphProvider } = await import("@/lib/cloud/microsoft-provider");
             // @ts-ignore
             provider = new MicrosoftGraphProvider(authClient);
-            console.log("[DEBUG] Using Microsoft Provider");
         } else if (account.provider === "dropbox") {
             const { DropboxProvider } = await import("@/lib/cloud/dropbox-provider");
             // @ts-ignore
             provider = new DropboxProvider(authClient);
-            console.log("[DEBUG] Using Dropbox Provider");
         } else if (account.provider === "koofr") {
             const { KoofrProvider } = await import("@/lib/cloud/koofr-provider");
             // @ts-ignore
@@ -88,14 +86,11 @@ export async function GET(request: Request) {
         } else {
             // Default Google Logic (Default)
             provider = new GoogleDriveProvider();
-            console.log("[DEBUG] Using Google Provider");
         }
 
         // 1. Check for special subfolders (photos AND videos)
-        console.log(`[DEBUG] Listing folders for parent: ${folderId}`);
         // @ts-ignore
         let subfolders = await provider.listFolders(folderId, authClient);
-        console.log(`[DEBUG] Subfolders found: ${subfolders.length}`, subfolders.map((f: any) => f.name));
 
         // Check if there's a "Fotografias" subfolder - if so, use it as the actual source
         const fotografiasFolder = subfolders.find((f: any) => f.name.toLowerCase() === "fotografias");
@@ -127,16 +122,13 @@ export async function GET(request: Request) {
         // For photos: prefer webjpg, fallback to root
         // For videos: prefer webmp4, fallback to root
         const sourceFolderId = webjpgFolder ? webjpgFolder.id : (webmp4Folder ? webmp4Folder.id : folderId);
-        console.log(`[DEBUG] Listing files from source: ${sourceFolderId} (Is WebJPG: ${sourceFolderId === webjpgFolder?.id})`);
         // @ts-ignore
         mainFiles = await provider.listFiles(sourceFolderId, authClient);
-        console.log(`[DEBUG] Main files found: ${mainFiles.length}`);
 
         // Filter out system files AND ensure it's a media file (unless it's a proxy folder where we assume they are images)
         mainFiles = mainFiles.filter((f: any) => !isSystemFile(f.name) && isValidMediaFile(f));
         // [NEW] If using a proxy folder (webjpg/webmp4), also check the Root Folder for additional files (ZIPs + Orphaned Images)
         if (sourceFolderId !== folderId) {
-            console.log(`[DEBUG] Proxy active. Checking Root Folder (${folderId}) for ZIPs and extra images...`);
             // @ts-ignore
             const rootFiles = await provider.listFiles(folderId, authClient);
 
@@ -154,12 +146,10 @@ export async function GET(request: Request) {
             );
 
             if (rootZips.length > 0) {
-                console.log(`[DEBUG] Found ${rootZips.length} ZIPs in root. Appending...`);
                 mainFiles = [...mainFiles, ...rootZips];
             }
 
             if (orphanedMedia.length > 0) {
-                console.log(`[DEBUG] Found ${orphanedMedia.length} orphaned media files in root. Appending...`);
                 mainFiles = [...mainFiles, ...orphanedMedia.filter((f: any) => !isSystemFile(f.name))];
             }
         } else {
@@ -188,7 +178,6 @@ export async function GET(request: Request) {
                         // Tag them? Not strictly necessary for "que se vea", just show them.
                         return subFiles;
                     } catch (err) {
-                        console.error(`[DEBUG] Failed to scan subfolder ${sub.name}:`, err);
                         return [];
                     }
                 });
@@ -197,7 +186,6 @@ export async function GET(request: Request) {
                 const flattenedFiles = results.flat();
 
                 if (flattenedFiles.length > 0) {
-                    console.log(`[DEBUG] Found ${flattenedFiles.length} files in subfolders. Merging...`);
                     mainFiles = [...mainFiles, ...flattenedFiles.filter((f: any) => !isSystemFile(f.name) && isValidMediaFile(f))];
                 }
             }
@@ -306,13 +294,6 @@ export async function GET(request: Request) {
             }
         });
     } catch (error: any) {
-        console.error("File List Error:", error);
-        console.error("Error details:", {
-            message: error?.message,
-            code: error?.code,
-            status: error?.status,
-            errors: error?.errors
-        });
         return NextResponse.json({
             error: "Failed to list files",
             details: error?.message || String(error),

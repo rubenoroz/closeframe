@@ -32,7 +32,7 @@ export async function POST(req: Request) {
         return new NextResponse(`Webhook Error: ${error.message}`, { status: 400 });
     }
 
-    console.log(`[STRIPE_WEBHOOK] Received event: ${event.type}`);
+    // Signature verification ... (keeps error log in catch)
 
     try {
         // Handle checkout.session.completed
@@ -97,7 +97,6 @@ export async function POST(req: Request) {
                         planId: plan.id,
                     },
                 });
-                console.log(`[STRIPE_WEBHOOK] User ${userId} subscribed to plan ${plan.name}`);
 
                 // Auto-assign referral code to paying customers
                 if (plan.name !== "free") {
@@ -137,7 +136,6 @@ export async function POST(req: Request) {
                         stripeCurrentPeriodEnd: periodEnd,
                     }
                 });
-                console.log(`[STRIPE_WEBHOOK] Updated period end for subscription ${subscriptionId}`);
             }
 
             // Calculate referral commission if applicable

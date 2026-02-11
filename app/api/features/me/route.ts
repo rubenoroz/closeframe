@@ -29,20 +29,14 @@ export async function GET() {
             return new NextResponse("User not found", { status: 404 });
         }
 
-        // Use centralized service logic (Handles Superadmin, Plans and Overrides correctly)
+        // Use centralized service logic
         const { getEffectiveFeatures } = await import("@/lib/features/service");
         const featuresMap = await getEffectiveFeatures(userId);
 
-        // Fetch user basic info for response context
-        const userData = await prisma.user.findUnique({
-            where: { id: userId },
-            select: { planId: true, role: true }
-        });
-
         return NextResponse.json({
             features: featuresMap,
-            planId: userData?.planId,
-            role: userData?.role
+            planId: user.planId,
+            role: user.role
         });
 
     } catch (error) {

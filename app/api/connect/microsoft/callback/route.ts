@@ -42,7 +42,7 @@ export async function GET(request: Request) {
         body.append('grant_type', 'authorization_code');
         body.append('client_secret', process.env.MICROSOFT_CLIENT_SECRET!);
 
-        console.log("[Microsoft Callback] Exchanging code for tokens...");
+        // Exchange code for tokens
 
         const tokenResponse = await fetch(tokenUrl, {
             method: 'POST',
@@ -89,8 +89,6 @@ export async function GET(request: Request) {
         });
 
         if (existingAccount) {
-            console.log("[Microsoft Callback] Updating existing account:", existingAccount.id);
-
             await prisma.cloudAccount.update({
                 where: { id: existingAccount.id },
                 data: {
@@ -101,8 +99,6 @@ export async function GET(request: Request) {
                 },
             });
         } else {
-            console.log("[Microsoft Callback] Creating new account");
-
             // Validate max cloud accounts limit
             const user = await prisma.user.findUnique({
                 where: { id: session.user.id },
