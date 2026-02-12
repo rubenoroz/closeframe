@@ -156,6 +156,7 @@ export async function POST(req: Request) {
                         order: currentOrder,
                         startDate: row.inicio ? new Date(row.inicio + 'T00:00:00') : null,
                         endDate: row.fin ? new Date(row.fin + 'T00:00:00') : null,
+                        toleranceDate: row.tolerancia ? new Date(row.tolerancia + 'T00:00:00') : null,
                         progress: mapEstadoToProgress(row.estado),
                         priority: mapPrioridadToPriority(row.prioridad || 'media'),
                         isHiddenInGantt: false,

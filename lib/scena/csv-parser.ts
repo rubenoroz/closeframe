@@ -9,6 +9,7 @@ export interface CsvTaskRow {
     responsable: string;
     inicio: string;
     fin: string;
+    tolerancia: string;
     duracion: string;
     dependencia: string;
     padre: string;
@@ -43,7 +44,7 @@ export interface CsvParseResult {
 }
 
 const REQUIRED_FIELDS = ['id', 'fase', 'tarea', 'inicio', 'fin', 'estado'] as const;
-const ALL_FIELDS = ['id', 'fase', 'tarea', 'descripcion', 'responsable', 'inicio', 'fin', 'duracion', 'dependencia', 'padre', 'entregable', 'estado', 'prioridad'] as const;
+const ALL_FIELDS = ['id', 'fase', 'tarea', 'descripcion', 'responsable', 'inicio', 'fin', 'tolerancia', 'duracion', 'dependencia', 'padre', 'entregable', 'estado', 'prioridad'] as const;
 
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -145,6 +146,11 @@ function mapHeaderToField(normalized: string): string | null {
         'end': 'fin',
         'end_date': 'fin',
         'fecha_fin': 'fin',
+        'tolerancia': 'tolerancia',
+        'tolerance': 'tolerancia',
+        'fecha_tolerancia': 'tolerancia',
+        'tolerance_date': 'tolerancia',
+        'limite': 'tolerancia',
         'duracion': 'duracion',
         'duration': 'duracion',
         'dias': 'duracion',
@@ -409,12 +415,12 @@ export function mapPrioridadToPriority(prioridad: string): string {
 export function generateCsvTemplate(): string {
     const headers = ALL_FIELDS.join(',');
     const sampleRows = [
-        '1,Preproducción,Investigación del tema,Análisis y documentación inicial,Director,2026-01-15,2026-01-20,5,,,Dossier de investigación,Pendiente,Alta',
-        '2,Preproducción,Guion técnico,Desarrollo del guion,Guionista,2026-01-21,2026-01-28,7,1,,Guion aprobado,Pendiente,Alta',
-        '3,Producción,Rodaje día 1,Grabación de escenas principales,Equipo completo,2026-02-01,2026-02-01,1,2,,Material grabado,Pendiente,Media',
-        '4,Producción,Setup de iluminación,Preparar luces para set 1,Iluminador,2026-02-01,2026-02-01,1,,3,Material grabado,Pendiente,Baja',
-        '5,Producción,Setup de audio,Preparar micrófonos,Sonidista,2026-02-01,2026-02-01,1,,3,Material grabado,Pendiente,Baja',
-        '6,Postproducción,Edición,Primer corte de edición,Editor,2026-02-05,2026-02-15,10,3,,Primer corte,Pendiente,Alta',
+        '1,Preproducción,Investigación del tema,Análisis y documentación inicial,Director,2026-01-15,2026-01-20,2026-01-22,5,,,Dossier de investigación,Pendiente,Alta',
+        '2,Preproducción,Guion técnico,Desarrollo del guion,Guionista,2026-01-21,2026-01-28,,7,1,,Guion aprobado,Pendiente,Alta',
+        '3,Producción,Rodaje día 1,Grabación de escenas principales,Equipo completo,2026-02-01,2026-02-01,,1,2,,Material grabado,Pendiente,Media',
+        '4,Producción,Setup de iluminación,Preparar luces para set 1,Iluminador,2026-02-01,2026-02-01,,1,,3,Material grabado,Pendiente,Baja',
+        '5,Producción,Setup de audio,Preparar micrófonos,Sonidista,2026-02-01,2026-02-01,,1,,3,Material grabado,Pendiente,Baja',
+        '6,Postproducción,Edición,Primer corte de edición,Editor,2026-02-05,2026-02-15,,10,3,,Primer corte,Pendiente,Alta',
     ];
     return [headers, ...sampleRows].join('\n');
 }
