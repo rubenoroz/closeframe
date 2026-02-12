@@ -4,10 +4,17 @@ import React, { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
-    Check, Trash2, Loader2, X, Folder, Download, Plus, AlertCircle
+    Check, Trash2, Loader2, X, Folder, Download, Plus, AlertCircle, ListChecks, Users
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ContentSourceCard, SourceAccount } from "./ContentSourceCard";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
 
 // Types
 interface CloudAccount {
@@ -250,33 +257,147 @@ function CloudManagerContent() {
                 )}
 
                 {/* 3. HERRAMIENTAS */}
+                {/* 3. HERRAMIENTAS Y GUÍAS */}
                 <section>
-                    <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] mb-6 text-neutral-600">Herramientas</h2>
+                    <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] mb-6 text-neutral-600">Herramientas y Guías</h2>
 
-                    <div className="bg-neutral-900 rounded-2xl md:rounded-3xl border border-neutral-800 p-5 md:p-8 lg:p-12 relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-32 md:w-64 h-32 md:h-64 bg-emerald-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-emerald-500/20 transition-all duration-700 pointer-events-none" />
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-                        <div className="relative z-10 flex flex-col gap-5 md:gap-8">
-                            <div className="space-y-3 md:space-y-4">
-                                <div className="flex items-center gap-2 md:gap-3">
-                                    <div className="p-1.5 md:p-2 bg-emerald-500/20 rounded-lg text-emerald-500">
-                                        <Folder className="w-4 h-4 md:w-6 md:h-6" />
+                        {/* CARD 1: KIT DE ORGANIZACIÓN */}
+                        <div className="bg-neutral-900 rounded-2xl border border-neutral-800 p-6 md:p-8 relative overflow-hidden group hover:border-emerald-500/30 transition-colors">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-emerald-500/20 transition-all duration-700 pointer-events-none" />
+
+                            <div className="relative z-10 flex flex-col h-full justify-between gap-6">
+                                <div className="space-y-3">
+                                    <div className="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center text-emerald-500 mb-2">
+                                        <Folder className="w-5 h-5" />
                                     </div>
-                                    <h2 className="text-base md:text-xl font-medium text-white">Kit de Organización</h2>
+                                    <h3 className="text-lg font-medium text-white">Kit de Organización</h3>
+                                    <p className="text-neutral-400 text-sm leading-relaxed">
+                                        Descarga la estructura de carpetas estándar. Incluye ejemplos para <strong>Estilo Closer</strong> (Editorial) y video.
+                                    </p>
                                 </div>
-                                <p className="text-neutral-400 leading-relaxed text-xs md:text-base">
-                                    Descarga la estructura de carpetas estándar. Si organizas tus archivos así, Closerlens los detectará automáticamente sin configuración extra.
-                                </p>
-                            </div>
 
-                            <a
-                                href="/api/utils/download-template"
-                                className="bg-white text-black hover:bg-neutral-200 transition px-5 md:px-8 py-3 md:py-4 rounded-lg md:rounded-xl font-bold flex items-center justify-center gap-2 md:gap-3 shadow-xl text-sm md:text-base w-full md:w-auto md:self-start"
-                            >
-                                <Download className="w-4 h-4 md:w-5 md:h-5" />
-                                Descargar .ZIP
-                            </a>
+                                <a
+                                    href="/api/utils/download-template"
+                                    className="bg-emerald-600 hover:bg-emerald-500 text-white transition px-4 py-3 rounded-xl font-medium flex items-center justify-center gap-2 text-sm w-full"
+                                >
+                                    <Download className="w-4 h-4" />
+                                    Descargar .ZIP
+                                </a>
+                            </div>
                         </div>
+
+                        {/* CARD 2: CÓMO ORGANIZAR (MODAL) */}
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                <div className="bg-neutral-900 rounded-2xl border border-neutral-800 p-6 md:p-8 relative overflow-hidden group hover:border-blue-500/30 transition-colors cursor-pointer">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-blue-500/20 transition-all duration-700 pointer-events-none" />
+
+                                    <div className="relative z-10 flex flex-col h-full justify-between gap-6">
+                                        <div className="space-y-3">
+                                            <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center text-blue-500 mb-2">
+                                                <ListChecks className="w-5 h-5" />
+                                            </div>
+                                            <h3 className="text-lg font-medium text-white">Guía de Estilos</h3>
+                                            <p className="text-neutral-400 text-sm leading-relaxed">
+                                                Aprende la diferencia entre una galería Standard y una <strong>Closer Gallery</strong>. El orden importa.
+                                            </p>
+                                        </div>
+
+                                        <button className="bg-neutral-800 hover:bg-neutral-700 text-white transition px-4 py-3 rounded-xl font-medium flex items-center justify-center gap-2 text-sm w-full">
+                                            Ver Guía
+                                        </button>
+                                    </div>
+                                </div>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-2xl bg-neutral-900 border-neutral-800 text-white">
+                                <DialogHeader>
+                                    <DialogTitle className="text-2xl font-light">El Arte de Organizar ✨</DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-6 py-4">
+                                    <div className="grid md:grid-cols-2 gap-6">
+                                        <div className="space-y-3">
+                                            <h4 className="font-bold text-blue-400 border-b border-blue-500/20 pb-2">Estilo Standard</h4>
+                                            <p className="text-xs text-neutral-400">Perfecto para entrega documental completa.</p>
+                                            <ul className="text-sm text-neutral-300 space-y-1 list-disc list-inside bg-neutral-950/50 p-3 rounded-lg border border-neutral-800">
+                                                <li>Ceremonia/</li>
+                                                <li>Recepción/</li>
+                                                <li>Fiesta/</li>
+                                                <li className="text-neutral-500">Videos/</li>
+                                            </ul>
+                                        </div>
+                                        <div className="space-y-3">
+                                            <h4 className="font-bold text-pink-400 border-b border-pink-500/20 pb-2">Estilo Closer (Editorial)</h4>
+                                            <p className="text-xs text-neutral-400">Diseñado para impactar visualmente.</p>
+                                            <ul className="text-sm text-neutral-300 space-y-1 list-disc list-inside bg-neutral-950/50 p-3 rounded-lg border border-neutral-800">
+                                                <li><span className="text-pink-200">Cover/</span> (Portada)</li>
+                                                <li>Highlights/</li>
+                                                <li>Verticales/ (Mobile first)</li>
+                                                <li>Historia/</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-neutral-800/50 p-4 rounded-xl border border-neutral-800 text-sm text-neutral-300">
+                                        <p>
+                                            <strong className="text-white">Tip de Oro:</strong> Descarga el <strong>Kit de Organización</strong>. Ya incluye ambas estructuras de carpetas listas para que solo arrastres tus fotos.
+                                        </p>
+                                    </div>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
+
+                        {/* CARD 3: GALERÍAS COLABORATIVAS (MODAL) */}
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                <div className="bg-neutral-900 rounded-2xl border border-neutral-800 p-6 md:p-8 relative overflow-hidden group hover:border-purple-500/30 transition-colors cursor-pointer">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-purple-500/20 transition-all duration-700 pointer-events-none" />
+
+                                    <div className="relative z-10 flex flex-col h-full justify-between gap-6">
+                                        <div className="space-y-3">
+                                            <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center text-purple-500 mb-2">
+                                                <Users className="w-5 h-5" />
+                                            </div>
+                                            <h3 className="text-lg font-medium text-white">Galerías Colaborativas</h3>
+                                            <p className="text-neutral-400 text-sm leading-relaxed">
+                                                Permite que invitados suban fotos via QR. Exclusivo para usuarios de Google Drive.
+                                            </p>
+                                        </div>
+
+                                        <button className="bg-neutral-800 hover:bg-neutral-700 text-white transition px-4 py-3 rounded-xl font-medium flex items-center justify-center gap-2 text-sm w-full">
+                                            Cómo funciona
+                                        </button>
+                                    </div>
+                                </div>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-xl bg-neutral-900 border-neutral-800 text-white">
+                                <DialogHeader>
+                                    <DialogTitle className="text-2xl font-light">Galerías Colaborativas 🤝</DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-6 py-4">
+                                    <div className="bg-purple-500/10 border border-purple-500/20 p-4 rounded-xl flex gap-3 text-purple-300 text-sm">
+                                        <img src="/assets/logos/drive.svg" className="w-5 h-5 opacity-80 shrink-0" alt="Drive" />
+                                        <p>
+                                            <strong>Nota Importante:</strong> Esta función requiere conectar una cuenta de <strong>Google Drive</strong>.
+                                        </p>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        <h4 className="font-bold text-white">¿Cómo funciona?</h4>
+                                        <p className="text-neutral-400 text-sm">
+                                            En bodas y eventos, generamos un código QR único. Tus invitados lo escanean y pueden subir sus fotos y videos directamente a una carpeta especial en tu Nube ("Uploads - Nombre Proyecto").
+                                        </p>
+                                    </div>
+
+                                    <div className="bg-neutral-950 p-4 rounded-lg border border-neutral-800 text-sm text-neutral-400">
+                                        <p className="mb-2"><strong>Organización automática:</strong></p>
+                                        <p>Closerlens crea una carpeta separada para cada evento, manteniendo tus archivos originales seguros y separados de las subidas de invitados.</p>
+                                    </div>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
+
                     </div>
                 </section>
 

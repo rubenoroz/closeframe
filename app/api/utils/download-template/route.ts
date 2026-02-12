@@ -5,108 +5,77 @@ export async function GET() {
    try {
       const zip = new JSZip();
 
-      // Crear estructura de carpetas completa
-      // Carpeta raíz de ejemplo
-      const root = zip.folder("MiGaleria");
+      // Carpetas Raíz - Usando los nombres sugeridos por el usuario
+      const standard = zip.folder("Nombre Galeria");
+      const closer = zip.folder("Nombre Galeria Closer");
 
-      // ====== FOTOGRAFÍAS ======
-      const fotografias = root?.folder("Fotografias");
-      fotografias?.folder("webjpg")?.file(".keep", "");
-      fotografias?.folder("jpg")?.file(".keep", "");
-      fotografias?.folder("raw")?.file(".keep", "");
+      // ====== ESTILO 1: NOMBRE GALERÍA (STANDARD) ======
+      // Estructura: Fotografias -> Calidades
+      const stdPhotos = standard?.folder("Fotografias");
 
-      // ====== ZIP DE DESCARGA RÁPIDA ======
-      // Archivo placeholder dentro de Fotografias para máxima compatibilidad
-      fotografias?.file("full_gallery.zip", "Reemplaza este archivo con el ZIP real de tu galería completa.");
+      const stdQualities = ["webjpg", "jpg", "raw"];
+      stdQualities.forEach(q => stdPhotos?.folder(q)?.file(".keep", ""));
+      stdPhotos?.file("full_gallery.zip", "Reemplaza con el ZIP de todas las fotos.");
 
-      // Crear LEEME.txt con instrucciones claras
-      const readmeContent = `GUÍA DE ORGANIZACIÓN DE ARCHIVOS - CLOSERLENS
+      const stdVideos = standard?.folder("Videos");
+      const videoQualities = ["webmp4", "hd", "alta"];
+      videoQualities.forEach(q => stdVideos?.folder(q)?.file(".keep", ""));
+
+      // ====== ESTILO 2: NOMBRE GALERÍA CLOSER (EDITORIAL) ======
+      // Estructura: Secciones -> Calidades (Híbrido)
+      const sections = ["01_Highlights", "02_Ceremonia", "03_Recepcion"];
+
+      sections.forEach(section => {
+         const secFolder = closer?.folder(section);
+         const qualities = ["webjpg", "jpg", "raw"];
+         qualities.forEach(q => secFolder?.folder(q)?.file(".keep", ""));
+         secFolder?.file("full_gallery.zip", "Reemplaza con el ZIP de las fotos de esta sección.");
+      });
+
+      // NOTA: En estilo Closer NO agregamos carpeta "Videos" separada
+      // porque es una galería híbrida donde el video convive con la foto.
+
+      // ====== LEEME ======
+      const readmeContent = `GUÍA DE ORGANIZACIÓN - CLOSERLENS
 =========================================================================
 
-Esta estructura te permite organizar tus galerías de forma profesional,
-separando fotografías y videos con sus diferentes calidades.
+Tienes dos formas de organizar tu trabajo. Elige la carpeta que prefieras y úsala como plantilla.
+
+OPCIÓN 1: "Nombre Galeria" (Estilo Standard)
+--------------------------------------------
+Usar cuando: Quieres una galería tradicional.
+- Separa FOTOS de VIDEOS en carpetas distintas.
+- Estructura:
+   Nombre Galeria/
+      ├── Fotografias/      <-- Tu carpeta principal de fotos
+      │      ├── webjpg/
+      │      ├── jpg/
+      │      └── raw/
+      └── Videos/           <-- Tu carpeta de videos
+
+
+OPCIÓN 2: "Nombre Galeria Closer" (Estilo Editorial / Híbrido)
+----------------------------------------------------
+Usar cuando: Quieres contar una historia fluida (Closer).
+- NO necesita carpeta de videos separada (es híbrido).
+- Estructura por Momentos:
+   Nombre Galeria Closer/
+      ├── 01_Highlights/    <-- Sección 1
+      │      ├── webjpg/
+      │      └── ...
+      ├── 02_Ceremonia/     <-- Sección 2
+      │      ├── webjpg/
+      │      └── ...
+      └── 03_Recepcion/     <-- Sección 3...
 
 =========================================================================
-ESTRUCTURA DE CARPETAS
+NOTAS IMPORTANTES:
+- No cambies los nombres de las subcarpetas "webjpg", "jpg", "raw", "webmp4".
+- El archivo "full_gallery.zip" sirve para habilitar la descarga en un solo clic.
 =========================================================================
-
-📁 MiGaleria/                    ← Carpeta raíz
-│
-├── 📁 Fotografias/              ← Selecciona esta carpeta como "Carpeta de Fotos"
-│   ├── 📁 webjpg/               ← Versiones web optimizadas
-│   ├── 📁 jpg/                  ← Alta resolución para descarga
-│   ├── 📁 raw/                  ← Archivos RAW (opcional)
-│   └── 📄 full_gallery.zip      ← ¡NUEVO! Pon tu ZIP aquí adentro.
-│
-└── 📁 Videos/                   ← Selecciona esta carpeta como "Carpeta de Videos"
-    ├── 📁 webmp4/
-    ├── 📁 hd/
-    └── 📁 alta/
-
-=========================================================================
-INSTRUCCIONES PARA FOTOGRAFÍAS
-=========================================================================
-
-1. CARPETA 'webjpg' ... (Igual que antes)
-
-...
-
-4. ARCHIVO 'full_gallery.zip' (Opcional pero Recomendado)
-   - Qué poner: Un archivo .zip que contenga TODAS las fotos en alta resolución.
-   - Dónde: ADENTRO de la carpeta 'Fotografias' (junto a las carpetas webjpg, jpg, etc).
-   - Uso: Habilita el botón "Descargar Todo".
-   - Nombre: "full_gallery.zip" (o cualquiera que contenga "full", "gallery", "todo").
-
-=========================================================================
-INSTRUCCIONES PARA VIDEOS
-=========================================================================
-
-1. CARPETA 'webmp4'
-   - Qué poner: Videos comprimidos para reproducción web rápida
-   - Formato: .mp4 (H.264, 720p recomendado)
-   - Uso: Son los que el cliente verá en la galería online
-   - Ejemplo: Highlights_001.mp4
-
-2. CARPETA 'hd'
-   - Qué poner: Videos en calidad HD para descarga
-   - Formato: .mp4 (H.264/H.265, 1080p)
-   - Uso: Opción "Descargar Baja" en la galería
-   - Ejemplo: Highlights_001.mp4  <-- ¡MISMO NOMBRE!
-
-3. CARPETA 'alta'
-   - Qué poner: Videos en máxima calidad
-   - Formato: .mp4, .mov, ProRes, etc. (4K o superior)
-   - Uso: Opción "Descargar Alta" en la galería
-   - Ejemplo: Highlights_001.mov  <-- ¡MISMO NOMBRE BASE!
-
-=========================================================================
-¡REGLA DE ORO: NOMBRES IDÉNTICOS!
-=========================================================================
-
-El sistema usa el nombre del archivo para vincular las diferentes calidades.
-
-✅ CORRECTO:
-   webjpg/foto_001.jpg  →  jpg/foto_001.jpg  →  raw/foto_001.CR2
-   webmp4/video_001.mp4 →  hd/video_001.mp4  →  alta/video_001.mov
-
-❌ INCORRECTO:
-   webjpg/foto_pequeña.jpg vs jpg/IMG_9999.jpg (nombres diferentes)
-
-Tip: Usa Lightroom para exportar renombrando tus archivos en secuencia.
-
-=========================================================================
-CONFIGURACIÓN EN CLOSERLENS
-=========================================================================
-
-Al crear tu galería:
-1. Selecciona la carpeta "Fotografias" como carpeta de fotos
-2. Activa la pestaña de Videos solo si tienes videos
-3. Si activas videos, selecciona la carpeta "Videos" como carpeta de videos
-
-¡La pestaña de Videos solo aparecerá si detectamos la carpeta Videos!
 `;
 
-      zip.file("LEEME_ORGANIZACION.txt", readmeContent);
+      zip.file("LEEME_PRIMERO.txt", readmeContent);
 
       const content = await zip.generateAsync({ type: "nodebuffer" });
 
@@ -125,4 +94,3 @@ Al crear tu galería:
       return NextResponse.json({ error: "Error generando plantilla" }, { status: 500 });
    }
 }
-
