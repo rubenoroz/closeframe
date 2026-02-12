@@ -86,10 +86,15 @@ export function useKanbanDrag({ tasks, setTasks, projectId, mutate, columns, set
 
             return prevTasks.map(t => {
                 if (t.id === activeId) {
+                    // check if column changed
+                    const columnChanged = t.columnId !== newColumnId;
+
                     return {
                         ...t,
                         columnId: newColumnId,
                         order: newOrder,
+                        // Emancipation: If column changed, it loses its parent
+                        parentId: columnChanged ? null : t.parentId
                     };
                 }
                 if (descendantIds.includes(t.id)) {
@@ -157,10 +162,15 @@ export function useKanbanDrag({ tasks, setTasks, projectId, mutate, columns, set
             }
 
             try {
-                const payload = {
+                // Emancipation Logic: If column changed, remove parentId (make it a root task)
+                const payload: any = {
                     columnId: targetColumnId,
                     order: targetOrder
                 };
+
+                if (hasColumnChanged) {
+                    payload.parentId = null;
+                }
 
                 const response = await fetch(`/api/scena/projects/${projectId}/tasks/${activeId}`, {
                     method: "PUT",

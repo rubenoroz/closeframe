@@ -40,7 +40,6 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
         tasks,
         setTasks,
         processedData,
-        ganttTasks,
         mutate,
         isLoading,
         errors: { columnsError, tasksError }
