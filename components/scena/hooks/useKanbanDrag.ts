@@ -1,3 +1,7 @@
+import { useCallback, useRef, useState } from "react";
+import { Active, DragEndEvent, DragOverEvent, DragStartEvent } from "@dnd-kit/core";
+import { arrayMove } from "@dnd-kit/sortable";
+import { FetchedTask, FetchedColumn } from "@/types/scena";
 import { KeyedMutator } from "swr";
 
 interface UseKanbanDragProps {
