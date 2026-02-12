@@ -40,6 +40,7 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
         tasks,
         setTasks,
         processedData,
+        ganttTasks,
         mutate,
         isLoading,
         errors: { columnsError, tasksError }
@@ -469,7 +470,7 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
                 ) : (
                     <div className="h-full">
                         <GanttChart
-                            tasks={processedData}
+                            tasks={ganttTasks}
                             columns={columns}
                             projectId={projectId}
                             onTaskClick={handleTaskClick}
