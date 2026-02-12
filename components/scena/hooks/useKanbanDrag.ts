@@ -170,6 +170,10 @@ export function useKanbanDrag({ tasks, setTasks, projectId, mutate, columns, set
 
                 if (!response.ok) {
                     mutate();
+                } else {
+                    // Success! Re-commit the current optimistic state to SWR cache
+                    // to overwrite any stale background fetch that might have landed during the request.
+                    setTasks(tasks);
                 }
             } catch (error) {
                 console.error("Error in drag end:", error);
