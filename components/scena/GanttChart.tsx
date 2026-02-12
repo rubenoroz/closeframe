@@ -277,9 +277,17 @@ export function GanttChart({ tasks, columns, projectId, onTaskClick, onOptimisti
             }
         };
 
-        const roots = tasksWithDates.filter(task =>
-            !task.parentId || !taskMap.has(task.parentId)
-        );
+        const roots = tasksWithDates.filter(task => {
+            // It's a root if it has no parent ID
+            if (!task.parentId || !taskMap.has(task.parentId)) return true;
+
+            // It's ALSO a root if it has a parent ID, but that parent 
+            // has not claimed it as a child (e.g. because they are in different columns)
+            const parent = taskMap.get(task.parentId);
+            const isClaimedChild = parent?.children?.some(child => child.id === task.id);
+
+            return !isClaimedChild;
+        });
 
         roots.forEach(task => flatten(task, 0));
 

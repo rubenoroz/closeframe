@@ -469,7 +469,7 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
                 ) : (
                     <div className="h-full">
                         <GanttChart
-                            tasks={ganttTasks}
+                            tasks={processedData}
                             columns={columns}
                             projectId={projectId}
                             onTaskClick={handleTaskClick}
