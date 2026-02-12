@@ -412,6 +412,9 @@ export function mapPrioridadToPriority(prioridad: string): string {
 /**
  * Generate a sample CSV template
  */
+/**
+ * Generate a sample CSV template
+ */
 export function generateCsvTemplate(): string {
     const headers = ALL_FIELDS.join(',');
     const sampleRows = [
@@ -423,4 +426,90 @@ export function generateCsvTemplate(): string {
         '6,Postproducción,Edición,Primer corte de edición,Editor,2026-02-05,2026-02-15,,10,3,,Primer corte,Pendiente,Alta',
     ];
     return [headers, ...sampleRows].join('\n');
+}
+
+/**
+ * Export tasks to CSV string (Import-compatible)
+ */
+export function exportTasksToCsv(tasks: any[], columns: any[]): string {
+    const headers = ALL_FIELDS.join(',');
+
+    // Helper to escape CSV fields
+    const escape = (field: string | null | undefined): string => {
+        if (!field) return '';
+        const stringField = String(field);
+        if (stringField.includes(',') || stringField.includes('"') || stringField.includes('\n')) {
+            return `"${stringField.replace(/"/g, '""')}"`;
+        }
+        return stringField;
+    };
+
+    // Helper to format date
+    const formatDate = (date: Date | string | null | undefined): string => {
+        if (!date) return '';
+        const d = new Date(date);
+        if (isNaN(d.getTime())) return '';
+        return d.toISOString().split('T')[0];
+    };
+
+    // Helper to map progress to text status
+    const getStatus = (progress: number): string => {
+        if (progress >= 100) return 'Completado';
+        if (progress > 0) return 'En Progreso';
+        return 'Pendiente';
+    };
+
+    // Helper to map priority
+    const getPriority = (priority: string): string => {
+        switch (priority?.toUpperCase()) {
+            case 'HIGH': return 'Alta';
+            case 'LOW': return 'Baja';
+            default: return 'Media';
+        }
+    };
+
+    const rows = tasks.map(task => {
+        const column = columns.find(c => c.id === task.columnId);
+        const phaseName = column ? column.name : 'Sin Fase';
+
+        // Calculate duration if needed, or leave empty
+        let duration = '';
+        if (task.startDate && task.endDate) {
+            const start = new Date(task.startDate);
+            const end = new Date(task.endDate);
+            const diffTime = Math.abs(end.getTime() - start.getTime());
+            duration = Math.ceil(diffTime / (1000 * 60 * 60 * 24)).toString();
+        }
+
+        // Map to ALL_FIELDS order: 
+        // ['id', 'fase', 'tarea', 'descripcion', 'responsable', 'inicio', 'fin', 'tolerancia', 'duracion', 'dependencia', 'padre', 'entregable', 'estado', 'prioridad']
+        return [
+            escape(task.id), // We use the real ID so updates might work if we supported them, or just strictly for reference. 
+            // NOTE: Re-importing usually ignores ID or treats as new if not matching existing. 
+            // For "Import compatible" to same platform, maybe we should use a sequential number?
+            // The user said "importable de nuevo a la misma plataforma". 
+            // If we use UUIDs, the generic import might be confused if it expects small integers for dependencies?
+            // The parser uses `id` for dependencies. So as long as we use the SAME ids for dependencies, it works.
+            // However, the UUIDs are long. Let's stick to real IDs for accuracy.
+            escape(phaseName),
+            escape(task.title),
+            escape(task.description),
+            '', // Responsable - not currently in FetchedTask?
+            formatDate(task.startDate),
+            formatDate(task.endDate),
+            formatDate(task.toleranceDate),
+            escape(duration),
+            '', // Dependencia - we don't strictly track "predecessors" link field in basic FetchedTask unless we look at 'links'? 
+            // The prompt says "dependencia" in CSV. In Scena currently we have parent/child.
+            // We don't have a rigid "Predecessor" field in the `Task` model shown in the generic interface, 
+            // but we might want to map something if it exists. 
+            // For now, leave empty as it's not a standard field in the `FetchedTask` interface I've seen.
+            escape(task.parentId),
+            '', // Entregable
+            escape(getStatus(task.progress || 0)),
+            escape(getPriority(task.priority))
+        ].join(',');
+    });
+
+    return [headers, ...rows].join('\n');
 }

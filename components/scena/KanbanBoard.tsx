@@ -18,7 +18,7 @@ import { Task } from "./Task";
 import { TaskDetailModal } from "./TaskDetailModal";
 import { GanttChart } from "./GanttChart";
 import { Button } from "@/components/ui/button";
-import { Loader2, BarChart3, FileSpreadsheet, PieChart, Plus, Eye, EyeOff, Search, X, MessageSquare } from "lucide-react";
+import { Loader2, BarChart3, FileSpreadsheet, PieChart, Plus, Eye, EyeOff, Search, X, MessageSquare, FileText } from "lucide-react";
 import { FetchedTask } from "@/types/scena";
 import { ProjectNotesModal } from "./ProjectNotesModal";
 import { InputModal } from "./InputModal";
@@ -197,6 +197,24 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
             await exportToExcel(exportData, columns, "Proyecto_Scena");
         } catch (error) {
             console.error("Failed to export excel:", error);
+        }
+    };
+
+    const handleExportCsv = async () => {
+        try {
+            const { exportTasksToCsv } = await import("@/lib/scena/csv-parser");
+            const csvContent = exportTasksToCsv(visibleTasks, columns);
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `scena_export_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (error) {
+            console.error("Failed to export csv:", error);
         }
     };
 
@@ -391,6 +409,16 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
                         >
                             <FileSpreadsheet className="w-4 h-4" />
                             <span className="hidden sm:inline">Exportar Excel</span>
+                        </button>
+                    )}
+
+                    {viewMode === 'kanban' && (
+                        <button
+                            onClick={handleExportCsv}
+                            className="px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 bg-neutral-700 text-neutral-100 hover:bg-neutral-600 border border-neutral-600 transition-all"
+                        >
+                            <FileText className="w-4 h-4" />
+                            <span className="hidden sm:inline">Exportar CSV</span>
                         </button>
                     )}
 
