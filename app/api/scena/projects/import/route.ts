@@ -7,15 +7,19 @@ import { parseCsvForScena, mapEstadoToProgress, mapPrioridadToPriority } from "@
 export const dynamic = 'force-dynamic';
 
 // Column color palette for imported phases
+// Column color palette for imported phases (Scena Pastels)
 const COLUMN_COLORS = [
-    { color: '#6366f1', cardColor: '#312e81' }, // Indigo
-    { color: '#f59e0b', cardColor: '#78350f' }, // Amber
-    { color: '#10b981', cardColor: '#064e3b' }, // Emerald
-    { color: '#3b82f6', cardColor: '#1e3a5f' }, // Blue
-    { color: '#ef4444', cardColor: '#7f1d1d' }, // Red
-    { color: '#8b5cf6', cardColor: '#4c1d95' }, // Violet
-    { color: '#ec4899', cardColor: '#831843' }, // Pink
-    { color: '#14b8a6', cardColor: '#134e4a' }, // Teal
+    { color: '#FBCFE8', cardColor: '#FFF1F2' }, // Pink
+    { color: '#C7D2FE', cardColor: '#EEF2FF' }, // Indigo
+    { color: '#BFDBFE', cardColor: '#EFF6FF' }, // Blue
+    { color: '#A7F3D0', cardColor: '#F0FDFA' }, // Emerald
+    { color: '#FEF08A', cardColor: '#FEFCE8' }, // Yellow
+    { color: '#FED7AA', cardColor: '#FFF7ED' }, // Orange
+    { color: '#E9D5FF', cardColor: '#FAFAF5' }, // Purple
+    // New additions
+    { color: '#99F6E4', cardColor: '#F0FDFA' }, // Teal
+    { color: '#D9F99D', cardColor: '#ECFCCB' }, // Lime
+    { color: '#E2E8F0', cardColor: '#F8FAFC' }, // Slate
 ];
 
 export async function POST(req: Request) {
