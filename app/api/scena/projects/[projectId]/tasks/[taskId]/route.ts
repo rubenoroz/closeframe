@@ -87,6 +87,24 @@ export async function PUT(
             }
         });
 
+        // Update Parent Progress if applicable
+        if (updatedTask.parentId) {
+            const siblings = await prisma.task.findMany({
+                where: { parentId: updatedTask.parentId },
+                select: { progress: true }
+            });
+
+            if (siblings.length > 0) {
+                const totalProgress = siblings.reduce((sum, t) => sum + (t.progress || 0), 0);
+                const avgProgress = Math.round(totalProgress / siblings.length);
+
+                await prisma.task.update({
+                    where: { id: updatedTask.parentId },
+                    data: { progress: avgProgress }
+                });
+            }
+        }
+
         return NextResponse.json(updatedTask);
     } catch (error) {
         console.error("[SCENA_TASK_PUT]", error);
