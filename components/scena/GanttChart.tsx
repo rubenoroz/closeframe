@@ -12,6 +12,7 @@ interface GanttTask {
     columnId: string;
     isHiddenInGantt?: boolean;
     level?: number;
+    order?: number;
 }
 
 interface GanttChartProps {
