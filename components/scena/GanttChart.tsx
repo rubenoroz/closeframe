@@ -289,26 +289,16 @@ export function GanttChart({ tasks, columns, projectId, onTaskClick, onOptimisti
             return !isClaimedChild;
         });
 
-        return !isClaimedChild;
-    });
-
-    // Sort roots by Column Order first, then Task Order
-    roots.sort((a, b) => {
-        const colIndexA = columns.findIndex(c => c.id === a.columnId);
-        const colIndexB = columns.findIndex(c => c.id === b.columnId);
-
-        if (colIndexA !== colIndexB) {
-            // If columns are different, sort by column index (Left -> Right on Board becomes Top -> Bottom on Gantt)
-            return colIndexA - colIndexB;
-        }
+        return colIndexA - colIndexB;
+    }
 
         // If in same column, sort by task order
         return (a.order || 0) - (b.order || 0);
-    });
+});
 
-    roots.forEach(task => flatten(task, 0));
+roots.forEach(task => flatten(task, 0));
 
-    return result;
+return result;
 }, [tasksWithDates]);
 
 if (tasksWithDates.length === 0) {
