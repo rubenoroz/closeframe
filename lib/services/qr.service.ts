@@ -140,7 +140,17 @@ export async function generateQRCode(url: string): Promise<Buffer> {
         resultBuffer = await sharp(Buffer.from(svgString)).png().toBuffer();
     } catch (e) {
         console.error("Critical Sharp Error (Base QR):", e);
-        throw new Error("Failed to generate base QR code");
+        // Fallback to simple QR using qrcode lib only (bypassing sharp)
+        try {
+            console.log("Attempting fallback to pure QRCode lib...");
+            return await QRCode.toBuffer(url, {
+                errorCorrectionLevel: 'H',
+                width: QR_SIZE,
+                margin: 2
+            });
+        } catch (finalError) {
+            throw new Error("Failed to generate even base QR code: " + (e instanceof Error ? e.message : String(e)));
+        }
     }
 
     // --- ENHANCEMENTS (Logo + Footer) ---
