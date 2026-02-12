@@ -27,7 +27,7 @@ export function useKanbanData(projectId: string) {
         {
             revalidateOnFocus: true,
             revalidateOnReconnect: true,
-            refreshInterval: 3000,
+            refreshInterval: 0,
         }
     );
 

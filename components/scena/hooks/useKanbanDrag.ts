@@ -2,13 +2,12 @@ import { useCallback, useRef, useState } from "react";
 import { Active, DragEndEvent, DragOverEvent, DragStartEvent } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
 import { FetchedTask, FetchedColumn } from "@/types/scena";
-import { KeyedMutator } from "swr";
 
 interface UseKanbanDragProps {
     tasks: FetchedTask[];
     setTasks: (newTasks: FetchedTask[] | ((prev: FetchedTask[]) => FetchedTask[])) => void;
     projectId: string;
-    mutate: KeyedMutator<FetchedTask[]>;
+    mutate: () => Promise<void>;
     columns: FetchedColumn[];
     setColumns: (cols: FetchedColumn[] | ((prev: FetchedColumn[]) => FetchedColumn[])) => void;
 }
@@ -194,8 +193,9 @@ export function useKanbanDrag({ tasks, setTasks, projectId, mutate, columns, set
             });
 
             // Optimistic Update: Update SWR cache immediately so useEffect doesn't revert us
-            await mutate(updatedTasks, false);
-            setTasks(updatedTasks); // Ensure local state is also set (redundancy is fine)
+            // Optimistic Update: Update SWR cache immediately so useEffect doesn't revert us
+            // Note: setTasks is already a wrapper around SWR mutate with revalidate: false
+            setTasks(updatedTasks);
 
             try {
                 const payload = {
