@@ -40,7 +40,7 @@ export default async function PlanBPage() {
         <div className="bg-[#0a0a0a] font-[var(--font-spline)] text-white transition-colors duration-300 antialiased overflow-x-hidden min-h-screen">
             <div className="relative flex flex-col w-full">
                 {/* Header */}
-                <PlanBNavbar />
+                <PlanBNavbar user={session?.user} />
 
                 {/* Hero Section */}
                 <section className="relative h-screen flex items-center pt-20 px-6 lg:px-20 overflow-hidden">

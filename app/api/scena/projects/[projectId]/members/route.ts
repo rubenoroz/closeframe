@@ -25,17 +25,17 @@ async function canManageProject(userId: string, projectId: string) {
 // GET: List members and pending invitations
 export async function GET(
     request: Request,
-    { params }: { params: Promise<{ projectId: string }> }
+    props: { params: Promise<{ projectId: string }> }
 ) {
+    const params = await props.params;
     const session = await auth();
     if (!session?.user?.email) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { projectId } = await params;
+    const { projectId } = params;
 
-    // Verify access (even Viewer should see who is in the project?)
-    // Let's allow any member to see the list.
+    // Verify access
     const user = await prisma.user.findUnique({ where: { email: session.user.email } });
     if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
@@ -52,7 +52,7 @@ export async function GET(
     }
 
     try {
-        const [members, invitations] = await Promise.all([
+        const [members, invitations, projectData] = await Promise.all([
             prismaAny.projectMember.findMany({
                 where: { projectId },
                 include: { user: { select: { id: true, name: true, email: true, image: true } } },
@@ -60,10 +60,36 @@ export async function GET(
             prismaAny.projectInvitation.findMany({
                 where: { projectId, status: "PENDING" },
             }),
+            prisma.scenaProject.findUnique({
+                where: { id: projectId },
+                select: {
+                    owner: {
+                        select: { id: true, name: true, email: true, image: true }
+                    }
+                }
+            })
         ]);
 
-        return NextResponse.json({ members, invitations });
+        // Add owner to members if not already present
+        const owner = (projectData as any)?.owner;
+        let allMembers = members;
+
+        if (owner && !members.some((m: any) => m.userId === owner.id)) {
+            // Mock a member object for the owner
+            const ownerMember = {
+                id: "owner",
+                projectId,
+                userId: owner.id,
+                role: "OWNER",
+                createdAt: new Date(),
+                user: owner
+            };
+            allMembers = [ownerMember, ...members];
+        }
+
+        return NextResponse.json({ members: allMembers, invitations });
     } catch (error) {
+        console.error("Error fetching members:", error);
         return NextResponse.json({ error: "Failed to fetch members" }, { status: 500 });
     }
 }

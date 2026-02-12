@@ -23,13 +23,23 @@ export async function GET(req: Request) {
                 ],
                 isArchived: archived,
             },
-            select: {
-                id: true,
-                name: true,
-                description: true,
-                isArchived: true,
-                updatedAt: true,
-                ownerId: true,
+            include: {
+                members: {
+                    include: { user: true }
+                },
+                notes: {
+                    where: {
+                        mentions: {
+                            some: {
+                                userId: session.user.id,
+                                isRead: false
+                            }
+                        }
+                    },
+                    select: {
+                        id: true // minimal select just to count
+                    }
+                },
                 booking: {
                     select: {
                         id: true,

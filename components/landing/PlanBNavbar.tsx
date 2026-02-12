@@ -4,7 +4,15 @@ import Link from "next/link";
 import React from "react";
 import { UserNavButton } from "./UserNavButton";
 
-export function PlanBNavbar() {
+interface PlanBNavbarProps {
+    user?: {
+        name?: string | null;
+        email?: string | null;
+        image?: string | null;
+    } | null;
+}
+
+export function PlanBNavbar({ user }: PlanBNavbarProps) {
     const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
     const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
@@ -67,7 +75,7 @@ export function PlanBNavbar() {
                         >
                             Precios
                         </a>
-                        <UserNavButton />
+                        <UserNavButton user={user} />
                     </nav>
                 </div>
             </header >

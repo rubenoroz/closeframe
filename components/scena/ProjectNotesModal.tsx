@@ -25,15 +25,46 @@ interface ProjectNote {
 interface ProjectNotesModalProps {
     projectId: string;
     trigger?: React.ReactNode;
+    onRead?: () => void;
 }
 
-export function ProjectNotesModal({ projectId, trigger }: ProjectNotesModalProps) {
+export function ProjectNotesModal({ projectId, trigger, onRead }: ProjectNotesModalProps) {
     const [notes, setNotes] = useState<ProjectNote[]>([]);
+    const [members, setMembers] = useState<{ id: string; name: string | null; email: string; image: string | null }[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isSending, setIsSending] = useState(false);
     const [newNote, setNewNote] = useState("");
     const [isOpen, setIsOpen] = useState(false);
+    const [unreadCount, setUnreadCount] = useState(0);
+
+    // Mentions state
+    const [mentionQuery, setMentionQuery] = useState<string | null>(null);
+    const [mentionIndex, setMentionIndex] = useState(0);
+    const [showMentions, setShowMentions] = useState(false);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+
     const scrollRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        // Poll for unread count
+        const fetchUnread = async () => {
+            if (isOpen) return; // Don't poll while open (we read them)
+            try {
+                const res = await fetch(`/api/scena/projects/${projectId}/unread`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setUnreadCount(data.count);
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        };
+
+        fetchUnread();
+        const interval = setInterval(fetchUnread, 10000); // 10s poll
+
+        return () => clearInterval(interval);
+    }, [projectId, isOpen]);
 
     const fetchNotes = async () => {
         setIsLoading(true);
@@ -50,11 +81,40 @@ export function ProjectNotesModal({ projectId, trigger }: ProjectNotesModalProps
         }
     };
 
+    const markAsRead = async () => {
+        setUnreadCount(0); // Optimistic update
+        try {
+            await fetch(`/api/scena/projects/${projectId}/notes`, {
+                method: "PATCH"
+            });
+            if (onRead) onRead();
+        } catch (error) {
+            console.error("Failed to mark notes as read:", error);
+        }
+    };
+
+    const fetchMembers = async () => {
+        try {
+            const res = await fetch(`/api/scena/projects/${projectId}/members`);
+            if (res.ok) {
+                const data = await res.json();
+                // API returns { members: [], invitations: [] }
+                // We need to extract the user object from the membership
+                const activeMembers = data.members?.map((m: any) => m.user) || [];
+                setMembers(activeMembers);
+            }
+        } catch (error) {
+            console.error("Failed to fetch members:", error);
+        }
+    };
+
     useEffect(() => {
         if (isOpen) {
             fetchNotes();
+            fetchMembers();
+            markAsRead();
         }
-    }, [isOpen, projectId]);
+    }, [isOpen, projectId, unreadCount, onRead]);
 
     const handleSend = async () => {
         if (!newNote.trim()) return;
@@ -78,13 +138,108 @@ export function ProjectNotesModal({ projectId, trigger }: ProjectNotesModalProps
         }
     };
 
+    // Mentions Logic
+    const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const value = e.target.value;
+        setNewNote(value);
+
+        const cursorPosition = e.target.selectionStart;
+        const textBeforeCursor = value.slice(0, cursorPosition);
+        const lastAt = textBeforeCursor.lastIndexOf("@");
+
+        if (lastAt !== -1) {
+            const query = textBeforeCursor.slice(lastAt + 1);
+            // Check if there are spaces, meaning we are not typing a name anymore
+            if (!query.includes(" ")) {
+                setMentionQuery(query);
+                setShowMentions(true);
+                setMentionIndex(0);
+                return;
+            }
+        }
+
+        setShowMentions(false);
+        setMentionQuery(null);
+    };
+
+    const filteredMembers = members.filter(member => {
+        if (!mentionQuery) return true;
+        const search = mentionQuery.toLowerCase();
+        return (
+            (member.name?.toLowerCase().includes(search)) ||
+            (member.email.toLowerCase().includes(search))
+        );
+    });
+
+    const insertMention = (member: typeof members[0]) => {
+        if (!textareaRef.current) return;
+
+        const value = newNote;
+        const cursorPosition = textareaRef.current.selectionStart;
+        const textBeforeCursor = value.slice(0, cursorPosition);
+        const lastAt = textBeforeCursor.lastIndexOf("@");
+
+        const textAfter = value.slice(cursorPosition);
+        const prefix = value.slice(0, lastAt);
+
+        const memberName = member.name || member.email.split('@')[0];
+        const newValue = `${prefix}@${memberName} ${textAfter}`;
+
+        setNewNote(newValue);
+        setShowMentions(false);
+        setMentionQuery(null);
+
+        // Restore focus
+        textareaRef.current.focus();
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (showMentions && filteredMembers.length > 0) {
+            if (e.key === "ArrowDown") {
+                e.preventDefault();
+                setMentionIndex(i => (i + 1) % filteredMembers.length);
+            } else if (e.key === "ArrowUp") {
+                e.preventDefault();
+                setMentionIndex(i => (i - 1 + filteredMembers.length) % filteredMembers.length);
+            } else if (e.key === "Enter" || e.key === "Tab") {
+                e.preventDefault();
+                insertMention(filteredMembers[mentionIndex]);
+            } else if (e.key === "Escape") {
+                setShowMentions(false);
+            }
+        } else if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            handleSend();
+        }
+    };
+
+    // Helper to highlight mentions in display
+    const renderContent = (content: string) => {
+        // Regex to match @Name including Spanish accents and spaces
+        // \u00C0-\u00FF covers standard Latin-1 Supplement (accents)
+        const parts = content.split(/(@[\w\s\u00C0-\u00FF]+)/g);
+        return parts.map((part, i) => {
+            if (part.startsWith('@')) {
+                // Check if it looks like a valid mention (simple heuristic)
+                return <span key={i} className="text-violet-400 font-semibold">{part}</span>;
+            }
+            return part;
+        });
+    };
+
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
                 {trigger || (
-                    <Button variant="outline" size="sm" className="gap-2">
+                    <Button variant="outline" size="sm" className="gap-2 relative overflow-visible">
                         <MessageSquare className="w-4 h-4" />
                         Notas
+                        {unreadCount > 0 && (
+                            <span className="absolute top-0.5 right-0.5 flex h-3 w-3 z-50">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 border border-neutral-900"></span>
+                            </span>
+                        )}
                     </Button>
                 )}
             </DialogTrigger>
@@ -124,7 +279,7 @@ export function ProjectNotesModal({ projectId, trigger }: ProjectNotesModalProps
                                         </span>
                                     </div>
                                     <div className="bg-slate-800/50 rounded-lg p-3 text-sm text-slate-300 border border-white/5">
-                                        <p className="whitespace-pre-wrap">{note.content}</p>
+                                        <p className="whitespace-pre-wrap">{renderContent(note.content)}</p>
                                     </div>
                                 </div>
                             </div>
@@ -132,19 +287,40 @@ export function ProjectNotesModal({ projectId, trigger }: ProjectNotesModalProps
                     )}
                 </div>
 
-                <div className="p-4 border-t border-slate-800 bg-slate-900/50">
+                <div className="p-4 border-t border-slate-800 bg-slate-900/50 relative">
+                    {/* Mentions Popup */}
+                    {showMentions && filteredMembers.length > 0 && (
+                        <div className="absolute bottom-full left-4 mb-2 w-64 bg-slate-800 border border-slate-700 rounded-lg shadow-xl overflow-hidden z-50">
+                            <div className="p-2 text-xs font-medium text-slate-500 border-b border-slate-700">
+                                Sugerencias
+                            </div>
+                            <ul className="max-h-48 overflow-y-auto">
+                                {filteredMembers.map((member, index) => (
+                                    <li
+                                        key={member.id}
+                                        className={`flex items-center gap-2 p-2 cursor-pointer transition-colors ${index === mentionIndex ? 'bg-violet-600/20 text-violet-200' : 'hover:bg-slate-700 text-slate-300'
+                                            }`}
+                                        onClick={() => insertMention(member)}
+                                    >
+                                        <Avatar className="w-6 h-6">
+                                            <AvatarImage src={member.image || undefined} />
+                                            <AvatarFallback className="text-[10px]">{member.name?.[0] || member.email[0]}</AvatarFallback>
+                                        </Avatar>
+                                        <span className="text-sm truncate">{member.name || member.email}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+
                     <div className="flex gap-2">
                         <Textarea
+                            ref={textareaRef}
                             value={newNote}
-                            onChange={(e) => setNewNote(e.target.value)}
-                            placeholder="Escribe una nota..."
+                            onChange={handleInput}
+                            onKeyDown={handleKeyDown}
+                            placeholder="Escribe una nota... (@ para mencionar)"
                             className="min-h-[40px] max-h-[120px] bg-slate-800 border-slate-700 resize-none focus-visible:ring-violet-500"
-                            onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-                                if (e.key === 'Enter' && !e.shiftKey) {
-                                    e.preventDefault();
-                                    handleSend();
-                                }
-                            }}
                         />
                         <Button
                             size="icon"

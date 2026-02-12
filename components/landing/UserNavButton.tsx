@@ -3,7 +3,6 @@
 
 import Link from "next/link";
 import { User } from "lucide-react";
-import { useSession } from "next-auth/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
     DropdownMenu,
@@ -13,10 +12,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { signOut } from "next-auth/react";
 
-export function UserNavButton() {
-    const { data: session } = useSession();
+interface UserNavButtonProps {
+    user?: {
+        name?: string | null;
+        email?: string | null;
+        image?: string | null;
+    } | null;
+}
 
-    if (!session?.user) {
+export function UserNavButton({ user }: UserNavButtonProps) {
+    if (!user) {
         return (
             <div className="flex items-center gap-4">
                 <Link
@@ -40,9 +45,9 @@ export function UserNavButton() {
             <DropdownMenu>
                 <DropdownMenuTrigger className="outline-none">
                     <Avatar className="h-9 w-9 border border-white/20 transition-all hover:border-[#cdb8e1]">
-                        <AvatarImage src={session.user.image || ""} alt={session.user.name || ""} />
+                        <AvatarImage src={user.image || ""} alt={user.name || ""} />
                         <AvatarFallback className="bg-neutral-800 text-white">
-                            {session.user.name?.charAt(0) || <User className="h-4 w-4" />}
+                            {user.name?.charAt(0) || <User className="h-4 w-4" />}
                         </AvatarFallback>
                     </Avatar>
                 </DropdownMenuTrigger>

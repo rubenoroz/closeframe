@@ -89,26 +89,32 @@ export function GanttChart({ tasks, columns, projectId, onTaskClick, onOptimisti
     }, [dateRange]);
 
     const totalDays = useMemo(() => {
-        return Math.ceil((dateRange.end.getTime() - dateRange.start.getTime()) / (1000 * 60 * 60 * 24));
+        // Add 1 to be inclusive of the end date (Visual columns count)
+        const diffTime = dateRange.end.getTime() - dateRange.start.getTime();
+        return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
     }, [dateRange]);
 
     // Generate all individual days for the timeline
     const allDays = useMemo(() => {
         const days: { date: Date; dayOfMonth: number; isWeekend: boolean; isToday: boolean }[] = [];
         const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        const todayString = today.toISOString().split('T')[0];
 
         const current = new Date(dateRange.start);
-        current.setHours(0, 0, 0, 0);
+        const end = new Date(dateRange.end);
 
-        while (current <= dateRange.end) {
+        while (current <= end) {
+            const dateString = current.toISOString().split('T')[0];
+            const dayOfWeek = current.getUTCDay(); // 0 = Sunday
+
             days.push({
-                date: new Date(current),
-                dayOfMonth: current.getDate(),
-                isWeekend: current.getDay() === 0 || current.getDay() === 6,
-                isToday: current.getTime() === today.getTime(),
+                date: new Date(current), // Clone
+                dayOfMonth: current.getUTCDate(),
+                isWeekend: dayOfWeek === 0 || dayOfWeek === 6,
+                isToday: dateString === todayString
             });
-            current.setDate(current.getDate() + 1);
+
+            current.setUTCDate(current.getUTCDate() + 1);
         }
         return days;
     }, [dateRange]);
@@ -121,23 +127,22 @@ export function GanttChart({ tasks, columns, projectId, onTaskClick, onOptimisti
         const endDate = preview?.endDate || task.endDate;
 
         const start = new Date(startDate as string);
-        start.setHours(0, 0, 0, 0);
         const end = new Date(endDate as string);
-        end.setHours(0, 0, 0, 0);
-        const rangeStart = new Date(dateRange.start);
-        rangeStart.setHours(0, 0, 0, 0);
+        const projectStart = dateRange.start;
 
-        // Use allDays.length for precise alignment with rendered day cells
-        const daysCount = allDays.length || totalDays;
-        const startOffset = Math.floor((start.getTime() - rangeStart.getTime()) / (1000 * 60 * 60 * 24));
-        const duration = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        const startOffsetMs = start.getTime() - projectStart.getTime();
+        const durationMs = end.getTime() - start.getTime();
 
-        const leftPercent = (startOffset / daysCount) * 100;
-        const widthPercent = (duration / daysCount) * 100;
+        const startOffsetDays = startOffsetMs / (1000 * 60 * 60 * 24);
+        const durationDays = durationMs / (1000 * 60 * 60 * 24);
+
+        const left = (startOffsetDays / totalDays) * 100;
+        // width represents duration inclusive (1 day task = 1 column)
+        const width = ((durationDays + 1) / totalDays) * 100;
 
         return {
-            left: `${leftPercent}%`,
-            width: `${widthPercent}%`,
+            left: `${left}%`,
+            width: `${width}%`,
         };
     };
 
@@ -150,7 +155,7 @@ export function GanttChart({ tasks, columns, projectId, onTaskClick, onOptimisti
         const dayOffset = Math.round(percentX * totalDays);
 
         const newDate = new Date(dateRange.start);
-        newDate.setDate(newDate.getDate() + dayOffset);
+        newDate.setUTCDate(newDate.getUTCDate() + dayOffset);
 
         return newDate;
     };
@@ -398,6 +403,26 @@ export function GanttChart({ tasks, columns, projectId, onTaskClick, onOptimisti
                                     const column = columns.find(c => c.id === task.columnId);
                                     const columnColor = column?.color || '#3B82F6';
 
+                                    // Helper to determine text color based on background luminance
+                                    const getContrastColor = (hexColor: string) => {
+                                        // Remove # if present
+                                        const hex = hexColor.replace('#', '');
+
+                                        // Parse r, g, b
+                                        const r = parseInt(hex.substring(0, 2), 16);
+                                        const g = parseInt(hex.substring(2, 4), 16);
+                                        const b = parseInt(hex.substring(4, 6), 16);
+
+                                        // Calculate luminance (perceived brightness)
+                                        // Standard formula: 0.299R + 0.587G + 0.114B
+                                        const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+
+                                        // Returns black for bright colors, white for dark colors
+                                        return (yiq >= 128) ? '#1f2937' : '#ffffff'; // gray-800 : white
+                                    };
+
+                                    const textColor = getContrastColor(columnColor);
+
                                     return (
                                         <div
                                             className="absolute top-1/2 -translate-y-1/2 h-8 rounded shadow-sm hover:opacity-90 transition-opacity group/bar"
@@ -413,7 +438,8 @@ export function GanttChart({ tasks, columns, projectId, onTaskClick, onOptimisti
 
                                             {/* Task title */}
                                             <div
-                                                className="h-full flex items-center justify-center text-white text-xs font-medium px-2 truncate cursor-pointer"
+                                                className="h-full flex items-center justify-center text-xs font-medium px-2 truncate cursor-pointer"
+                                                style={{ color: textColor }}
                                                 onClick={() => onTaskClick(task.id)}
                                             >
                                                 {task.title}
