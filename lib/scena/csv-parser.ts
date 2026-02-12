@@ -468,7 +468,21 @@ export function exportTasksToCsv(tasks: any[], columns: any[]): string {
         }
     };
 
-    const rows = tasks.map(task => {
+    // Sort tasks by Column Order then Task Order
+    const sortedTasks = [...tasks].sort((a, b) => {
+        // 1. Column Order
+        const colA = columns.find(c => c.id === a.columnId);
+        const colB = columns.find(c => c.id === b.columnId);
+        const orderA = colA?.order ?? 9999;
+        const orderB = colB?.order ?? 9999;
+
+        if (orderA !== orderB) return orderA - orderB;
+
+        // 2. Task Order
+        return (a.order || 0) - (b.order || 0);
+    });
+
+    const rows = sortedTasks.map(task => {
         const column = columns.find(c => c.id === task.columnId);
         const phaseName = column ? column.name : 'Sin Fase';
 

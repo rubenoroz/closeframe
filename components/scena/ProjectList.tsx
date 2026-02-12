@@ -61,13 +61,20 @@ export function ProjectList({ canCreate = true }: { canCreate?: boolean }) {
         );
     });
 
-    const colors = [
-        'bg-pink-100 dark:bg-pink-900/20 border-pink-200 dark:border-pink-800',
-        'bg-purple-100 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800',
-        'bg-orange-100 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800',
-        'bg-blue-100 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800',
-        'bg-emerald-100 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800',
-        'bg-yellow-100 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
+    // Scena Pastel Palette (same as columns)
+    const CARD_COLORS = [
+        '#FBCFE8', // Pink
+        '#C7D2FE', // Indigo
+        '#BFDBFE', // Blue
+        '#A7F3D0', // Emerald
+        '#FEF08A', // Yellow
+        '#FED7AA', // Orange
+        '#E9D5FF', // Purple
+        '#99F6E4', // Teal
+        '#D9F99D', // Lime
+        '#E2E8F0', // Slate
+        '#FECDD3', // Rose
+        '#BAE6FD', // Sky
     ];
 
     const fetchProjects = async () => {
@@ -259,21 +266,24 @@ export function ProjectList({ canCreate = true }: { canCreate?: boolean }) {
                         {filteredProjects.map((project, idx) => (
                             <div
                                 key={project.id}
-                                className={`relative group rounded-2xl p-5 border transition-all hover:shadow-md hover:-translate-y-1 flex flex-col h-[200px] ${colors[idx % colors.length]}`}
+                                className="relative group rounded-2xl p-5 border border-neutral-200/50 transition-all hover:shadow-lg hover:-translate-y-1 flex flex-col h-[200px]"
+                                style={{
+                                    backgroundColor: CARD_COLORS[idx % CARD_COLORS.length]
+                                }}
                             >
                                 <div onClick={() => router.push(`/dashboard/scena/${project.id}`)} className="cursor-pointer flex-1 flex flex-col">
                                     <div className="flex justify-between items-start mb-2">
-                                        <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-100 line-clamp-3 pr-8">
+                                        <h3 className="text-lg font-bold text-neutral-800 line-clamp-3 pr-8">
                                             {project.name}
                                         </h3>
                                     </div>
 
-                                    <p className="text-neutral-700 dark:text-neutral-300 text-sm line-clamp-2 mb-3 flex-1">
+                                    <p className="text-neutral-700 text-sm line-clamp-3 mb-3 flex-1 font-medium">
                                         {project.description || "Sin descripción"}
                                     </p>
 
                                     {project.booking && (
-                                        <div className="mt-auto flex items-center gap-2 text-xs font-medium text-neutral-600 dark:text-neutral-400 bg-white/60 dark:bg-black/20 p-2 rounded-lg w-fit backdrop-blur-sm">
+                                        <div className="mt-auto flex items-center gap-2 text-xs font-medium text-neutral-700 bg-white/50 p-2 rounded-lg w-fit backdrop-blur-sm">
                                             <Calendar className="w-3 h-3" />
                                             <span>
                                                 {new Date(project.booking.date).toLocaleDateString()}
@@ -286,7 +296,7 @@ export function ProjectList({ canCreate = true }: { canCreate?: boolean }) {
                                 <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 bg-white dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded-full shadow-sm text-neutral-700 dark:text-neutral-200 ring-1 ring-black/5">
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 bg-white/50 hover:bg-white rounded-full shadow-sm text-neutral-700 ring-1 ring-black/5">
                                                 <MoreVertical className="h-4 w-4" />
                                             </Button>
                                         </DropdownMenuTrigger>

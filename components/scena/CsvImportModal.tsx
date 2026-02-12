@@ -127,7 +127,7 @@ export function CsvImportModal({ isOpen, onClose, existingProjectId, existingPro
             setImportError('Error de conexión al importar');
             setStep('preview');
         }
-    }, [csvContent, projectName, existingProjectId]);
+    }, [csvContent, projectName, existingProjectId, description]);
 
     const handleDownloadTemplate = useCallback((e: React.MouseEvent) => {
         e.stopPropagation();
