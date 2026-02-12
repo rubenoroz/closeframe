@@ -141,7 +141,8 @@ export default function CollaborativeSettings({ projectId, isGoogleDrive }: Prop
 
             if (!res.ok) {
                 const errorData = await res.json().catch(() => ({}));
-                throw new Error(errorData.error || 'Error al descargar QR');
+                const msg = errorData.details ? `${errorData.error}: ${errorData.details}` : (errorData.error || 'Error al descargar QR');
+                throw new Error(msg);
             }
 
             const blob = await res.blob();
@@ -155,7 +156,8 @@ export default function CollaborativeSettings({ projectId, isGoogleDrive }: Prop
             URL.revokeObjectURL(url);
         } catch (error) {
             console.error('Failed to download QR:', error);
-            alert('Error al descargar el código QR. Por favor intenta de nuevo.');
+            const msg = error instanceof Error ? error.message : 'Error desconocido';
+            alert(`Error al descargar el código QR: ${msg}`);
         }
     };
 
