@@ -20,6 +20,8 @@ const COLUMN_COLORS = [
     { color: '#99F6E4', cardColor: '#F0FDFA' }, // Teal
     { color: '#D9F99D', cardColor: '#ECFCCB' }, // Lime
     { color: '#E2E8F0', cardColor: '#F8FAFC' }, // Slate
+    { color: '#FECDD3', cardColor: '#FFF1F2' }, // Rose
+    { color: '#BAE6FD', cardColor: '#F0F9FF' }, // Sky
 ];
 
 export async function POST(req: Request) {

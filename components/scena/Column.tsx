@@ -25,6 +25,8 @@ const COLUMN_COLORS = [
     { column: '#99F6E4', card: '#F0FDFA' }, // Teal
     { column: '#D9F99D', card: '#ECFCCB' }, // Lime
     { column: '#E2E8F0', card: '#F8FAFC' }, // Slate
+    { column: '#FECDD3', card: '#FFF1F2' }, // Rose
+    { column: '#BAE6FD', card: '#F0F9FF' }, // Sky
 ];
 
 interface ColumnProps {
