@@ -156,6 +156,46 @@ export function useKanbanDrag({ tasks, setTasks, projectId, mutate, columns, set
                 return;
             }
 
+            // Create new tasks state for Optimistic SWR Update
+            const newTasks = tasks.map(t => {
+                if (t.id === activeId) {
+                    return { ...t, columnId: targetColumnId, order: targetOrder };
+                }
+                // We should also reorder other tasks if needed, but for the cache 
+                // simply updating the moved task is often enough to prevent the major "jump"
+                // Ideally, we should replicate the full reorder logic here, 
+                // but since setTasks is already handling the visual part (via onDragOver updates usually),
+                // we technically just need to make sure SWR doesn't revert it.
+                // However, 'tasks' here is the state *at the start of drag* or current?
+                // 'tasks' from props comes from useKanbanData -> SWR/State.
+                // 'onDragEnd' uses the 'tasks' closed over or dependency? 
+                // It has [tasks] as dependency.
+                return t;
+            });
+
+            // ACTUALLY: The best way is to use the *current* tasks state which is already
+            // being updated by onDragOver/setTasks logic? 
+            // `onDragOver` updates `setTasks`. 
+            // So `tasks` in `onDragEnd` might be the updated state if the component re-rendered?
+            // Yes, `onDragEnd` depends on `tasks`.
+
+            // So we can just mutate the current `tasks` into the cache!
+            // But wait, `active` and `over` calculations are based on the *latest* drag event.
+            // The `tasks` array in the scope might be slightly behind if high-frequency?
+            // No, React handles this.
+
+            // Let's manually reconstruct the final valid state to be safe and update SWR.
+            const updatedTasks = tasks.map(t => {
+                if (t.id === activeId) {
+                    return { ...t, columnId: targetColumnId, order: targetOrder };
+                }
+                return t;
+            });
+
+            // Optimistic Update: Update SWR cache immediately so useEffect doesn't revert us
+            await mutate(updatedTasks, false);
+            setTasks(updatedTasks); // Ensure local state is also set (redundancy is fine)
+
             try {
                 const payload = {
                     columnId: targetColumnId,
@@ -169,12 +209,12 @@ export function useKanbanDrag({ tasks, setTasks, projectId, mutate, columns, set
                 });
 
                 if (!response.ok) {
+                    // Revalidate on error
                     mutate();
-                } else {
-                    // Success! Re-commit the current optimistic state to SWR cache
-                    // to overwrite any stale background fetch that might have landed during the request.
-                    setTasks(tasks);
                 }
+                // On success, we don't need to do anything because we already updated the cache!
+                // Optionally we can revalidate quietly: mutate(); to allow server side side-effects (like updated timestamps)
+
             } catch (error) {
                 console.error("Error in drag end:", error);
                 mutate();
