@@ -1,13 +1,10 @@
-import { useCallback, useRef, useState } from "react";
-import { Active, DragEndEvent, DragOverEvent, DragStartEvent } from "@dnd-kit/core";
-import { arrayMove } from "@dnd-kit/sortable";
-import { FetchedTask, FetchedColumn } from "@/types/scena";
+import { KeyedMutator } from "swr";
 
 interface UseKanbanDragProps {
     tasks: FetchedTask[];
     setTasks: (newTasks: FetchedTask[] | ((prev: FetchedTask[]) => FetchedTask[])) => void;
     projectId: string;
-    mutate: () => Promise<void>;
+    mutate: KeyedMutator<FetchedTask[]>;
     columns: FetchedColumn[];
     setColumns: (cols: FetchedColumn[] | ((prev: FetchedColumn[]) => FetchedColumn[])) => void;
 }
