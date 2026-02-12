@@ -133,107 +133,114 @@ export async function generateQRCode(url: string): Promise<Buffer> {
         ${shapes.join('')}
     </svg>`;
 
-    // --- EXISTING LOGO & FOOTER LOGIC (Adapted) ---
+    // Initial QR Buffer (Simple QR)
+    let resultBuffer: Buffer;
 
-    // 1. Check if logo exists
-    let logoExists = false;
     try {
-        await fs.promises.access(LOGO_PATH);
-        logoExists = true;
-    } catch {
-        // Logo doesn't exist
+        resultBuffer = await sharp(Buffer.from(svgString)).png().toBuffer();
+    } catch (e) {
+        console.error("Critical Sharp Error (Base QR):", e);
+        throw new Error("Failed to generate base QR code");
     }
 
-    let resultBuffer = await sharp(Buffer.from(svgString)).png().toBuffer();
+    // --- ENHANCEMENTS (Logo + Footer) ---
+    // Wrapped in try-catch to ensure we at least return the working QR if assets fail
+    try {
+        // 1. Center Logo
+        let logoExists = false;
+        try {
+            if (fs.existsSync(LOGO_PATH)) {
+                logoExists = true;
+            }
+        } catch { }
 
-    if (logoExists) {
-        // Resize logo
-        const logo = await sharp(LOGO_PATH)
-            .resize(Math.floor(LOGO_SIZE * 0.8), Math.floor(LOGO_SIZE * 0.8), { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
-            .png()
-            .toBuffer();
+        if (logoExists) {
+            // Resize logo
+            const logo = await sharp(LOGO_PATH)
+                .resize(Math.floor(LOGO_SIZE * 0.8), Math.floor(LOGO_SIZE * 0.8), { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+                .png()
+                .toBuffer();
 
-        // White flexible background for logo (Circle)
-        // Since we are using dots, a circle background looks best for the logo
-        const bgSize = LOGO_SIZE;
-        const circleBg = Buffer.from(`
-            <svg width="${bgSize}" height="${bgSize}" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="${bgSize / 2}" cy="${bgSize / 2}" r="${bgSize / 2}" fill="white"/>
+            // White flexible background for logo (Circle)
+            const bgSize = LOGO_SIZE;
+            const circleBg = Buffer.from(`
+                <svg width="${bgSize}" height="${bgSize}" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="${bgSize / 2}" cy="${bgSize / 2}" r="${bgSize / 2}" fill="white"/>
+                </svg>
+            `);
+
+            // Composite QR with white background and then logo
+            resultBuffer = await sharp(resultBuffer)
+                .composite([
+                    { input: circleBg as any, gravity: 'center' },
+                    { input: logo as any, gravity: 'center' },
+                ])
+                .png()
+                .toBuffer();
+        }
+
+        // 2. Branding Footer
+        const FOOTER_HEIGHT = 70;
+        const FULL_LOGO_PATH = path.join(process.cwd(), 'public', 'logo-white.svg');
+
+        const footerBg = Buffer.from(`
+            <svg width="${QR_SIZE}" height="${FOOTER_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
+                <rect x="0" y="0" width="${QR_SIZE}" height="${FOOTER_HEIGHT}" fill="white"/>
             </svg>
         `);
 
-        // Composite QR with white background and then logo
+        let footerOverlay: any = footerBg;
+
+        try {
+            if (fs.existsSync(FULL_LOGO_PATH)) {
+                let logoSvg = await fs.promises.readFile(FULL_LOGO_PATH, 'utf8');
+                logoSvg = logoSvg.replace(/.st0\s*{\s*fill:\s*#f7f7f7;\s*}/g, '.st0{fill:#000000;}');
+
+                const footerLogo = await sharp(Buffer.from(logoSvg))
+                    .resize({ height: 40, fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+                    .png()
+                    .toBuffer();
+
+                footerOverlay = await sharp(footerBg)
+                    .composite([{ input: footerLogo as any, gravity: 'center' }])
+                    .png()
+                    .toBuffer();
+            } else {
+                throw new Error("Logo file not found");
+            }
+
+        } catch (e) {
+            // Fallback text footer if logo fails
+            const BRAND_TEXT = "closerlens.com";
+            footerOverlay = Buffer.from(`
+                <svg width="${QR_SIZE}" height="${FOOTER_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="0" y="0" width="${QR_SIZE}" height="${FOOTER_HEIGHT}" fill="white"/>
+                    <text x="50%" y="55%" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#000000" text-anchor="middle" dominant-baseline="middle" letter-spacing="1px">${BRAND_TEXT}</text>
+                </svg>
+            `);
+        }
+
+        // Extend original image and composite footer
         resultBuffer = await sharp(resultBuffer)
+            .extend({
+                top: 0,
+                bottom: FOOTER_HEIGHT,
+                left: 0,
+                right: 0,
+                background: { r: 255, g: 255, b: 255, alpha: 1 }
+            })
             .composite([
-                {
-                    input: circleBg as any,
-                    gravity: 'center',
-                },
-                {
-                    input: logo as any,
-                    gravity: 'center',
-                },
+                { input: footerOverlay as any, gravity: 'south' }
             ])
             .png()
             .toBuffer();
+
+    } catch (enhancementError) {
+        console.error("QR Enhancement failed (returning simple QR):", enhancementError);
+        // Do nothing, resultBuffer still holds the valid, unenhanced QR
     }
 
-    // 3. Add Branding Footer (Extend canvas)
-    const FOOTER_HEIGHT = 70;
-    const FULL_LOGO_PATH = path.join(process.cwd(), 'public', 'logo-white.svg');
-
-    const footerBg = Buffer.from(`
-        <svg width="${QR_SIZE}" height="${FOOTER_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
-            <rect x="0" y="0" width="${QR_SIZE}" height="${FOOTER_HEIGHT}" fill="white"/>
-        </svg>
-    `);
-
-    let footerOverlay: any = footerBg;
-
-    try {
-        let logoSvg = await fs.promises.readFile(FULL_LOGO_PATH, 'utf8');
-        logoSvg = logoSvg.replace(/.st0\s*{\s*fill:\s*#f7f7f7;\s*}/g, '.st0{fill:#000000;}');
-
-        const footerLogo = await sharp(Buffer.from(logoSvg))
-            .resize({ height: 40, fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
-            .png()
-            .toBuffer();
-
-        footerOverlay = await sharp(footerBg)
-            .composite([{ input: footerLogo as any, gravity: 'center' }])
-            .png()
-            .toBuffer();
-
-    } catch (e) {
-        console.error("Failed to process footer logo:", e);
-        const BRAND_TEXT = "closerlens.com";
-        footerOverlay = Buffer.from(`
-            <svg width="${QR_SIZE}" height="${FOOTER_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
-                <rect x="0" y="0" width="${QR_SIZE}" height="${FOOTER_HEIGHT}" fill="white"/>
-                <text x="50%" y="55%" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#000000" text-anchor="middle" dominant-baseline="middle" letter-spacing="1px">${BRAND_TEXT}</text>
-            </svg>
-        `);
-    }
-
-    // Extend original image and composite footer
-    const finalResult = await sharp(resultBuffer)
-        .extend({
-            top: 0,
-            bottom: FOOTER_HEIGHT,
-            left: 0,
-            right: 0,
-            background: { r: 255, g: 255, b: 255, alpha: 1 }
-        })
-        .composite([
-            {
-                input: footerOverlay as any,
-                gravity: 'south',
-            }
-        ])
-        .png()
-        .toBuffer();
-
-    return finalResult;
+    return resultBuffer;
 }
 
 /**
