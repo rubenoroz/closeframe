@@ -348,16 +348,16 @@ export function GanttChart({ tasks, columns, projectId, onTaskClick, onOptimisti
                     {allDays.map((day, idx) => {
                         // Spanish weekday initials: L, M, X, J, V, S, D
                         const weekdayInitials = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
-                        const weekdayInitial = weekdayInitials[day.date.getDay()];
+                        const weekdayInitial = weekdayInitials[day.date.getUTCDay()];
 
                         return (
                             <div
                                 key={idx}
-                                className={`flex-1 min-w-[24px] text-center py-0.5 border-r border-neutral-200/50 dark:border-neutral-700/50 flex flex-col
+                                className={`flex-1 text-center py-0.5 border-r border-neutral-200/50 dark:border-neutral-700/50 flex flex-col min-w-0
                                     ${day.isToday ? 'bg-emerald-500 text-white font-bold' : ''}
                                     ${day.isWeekend && !day.isToday ? 'bg-neutral-200/50 dark:bg-neutral-700/50 text-neutral-400' : 'text-neutral-500 dark:text-neutral-400'}
                                 `}
-                                title={day.date.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short' })}
+                                title={day.date.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short', timeZone: 'UTC' })}
                             >
                                 <span className="text-[8px] leading-tight">{weekdayInitial}</span>
                                 <span className="text-[10px] leading-tight">{day.dayOfMonth}</span>
@@ -402,7 +402,7 @@ export function GanttChart({ tasks, columns, projectId, onTaskClick, onOptimisti
                                         <div
                                             className="absolute top-1/2 -translate-y-1/2 h-8 rounded shadow-sm hover:opacity-90 transition-opacity group/bar"
                                             style={{ ...barStyle, backgroundColor: columnColor }}
-                                            title={`${task.title}\n${new Date(task.startDate as string).toLocaleDateString()} - ${new Date(task.endDate as string).toLocaleDateString()}`}
+                                            title={`${task.title}\n${new Date(task.startDate as string).toLocaleDateString(undefined, { timeZone: 'UTC' })} - ${new Date(task.endDate as string).toLocaleDateString(undefined, { timeZone: 'UTC' })}`}
                                         >
                                             {/* Left resize handle */}
                                             <div
@@ -437,7 +437,7 @@ export function GanttChart({ tasks, columns, projectId, onTaskClick, onOptimisti
                                             left: `${((new Date(previewDates[task.id]?.toleranceDate || task.toleranceDate as string).getTime() - dateRange.start.getTime()) / (1000 * 60 * 60 * 24) / totalDays) * 100}%`,
                                         }}
                                         onMouseDown={(e) => handleMouseDown(e, task.id, 'tolerance')}
-                                        title={`Fecha de tolerancia: ${new Date(previewDates[task.id]?.toleranceDate || task.toleranceDate as string).toLocaleDateString()}\nArrastrar para cambiar`}
+                                        title={`Fecha de tolerancia: ${new Date(previewDates[task.id]?.toleranceDate || task.toleranceDate as string).toLocaleDateString(undefined, { timeZone: 'UTC' })}\nArrastrar para cambiar`}
                                     >
                                         <div className="absolute inset-0 flex items-center justify-center">
                                             <div className="w-1 h-full bg-red-600" />
