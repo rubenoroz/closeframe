@@ -138,15 +138,24 @@ export default function CollaborativeSettings({ projectId, isGoogleDrive }: Prop
     const handleDownloadQR = async (sectionId: string, sectionName: string) => {
         try {
             const res = await fetch(`/api/projects/${projectId}/collaborative/sections/${sectionId}/qr`);
+
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}));
+                throw new Error(errorData.error || 'Error al descargar QR');
+            }
+
             const blob = await res.blob();
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
             a.download = `QR-${sectionName.replace(/[^a-zA-Z0-9]/g, '_')}.png`;
+            document.body.appendChild(a);
             a.click();
+            document.body.removeChild(a);
             URL.revokeObjectURL(url);
         } catch (error) {
             console.error('Failed to download QR:', error);
+            alert('Error al descargar el código QR. Por favor intenta de nuevo.');
         }
     };
 
