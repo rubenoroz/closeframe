@@ -13,6 +13,7 @@ interface GanttTask {
     isHiddenInGantt?: boolean;
     level?: number;
     order?: number;
+    progress?: number;
 }
 
 interface GanttChartProps {
@@ -389,16 +390,31 @@ export function GanttChart({ tasks, columns, projectId, onTaskClick, onOptimisti
                                 >
                                     {/* Task Name (Sticky Column) */}
                                     <div
-                                        className="w-48 md:w-64 flex-shrink-0 p-3 border-r border-neutral-200 dark:border-neutral-700 flex items-center cursor-pointer sticky left-0 z-10 bg-white dark:bg-neutral-900 group-hover:bg-neutral-50 dark:group-hover:bg-neutral-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] transition-colors"
+                                        className="w-48 md:w-64 flex-shrink-0 p-3 pr-4 border-r border-neutral-200 dark:border-neutral-700 flex flex-col justify-center cursor-pointer sticky left-0 z-10 bg-white dark:bg-neutral-900 group-hover:bg-neutral-50 dark:group-hover:bg-neutral-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] transition-colors"
                                         onClick={() => onTaskClick(task.id)}
                                         style={{ paddingLeft: `${task.level * 20 + 12}px` }}
                                     >
-                                        {task.level > 0 && (
-                                            <span className="text-neutral-400 mr-2">└</span>
-                                        )}
-                                        <span className="text-sm text-neutral-700 dark:text-neutral-200 truncate hover:text-blue-600">
-                                            {task.title}
-                                        </span>
+                                        <div className="flex items-center min-w-0">
+                                            {task.level > 0 && (
+                                                <span className="text-neutral-400 mr-2 shrink-0">└</span>
+                                            )}
+                                            <span className="text-sm text-neutral-700 dark:text-neutral-200 truncate hover:text-blue-600 font-medium">
+                                                {task.title}
+                                            </span>
+                                        </div>
+
+                                        {/* Progress Bar */}
+                                        <div className="flex items-center gap-2 mt-1 min-w-0">
+                                            <div className="h-1.5 flex-1 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">
+                                                <div
+                                                    className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                                                    style={{ width: `${task.progress || 0}%` }}
+                                                />
+                                            </div>
+                                            <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-mono w-8 text-right shrink-0">
+                                                {task.progress || 0}%
+                                            </span>
+                                        </div>
                                     </div>
 
                                     {/* Timeline Bar */}
