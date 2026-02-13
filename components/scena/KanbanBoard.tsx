@@ -521,12 +521,14 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
             </div>
 
             {/* Modals */}
-            <ProjectStatisticsModal
-                isOpen={isStatsModalOpen}
-                onClose={() => setIsStatsModalOpen(false)}
-                tasks={tasks}
-                columns={columns}
-            />
+            {isStatsModalOpen && (
+                <ProjectStatisticsModal
+                    isOpen={isStatsModalOpen}
+                    onClose={() => setIsStatsModalOpen(false)}
+                    tasks={tasks}
+                    columns={columns}
+                />
+            )}
 
             {selectedTask && isModalOpen && (
                 <TaskDetailModal
@@ -539,23 +541,27 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
             )}
 
             {/* Custom Modals for Add Column/Task */}
-            <InputModal
-                isOpen={isAddColumnModalOpen}
-                onClose={() => setIsAddColumnModalOpen(false)}
-                onConfirm={confirmAddColumn}
-                title="Nueva Columna"
-                placeholder="Nombre de la columna"
-                confirmText="Crear Columna"
-            />
+            {isAddColumnModalOpen && (
+                <InputModal
+                    isOpen={isAddColumnModalOpen}
+                    onClose={() => setIsAddColumnModalOpen(false)}
+                    onConfirm={confirmAddColumn}
+                    title="Nueva Columna"
+                    placeholder="Nombre de la columna"
+                    confirmText="Crear Columna"
+                />
+            )}
 
-            <InputModal
-                isOpen={isAddTaskModalOpen}
-                onClose={() => setIsAddTaskModalOpen(false)}
-                onConfirm={confirmAddTask}
-                title="Nueva Tarea"
-                placeholder="Título de la tarea"
-                confirmText="Crear Tarea"
-            />
+            {isAddTaskModalOpen && (
+                <InputModal
+                    isOpen={isAddTaskModalOpen}
+                    onClose={() => setIsAddTaskModalOpen(false)}
+                    onConfirm={confirmAddTask}
+                    title="Nueva Tarea"
+                    placeholder="Título de la tarea"
+                    confirmText="Crear Tarea"
+                />
+            )}
         </div>
     );
 }
