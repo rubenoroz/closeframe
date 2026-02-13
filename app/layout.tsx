@@ -1,6 +1,6 @@
+import "./globals.css";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Spline_Sans } from "next/font/google";
-import "./globals.css";
 import Providers from "@/components/Providers";
 import ClosseAssistant from "@/components/closer/ClosseAssistant";
 
