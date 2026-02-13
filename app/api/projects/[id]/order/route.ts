@@ -10,7 +10,7 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
-        const { fileOrder, momentsOrder } = await req.json();
+        const { fileOrder, momentsOrder, momentsHidden } = await req.json();
 
         if (fileOrder && !Array.isArray(fileOrder)) {
             return new NextResponse("Invalid fileOrder format", { status: 400 });
@@ -18,6 +18,10 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
 
         if (momentsOrder && !Array.isArray(momentsOrder)) {
             return new NextResponse("Invalid momentsOrder format", { status: 400 });
+        }
+
+        if (momentsHidden && !Array.isArray(momentsHidden)) {
+            return new NextResponse("Invalid momentsHidden format", { status: 400 });
         }
 
         const project = await prisma.project.findUnique({
@@ -45,6 +49,7 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
         const updateData: any = {};
         if (fileOrder) updateData.fileOrder = fileOrder;
         if (momentsOrder) updateData.momentsOrder = momentsOrder;
+        if (momentsHidden) updateData.momentsHidden = momentsHidden; // [NEW] Save hidden moments
 
         await prisma.project.update({
             where: { id: params.id },

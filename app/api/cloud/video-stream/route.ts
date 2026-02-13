@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { google } from "googleapis";
 import { prisma } from "@/lib/db";
+import { getFreshAuth } from "@/lib/cloud/auth-factory";
 
 /**
  * Video Streaming Proxy for Google Drive
@@ -20,35 +21,11 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: "Missing cloudAccountId or fileId" }, { status: 400 });
         }
 
-        // Get cloud account
-        const account = await prisma.cloudAccount.findUnique({
-            where: { id: cloudAccountId },
-        });
+        // Use centralized auth factory (handles decryption and refresh)
+        const authClient = await getFreshAuth(cloudAccountId);
 
-        if (!account || !account.accessToken) {
-            return NextResponse.json({ error: "Cloud account not found" }, { status: 404 });
-        }
-
-        // Setup Google Auth
-        const auth = new google.auth.OAuth2(
-            process.env.GOOGLE_CLIENT_ID,
-            process.env.GOOGLE_CLIENT_SECRET
-        );
-        auth.setCredentials({
-            access_token: account.accessToken,
-            refresh_token: account.refreshToken,
-        });
-
-        // Refresh token if needed
-        const tokenInfo = await auth.getAccessToken();
-        if (tokenInfo.token && tokenInfo.token !== account.accessToken) {
-            await prisma.cloudAccount.update({
-                where: { id: account.id },
-                data: { accessToken: tokenInfo.token }
-            });
-        }
-
-        const drive = google.drive({ version: "v3", auth });
+        // @ts-ignore
+        const drive = google.drive({ version: "v3", auth: authClient });
 
         // Get file metadata first to know the size and mimeType
         const fileMeta = await drive.files.get({
@@ -147,6 +124,9 @@ export async function GET(req: NextRequest) {
 
     } catch (error) {
         console.error("Video Stream Error:", error);
-        return NextResponse.json({ error: "Failed to stream video" }, { status: 500 });
+        return NextResponse.json({
+            error: "Failed to stream video",
+            details: error instanceof Error ? error.message : String(error)
+        }, { status: 500 });
     }
 }

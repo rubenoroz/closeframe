@@ -18,6 +18,7 @@ interface PublicGalleryClientProps {
         cloudAccountId: string;
         projectId?: string;
         rootFolderId: string;
+        date?: string | null; // [NEW]
         passwordProtected: boolean;
         downloadEnabled: boolean;
         downloadJpgEnabled: boolean;
@@ -195,6 +196,8 @@ export default function PublicGalleryClient({ project }: PublicGalleryClientProp
                 projectName={project.name}
                 onEnter={handleEnterGallery}
                 cloudAccountId={project.cloudAccountId}
+                date={project.date} // [NEW]
+                fontFamily={project.headerFontFamily || "Inter"} // [NEW]
             />
         );
     }
@@ -240,6 +243,7 @@ export default function PublicGalleryClient({ project }: PublicGalleryClientProp
                 coverImage={project.headerImage}
                 coverImageFocus={project.headerImageFocus}
                 cloudAccountId={project.cloudAccountId}
+                date={project.date} // [NEW]
             />
 
             {/* Media Tabs (Photos/Videos) - hidden until mounted to avoid flash */}

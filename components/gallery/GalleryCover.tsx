@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ChevronRight } from 'lucide-react';
 
 interface GalleryCoverProps {
@@ -11,6 +11,8 @@ interface GalleryCoverProps {
     onEnter: () => void;
     cloudAccountId: string;
     profileUrl?: string; // [NEW] Optional profile link
+    date?: string | null; // [NEW]
+    fontFamily?: string; // [NEW]
 }
 
 export default function GalleryCover({
@@ -22,8 +24,27 @@ export default function GalleryCover({
     projectName,
     onEnter,
     cloudAccountId,
-    profileUrl
+    profileUrl,
+    date, // [NEW]
+    fontFamily = "Inter" // [NEW]
 }: GalleryCoverProps) {
+    useEffect(() => {
+        // Dynamically load Google Font if not Inter (default system font)
+        if (fontFamily && fontFamily !== "Inter") {
+            const link = document.createElement("link");
+            link.href = `https://fonts.googleapis.com/css2?family=${fontFamily.replace(
+                / /g,
+                "+"
+            )}:wght@400;700&display=swap`;
+            link.rel = "stylesheet";
+            document.head.appendChild(link);
+
+            // Cleanup on unmount
+            return () => {
+                document.head.removeChild(link);
+            };
+        }
+    }, [fontFamily]);
     // Generate high-quality thumbnail URL for cover
     const coverUrl = `/api/cloud/thumbnail?c=${cloudAccountId}&f=${coverImage}&s=1200`;
 
@@ -78,10 +99,15 @@ export default function GalleryCover({
                     {/* Title - Bottom Left */}
                     <h1
                         className="text-4xl md:text-6xl lg:text-7xl font-sans font-extralight text-white tracking-tight text-balance drop-shadow-lg text-left"
-                        style={{ fontSize: `${fontSize / 100}em` }}
+                        style={{
+                            fontSize: `${fontSize / 100}em`,
+                            fontFamily: fontFamily !== "Inter" ? `'${fontFamily}', sans-serif` : "inherit"
+                        }}
                     >
                         {projectName}
                     </h1>
+
+                    {/* Date removed as per user request */}
 
                     {/* Button - Bottom Right (Desktop) / Below Title (Mobile) */}
                     <div className="md:self-end">

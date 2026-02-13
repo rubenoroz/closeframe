@@ -61,6 +61,7 @@ interface Project {
     isCloserGallery?: boolean;
     musicTrackId?: string;
     musicEnabled?: boolean;
+    date?: string; // [NEW]
 }
 
 export default function DashboardPage() {
@@ -294,7 +295,8 @@ export default function DashboardPage() {
             layoutType: (project as any).layoutType || "mosaic",
             isCloserGallery: project.isCloserGallery || false,
             musicTrackId: project.musicTrackId || "",
-            musicEnabled: project.musicEnabled || false, // [NEW]
+            musicEnabled: project.musicEnabled || false,
+            date: project.date || "", // [NEW]
         });
         setActiveMenu(null);
     };
@@ -336,7 +338,8 @@ export default function DashboardPage() {
                     layoutType: editData.layoutType,
                     isCloserGallery: editData.isCloserGallery,
                     musicTrackId: editData.musicTrackId,
-                    musicEnabled: editData.musicEnabled, // [NEW] Autoplay
+                    musicEnabled: editData.musicEnabled,
+                    date: editData.date, // [NEW]
                 })
             });
 

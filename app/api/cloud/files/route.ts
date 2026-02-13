@@ -108,27 +108,65 @@ export async function GET(request: Request) {
         console.log("[DEBUG] WebJPG folder detected:", webjpgFolder ? webjpgFolder.id : "NO");
 
         // Video proxies (support both old and new naming: webmp4/preview, hd/baja, raw/alta)
-        const webmp4Folder = subfolders.find((f: any) =>
+        let webmp4Folder = subfolders.find((f: any) =>
             f.name.toLowerCase() === "webmp4" || f.name.toLowerCase() === "preview"
         );
-        const hdFolder = subfolders.find((f: any) =>
+        let hdFolder = subfolders.find((f: any) =>
             f.name.toLowerCase() === "hd" || f.name.toLowerCase() === "baja"
         );
-        const rawVideoFolder = subfolders.find((f: any) =>
+        let rawVideoFolder = subfolders.find((f: any) =>
             f.name.toLowerCase() === "alta"
         ) || subfolders.find((f: any) => f.name.toLowerCase() === "raw");
 
+        // [NEW] Deep Search for Videos if not found in root
+        if (!webmp4Folder && !hdFolder && !rawVideoFolder) {
+            const videosRoot = subfolders.find((f: any) => f.name.toLowerCase() === "videos");
+            if (videosRoot) {
+                console.log("[DEBUG] Found 'Videos' folder, scanning subfolders...");
+                // @ts-ignore
+                const videoSubfolders = await provider.listFolders(videosRoot.id, authClient);
+
+                webmp4Folder = videoSubfolders.find((f: any) =>
+                    f.name.toLowerCase() === "webmp4" || f.name.toLowerCase() === "preview"
+                );
+
+                hdFolder = videoSubfolders.find((f: any) =>
+                    f.name.toLowerCase() === "hd" || f.name.toLowerCase() === "baja"
+                );
+
+                rawVideoFolder = videoSubfolders.find((f: any) =>
+                    f.name.toLowerCase() === "alta"
+                );
+            }
+        }
+
         // 2. Decide where to pull main files from
-        // For photos: prefer webjpg, fallback to root
-        // For videos: prefer webmp4, fallback to root
-        const sourceFolderId = webjpgFolder ? webjpgFolder.id : (webmp4Folder ? webmp4Folder.id : folderId);
-        // @ts-ignore
-        mainFiles = await provider.listFiles(sourceFolderId, authClient);
+        // Optimized: Fetch from BOTH webjpg and webmp4 if they exist
+        let proxyPromises = [];
+
+        if (webjpgFolder) {
+            // @ts-ignore
+            proxyPromises.push(provider.listFiles(webjpgFolder.id, authClient));
+        }
+
+        if (webmp4Folder) {
+            // @ts-ignore
+            proxyPromises.push(provider.listFiles(webmp4Folder.id, authClient));
+        }
+
+        if (proxyPromises.length > 0) {
+            const results = await Promise.all(proxyPromises);
+            mainFiles = results.flat();
+        } else {
+            // Fallback to root (folderId)
+            // @ts-ignore
+            mainFiles = await provider.listFiles(folderId, authClient);
+        }
 
         // Filter out system files AND ensure it's a media file (unless it's a proxy folder where we assume they are images)
         mainFiles = mainFiles.filter((f: any) => !isSystemFile(f.name) && isValidMediaFile(f));
         // [NEW] If using a proxy folder (webjpg/webmp4), also check the Root Folder for additional files (ZIPs + Orphaned Images)
-        if (sourceFolderId !== folderId) {
+        if (proxyPromises.length > 0) {
             // @ts-ignore
             const rootFiles = await provider.listFiles(folderId, authClient);
 

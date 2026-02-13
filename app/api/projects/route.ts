@@ -85,6 +85,7 @@ export async function POST(request: Request) {
             rootFolderId,
             password,
             category, // [NEW]
+            date, // [NEW]
             downloadEnabled,
             downloadJpgEnabled,
             downloadRawEnabled,
@@ -195,6 +196,7 @@ export async function POST(request: Request) {
                 name,
                 slug,
                 category: category || null,
+                date: date ? new Date(date) : null,
                 cloudAccountId,
                 rootFolderId,
                 userId: session.user.id,
@@ -275,7 +277,7 @@ export async function PATCH(request: NextRequest) {
 
         const body = await request.json();
         const {
-            id, name, password, category,
+            id, name, password, category, date,
             downloadEnabled, downloadJpgEnabled, downloadRawEnabled,
             downloadVideoHdEnabled, downloadVideoRawEnabled,
             enableVideoTab, showInProfile, enableWatermark,
@@ -285,6 +287,8 @@ export async function PATCH(request: NextRequest) {
             layoutType, public: isPublic,
             isCloserGallery, musicTrackId, musicEnabled, isCollaborative // [NEW]
         } = body;
+
+        console.log("[API] PATCH Project Payload:", { id, name, category, date, isCloserGallery }); // [DEBUG]
 
         if (!id) {
             return NextResponse.json({ error: "Project ID is required" }, { status: 400 });
@@ -338,6 +342,7 @@ export async function PATCH(request: NextRequest) {
         if (showInProfile !== undefined) updateData.showInProfile = showInProfile;
         if (enableWatermark !== undefined) updateData.enableWatermark = enableWatermark;
         if (category !== undefined) updateData.category = category;
+        if (date !== undefined) updateData.date = date ? new Date(date) : null;
         if (headerTitle !== undefined) updateData.headerTitle = headerTitle;
         if (headerFontFamily !== undefined) updateData.headerFontFamily = headerFontFamily;
         if (headerFontSize !== undefined) updateData.headerFontSize = headerFontSize;
@@ -396,10 +401,12 @@ export async function PATCH(request: NextRequest) {
             data: updateData,
         });
 
+        console.log("[API] Project Updated Successfully:", updatedProject.id); // [DEBUG]
+
         return NextResponse.json({ project: updatedProject });
-    } catch (error) {
-        console.error("UPDATE Project Error:", error);
-        return NextResponse.json({ error: "Failed to update project" }, { status: 500 });
+    } catch (error: any) {
+        console.error("UPDATE Project Error Stack:", error, error.stack); // [DEBUG]
+        return NextResponse.json({ error: "Failed to update project", details: error.message }, { status: 500 });
     }
 }
 

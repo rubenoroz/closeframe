@@ -97,7 +97,25 @@ export default function CloserGalleryClient({
                             !['webjpg', 'jpg', 'raw', 'print', 'highres'].includes(f.name.toLowerCase())
                         );
 
-                        // ... sort ...
+                        // [NEW] Filter hidden folders
+                        if (project.momentsHidden && Array.isArray(project.momentsHidden)) {
+                            const hiddenSet = new Set(project.momentsHidden as string[]);
+                            validFolders = validFolders.filter((f: any) => !hiddenSet.has(f.id));
+                        }
+
+                        // Order logic
+                        if (project.momentsOrder && Array.isArray(project.momentsOrder)) {
+                            const orderMap = new Map();
+                            (project.momentsOrder as string[]).forEach((id, idx) => orderMap.set(id, idx));
+                            validFolders.sort((a: any, b: any) => {
+                                const idxA = orderMap.has(a.id) ? orderMap.get(a.id) : 999999;
+                                const idxB = orderMap.has(b.id) ? orderMap.get(b.id) : 999999;
+                                return idxA - idxB;
+                            });
+                        } else {
+                            validFolders.sort((a: any, b: any) => a.name.localeCompare(b.name));
+                        }
+
                         setPhotographerMomentos(validFolders);
                     }
                 }
@@ -324,6 +342,8 @@ export default function CloserGalleryClient({
                 cloudAccountId={project.cloudAccountId}
                 fontSize={project.headerFontSize}
                 profileUrl={profileUrl}
+                date={project.date} // [NEW]
+                fontFamily={project.headerFontFamily || "Inter"} // [NEW]
             />
         );
     }
@@ -348,6 +368,7 @@ export default function CloserGalleryClient({
                 coverImage={project.headerImage}
                 coverImageFocus={project.headerImageFocus}
                 profileUrl={profileUrl}
+                date={project.date} // [NEW]
             />
 
             {/* Single Merged Navigation Bar */}

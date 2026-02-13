@@ -72,6 +72,7 @@ export default function OrganizePage() {
     const [loading, setLoading] = useState(true);
     const [loadingTab, setLoadingTab] = useState(false); // [NEW] Loading state for items within a tab
     const [loadedFolders, setLoadedFolders] = useState<Set<string>>(new Set()); // [NEW] Track loaded folders
+    const [hiddenFolders, setHiddenFolders] = useState<Set<string>>(new Set()); // [NEW] Track hidden folders
     const [saving, setSaving] = useState(false);
     const [showVideoPicker, setShowVideoPicker] = useState(false);
 
@@ -239,6 +240,9 @@ export default function OrganizePage() {
                 setIsGoogleDrive(project.cloudAccount?.provider === 'google'); // [NEW]
                 setEnableVideoTab(!!project.enableVideoTab);
                 setFileOrder(project.fileOrder || []);
+                if (project.momentsHidden && Array.isArray(project.momentsHidden)) {
+                    setHiddenFolders(new Set(project.momentsHidden));
+                }
 
                 // Populate Settings Data for Modal
                 setSettingsData({
@@ -465,6 +469,21 @@ export default function OrganizePage() {
         }
     };
 
+
+
+    const handleToggleVisibility = (folderId: string, e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent tab selection
+        setHiddenFolders(prev => {
+            const next = new Set(prev);
+            if (next.has(folderId)) {
+                next.delete(folderId);
+            } else {
+                next.add(folderId);
+            }
+            return next;
+        });
+    };
+
     const handleSave = async () => {
         setSaving(true);
         try {
@@ -474,7 +493,8 @@ export default function OrganizePage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     fileOrder: fileOrder, // Now includes ALL IDs (files and videos)
-                    momentsOrder: folders.map(f => f.id)
+                    momentsOrder: folders.map(f => f.id),
+                    momentsHidden: Array.from(hiddenFolders) // [NEW] Save hidden status
                 }),
             });
 
@@ -668,7 +688,9 @@ export default function OrganizePage() {
                                         key={folder.id}
                                         folder={folder}
                                         isActive={activeTabId === folder.id}
+                                        isHidden={hiddenFolders.has(folder.id)}
                                         onClick={() => setActiveTabId(folder.id)}
+                                        onToggle={(e) => handleToggleVisibility(folder.id, e)}
                                     />
                                 ))}
                             </div>
@@ -830,13 +852,15 @@ export default function OrganizePage() {
 
 // --- COMPONENTS ---
 
-function SortableTab({ folder, isActive, onClick }: { folder: FolderItem, isActive: boolean, onClick: () => void }) {
+import { Eye, EyeOff } from "lucide-react";
+
+function SortableTab({ folder, isActive, isHidden, onClick, onToggle }: { folder: FolderItem, isActive: boolean, isHidden: boolean, onClick: () => void, onToggle: (e: any) => void }) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: folder.id });
 
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
-        opacity: isDragging ? 0.4 : 1,
+        opacity: isDragging ? 0.4 : (isHidden ? 0.5 : 1),
         zIndex: isDragging ? 10 : 1,
     };
 
@@ -847,14 +871,23 @@ function SortableTab({ folder, isActive, onClick }: { folder: FolderItem, isActi
             {...attributes}
             {...listeners}
             onClick={onClick}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium transition whitespace-nowrap border uppercase tracking-wider ${isActive
+            className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium transition whitespace-nowrap border uppercase tracking-wider group ${isActive
                 ? 'bg-white border-white text-black shadow-[0_0_15px_rgba(255,255,255,0.2)]'
                 : 'bg-neutral-900 border-neutral-800 text-neutral-400 hover:text-white hover:border-neutral-700'
                 } ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
         >
             <GripVertical className={`w-3 h-3 ${isActive ? 'text-neutral-400' : 'text-neutral-600'}`} />
             <FolderIcon className="w-3.5 h-3.5" />
-            {folder.name}
+            <span className={isHidden ? "line-through decoration-neutral-500" : ""}>{folder.name}</span>
+
+            <div
+                role="button"
+                onPointerDown={e => e.stopPropagation()} // Prevent drag
+                onClick={onToggle}
+                className={`ml-1 p-1 rounded-full hover:bg-black/10 transition-colors ${isActive ? 'text-neutral-500 hover:text-black' : 'text-neutral-600 hover:text-white'}`}
+            >
+                {isHidden ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+            </div>
         </button>
     );
 }

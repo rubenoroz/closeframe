@@ -13,6 +13,7 @@ interface GalleryHeaderProps {
     coverImageFocus?: string | null; // "x,y" format (0-100)
     cloudAccountId?: string;
     profileUrl?: string; // [NEW] Optional profile link
+    date?: string | null; // [NEW]
 }
 
 export default function GalleryHeader({
@@ -26,6 +27,7 @@ export default function GalleryHeader({
     coverImageFocus,
     cloudAccountId,
     profileUrl,
+    date, // [NEW]
 }: GalleryHeaderProps) {
     useEffect(() => {
         // Dynamically load Google Font if not Inter (default system font)
@@ -130,6 +132,8 @@ export default function GalleryHeader({
                 >
                     {title}
                 </h1>
+
+                {/* Date removed as per user request */}
             </div>
         </div>
     );

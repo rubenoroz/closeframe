@@ -138,6 +138,7 @@ model Project {
   public                  Boolean               @default(true)
   layoutType              String                @default("grid")
   userId                  String
+  date                    DateTime?
   createdAt               DateTime              @default(now())
   updatedAt               DateTime              @updatedAt
   headerTitle             String?
@@ -162,6 +163,7 @@ model Project {
   zipFileName             String?
   isCloserGallery         Boolean               @default(false)
   momentsOrder            Json?
+  momentsHidden           Json?
   musicEnabled            Boolean               @default(false)
   musicTrackId            String?
   isCollaborative         Boolean               @default(false)

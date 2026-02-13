@@ -53,7 +53,7 @@ export class GalleryIndexer {
         structure.totalItems += structure.highlights.length;
 
         // 4. Process Subfolders (Momentos)
-        const project = projectId ? await prisma.project.findUnique({ where: { id: projectId }, select: { fileOrder: true, momentsOrder: true } }) : null;
+        const project = projectId ? await prisma.project.findUnique({ where: { id: projectId }, select: { fileOrder: true, momentsOrder: true, momentsHidden: true } }) : null;
         const momentFolders = folders.filter(f => !IGNORED_FOLDERS.includes(f.name.toLowerCase()));
 
         const momentsData = await Promise.all(momentFolders.map(async (folder, index) => {
@@ -90,11 +90,15 @@ export class GalleryIndexer {
             } as Moment;
         }));
 
+        // Filter hidden moments
+        const hiddenSet = new Set((project?.momentsHidden as string[]) || []);
+
         // Sort moments by momentsOrder if exists
         if (project?.momentsOrder && Array.isArray(project.momentsOrder)) {
             const mOrderMap = new Map();
             (project.momentsOrder as string[]).forEach((id, idx) => mOrderMap.set(id, idx));
             structure.moments = momentsData
+                .filter(m => !hiddenSet.has(m.id)) // [NEW] Filter hidden
                 .sort((a, b) => {
                     const idxA = mOrderMap.has(a.id) ? mOrderMap.get(a.id) : 999999;
                     const idxB = mOrderMap.has(b.id) ? mOrderMap.get(b.id) : 999999;
@@ -103,6 +107,7 @@ export class GalleryIndexer {
                 .map((m, i) => ({ ...m, order: i }));
         } else {
             structure.moments = momentsData
+                .filter(m => !hiddenSet.has(m.id)) // [NEW] Filter hidden
                 .sort((a, b) => a.name.localeCompare(b.name))
                 .map((m, i) => ({ ...m, order: i }));
         }
