@@ -1,5 +1,6 @@
 "use client";
 import React, { useMemo, useState, useRef, useEffect } from "react";
+import { ZoomIn, ZoomOut } from "lucide-react";
 
 interface GanttTask {
     id: string;
@@ -26,6 +27,7 @@ interface GanttChartProps {
 }
 
 export function GanttChart({ tasks, columns, projectId, onTaskClick, onOptimisticUpdate, visibleTasks }: GanttChartProps) {
+    const [columnWidth, setColumnWidth] = useState(40); // Default width per day in pixels
     const [resizing, setResizing] = useState<{ taskId: string; edge: 'start' | 'end' | 'tolerance'; newDate: string | null } | null>(null);
     const [previewDates, setPreviewDates] = useState<Record<string, { startDate?: string; endDate?: string; toleranceDate?: string }>>({});
     const timelineRef = useRef<HTMLDivElement>(null);
@@ -67,9 +69,17 @@ export function GanttChart({ tasks, columns, projectId, onTaskClick, onOptimisti
         return { start: minDate, end: maxDate };
     }, [tasksWithDates]);
 
+    const totalDays = useMemo(() => {
+        // Add 1 to be inclusive of the end date (Visual columns count)
+        const diffTime = dateRange.end.getTime() - dateRange.start.getTime();
+        return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    }, [dateRange]);
+
+    const timelineWidth = useMemo(() => totalDays * columnWidth, [totalDays, columnWidth]);
+
     // Generate month headers
     const months = useMemo(() => {
-        const result: { label: string; days: number }[] = [];
+        const result: { label: string; days: number; width: number }[] = [];
         const current = new Date(dateRange.start);
 
         while (current <= dateRange.end) {
@@ -77,23 +87,37 @@ export function GanttChart({ tasks, columns, projectId, onTaskClick, onOptimisti
             const month = current.getMonth();
             const monthEnd = new Date(year, month + 1, 0);
 
-            const daysInMonth = monthEnd.getDate();
-            result.push({
-                label: current.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' }),
-                days: daysInMonth,
-            });
+            // Adjust calculation for partial first month if needed, but simplified here:
+            // We iterate day by day or just calculate days remaining in month vs project end
+            // A simpler approach for headers:
 
+            // Find end of current month OR end of project, whichever comes first
+            const chunkEnd = new Date(Math.min(monthEnd.getTime(), dateRange.end.getTime()));
+
+            // Days in this chunk
+            const daysInChunk = Math.floor((chunkEnd.getTime() - current.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+            if (daysInChunk > 0) {
+                result.push({
+                    label: current.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' }),
+                    days: daysInChunk,
+                    width: daysInChunk * columnWidth
+                });
+            }
+
+            // Move to first day of next month
+            current.setDate(1);
             current.setMonth(current.getMonth() + 1);
+            // Ensure we don't loop infinitely if logic is off, though current logic moves date forward.
+            if (current.getTime() <= chunkEnd.getTime()) {
+                // Should not happen if we update current correctly. 
+                // Explicitly set to next month start
+                const nextMonth = new Date(year, month + 1, 1);
+                current.setTime(nextMonth.getTime());
+            }
         }
-
         return result;
-    }, [dateRange]);
-
-    const totalDays = useMemo(() => {
-        // Add 1 to be inclusive of the end date (Visual columns count)
-        const diffTime = dateRange.end.getTime() - dateRange.start.getTime();
-        return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-    }, [dateRange]);
+    }, [dateRange, columnWidth]);
 
     // Generate all individual days for the timeline
     const allDays = useMemo(() => {
@@ -137,13 +161,12 @@ export function GanttChart({ tasks, columns, projectId, onTaskClick, onOptimisti
         const startOffsetDays = startOffsetMs / (1000 * 60 * 60 * 24);
         const durationDays = durationMs / (1000 * 60 * 60 * 24);
 
-        const left = (startOffsetDays / totalDays) * 100;
-        // width represents duration inclusive (1 day task = 1 column)
-        const width = ((durationDays + 1) / totalDays) * 100;
+        const left = startOffsetDays * columnWidth;
+        const width = (durationDays + 1) * columnWidth; // +1 to include end day
 
         return {
-            left: `${left}%`,
-            width: `${width}%`,
+            left: `${left}px`,
+            width: `${width}px`,
         };
     };
 
@@ -152,8 +175,7 @@ export function GanttChart({ tasks, columns, projectId, onTaskClick, onOptimisti
 
         const rect = timelineTrackRef.current.getBoundingClientRect();
         const relativeX = clientX - rect.left;
-        const percentX = relativeX / rect.width;
-        const dayOffset = Math.round(percentX * totalDays);
+        const dayOffset = Math.floor(relativeX / columnWidth);
 
         const newDate = new Date(dateRange.start);
         newDate.setUTCDate(newDate.getUTCDate() + dayOffset);
@@ -285,28 +307,16 @@ export function GanttChart({ tasks, columns, projectId, onTaskClick, onOptimisti
         };
 
         const roots = tasksWithDates.filter(task => {
-            // It's a root if it has no parent ID
             if (!task.parentId || !taskMap.has(task.parentId)) return true;
-
-            // It's ALSO a root if it has a parent ID, but that parent 
-            // has not claimed it as a child (e.g. because they are in different columns)
             const parent = taskMap.get(task.parentId);
             const isClaimedChild = parent?.children?.some(child => child.id === task.id);
-
             return !isClaimedChild;
         });
 
-        // Sort roots by Column Order first, then Task Order
         roots.sort((a, b) => {
             const colIndexA = columns.findIndex(c => c.id === a.columnId);
             const colIndexB = columns.findIndex(c => c.id === b.columnId);
-
-            if (colIndexA !== colIndexB) {
-                // If columns are different, sort by column index
-                return colIndexA - colIndexB;
-            }
-
-            // If in same column, sort by task order
+            if (colIndexA !== colIndexB) return colIndexA - colIndexB;
             return (a.order || 0) - (b.order || 0);
         });
 
@@ -329,21 +339,58 @@ export function GanttChart({ tasks, columns, projectId, onTaskClick, onOptimisti
 
     return (
         <div className="h-full flex flex-col bg-white dark:bg-neutral-900 rounded-lg shadow-sm border border-neutral-200 dark:border-neutral-700 overflow-hidden relative">
+            {/* Toolbar with Zoom */}
+            <div className="p-2 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 flex justify-end items-center gap-4">
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setColumnWidth(prev => Math.max(20, prev - 5))}
+                        className="p-1 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded transition-colors"
+                        title="Zoom Out"
+                    >
+                        <ZoomOut className="w-4 h-4 text-neutral-600 dark:text-neutral-400" />
+                    </button>
+
+                    <input
+                        type="range"
+                        min="20"
+                        max="150"
+                        value={columnWidth}
+                        onChange={(e) => setColumnWidth(Number(e.target.value))}
+                        className="w-32 h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer dark:bg-neutral-700 accent-emerald-500"
+                    />
+
+                    <button
+                        onClick={() => setColumnWidth(prev => Math.min(150, prev + 5))}
+                        className="p-1 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded transition-colors"
+                        title="Zoom In"
+                    >
+                        <ZoomIn className="w-4 h-4 text-neutral-600 dark:text-neutral-400" />
+                    </button>
+                </div>
+            </div>
+
             {/* Scrollable Container */}
             <div className="flex-1 overflow-auto relative">
-                <div className="min-w-[800px] md:min-w-full h-full flex flex-col">
+                {/* 
+                   Dynamic Width Container 
+                   We add 256px (w-64) for the sticky sidebar to the timeline width 
+                */}
+                <div
+                    className="h-full flex flex-col relative"
+                    style={{ minWidth: '100%', width: `max(100%, ${timelineWidth + 256}px)` }}
+                >
 
                     {/* Timeline Header - Months */}
                     <div className="flex border-b border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 sticky top-0 z-30">
                         <div className="w-48 md:w-64 flex-shrink-0 p-2 font-semibold text-neutral-700 dark:text-neutral-200 border-r border-neutral-200 dark:border-neutral-700 text-sm sticky left-0 z-40 bg-neutral-50 dark:bg-neutral-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                             Tarea
                         </div>
-                        <div className="flex-1 flex">
+                        <div className="flex-1 flex pointer-events-none"> {/* Render full width months */}
                             {months.map((month, idx) => (
                                 <div
                                     key={idx}
                                     className="p-2 text-center font-semibold text-neutral-700 dark:text-neutral-200 border-r border-neutral-200 dark:border-neutral-700 last:border-r-0 text-sm truncate"
-                                    style={{ width: `${(month.days / totalDays) * 100}%` }}
+                                    style={{ width: `${month.width}px`, flexShrink: 0 }}
                                 >
                                     {month.label}
                                 </div>
@@ -352,7 +399,7 @@ export function GanttChart({ tasks, columns, projectId, onTaskClick, onOptimisti
                     </div>
 
                     {/* Timeline Header - Days */}
-                    <div className="flex border-b border-neutral-200 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800/70 sticky top-[37px] z-20">
+                    <div className="flex border-b border-neutral-200 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800/70 sticky top-[41px] z-20">
                         <div className="w-48 md:w-64 flex-shrink-0 border-r border-neutral-200 dark:border-neutral-700 sticky left-0 z-30 bg-neutral-100 dark:bg-neutral-800/70 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]" />
                         <div className="flex-1 flex" ref={timelineTrackRef}>
                             {allDays.map((day, idx) => {
@@ -363,10 +410,11 @@ export function GanttChart({ tasks, columns, projectId, onTaskClick, onOptimisti
                                 return (
                                     <div
                                         key={idx}
-                                        className={`flex-1 text-center py-0.5 border-r border-neutral-200/50 dark:border-neutral-700/50 flex flex-col min-w-0
+                                        className={`text-center py-0.5 border-r border-neutral-200/50 dark:border-neutral-700/50 flex flex-col min-w-0 flex-shrink-0
                                             ${day.isToday ? 'bg-emerald-500 text-white font-bold' : ''}
                                             ${day.isWeekend && !day.isToday ? 'bg-neutral-200/50 dark:bg-neutral-700/50 text-neutral-400' : 'text-neutral-500 dark:text-neutral-400'}
                                         `}
+                                        style={{ width: `${columnWidth}px` }}
                                         title={day.date.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short', timeZone: 'UTC' })}
                                     >
                                         <span className="text-[8px] leading-tight">{weekdayInitial}</span>
@@ -478,7 +526,7 @@ export function GanttChart({ tasks, columns, projectId, onTaskClick, onOptimisti
                                             <div
                                                 className="absolute top-1/2 -translate-y-1/2 w-3 h-12 bg-red-500 opacity-70 hover:opacity-100 cursor-ew-resize transition-opacity"
                                                 style={{
-                                                    left: `${((new Date(previewDates[task.id]?.toleranceDate || task.toleranceDate as string).getTime() - dateRange.start.getTime()) / (1000 * 60 * 60 * 24) / totalDays) * 100}%`,
+                                                    left: `${((new Date(previewDates[task.id]?.toleranceDate || task.toleranceDate as string).getTime() - dateRange.start.getTime()) / (1000 * 60 * 60 * 24)) * columnWidth}px`,
                                                 }}
                                                 onMouseDown={(e) => handleMouseDown(e, task.id, 'tolerance')}
                                                 title={`Fecha de tolerancia: ${new Date(previewDates[task.id]?.toleranceDate || task.toleranceDate as string).toLocaleDateString(undefined, { timeZone: 'UTC' })}\nArrastrar para cambiar`}
