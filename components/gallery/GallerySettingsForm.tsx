@@ -174,7 +174,11 @@ export default function GallerySettingsForm({
                             <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-3 block">Música de Fondo</label>
                             <MusicPicker
                                 selectedTrackId={data.musicTrackId || null}
-                                onSelect={(id) => update('musicTrackId', id || "")}
+                                onSelect={(id) => {
+                                    const newData = { ...data, musicTrackId: id || "" };
+                                    if (id) newData.musicEnabled = true;
+                                    onChange(newData);
+                                }}
                             />
                         </div>
 

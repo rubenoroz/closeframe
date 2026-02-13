@@ -226,6 +226,7 @@ export async function POST(request: Request) {
                 zipFileName: zipFileName || null,
                 // Music
                 musicTrackId: musicTrackId || null,
+                musicEnabled: musicEnabled ?? false, // [FIX] Save music enabled state
             },
         });
 
