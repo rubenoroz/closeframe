@@ -1,28 +1,45 @@
 "use client";
 import React, { useCallback, useMemo, useState } from "react";
 import {
-    DndContext,
-    DragOverlay,
     PointerSensor,
     useSensor,
     useSensors,
-    pointerWithin
 } from "@dnd-kit/core";
-import { SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortable";
-import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
 import { useKanbanData } from "./hooks/useKanbanData";
 import { useKanbanDrag } from "./hooks/useKanbanDrag";
-import { Column } from "./Column";
-import { Task } from "./Task";
 import { TaskDetailModal } from "./TaskDetailModal";
-import { GanttChart } from "./GanttChart";
 import { Button } from "@/components/ui/button";
 import { Loader2, BarChart3, FileSpreadsheet, PieChart, Plus, Eye, EyeOff, Search, X, MessageSquare, FileText } from "lucide-react";
 import { FetchedTask } from "@/types/scena";
 import { ProjectNotesModal } from "./ProjectNotesModal";
 import { InputModal } from "./InputModal";
 
+
+// Dynamic Imports with loading states
+const KanbanView = dynamic(
+    () => import("./KanbanView").then((mod) => mod.KanbanView),
+    {
+        ssr: false,
+        loading: () => (
+            <div className="flex items-center justify-center h-full w-full">
+                <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+            </div>
+        )
+    }
+);
+
+const GanttChart = dynamic(
+    () => import("./GanttChart").then((mod) => mod.GanttChart),
+    {
+        ssr: false,
+        loading: () => (
+            <div className="flex items-center justify-center h-full w-full">
+                <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+            </div>
+        )
+    }
+);
 
 const ProjectStatisticsModal = dynamic(
     () => import("./ProjectStatisticsModal").then((mod) => mod.ProjectStatisticsModal),
@@ -449,63 +466,25 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
             {/* Main Content */}
             <div className="flex-1 overflow-hidden">
                 {viewMode === 'kanban' ? (
-                    <DndContext
+                    <KanbanView
+                        columns={columns}
+                        visibleTasks={visibleTasks}
+                        columnsId={columnsId}
                         sensors={sensors}
-                        collisionDetection={pointerWithin}
                         onDragStart={onDragStart}
                         onDragOver={onDragOver}
                         onDragEnd={onDragEnd}
-                    >
-                        <div className="h-full overflow-x-auto">
-                            <div className="flex h-full gap-4 pb-4 min-w-fit">
-                                <SortableContext items={columnsId} strategy={horizontalListSortingStrategy}>
-                                    {columns.map((col) => {
-                                        const columnTasks = visibleTasks
-                                            .filter(task => task.columnId === col.id)
-                                            .sort((a, b) => (a.sortKey || "").localeCompare(b.sortKey || ""));
-
-                                        return (
-                                            <Column
-                                                key={col.id}
-                                                column={col}
-                                                tasks={columnTasks}
-                                                onAddTask={handleAddTask}
-                                                onEditColumn={handleEditColumn}
-                                                onDeleteColumn={handleDeleteColumn}
-                                                onTaskClick={handleTaskClick}
-                                                onColorChange={handleColorChange}
-                                                collapsedTasks={collapsedTasks}
-                                                onToggleCollapse={toggleTaskCollapse}
-                                                activeTaskId={activeItem?.id as string}
-                                            />
-                                        );
-                                    })}
-                                </SortableContext>
-
-                                <button
-                                    className="w-[300px] h-[60px] rounded-xl border border-dashed border-neutral-300 dark:border-neutral-700 hover:border-emerald-500/50 hover:bg-neutral-100 dark:hover:bg-neutral-800/50 flex items-center justify-center text-neutral-500 transition-colors shrink-0"
-                                    onClick={handleAddColumn}
-                                >
-                                    <Plus className="w-4 h-4 mr-2" />
-                                    Nueva Columna
-                                </button>
-                                <div className="w-4 shrink-0" />
-                            </div>
-                        </div>
-
-                        {typeof document !== 'undefined' && createPortal(
-                            <DragOverlay>
-                                {activeItem && activeItem.data.current?.type === "Task" && activeTaskContent && (
-                                    <Task
-                                        task={activeTaskContent}
-                                        onClick={() => { }}
-                                        isActive
-                                    />
-                                )}
-                            </DragOverlay>,
-                            document.body
-                        )}
-                    </DndContext>
+                        onAddTask={handleAddTask}
+                        onEditColumn={handleEditColumn}
+                        onDeleteColumn={handleDeleteColumn}
+                        onTaskClick={handleTaskClick}
+                        onColorChange={handleColorChange}
+                        collapsedTasks={collapsedTasks}
+                        onToggleCollapse={toggleTaskCollapse}
+                        activeItem={activeItem}
+                        activeTaskContent={activeTaskContent}
+                        onAddColumn={handleAddColumn}
+                    />
                 ) : (
                     <div className="h-full">
                         <GanttChart
