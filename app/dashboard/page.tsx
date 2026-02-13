@@ -194,7 +194,6 @@ export default function DashboardPage() {
                     // Use Features from /api/features/me (Modular System)
                     if (featuresData.features) {
                         const f = featuresData.features;
-                        console.log("DEBUG: Features from API:", f);
                         setPlanLimits({
                             videoEnabled: f.videoGallery ?? f.videoEnabled ?? false,
                             allowedLowRes: f.lowResDownloads ?? false,
@@ -205,10 +204,6 @@ export default function DashboardPage() {
                             collaborativeGalleries: f.collaborativeGalleries ?? false,
                             zipDownloadsEnabled: f.zipDownloadsEnabled ?? false,
                             customFonts: f.customFonts ?? false
-                        });
-                        console.log("DEBUG: Plan Limits Set (API):", {
-                            low: f.lowResDownloads,
-                            high: f.highResDownloads
                         });
                     } else if (settingsData.effectiveConfig?.features) {
                         const features = settingsData.effectiveConfig.features;

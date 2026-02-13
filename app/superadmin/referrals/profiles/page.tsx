@@ -11,6 +11,7 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
     DialogTrigger,
 } from "@/components/ui/dialog";
 import {
@@ -220,6 +221,9 @@ export default function ProfilesPage() {
                     <DialogContent>
                         <DialogHeader>
                             <DialogTitle>Crear Perfil de Referido</DialogTitle>
+                            <DialogDescription>
+                                Configura un nuevo tipo de perfil para tus referidos.
+                            </DialogDescription>
                         </DialogHeader>
                         <form
                             action={handleCreate}
@@ -344,6 +348,9 @@ export default function ProfilesPage() {
                 <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>Editar Perfil: {editProfile?.name}</DialogTitle>
+                        <DialogDescription>
+                            Modifica las reglas de comisión y niveles para este perfil.
+                        </DialogDescription>
                     </DialogHeader>
                     {editProfile && (
                         <form onSubmit={handleEdit} className="space-y-5">

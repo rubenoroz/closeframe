@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle, RefreshCw, Trash2, Edit2, Check, X, HardDrive } from "lucide-react";
+import { CheckCircle, RefreshCw, Trash2, Edit2, Check, X, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { QuotaDisplay } from "./QuotaDisplay";
 
@@ -25,6 +25,7 @@ interface ContentSourceCardProps {
 export function ContentSourceCard({ account, onRename, onDisconnect, onReauthorize }: ContentSourceCardProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [tempName, setTempName] = useState(account.name || "");
+    const [authError, setAuthError] = useState<string | null>(null);
 
     const handleSaveRename = () => {
         if (onRename) {
@@ -66,7 +67,10 @@ export function ContentSourceCard({ account, onRename, onDisconnect, onReauthori
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             whileHover={{ scale: 1.02 }}
-            className="rounded-xl md:rounded-2xl border border-neutral-700/50 bg-neutral-900 p-4 md:p-6 flex flex-col group transition-all hover:bg-neutral-800/80 hover:border-emerald-500/30 border-b-4 shadow-2xl shadow-black/50"
+            className={cn(
+                "rounded-xl md:rounded-2xl border border-neutral-700/50 bg-neutral-900 p-4 md:p-6 flex flex-col group transition-all hover:bg-neutral-800/80 border-b-4 shadow-2xl shadow-black/50",
+                authError ? "border-red-500/50 hover:border-red-500" : "hover:border-emerald-500/30"
+            )}
         >
             <div className="flex items-start justify-between mb-6 md:mb-8">
                 <div className="flex-1 min-w-0 flex items-start gap-3">
@@ -120,21 +124,34 @@ export function ContentSourceCard({ account, onRename, onDisconnect, onReauthori
                                     )}
                                 </div>
                                 <span className="text-xs text-neutral-400 truncate">
-                                    {account.email || account.name || "Cuenta Conectada"}
+                                    {authError ? (
+                                        <span className="text-red-400 font-bold animate-pulse">Renovar Conexión</span>
+                                    ) : (
+                                        account.email || account.name || "Cuenta Conectada"
+                                    )}
                                 </span>
                             </div>
                         )}
                     </div>
                 </div>
 
-                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-500/10 shrink-0" title="Conectado y Activo">
-                    <CheckCircle className="w-4 h-4 text-emerald-500" />
-                </div>
+                {authError ? (
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-red-500/10 shrink-0" title="Requiere Re-autorización">
+                        <AlertTriangle className="w-4 h-4 text-red-500 animate-pulse" />
+                    </div>
+                ) : (
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-500/10 shrink-0" title="Conectado y Activo">
+                        <CheckCircle className="w-4 h-4 text-emerald-500" />
+                    </div>
+                )}
             </div>
 
             {/* Metrics (Only for Storage) */}
             {isStorage && (
-                <QuotaDisplay accountId={account.id} />
+                <QuotaDisplay
+                    accountId={account.id}
+                    onError={(err) => setAuthError(err)}
+                />
             )}
 
             {!isStorage && (
@@ -150,9 +167,15 @@ export function ContentSourceCard({ account, onRename, onDisconnect, onReauthori
             <div className="flex gap-2 mt-auto pt-4 border-t border-neutral-800/50">
                 <button
                     onClick={() => onReauthorize(account)}
-                    className="flex-1 flex items-center justify-center gap-1.5 md:gap-2 px-3 md:px-4 py-2 md:py-2.5 rounded-lg md:rounded-xl border border-neutral-800 hover:border-neutral-700 hover:bg-neutral-800 transition text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-neutral-400 hover:text-white"
+                    className={cn(
+                        "flex-1 flex items-center justify-center gap-1.5 md:gap-2 px-3 md:px-4 py-2 md:py-2.5 rounded-lg md:rounded-xl border transition text-[9px] md:text-[10px] font-bold uppercase tracking-widest",
+                        authError
+                            ? "border-red-500 bg-red-500/10 text-red-200 hover:bg-red-500 hover:text-white animate-pulse"
+                            : "border-neutral-800 hover:border-neutral-700 hover:bg-neutral-800 text-neutral-400 hover:text-white"
+                    )}
                 >
-                    <RefreshCw className="w-3 h-3" /> <span className="hidden sm:inline">Re</span>autorizar
+                    {authError ? <AlertTriangle className="w-3 h-3" /> : <RefreshCw className="w-3 h-3" />}
+                    <span className="hidden sm:inline">Re</span>autorizar
                 </button>
                 <button
                     onClick={() => onDisconnect(account.id, account.type)}

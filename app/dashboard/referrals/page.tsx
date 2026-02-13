@@ -226,7 +226,7 @@ export default function ReferralsPage() {
                 <div>
                     <h1 className="text-2xl font-bold">Mis Referidos</h1>
                     <p className="text-muted-foreground">
-                        Comparte tu link y gana comisiones
+                        Comparte tu link y gana crédito para reducir tu factura o conseguir tu <strong>mensualidad GRATIS</strong>.
                     </p>
                 </div>
                 <Button onClick={fetchStats} variant="outline" size="sm">

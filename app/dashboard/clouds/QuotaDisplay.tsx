@@ -3,19 +3,25 @@
 import React, { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
-export function QuotaDisplay({ accountId }: { accountId: string }) {
+export function QuotaDisplay({ accountId, onError }: { accountId: string, onError?: (error: string) => void }) {
     const [quota, setQuota] = useState<{ usage: number, limit: number } | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         fetch(`/api/cloud/quota?cloudAccountId=${accountId}`)
-            .then(res => res.ok ? res.json() : null)
+            .then(res => {
+                if (res.status === 401) {
+                    if (onError) onError("auth_expired");
+                    return null;
+                }
+                return res.ok ? res.json() : null;
+            })
             .then(data => {
                 if (data && typeof data.usage === 'number') setQuota(data);
                 setLoading(false);
             })
             .catch(() => setLoading(false));
-    }, [accountId]);
+    }, [accountId, onError]);
 
     if (loading) return (
         <div className="space-y-4 mb-4 md:mb-8 w-full animate-pulse opacity-50">

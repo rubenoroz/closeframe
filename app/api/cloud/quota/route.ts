@@ -39,14 +39,39 @@ export async function GET(request: Request) {
         // We handle this difference here.
         let quota = null;
         if (account.provider === "google") {
+            console.log("DEBUG: Calling Google getQuota with authClient");
+            quota = await provider.getQuota(authClient);
+        } else if (account.provider !== "microsoft" && account.provider !== "dropbox") {
+            console.log("DEBUG: Fallback to Google getQuota with authClient (provider: " + account.provider + ")");
             quota = await provider.getQuota(authClient);
         } else {
+            console.log("DEBUG: Calling Provider getQuota without args (provider: " + account.provider + ")");
             quota = await provider.getQuota();
         }
 
         return NextResponse.json(quota || { usage: 0, limit: 0 });
-    } catch (error) {
-        console.error("Quota Error:", error);
+    } catch (error: any) {
+        console.error("Quota Error:", error.message || error);
+
+        // Handle expired/revoked tokens gracefully (Google, Microsoft, Dropbox)
+        if (
+            (error.code === 401 || error.status === 401 || error.statusCode === 401) || // Generic HTTP 401
+            (error.message && (
+                error.message.includes("invalid_grant") ||
+                error.message.includes("invalid_request") ||
+                error.message.includes("InvalidAuthenticationToken") || // Microsoft
+                error.message.includes("v1/oauth2/token") || // Dropbox auth endpoint
+                error.message.toLowerCase().includes("unauthorized") ||
+                error.message.toLowerCase().includes("expired")
+            ))
+        ) {
+            return NextResponse.json({
+                error: "auth_expired",
+                usage: 0,
+                limit: 0
+            }, { status: 401 });
+        }
+
         return NextResponse.json({
             error: "Failed to fetch quota",
             details: error instanceof Error ? error.message : String(error)
