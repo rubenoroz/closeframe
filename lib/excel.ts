@@ -10,6 +10,7 @@ interface ExportTask {
     assignees?: { name: string | null; email: string | null }[];
     columnId?: string;
     level?: number;
+    progress?: number;
 }
 
 export const exportToExcel = async (
@@ -23,6 +24,7 @@ export const exportToExcel = async (
     // Setup Columns
     worksheet.columns = [
         { header: 'Tarea', key: 'title', width: 40 },
+        { header: 'Progreso', key: 'progress', width: 12 },
         { header: 'Estado', key: 'status', width: 15 },
         { header: 'Prioridad', key: 'priority', width: 12 },
         { header: 'Asignado a', key: 'assignees', width: 25 },
@@ -45,7 +47,7 @@ export const exportToExcel = async (
 
     // Add Timeline Headers
     let currentDate = new Date(minDate);
-    let colIndex = 7;
+    let colIndex = 8; // Reset to 8 because we added a column
     const dateColMap = new Map<string, number>();
 
     while (currentDate <= maxDate) {
@@ -88,6 +90,7 @@ export const exportToExcel = async (
         const indentation = task.level ? '    '.repeat(task.level) : '';
 
         row.getCell('title').value = indentation + task.title;
+        row.getCell('progress').value = (task.progress || 0) + '%';
         row.getCell('status').value = statusName;
         row.getCell('priority').value = task.priority;
         row.getCell('assignees').value = assignees;
@@ -106,7 +109,7 @@ export const exportToExcel = async (
 
                 if (colIdx) {
                     const cell = row.getCell(colIdx);
-                    const argbColor = 'FF' + ((statusColor || '#3B82F6').replace('#', ''));
+                    const argbColor = 'FF' + ((statusColor || '#3B82F6').replace('#', '')); // 'FF' + hex
 
                     cell.fill = {
                         type: 'pattern',
