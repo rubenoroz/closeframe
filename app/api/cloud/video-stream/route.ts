@@ -34,7 +34,21 @@ export async function GET(req: NextRequest) {
         });
 
         const fileSize = parseInt(fileMeta.data.size || "0");
-        const mimeType = fileMeta.data.mimeType || "video/mp4";
+        let mimeType = fileMeta.data.mimeType || "video/mp4";
+
+        // [FIX] Google Drive sometimes returns octet-stream or video/mp4 for audio
+        // We fallback to extension detection to ensure <audio> tags work
+        if (fileMeta.data.name) {
+            const lowerName = fileMeta.data.name.toLowerCase();
+            if (lowerName.endsWith(".mp3")) mimeType = "audio/mpeg";
+            else if (lowerName.endsWith(".wav")) mimeType = "audio/wav";
+            else if (lowerName.endsWith(".m4a")) mimeType = "audio/mp4";
+            else if (lowerName.endsWith(".aac")) mimeType = "audio/aac";
+            else if (lowerName.endsWith(".ogg")) mimeType = "audio/ogg";
+            else if (lowerName.endsWith(".flac")) mimeType = "audio/flac";
+        }
+
+        console.log(`[VideoStream] Streaming ${fileId} (${fileMeta.data.name}): ${mimeType}`);
 
         // Check for Range header (for seeking support)
         const rangeHeader = req.headers.get("range");

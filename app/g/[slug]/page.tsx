@@ -15,6 +15,7 @@ interface Props {
 
 // Ensure dynamic rendering
 export const dynamic = "force-dynamic";
+export const revalidate = 0; // [FIX] Ensure no caching for instant updates
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { slug } = await params;

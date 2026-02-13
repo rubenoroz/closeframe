@@ -120,7 +120,16 @@ export default function GallerySettingsForm({
     }, [planLimits, data.isCloserGallery]);
 
     const update = (field: keyof GallerySettingsData, value: any) => {
-        onChange({ ...data, [field]: value });
+        let newData = { ...data, [field]: value };
+
+        // Auto-sync Header Title if it was empty or matched the old name
+        if (field === 'name') {
+            if (!data.headerTitle || data.headerTitle === data.name) {
+                newData.headerTitle = value;
+            }
+        }
+
+        onChange(newData);
     };
 
     return (
@@ -445,9 +454,12 @@ export default function GallerySettingsForm({
                             type="text"
                             value={data.headerTitle}
                             onChange={(e) => update('headerTitle', e.target.value)}
-                            placeholder="Ej: Boda de Ana & Carlos"
+                            placeholder={data.name || "Ej: Boda de Ana & Carlos"}
                             className={`w-full border rounded-xl px-4 py-2.5 text-sm outline-none transition-all ${isLight ? 'bg-white border-neutral-200 focus:border-emerald-500' : 'bg-neutral-900 border-neutral-700 focus:border-emerald-500'}`}
                         />
+                        <p className="text-[10px] text-neutral-500 mt-1.5 ml-1">
+                            Se sincroniza automáticamente con el "Nombre de Galería" a menos que escribas algo diferente aquí.
+                        </p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

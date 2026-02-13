@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Camera, Folder, Heart, Loader2, Maximize2, CheckCircle2, Circle, Download, X } from "lucide-react";
+import { Camera, Folder, Heart, Loader2, Maximize2, CheckCircle2, Circle, Download, X, Music } from "lucide-react";
 import Lightbox from "./Lightbox";
 import { Skeleton } from "@/components/Skeleton";
 import GalleryLoaderGrid from "./GalleryLoaderGrid";
@@ -654,8 +654,8 @@ export default function GalleryViewer({
                                             onClick={() => handleDownloadZip("jpg")}
                                         >
                                             {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                                            <span className="hidden sm:inline">{mediaType === "videos" ? "Descargar HD" : "Descargar JPG"}</span>
-                                            <span className="sm:hidden">{mediaType === "videos" ? "HD" : "JPG"}</span>
+                                            <span className="hidden sm:inline">Descargar</span>
+                                            <span className="sm:hidden">Descargar</span>
                                         </button>
                                     </div>
                                 )}
@@ -714,35 +714,19 @@ function MediaCard({
 }) {
     const [loaded, setLoaded] = useState(false);
     const [error, setError] = useState(false);
-    const [realAspectRatio, setRealAspectRatio] = useState<number | null>(null); // [NEW] Client-side correction
-    // [FIX] Detect external videos by mimeType 'video/external' OR prefix, or explicit prop
-    const isVideo = item.mimeType?.startsWith('video/') || item.isExternal;
-    // [FIX] If external, assume loaded once rendered or use simple onLoad
+    const [realAspectRatio, setRealAspectRatio] = useState<number | null>(null);
 
+    const isVideo = item.mimeType?.startsWith('video/') || item.isExternal;
+    const isAudio = item.mimeType?.startsWith('audio/') || /\.(mp3|m4a|wav|aac|ogg|flac)/i.test(item.name);
     const isExternal = !!item.isExternal;
 
-    // Determine thumbnail size based on plan limits
-    // Optimized: 600px is enough for most grid views and retina mobile
     const thumbSize = lowResThumbnails ? 400 : 600;
 
-    // Calculate aspect ratio for placeholder sizing (avoids layout shift)
-    // Default to 4:3 if dimensions unknown
     const aspectRatio = (item.width && item.height)
         ? item.width / item.height
         : 4 / 3;
 
-    // [DEBUG] Log layout state
-    // useEffect(() => {
-    //     if (index === 0) console.log("MediaCard[0]:", { layoutType, width: item.width, height: item.height, aspectRatio });
-    // }, [layoutType, item, index]);
-
-    // Use eager loading for first 8 items (likely in viewport)
     const loadingStrategy = index < 8 ? "eager" : "lazy";
-
-    // Debug logging for selection visibility
-    // useEffect(() => {
-    //    if (index === 0) console.log("MediaCard[0] props:", { downloadEnabled, selectionEnabled, isSelected });
-    // }, [downloadEnabled, selectionEnabled, isSelected, index]);
 
     return (
         <motion.div
@@ -757,12 +741,11 @@ function MediaCard({
                 style={{
                     aspectRatio: layoutType === "grid"
                         ? (isVideo ? 1.77 : 1.5)
-                        : (realAspectRatio || aspectRatio) // Use detected ratio if available
+                        : (realAspectRatio || aspectRatio)
                 }}
             >
                 <div onClick={onView} className="absolute inset-0">
-                    {/* Skeleton placeholder with shimmer effect */}
-                    {!loaded && !error && (
+                    {!loaded && !error && !isAudio && (
                         <div className="absolute inset-0 bg-neutral-800 overflow-hidden">
                             <div className="absolute inset-0 bg-gradient-to-r from-neutral-800 via-neutral-700 to-neutral-800 animate-pulse" />
                             {isVideo && (
@@ -777,68 +760,69 @@ function MediaCard({
                         </div>
                     )}
 
-                    {/* Error state */}
-                    {error && (
-                        <div className="absolute inset-0 bg-neutral-900 flex items-center justify-center">
-                            <span className="text-neutral-500 text-xs">Error</span>
+                    {isAudio ? (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-neutral-900 border border-neutral-800">
+                            <Music className="w-12 h-12 text-neutral-600 mb-2" />
+                            <span className="text-[10px] uppercase tracking-widest text-neutral-500">Audio</span>
                         </div>
-                    )}
+                    ) : (
+                        <>
+                            {error && (
+                                <div className="absolute inset-0 bg-neutral-900 flex items-center justify-center">
+                                    <span className="text-neutral-500 text-xs">Error</span>
+                                </div>
+                            )}
 
-                    <img
-                        src={isExternal && item.thumbnailLink
-                            ? item.thumbnailLink
-                            : `/api/cloud/thumbnail?c=${cloudAccountId}&f=${item.id}&s=${thumbSize}&t=${encodeURIComponent(item.thumbnailLink || '')}&v=2`
-                        }
-                        alt={item.name}
-                        className={`absolute inset-0 w-full h-full object-cover transform group-hover:scale-105 transition duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
-                        onLoad={(e) => {
-                            setLoaded(true);
-                            if (!isVideo) {
-                                const img = e.currentTarget;
-                                if (img.naturalWidth && img.naturalHeight) {
-                                    const naturalRatio = img.naturalWidth / img.naturalHeight;
-                                    // If difference is significant (> 10%), assume metadata was wrong (e.g. rotation issue)
-                                    if (Math.abs(naturalRatio - aspectRatio) > 0.1) {
-                                        // console.log(`[Fix] Correcting aspect ratio for ${item.name}: ${aspectRatio.toFixed(2)} -> ${naturalRatio.toFixed(2)}`);
-                                        setRealAspectRatio(naturalRatio);
-                                    }
+                            <img
+                                src={isExternal && item.thumbnailLink
+                                    ? item.thumbnailLink
+                                    : `/api/cloud/thumbnail?c=${cloudAccountId}&f=${item.id}&s=${thumbSize}&t=${encodeURIComponent(item.thumbnailLink || '')}&v=2`
                                 }
-                            }
-                        }}
-                        onError={() => setError(true)}
-                        referrerPolicy="no-referrer"
-                        loading={loadingStrategy}
-                    />
+                                alt={item.name}
+                                className={`absolute inset-0 w-full h-full object-cover transform group-hover:scale-105 transition duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
+                                onLoad={(e) => {
+                                    setLoaded(true);
+                                    if (!isVideo) {
+                                        const img = e.currentTarget;
+                                        if (img.naturalWidth && img.naturalHeight) {
+                                            const naturalRatio = img.naturalWidth / img.naturalHeight;
+                                            if (Math.abs(naturalRatio - aspectRatio) > 0.1) {
+                                                setRealAspectRatio(naturalRatio);
+                                            }
+                                        }
+                                    }
+                                }}
+                                onError={() => setError(true)}
+                                referrerPolicy="no-referrer"
+                                loading={loadingStrategy}
+                            />
 
-                    {/* Video play icon overlay */}
-                    {isVideo && (loaded || isExternal) && (
-                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <div className="w-16 h-16 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center border-2 border-white/30 shadow-xl">
-                                <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M8 5v14l11-7z" />
-                                </svg>
-                            </div>
-                        </div>
-                    )}
+                            {isVideo && (loaded || isExternal) && (
+                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                    <div className="w-16 h-16 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center border-2 border-white/30 shadow-xl">
+                                        <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M8 5v14l11-7z" />
+                                        </svg>
+                                    </div>
+                                </div>
+                            )}
 
-                    {/* Watermark overlay */}
-                    {enableWatermark && loaded && !isVideo && (
-                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <div className="opacity-30 max-w-[40%] max-h-[40%]">
-                                <img
-                                    src={studioLogo || "/favicon-white.svg"}
-                                    alt="Watermark"
-                                    className="w-full h-full object-contain drop-shadow-lg"
-                                    style={{ filter: 'opacity(0.6)' }}
-                                />
-                            </div>
-                        </div>
+                            {enableWatermark && loaded && !isVideo && (
+                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                    <div className="opacity-30 max-w-[40%] max-h-[40%]">
+                                        <img
+                                            src={studioLogo || "/favicon-white.svg"}
+                                            alt="Watermark"
+                                            className="w-full h-full object-contain drop-shadow-lg"
+                                            style={{ filter: 'opacity(0.6)' }}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
 
-
-
-                {/* Overlay Actions (Hover) */}
                 <div
                     onClick={onView}
                     className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center pointer-events-none"
@@ -852,7 +836,6 @@ function MediaCard({
                     <span className="text-xs text-neutral-200 truncate block">{item.name}</span>
                 </div>
 
-                {/* Selection Checkbox - Moved to end for stacking context safe-guard */}
                 {downloadEnabled && selectionEnabled && (
                     <button
                         onClick={(e) => {
@@ -865,13 +848,13 @@ function MediaCard({
                                 ? "bg-emerald-500 text-white border-emerald-400 opacity-100 scale-100"
                                 : "bg-black/40 text-white/80 border-white/20 opacity-100 scale-100 hover:bg-black/60"
                         )}
-                        style={{ opacity: 1 }} // Always force visibility
+                        style={{ opacity: 1 }}
                     >
                         {isSelected ? <CheckCircle2 className="w-4 h-4" /> : <Circle className="w-4 h-4" />}
                     </button>
                 )}
             </div>
-        </motion.div >
+        </motion.div>
     );
 }
 

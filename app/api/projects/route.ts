@@ -343,7 +343,10 @@ export async function PATCH(request: NextRequest) {
         if (enableWatermark !== undefined) updateData.enableWatermark = enableWatermark;
         if (category !== undefined) updateData.category = category;
         if (date !== undefined) updateData.date = date ? new Date(date) : null;
-        if (headerTitle !== undefined) updateData.headerTitle = headerTitle;
+        if (headerTitle !== undefined) {
+            // If user clears the input (sends ""), we set it to null so it falls back to name
+            updateData.headerTitle = headerTitle === "" ? null : headerTitle;
+        }
         if (headerFontFamily !== undefined) updateData.headerFontFamily = headerFontFamily;
         if (headerFontSize !== undefined) updateData.headerFontSize = headerFontSize;
         if (headerColor !== undefined) updateData.headerColor = headerColor;

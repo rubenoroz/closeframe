@@ -394,6 +394,7 @@ export default function DashboardPage() {
                     isCloserGallery: editData.isCloserGallery,
                     musicTrackId: editData.musicTrackId,
                     musicEnabled: editData.musicEnabled,
+                    date: editData.date, // [FIX] Include date in organize save
                 })
             });
 

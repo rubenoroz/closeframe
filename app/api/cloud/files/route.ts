@@ -19,12 +19,13 @@ const isSystemFile = (name: string) => {
 const isValidMediaFile = (f: any) => {
     const name = f.name?.toLowerCase() || "";
     const mime = f.mimeType?.toLowerCase() || "";
-    // Broaden significantly to allow common photo/video/raw formats
+    // Broaden significantly to allow common photo/video/raw/audio formats
     const isKnownMedia =
         mime.startsWith('image/') ||
         mime.startsWith('video/') ||
+        mime.startsWith('audio/') ||
         mime.includes('zip') ||
-        /\.(jpg|jpeg|png|webp|gif|heic|heif|tiff|tif|mp4|mov|avi|mkv|zip|cr2|nef|arw|dng|orf|raf|rw2|peif|srw)$/i.test(name);
+        /\.(jpg|jpeg|png|webp|gif|heic|heif|tiff|tif|mp4|mov|avi|mkv|zip|cr2|nef|arw|dng|orf|raf|rw2|peif|srw|mp3|m4a|wav|aac|ogg|flac)$/i.test(name);
 
     // If it has a mimeType that looks like a file and it's not explicitly a folder, 
     // we'll assume it's media unless it's a known system file

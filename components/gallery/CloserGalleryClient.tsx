@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import GalleryViewer from "@/components/gallery/GalleryViewer";
 import GalleryLock from "@/components/gallery/GalleryLock";
 import GalleryCover from "@/components/gallery/GalleryCover";
@@ -309,6 +309,16 @@ export default function CloserGalleryClient({
 
 
     // Handlers
+    const handleVideoPlay = useCallback(() => {
+        console.log("[CloserGallery] Video/Audio STARTED playing - muting background music");
+        setIsVideoPlaying(true);
+    }, []);
+
+    const handleVideoPause = useCallback(() => {
+        console.log("[CloserGallery] Video/Audio STOPPED playing - resuming background music");
+        setIsVideoPlaying(false);
+    }, []);
+
     const handleUnlock = () => setIsLocked(false);
     const handleEnter = () => {
         setShowCover(false);
@@ -448,8 +458,9 @@ export default function CloserGalleryClient({
                     className="pt-0"
 
                     // Video Events
-                    onVideoPlay={() => setIsVideoPlaying(true)}
-                    onVideoPause={() => setIsVideoPlaying(false)}
+                    // Video Events
+                    onVideoPlay={handleVideoPlay}
+                    onVideoPause={handleVideoPause}
                 />
             )}
         </div>

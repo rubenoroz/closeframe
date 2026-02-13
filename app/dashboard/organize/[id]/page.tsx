@@ -3,11 +3,10 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Save, Loader2, GripVertical, Folder as FolderIcon, LayoutGrid, Video, Trash2, Plus, QrCode } from "lucide-react";
+import { ArrowLeft, Save, Loader2, GripVertical, Folder as FolderIcon, LayoutGrid, Video, Trash2, Plus, QrCode, Music, Settings, X, Play, Pause } from "lucide-react";
 import GalleryLoaderGrid from "@/components/gallery/GalleryLoaderGrid";
 import CollaborativeSettings from "@/components/gallery/CollaborativeSettings";
 import GallerySettingsForm, { GallerySettingsData } from "@/components/gallery/GallerySettingsForm";
-import { Settings, X } from "lucide-react";
 
 import {
     DndContext,
@@ -37,6 +36,7 @@ interface FileItem {
     name: string;
     thumbnailLink?: string;
     folderId?: string; // Track which folder this file belongs to
+    mimeType?: string; // Add MIME type for better detection
 }
 
 interface FolderItem {
@@ -155,7 +155,7 @@ export default function OrganizePage() {
             newFiles = newFiles.filter((f: any) => {
                 const low = f.name.toLowerCase();
                 const isSystem = f.name.startsWith('.') || low === 'thumbs.db' || low === 'desktop.ini' || f.name.includes('Icon\r') || low === '__macosx' || f.name.startsWith('._');
-                const isMedia = f.mimeType?.startsWith('image/') || f.mimeType?.startsWith('video/') || low.endsWith('.zip') || f.mimeType?.includes('zip') || /\.(jpg|jpeg|png|webp|gif|heic|heif|tiff|tif|mp4|mov|avi|mkv|zip|cr2|nef|arw|dng)$/i.test(low);
+                const isMedia = f.mimeType?.startsWith('image/') || f.mimeType?.startsWith('video/') || f.mimeType?.startsWith('audio/') || low.endsWith('.zip') || f.mimeType?.includes('zip') || /\.(jpg|jpeg|png|webp|gif|heic|heif|tiff|tif|mp4|mov|avi|mkv|zip|cr2|nef|arw|dng|mp3|m4a|wav|aac|ogg|flac)$/i.test(low);
                 const isStructure = ['webjpg', 'jpg', 'raw', 'print', 'highres', 'icon'].includes(low);
                 return !isSystem && (isMedia || (f.mimeType && f.mimeType !== "application/vnd.google-apps.folder")) && !isStructure;
             });
@@ -894,12 +894,31 @@ function SortableTab({ folder, isActive, isHidden, onClick, onToggle }: { folder
 
 function SortableFile({ file, cloudAccountId }: { file: FileItem, cloudAccountId: string }) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: file.id });
+    const [isPlaying, setIsPlaying] = useState(false);
+    const audioRef = React.useRef<HTMLAudioElement | null>(null);
 
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
         opacity: isDragging ? 0.3 : 1,
         zIndex: isDragging ? 2 : 1,
+    };
+
+    // Use robust detection that handles trailing whitespace and MIME types
+    const isAudio = (file.mimeType && file.mimeType.startsWith('audio/')) || /\.(mp3|m4a|wav|aac|ogg|flac)(\s*)?$/i.test(file.name);
+
+    const togglePlay = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
+
+        if (!audioRef.current) return;
+
+        if (isPlaying) {
+            audioRef.current.pause();
+        } else {
+            audioRef.current.play();
+        }
+        setIsPlaying(!isPlaying);
     };
 
     return (
@@ -910,12 +929,34 @@ function SortableFile({ file, cloudAccountId }: { file: FileItem, cloudAccountId
             {...listeners}
             className="group relative aspect-[3/2] bg-neutral-900 rounded-lg overflow-hidden border border-neutral-800/50 hover:border-neutral-600 transition-all duration-300 cursor-grab active:cursor-grabbing shadow-sm hover:shadow-xl hover:shadow-black/50"
         >
-            <img
-                src={`/api/cloud/thumbnail?c=${cloudAccountId}&f=${file.id}&s=300${file.thumbnailLink ? `&t=${encodeURIComponent(file.thumbnailLink)}` : ""}`}
-                alt={file.name}
-                className="w-full h-full object-cover select-none pointer-events-none transition-transform duration-500 group-hover:scale-105"
-                loading="lazy"
-            />
+            {isAudio ? (
+                <div className="w-full h-full flex flex-col items-center justify-center bg-neutral-800 text-neutral-500 relative">
+                    <Music className="w-8 h-8 mb-2 opacity-50" />
+                    <span className="text-[10px] font-mono uppercase tracking-widest opacity-50 mb-4">Audio</span>
+
+                    <button
+                        onClick={togglePlay}
+                        className="p-3 rounded-full bg-emerald-500 text-white hover:bg-emerald-400 transition-colors shadow-lg z-20 flex items-center justify-center"
+                        onPointerDown={e => e.stopPropagation()}
+                    >
+                        {isPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
+                    </button>
+
+                    <audio
+                        ref={audioRef}
+                        src={`/api/cloud/video-stream?c=${cloudAccountId}&f=${file.id}`}
+                        onEnded={() => setIsPlaying(false)}
+                        className="hidden"
+                    />
+                </div>
+            ) : (
+                <img
+                    src={`/api/cloud/thumbnail?c=${cloudAccountId}&f=${file.id}&s=300${file.thumbnailLink ? `&t=${encodeURIComponent(file.thumbnailLink)}` : ""}`}
+                    alt={file.name}
+                    className="w-full h-full object-cover select-none pointer-events-none transition-transform duration-500 group-hover:scale-105"
+                    loading="lazy"
+                />
+            )}
 
             {/* Overlay Gradient */}
             <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -929,6 +970,12 @@ function SortableFile({ file, cloudAccountId }: { file: FileItem, cloudAccountId
 
             <div className="absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-[10px] group-hover:translate-y-0">
                 <p className="text-[10px] font-medium text-white/80 line-clamp-1 max-w-[90%]">{file.name}</p>
+            </div>
+
+            {/* DEBUG: Remove after fixing audio issue */}
+            <div className="absolute top-10 left-2 bg-red-500/80 text-[10px] text-white p-1 z-50 pointer-events-none rounded">
+                Type: {file.mimeType || 'N/A'} <br />
+                Name: {file.name}
             </div>
         </div>
     );
