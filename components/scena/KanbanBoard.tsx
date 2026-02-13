@@ -192,6 +192,18 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
             const roots = visibleTasks.filter(t =>
                 (!t.parentId || !taskMap.has(t.parentId)) && !t.isHiddenInGantt
             );
+
+            // Sort roots by Column Order first, then Task Order (Matching GanttChart logic)
+            roots.sort((a, b) => {
+                const colIndexA = columns.findIndex(c => c.id === a.columnId);
+                const colIndexB = columns.findIndex(c => c.id === b.columnId);
+
+                if (colIndexA !== colIndexB) {
+                    return colIndexA - colIndexB;
+                }
+                return (a.order || 0) - (b.order || 0);
+            });
+
             roots.forEach(t => processTask(t, 0));
 
             await exportToExcel(exportData, columns, "Proyecto_Scena");
