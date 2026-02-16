@@ -347,9 +347,9 @@ export default function LandingPage() {
                 </Link>
             </section>
 
-            <footer className="px-4 md:px-6 py-8 md:py-10 border-t border-neutral-900 text-center">
-                <div className="flex justify-center mb-3 md:mb-4">
-                    <div className="relative w-24 h-6 opacity-70 grayscale">
+            <footer className="px-4 md:px-6 py-8 md:py-10 border-t border-neutral-900 text-center relative z-10 bg-neutral-950">
+                <div className="flex flex-col items-center justify-center mb-6">
+                    <div className="relative w-24 h-6 opacity-70 grayscale hover:grayscale-0 transition mb-4">
                         <NextImage
                             src="/logo-white.svg"
                             alt="CloserLens"
@@ -357,9 +357,19 @@ export default function LandingPage() {
                             className="object-contain"
                         />
                     </div>
+                    <div className="text-xs md:text-sm text-neutral-600 mb-4 italic">Tu presencia visual profesional.</div>
+
+                    <div className="flex flex-wrap justify-center gap-4 text-[10px] md:text-xs text-neutral-500 mb-6">
+                        <Link href="/legal/terminos_y_condiciones_closerlens" className="hover:text-white transition">Términos y Condiciones</Link>
+                        <Link href="/legal/politica_de_privacidad_closerlens" className="hover:text-white transition">Privacidad</Link>
+                        <Link href="/legal/politica_de_cookies_closerlens" className="hover:text-white transition">Cookies</Link>
+                        <Link href="/legal/politica_de_uso_aceptable_closerlens" className="hover:text-white transition">Uso Aceptable</Link>
+                        <Link href="/legal/politica_de_derechos_de_autor_closerlens" className="hover:text-white transition">Derechos de Autor</Link>
+                        <Link href="/legal/politica_de_pagos_y_reembolsos_closerlens" className="hover:text-white transition">Pagos y Reembolsos</Link>
+                    </div>
+
+                    <div className="text-[10px] md:text-xs text-neutral-700">© 2026 CloserLens · Hecho para creativos.</div>
                 </div>
-                <div className="text-xs md:text-sm text-neutral-600 mb-4 md:mb-6 italic">Tu presencia visual profesional.</div>
-                <div className="text-[10px] md:text-xs text-neutral-700">© 2026 CloserLens · Hecho para creativos.</div>
             </footer>
         </div>
     );
