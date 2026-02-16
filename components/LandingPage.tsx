@@ -137,10 +137,11 @@ export default function LandingPage() {
                     >
                         Portfolios, books y galerías para fotógrafos, modelos, creativos y agencias. Tu trabajo, presentado con intención.
                     </motion.p>
-                    <Link href="/login">
-                        <button className="px-8 md:px-10 py-3 md:py-4 rounded-full bg-white text-black font-bold hover:scale-105 transition shadow-xl shadow-white/10 text-sm md:text-base">
-                            Empieza gratis
-                        </button>
+                    <Link
+                        href="/login"
+                        className="inline-block px-8 md:px-10 py-3 md:py-4 rounded-full bg-white text-black font-bold hover:scale-105 transition shadow-xl shadow-white/10 text-sm md:text-base"
+                    >
+                        Empieza gratis
                     </Link>
                 </div>
             </section>
@@ -279,12 +280,11 @@ export default function LandingPage() {
                                     )}
 
                                     {/* CTA - siempre al fondo */}
-                                    <Link href="/dashboard" className="mt-auto">
-                                        <button
-                                            className={`w-full py-3 rounded-xl font-bold transition text-sm ${isHighlight ? "bg-emerald-500 text-black hover:bg-emerald-400 shadow-lg shadow-emerald-500/20" : "bg-neutral-800 text-white hover:bg-neutral-700"}`}
-                                        >
-                                            {getCta(p, i)}
-                                        </button>
+                                    <Link
+                                        href="/login"
+                                        className={`mt-auto w-full py-3 rounded-xl font-bold transition text-sm flex items-center justify-center ${isHighlight ? "bg-emerald-500 text-black hover:bg-emerald-400 shadow-lg shadow-emerald-500/20" : "bg-neutral-800 text-white hover:bg-neutral-700"}`}
+                                    >
+                                        {getCta(p, i)}
                                     </Link>
                                 </motion.div>
                             );
@@ -339,11 +339,12 @@ export default function LandingPage() {
                 <p className="text-neutral-500 max-w-xl mx-auto mb-8 md:mb-12 text-sm md:text-lg px-4">
                     Crea tu portafolio profesional en minutos. Sin complicaciones.
                 </p>
-                <Link href="/login">
-                    <button className="px-8 md:px-12 py-4 md:py-5 rounded-full bg-white text-black font-bold hover:scale-105 transition shadow-2xl shadow-white/10 text-sm md:text-base">
-                        <span className="hidden sm:inline">Crear mi portafolio gratis</span>
-                        <span className="sm:hidden">Empezar gratis</span>
-                    </button>
+                <Link
+                    href="/login"
+                    className="inline-block px-8 md:px-12 py-4 md:py-5 rounded-full bg-white text-black font-bold hover:scale-105 transition shadow-2xl shadow-white/10 text-sm md:text-base"
+                >
+                    <span className="hidden sm:inline">Crear mi portafolio gratis</span>
+                    <span className="sm:hidden">Empezar gratis</span>
                 </Link>
             </section>
 

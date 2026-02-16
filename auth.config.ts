@@ -30,6 +30,7 @@ export const authConfig = {
             const isPublicRoute =
                 nextUrl.pathname === '/' ||
                 nextUrl.pathname.startsWith('/login') ||
+                nextUrl.pathname.startsWith('/legal') || // Public legal docs
                 nextUrl.pathname.startsWith('/plan-b') ||
                 nextUrl.pathname.startsWith('/api/upload') || // Guest uploads
                 nextUrl.pathname.startsWith('/api/auth'); // Auth handlers
