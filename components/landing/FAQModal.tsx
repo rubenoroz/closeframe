@@ -42,8 +42,10 @@ export function FAQModal() {
 
     return (
         <Dialog>
-            <DialogTrigger className="text-sm font-medium hover:text-[#cdb8e1] transition-colors text-left">
-                Preguntas Frecuentes
+            <DialogTrigger asChild>
+                <button className="text-sm font-medium hover:text-[#cdb8e1] transition-colors text-left">
+                    Preguntas Frecuentes
+                </button>
             </DialogTrigger>
             <DialogContent className="bg-black/95 border-white/10 text-white max-w-2xl max-h-[85vh] overflow-y-auto">
                 <DialogHeader>

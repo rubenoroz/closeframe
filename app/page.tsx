@@ -12,6 +12,7 @@ import { getRegionFromHeaders } from "@/lib/geo";
 
 import Image from "next/image";
 
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 
@@ -65,9 +66,9 @@ export default async function PlanBPage() {
                                     Closerlens transforma tu almacenamiento en galerías premium, flujos de trabajo y experiencias para tus clientes. <span className="text-white">tu respaldo, su galería.</span>
                                 </p>
                                 <div className="flex gap-4">
-                                    <button className="bg-[#cdb8e1] text-black h-16 px-10 rounded-full text-sm font-bold tracking-widest uppercase hover:scale-105 transition-all">
+                                    <Link href="/login" className="bg-[#cdb8e1] text-black h-16 px-10 rounded-full text-sm font-bold tracking-widest uppercase hover:scale-105 transition-all flex items-center justify-center">
                                         Empezar Ahora
-                                    </button>
+                                    </Link>
                                 </div>
                             </div>
                         </div>
@@ -405,10 +406,10 @@ export default async function PlanBPage() {
                             </div>
 
                             <div className="mt-12 flex items-center gap-4">
-                                <a href="/signup" className="bg-white text-black px-8 py-4 rounded-full font-bold hover:bg-[#cdb8e1] transition-colors inline-flex items-center gap-2">
+                                <Link href="/login" className="bg-white text-black px-8 py-4 rounded-full font-bold hover:bg-[#cdb8e1] transition-colors inline-flex items-center gap-2">
                                     Empezar ahora
                                     <span className="material-symbols-outlined text-sm">arrow_forward</span>
-                                </a>
+                                </Link>
                             </div>
                         </div>
 
@@ -494,9 +495,8 @@ export default async function PlanBPage() {
                         <div>
                             <h4 className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-10">Legal</h4>
                             <ul className="space-y-4 text-sm font-medium text-white/40">
-                                <li><a className="hover:text-white transition-colors" href="#">Términos</a></li>
-                                <li><a className="hover:text-white transition-colors" href="#">Privacidad</a></li>
-                                <li><a className="hover:text-white transition-colors" href="#">Security</a></li>
+                                <li><Link className="hover:text-white transition-colors" href="/legal/terminos_y_condiciones_closerlens">Términos</Link></li>
+                                <li><Link className="hover:text-white transition-colors" href="/legal/politica_de_privacidad_closerlens">Privacidad</Link></li>
                             </ul>
                         </div>
                     </div>
@@ -516,7 +516,7 @@ export default async function PlanBPage() {
                 <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] bg-black/60 backdrop-blur-md border border-white/10 px-6 py-3 rounded-full flex items-center gap-6 shadow-2xl border-white/5 hover:bg-black/80 transition-all">
                     <span className="text-[10px] font-bold text-white/60 hidden lg:block tracking-widest uppercase">Eleva tu flujo de trabajo.</span>
                     <div className="flex gap-3">
-                        <button className="bg-white text-black px-5 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase hover:bg-[#cdb8e1] transition-all">Prueba Gratis</button>
+                        <Link href="/login" className="bg-white text-black px-5 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase hover:bg-[#cdb8e1] transition-all flex items-center justify-center">Prueba Gratis</Link>
                     </div>
                 </div>
             </div>

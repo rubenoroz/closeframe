@@ -111,13 +111,13 @@ export function PlanBNavbar({ user }: PlanBNavbarProps) {
                     >
                         Precios
                     </a>
-                    <a
+                    <Link
                         className="text-right text-base font-light text-white hover:text-[#cdb8e1] py-2 px-3 rounded-lg hover:bg-white/10 transition-all cursor-pointer"
                         onClick={() => setIsMenuOpen(false)}
                         href="/login"
                     >
                         Iniciar Sesión
-                    </a>
+                    </Link>
                 </nav>
             </div>
         </>
