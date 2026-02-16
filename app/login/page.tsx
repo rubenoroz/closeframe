@@ -11,7 +11,6 @@ export default function LoginPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [isGoogleLoading, setIsGoogleLoading] = useState(false);
     const [emailSent, setEmailSent] = useState(false);
-    const [acceptedTerms, setAcceptedTerms] = useState(false);
 
     const handleEmailLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -99,39 +98,21 @@ export default function LoginPage() {
                                 Inicia sesión para gestionar tus galerías.
                             </p>
 
-                            <div className="mb-6 flex items-start gap-2">
-                                <div className="flex h-5 items-center">
-                                    <input
-                                        id="terms"
-                                        name="terms"
-                                        type="checkbox"
-                                        checked={acceptedTerms}
-                                        onChange={(e) => setAcceptedTerms(e.target.checked)}
-                                        className="h-4 w-4 rounded border-neutral-700 bg-neutral-800 text-emerald-500 focus:ring-emerald-500/20 focus:ring-offset-0"
-                                    />
-                                </div>
-                                <div className="text-xs text-neutral-400">
-                                    <label htmlFor="terms" className="font-medium text-neutral-300">
-                                        Acepto los términos y condiciones
-                                    </label>
-                                    <p className="mt-1">
-                                        Al continuar, confirmas que has leído y aceptas nuestros{" "}
-                                        <a href="/legal/terminos_y_condiciones_closerlens" target="_blank" className="text-blue-400 hover:text-blue-300 underline">
-                                            Términos de Servicio
-                                        </a>{" "}
-                                        y{" "}
-                                        <a href="/legal/politica_de_privacidad_closerlens" target="_blank" className="text-blue-400 hover:text-blue-300 underline">
-                                            Política de Privacidad
-                                        </a>
-                                        .
-                                    </p>
-                                </div>
+                            <div className="mb-6 text-xs text-neutral-500 text-center px-4">
+                                Al continuar, confirmas que has leído y aceptas nuestros{" "}
+                                <a href="/legal/terminos_y_condiciones_closerlens" target="_blank" rel="noopener noreferrer" className="text-neutral-400 hover:text-white underline transition">
+                                    Términos de Servicio
+                                </a>{" "}
+                                y{" "}
+                                <a href="/legal/politica_de_privacidad_closerlens" target="_blank" rel="noopener noreferrer" className="text-neutral-400 hover:text-white underline transition">
+                                    Política de Privacidad
+                                </a>.
                             </div>
 
                             {/* Google Button */}
                             <button
                                 onClick={handleGoogleLogin}
-                                disabled={isGoogleLoading || isLoading || !acceptedTerms}
+                                disabled={isGoogleLoading || isLoading}
                                 className="w-full flex items-center justify-center gap-3 px-5 md:px-6 py-3.5 bg-white text-black font-medium rounded-xl hover:bg-neutral-200 transition text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed mb-6 group"
                             >
                                 {isGoogleLoading ? (
@@ -188,7 +169,7 @@ export default function LoginPage() {
 
                                 <button
                                     type="submit"
-                                    disabled={isLoading || isGoogleLoading || !email || !acceptedTerms}
+                                    disabled={isLoading || isGoogleLoading || !email}
                                     className="w-full flex items-center justify-center gap-2 px-5 py-3.5 bg-neutral-800 border border-neutral-700 text-white font-medium rounded-xl hover:bg-neutral-700 hover:border-neutral-600 transition text-sm disabled:opacity-50 disabled:cursor-not-allowed group"
                                 >
                                     {isLoading ? (

@@ -18,14 +18,15 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
                     {/* Sidebar Navigation */}
                     <aside className="space-y-6">
                         <div className="sticky top-24">
-                            <h2 className="text-xl font-semibold mb-4 text-white">Legal</h2>
-                            <nav className="flex flex-col space-y-2">
+                            <h2 className="text-sm font-semibold mb-4 text-white uppercase tracking-wider px-3">Legal</h2>
+                            <nav className="flex flex-col space-y-1">
                                 {legalLinks.map((link) => (
                                     <Link
                                         key={link.href}
                                         href={link.href}
-                                        className="text-sm text-neutral-400 hover:text-white transition-colors py-1.5 px-3 rounded-md hover:bg-neutral-900/50"
+                                        className="text-sm text-neutral-400 hover:text-white hover:bg-neutral-800/50 transition-all py-2 px-3 rounded-lg flex items-center gap-2 group"
                                     >
+                                        <div className="w-1 h-1 rounded-full bg-neutral-700 group-hover:bg-emerald-500 transition-colors" />
                                         {link.name}
                                     </Link>
                                 ))}
