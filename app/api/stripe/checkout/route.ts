@@ -82,8 +82,31 @@ export async function POST(req: NextRequest) {
                 return NextResponse.json({ error: "No connected Stripe account found" }, { status: 400 });
             }
 
-            // For now, 0% fee.
-            const applicationFeeAmount = 0;
+            // Get effective plan config with limits
+            const planConfig = user.plan?.config ? JSON.parse(JSON.stringify(user.plan.config)) : {};
+            const limits = planConfig.limits || {};
+
+            // Get commission percentage from plan limits (search in this order: user specific override -> plan default -> global default)
+            // Note: limits are flattened in getEffectivePlanConfig but here we might be accessing raw plan config
+            // Ideally we should use a helper, but for now let's access specific plan defaults if not on user plan
+
+            // Actually, we can just look at the Plans config based on plan name if config is empty
+            const planName = user.plan?.name || "FREE";
+            const defaultCommission = 15; // Fallback
+
+            let commissionPercent = limits.commissionPercentage;
+
+            if (commissionPercent === undefined) {
+                // Try to find in static config based on plan name
+                const { PLANS } = require("@/lib/plans.config");
+                const staticPlan = Object.values(PLANS).find((p: any) => p.name === planName) as any;
+                commissionPercent = staticPlan?.limits?.commissionPercentage ?? defaultCommission;
+            }
+
+            // Calculate fee
+            // Amount is in dollars/pesos, convert to cents first
+            const amountInCents = Math.round(amount * 100);
+            const applicationFeeAmount = Math.round(amountInCents * (commissionPercent / 100));
 
             const checkoutSession = await stripe.checkout.sessions.create(
                 {
@@ -96,7 +119,7 @@ export async function POST(req: NextRequest) {
                                 product_data: {
                                     name: description,
                                 },
-                                unit_amount: Math.round(amount * 100), // Convert to cents
+                                unit_amount: amountInCents, // Use pre-calculated cents
                             },
                             quantity: 1,
                         },
@@ -125,7 +148,7 @@ export async function POST(req: NextRequest) {
                     connectAccountId: user!.stripeConnectAccount!.id,
                     stripePaymentIntentId: checkoutSession.payment_intent as string || `sess_${checkoutSession.id}`,
                     stripeSessionId: checkoutSession.id,
-                    amount: Math.round(amount * 100),
+                    amount: amountInCents,
                     currency: currency || "usd",
                     description,
                     status: "pending",

@@ -18,7 +18,9 @@ interface SystemSettings {
     defaultPlanId: string | null;
     maxProjectsDefault: number;
     maxCloudAccountsDefault: number;
-    zipDownloadsDefault: number; // Descargas ZIP por mes
+    maxCloudAccountsDefault: number;
+    zipDownloadsDefault: number;
+    masterInviteCode?: string; // New field
 }
 
 const defaultSettings: SystemSettings = {
@@ -29,7 +31,8 @@ const defaultSettings: SystemSettings = {
     defaultPlanId: null,
     maxProjectsDefault: 3,
     maxCloudAccountsDefault: 1,
-    zipDownloadsDefault: 5
+    zipDownloadsDefault: 5,
+    masterInviteCode: ""
 };
 
 export default function SettingsPage() {
@@ -41,9 +44,12 @@ export default function SettingsPage() {
     useEffect(() => {
         const fetchSettings = async () => {
             try {
-                // Por ahora usamos configuración por defecto
-                // En el futuro se puede cargar de SystemSettings
-                setSettings(defaultSettings);
+                const res = await fetch("/api/superadmin/settings");
+                if (res.ok) {
+                    const data = await res.json();
+                    // Merge with defaults to ensure all keys exist
+                    setSettings({ ...defaultSettings, ...data });
+                }
             } catch (error) {
                 console.error("Error fetching settings:", error);
             } finally {
@@ -57,15 +63,19 @@ export default function SettingsPage() {
     const handleSave = async () => {
         setSaving(true);
         try {
-            // Aquí se guardarían en SystemSettings
-            // await fetch("/api/superadmin/settings", { method: "PUT", body: ... })
+            const res = await fetch("/api/superadmin/settings", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(settings)
+            });
 
-            // Simular guardado
-            await new Promise(resolve => setTimeout(resolve, 500));
+            if (!res.ok) throw new Error("Failed to save");
+
             setSaved(true);
             setTimeout(() => setSaved(false), 3000);
         } catch (error) {
             console.error("Error saving settings:", error);
+            alert("Error guardando configuración");
         } finally {
             setSaving(false);
         }
@@ -179,10 +189,34 @@ export default function SettingsPage() {
                         />
                     </label>
                 </div>
-            </section>
+
+                <div className="mt-6 border-t border-neutral-800 pt-6">
+                    <h3 className="text-sm font-medium text-neutral-300 mb-3">Beta Cerrada</h3>
+                    <div className="flex flex-col gap-2">
+                        <label className="block text-xs text-neutral-400">
+                            Código Maestro de Invitación
+                        </label>
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                value={settings.masterInviteCode || ""}
+                                onChange={(e) => setSettings({ ...settings, masterInviteCode: e.target.value })}
+                                placeholder="Ej: VIP2025"
+                                className="flex-1 px-4 py-2 bg-neutral-800 border border-neutral-700 rounded-xl text-white focus:outline-none focus:border-violet-500 font-mono tracking-wider"
+                            />
+                            <div className="p-2 bg-neutral-800 rounded-lg border border-neutral-700 flex items-center justify-center text-neutral-400" title="Este código se guarda en la base de datos y tiene prioridad sobre el .env">
+                                <Database className="w-4 h-4" />
+                            </div>
+                        </div>
+                        <p className="text-xs text-neutral-500">
+                            Cualquier usuario con este código podrá registrarse, ignorando los límites de referidos.
+                        </p>
+                    </div>
+                </div>
+            </section >
 
             {/* Default Limits */}
-            <section className="bg-neutral-900/50 border border-neutral-800 rounded-2xl p-6">
+            < section className="bg-neutral-900/50 border border-neutral-800 rounded-2xl p-6" >
                 <div className="flex items-center gap-3 mb-6">
                     <div className="p-2 bg-blue-500/20 rounded-lg">
                         <Database className="w-5 h-5 text-blue-400" />
@@ -243,10 +277,10 @@ export default function SettingsPage() {
                         />
                     </div>
                 </div>
-            </section>
+            </section >
 
             {/* Database Info */}
-            <section className="bg-neutral-900/50 border border-neutral-800 rounded-2xl p-6">
+            < section className="bg-neutral-900/50 border border-neutral-800 rounded-2xl p-6" >
                 <div className="flex items-center gap-3 mb-6">
                     <div className="p-2 bg-green-500/20 rounded-lg">
                         <Database className="w-5 h-5 text-green-400" />
@@ -268,7 +302,7 @@ export default function SettingsPage() {
                         <span className="text-neutral-200">1.0.0-beta</span>
                     </div>
                 </div>
-            </section>
-        </div>
+            </section >
+        </div >
     );
 }

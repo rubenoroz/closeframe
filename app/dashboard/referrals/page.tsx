@@ -59,6 +59,11 @@ interface ReferralStats {
         currentProgress: number;
         nextRewardAt: number;
     } | null;
+    limits?: {
+        max: number;
+        remaining: number;
+        enabled: boolean;
+    };
 }
 
 // ... rest of imports/component ...
@@ -235,39 +240,65 @@ export default function ReferralsPage() {
                 </Button>
             </div>
 
+            {/* Limits Card */}
+            {
+                stats.limits && stats.limits.max !== -1 && (
+                    <Card className="border-blue-500/50 bg-blue-500/10">
+                        <CardContent className="flex items-center justify-between p-4">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-blue-500/20 rounded-full">
+                                    <Users className="h-5 w-5 text-blue-500" />
+                                </div>
+                                <div>
+                                    <p className="font-medium text-blue-100">Invitaciones Disponibles</p>
+                                    <p className="text-sm text-blue-200/80">
+                                        Te quedan <strong>{stats.limits.remaining}</strong> de <strong>{stats.limits.max}</strong> invitaciones.
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="text-2xl font-bold text-blue-100">
+                                {stats.limits.remaining}
+                            </div>
+                        </CardContent>
+                    </Card>
+                )
+            }
+
             {/* Batch Progress Card (New Feature) */}
-            {stats.batchProgress && (
-                <Card className="border-primary/50 bg-gradient-to-br from-primary/10 via-background to-primary/5 overflow-hidden">
-                    <CardHeader className="pb-2">
-                        <div className="flex items-center justify-between">
-                            <CardTitle className="text-lg flex items-center gap-2">
-                                <Gift className="h-5 w-5 text-primary" />
-                                Tu Próxima Recompensa
-                            </CardTitle>
-                            <Badge variant="outline" className="bg-background/50">
-                                {stats.batchProgress.activeReferrals} referidos activos
-                            </Badge>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                            <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">Progreso del lote actual</span>
-                                <span className="font-bold">{stats.batchProgress.currentProgress} / {stats.batchProgress.batchSize}</span>
+            {
+                stats.batchProgress && (
+                    <Card className="border-primary/50 bg-gradient-to-br from-primary/10 via-background to-primary/5 overflow-hidden">
+                        <CardHeader className="pb-2">
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="text-lg flex items-center gap-2">
+                                    <Gift className="h-5 w-5 text-primary" />
+                                    Tu Próxima Recompensa
+                                </CardTitle>
+                                <Badge variant="outline" className="bg-background/50">
+                                    {stats.batchProgress.activeReferrals} referidos activos
+                                </Badge>
                             </div>
-                            <div className="h-3 w-full bg-muted rounded-full overflow-hidden border">
-                                <div
-                                    className="h-full bg-primary transition-all duration-500 ease-out shadow-[0_0_10px_rgba(var(--primary),0.5)]"
-                                    style={{ width: `${(stats.batchProgress.currentProgress / stats.batchProgress.batchSize) * 100}%` }}
-                                />
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="space-y-2">
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-muted-foreground">Progreso del lote actual</span>
+                                    <span className="font-bold">{stats.batchProgress.currentProgress} / {stats.batchProgress.batchSize}</span>
+                                </div>
+                                <div className="h-3 w-full bg-muted rounded-full overflow-hidden border">
+                                    <div
+                                        className="h-full bg-primary transition-all duration-500 ease-out shadow-[0_0_10px_rgba(var(--primary),0.5)]"
+                                        style={{ width: `${(stats.batchProgress.currentProgress / stats.batchProgress.batchSize) * 100}%` }}
+                                    />
+                                </div>
                             </div>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                            Te faltan <strong className="text-foreground">{stats.batchProgress.nextRewardAt} referidos</strong> con suscripción activa para obtener tu siguiente crédito automático.
-                        </p>
-                    </CardContent>
-                </Card>
-            )}
+                            <p className="text-sm text-muted-foreground">
+                                Te faltan <strong className="text-foreground">{stats.batchProgress.nextRewardAt} referidos</strong> con suscripción activa para obtener tu siguiente crédito automático.
+                            </p>
+                        </CardContent>
+                    </Card>
+                )
+            }
 
             {/* Referral Link Card */}
             <Card className="border-violet-500/50 bg-gradient-to-r from-violet-500/10 to-purple-500/10">
@@ -521,6 +552,6 @@ export default function ReferralsPage() {
                     </div>
                 </CardContent>
             </Card>
-        </div>
+        </div >
     );
 }

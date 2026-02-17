@@ -60,6 +60,7 @@ export class GoogleDriveProvider implements CloudProvider {
                 width: width || undefined,
                 height: height || undefined,
                 lastModified: file.modifiedTime || undefined,
+                duration: isVideo && file.videoMediaMetadata?.durationMillis ? Math.round(parseInt(file.videoMediaMetadata.durationMillis) / 1000) : undefined
             };
         });
     }

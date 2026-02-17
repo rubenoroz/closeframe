@@ -8,6 +8,7 @@ export interface CloudFile {
     width?: number;
     height?: number;
     lastModified?: string;
+    duration?: number; // Duration in seconds
 }
 
 export interface CloudFolder {

@@ -9,6 +9,7 @@ export const PLANS = {
             maxProjects: 3,
             maxCloudAccounts: 1,
             maxScenaProjects: 0,
+            commissionPercentage: 15, // 15% commission for Free
         },
         features: {
             advancedSocialNetworks: false,
@@ -39,6 +40,7 @@ export const PLANS = {
             maxProjects: 50,
             maxCloudAccounts: 2,
             maxScenaProjects: 3,
+            commissionPercentage: 12, // 12% commission for Family
         },
         features: {
             advancedSocialNetworks: true,
@@ -70,6 +72,7 @@ export const PLANS = {
             maxProjects: 100,
             maxCloudAccounts: 2,
             maxScenaProjects: 10,
+            commissionPercentage: 5, // 5% commission for Pro
         },
         features: {
             advancedSocialNetworks: true,
@@ -101,6 +104,7 @@ export const PLANS = {
             maxCloudAccounts: -1,
             closerGalleryLimit: 10,
             maxScenaProjects: -1,
+            commissionPercentage: 0, // 0% commission for Studio
         },
         features: {
             advancedSocialNetworks: true,
@@ -133,6 +137,7 @@ export const PLANS = {
             maxCloudAccounts: -1,
             closerGalleryLimit: -1,
             maxScenaProjects: -1,
+            commissionPercentage: 0, // 0% commission for Agency
         },
         features: {
             advancedSocialNetworks: true,

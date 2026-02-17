@@ -445,6 +445,24 @@ export const FEATURE_POOL: FeatureDefinition[] = [
 
     // --- SYSTEM / LIMITS ---
     {
+        id: "referralProgramEnabled",
+        label: "Programa de Referidos",
+        description: "Permitir invitar a otros usuarios",
+        category: "system",
+        type: "boolean",
+        defaultValue: false,
+        icon: Users
+    },
+    {
+        id: "maxReferrals",
+        label: "Límite de Invitaciones",
+        description: "Máx. usuarios invitados (-1 = Ilimitado)",
+        category: "system",
+        type: "number",
+        defaultValue: 0,
+        icon: Users
+    },
+    {
         id: "maxProjects",
         label: "Límite de Galerías",
         description: "Galerías activas (-1 = Ilimitado)",
@@ -721,6 +739,15 @@ export const FEATURE_POOL: FeatureDefinition[] = [
     },
 
     // --- MONETIZATION / BOOKING ---
+    {
+        id: "commissionPercentage",
+        label: "Comisión por Venta (%)",
+        description: "Porcentaje retenido por plataforma",
+        category: "monetization",
+        type: "number",
+        defaultValue: 15,
+        icon: CreditCard
+    },
     {
         id: "stripeIntegration",
         label: "Integración Stripe",

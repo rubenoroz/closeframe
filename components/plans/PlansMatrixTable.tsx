@@ -235,6 +235,9 @@ export default function PlansMatrixTable({ onUpdate }: Props) {
                                                                         displayVal === 0 ? 'Solo Invitado' :
                                                                             displayVal === 1 ? '1 Tablero' : 'Tableros'
                                                                 )}
+                                                                {feature.id === 'commissionPercentage' && (
+                                                                    displayVal === 0 ? 'Sin Comisión' : '% por venta'
+                                                                )}
                                                             </span>
                                                         </div>
                                                     )}

@@ -116,7 +116,10 @@ export async function GET() {
     const pendingCommissionsAll = assignmentsWithStats.reduce((sum, a) => sum + (Number(a.pendingCommissions) || 0), 0);
     const availableBalance = Math.max(0, totalEarnedAll - totalPaidAll);
 
-    // Add batch progress for CUSTOMER profiles
+    // Aggregated stats
+    const totalReferralsAll = assignmentsWithStats.reduce((sum, a) => sum + (Number(a.totalReferrals) || 0), 0);
+
+    // Add batch progress for CUSTOMER profiles (Restoring logic or initializing null)
     const customerAssignment = assignmentsWithStats.find(a => a.profile.type === "CUSTOMER");
     let batchProgress = null;
 
@@ -143,8 +146,53 @@ export async function GET() {
         };
     }
 
+    // Get User Plan Limits
+    const userPlan = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: {
+            plan: {
+                select: { config: true }
+            }
+        }
+    });
+
+    const planConfig = userPlan?.plan?.config as any || {};
+    const features = planConfig.features || {};
+    const limits = planConfig.limits || {};
+
+    const referralProgramEnabled = features.referralProgramEnabled ?? false;
+    const maxReferrals = limits.maxReferrals ?? 0;
+
+    // Calculate remaining
+    // If maxReferrals is -1, it's unlimited.
+    // Otherwise, remaining = max - totalReferralsAll
+    // Note: We might want to count only specific assignments if they are separate, but usually limits are per user.
+    // However, the limit logic in auth.ts checks per assignment (assignment -> user -> plan).
+    // So total count for the user is what matters.
+
+    // Let's use the total usage count we calculated or query it fresh if we want to be precise about "non-cancelled"
+    // The previous stats might include cancelled? 
+    // Let's rely on the stats we already have: totalReferralsAll.
+    // But ideally we should filter out cancelled ones if the limit allows retries.
+    // For now, simple subtraction is safer to show "attempts used".
+
+    const remainingReferrals = maxReferrals === -1
+        ? -1
+        : Math.max(0, maxReferrals - totalReferralsAll);
+
     return NextResponse.json({
-        hasProgram: true,
+        hasProgram: referralProgramEnabled, // Use plan setting to determine if they truly have access
+        // If false, frontend shows "Not available". Currently logic used assignment existence.
+        // Let's keep existing logic but maybe add a flag.
+        // Actually, previous logic returned hasProgram: false if no assignments.
+        // Let's keep that.
+
+        limits: {
+            max: maxReferrals,
+            remaining: remainingReferrals,
+            enabled: referralProgramEnabled
+        },
+
         assignments: assignmentsWithStats,
         recentReferrals: allRecentReferrals,
         totalEarned: totalEarnedAll,

@@ -86,7 +86,10 @@ export const PLAN_DEFAULTS = {
             maxImagesPerProject: 20,
             maxCloudAccounts: 1,
             bookingWindow: 0,
-            maxScenaProjects: 0
+            maxScenaProjects: 0,
+            commissionPercentage: 15,
+            referralProgramEnabled: false,
+            maxReferrals: 0
         }
     },
     FAMILY: {
@@ -176,7 +179,10 @@ export const PLAN_DEFAULTS = {
             maxImagesPerProject: -1,
             maxCloudAccounts: 2,
             bookingWindow: 0,
-            maxScenaProjects: 3
+            maxScenaProjects: 3,
+            commissionPercentage: 12,
+            referralProgramEnabled: true,
+            maxReferrals: 3
         }
     },
     PRO: {
@@ -270,7 +276,10 @@ export const PLAN_DEFAULTS = {
             maxImagesPerProject: -1,
             maxCloudAccounts: 2,
             bookingWindow: 4,
-            maxScenaProjects: 10
+            maxScenaProjects: 10,
+            commissionPercentage: 5,
+            referralProgramEnabled: true,
+            maxReferrals: 10
         }
     },
     STUDIO: {
@@ -362,7 +371,10 @@ export const PLAN_DEFAULTS = {
             maxImagesPerProject: -1,
             maxCloudAccounts: 5,
             bookingWindow: 0,
-            maxScenaProjects: -1
+            maxScenaProjects: -1,
+            commissionPercentage: 0,
+            referralProgramEnabled: true,
+            maxReferrals: -1
         }
     },
     AGENCY: {
@@ -454,7 +466,8 @@ export const PLAN_DEFAULTS = {
             maxProjects: -1,
             maxImagesPerProject: -1,
             maxCloudAccounts: -1,
-            bookingWindow: 0
+            bookingWindow: 0,
+            commissionPercentage: 0
         }
     }
 };

@@ -4,6 +4,7 @@
 import React, { useEffect, useState } from 'react';
 import { Loader2, Check, X, Shield, Save, Search } from 'lucide-react';
 import { toast } from 'sonner';
+import { cn } from "@/lib/utils";
 
 import { FEATURE_POOL } from '@/lib/features';
 
@@ -314,18 +315,26 @@ export default function FeaturesMatrixPage() {
 
                                                             {isNumeric && (
                                                                 <div className="relative group/limit w-24">
-                                                                    <input
-                                                                        type="number"
-                                                                        defaultValue={limit ?? -1}
-                                                                        onBlur={(e) => {
-                                                                            const val = parseInt(e.target.value);
-                                                                            if (val !== limit) {
-                                                                                handleLimitChange(plan.id, feature.id, isEnabled, val === -1 ? null : val);
-                                                                            }
-                                                                        }}
-                                                                        className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-2 py-1 text-[11px] text-center text-neutral-300 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition-all font-mono"
-                                                                        placeholder="∞"
-                                                                    />
+                                                                    <div className="relative">
+                                                                        <input
+                                                                            type="number"
+                                                                            defaultValue={limit ?? -1}
+                                                                            onBlur={(e) => {
+                                                                                const val = parseInt(e.target.value);
+                                                                                if (val !== limit) {
+                                                                                    handleLimitChange(plan.id, feature.id, isEnabled, val === -1 ? null : val);
+                                                                                }
+                                                                            }}
+                                                                            className={cn(
+                                                                                "w-full bg-neutral-950 border border-neutral-800 rounded-lg px-2 py-1 text-[11px] text-center text-neutral-300 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition-all font-mono",
+                                                                                feature.id === 'commissionPercentage' && "pr-6"
+                                                                            )}
+                                                                            placeholder="∞"
+                                                                        />
+                                                                        {feature.id === 'commissionPercentage' && (
+                                                                            <span className="absolute right-2 top-1.5 text-[9px] text-neutral-500">%</span>
+                                                                        )}
+                                                                    </div>
                                                                     <div className="absolute -top-6 left-1/2 -translate-x-1/2 hidden group-focus-within/limit:block bg-neutral-800 text-white text-[9px] px-2 py-1 rounded shadow-lg whitespace-nowrap z-50">
                                                                         Enter para guardar. -1 = ∞
                                                                     </div>
@@ -335,6 +344,12 @@ export default function FeaturesMatrixPage() {
                                                             {!isNumeric && limit !== null && (
                                                                 <div className="text-[10px] text-neutral-500 font-mono mt-1">
                                                                     Lim: {limit}
+                                                                </div>
+                                                            )}
+
+                                                            {feature.id === 'commissionPercentage' && (
+                                                                <div className="text-[9px] text-neutral-500 mt-1">
+                                                                    {limit === 0 ? 'Sin Comisión' : 'por venta'}
                                                                 </div>
                                                             )}
                                                         </div>
@@ -411,7 +426,11 @@ export default function FeaturesMatrixPage() {
                                                             placeholder="∞"
                                                         />
                                                     )}
-                                                    <span className="text-[9px] text-neutral-500 truncate max-w-[60px]">{plan.displayName}</span>
+                                                    <span className="text-[9px] text-neutral-500 truncate max-w-[60px]">
+                                                        {feature.id === 'commissionPercentage'
+                                                            ? (limit === 0 ? 'Sin Comisión' : '% por venta')
+                                                            : plan.displayName}
+                                                    </span>
                                                 </div>
                                             );
                                         })}
