@@ -18,7 +18,6 @@ interface SystemSettings {
     defaultPlanId: string | null;
     maxProjectsDefault: number;
     maxCloudAccountsDefault: number;
-    maxCloudAccountsDefault: number;
     zipDownloadsDefault: number;
     masterInviteCode?: string; // New field
 }
@@ -213,10 +212,10 @@ export default function SettingsPage() {
                         </p>
                     </div>
                 </div>
-            </section >
+            </section>
 
             {/* Default Limits */}
-            < section className="bg-neutral-900/50 border border-neutral-800 rounded-2xl p-6" >
+            <section className="bg-neutral-900/50 border border-neutral-800 rounded-2xl p-6">
                 <div className="flex items-center gap-3 mb-6">
                     <div className="p-2 bg-blue-500/20 rounded-lg">
                         <Database className="w-5 h-5 text-blue-400" />
@@ -277,10 +276,10 @@ export default function SettingsPage() {
                         />
                     </div>
                 </div>
-            </section >
+            </section>
 
             {/* Database Info */}
-            < section className="bg-neutral-900/50 border border-neutral-800 rounded-2xl p-6" >
+            <section className="bg-neutral-900/50 border border-neutral-800 rounded-2xl p-6">
                 <div className="flex items-center gap-3 mb-6">
                     <div className="p-2 bg-green-500/20 rounded-lg">
                         <Database className="w-5 h-5 text-green-400" />
@@ -302,7 +301,9 @@ export default function SettingsPage() {
                         <span className="text-neutral-200">1.0.0-beta</span>
                     </div>
                 </div>
-            </section >
-        </div >
+            </section>
+        </div>
+    );
+}
     );
 }
