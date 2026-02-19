@@ -760,12 +760,78 @@ function MediaCard({
                         </div>
                     )}
 
-                    {isAudio ? (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-neutral-900 border border-neutral-800">
-                            <Music className="w-12 h-12 text-neutral-600 mb-2" />
-                            <span className="text-[10px] uppercase tracking-widest text-neutral-500">Audio</span>
-                        </div>
-                    ) : (
+                    {/* Optimized Render Logic for Non-Image Files */}
+                    {(() => {
+                        // Helper checks
+                        const ext = item.name.split('.').pop()?.toLowerCase();
+                        const isPdf = ext === 'pdf' || item.mimeType === 'application/pdf';
+                        const isWord = ['doc', 'docx'].includes(ext || '') || item.mimeType?.includes('word');
+                        const isExcel = ['xls', 'xlsx', 'csv'].includes(ext || '') || item.mimeType?.includes('spreadsheet') || item.mimeType?.includes('excel');
+                        const isPpt = ['ppt', 'pptx'].includes(ext || '') || item.mimeType?.includes('presentation') || item.mimeType?.includes('powerpoint');
+
+                        // If it's audio, render Audio Card
+                        if (isAudio) {
+                            return (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-neutral-900 border border-neutral-800 bg-gradient-to-br from-violet-500/20 to-fuchsia-900/40">
+                                    <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mb-3 backdrop-blur-sm border border-white/10 shadow-lg group-hover:scale-110 transition-transform duration-300">
+                                        <Music className="w-8 h-8 text-violet-300" />
+                                    </div>
+                                    <span className="text-[10px] uppercase tracking-widest text-violet-200/70 font-bold">Audio</span>
+                                    <span className="text-[10px] text-white/50 mt-1 max-w-[80%] truncate px-2">{item.name}</span>
+                                </div>
+                            );
+                        }
+
+                        // If it's a document, render Rich Doc Card
+                        if (isPdf || isWord || isExcel || isPpt) {
+                            let gradient = "from-neutral-800 to-neutral-900";
+                            let iconColor = "text-neutral-400";
+                            let iconBg = "bg-white/5";
+                            let IconComponent = FileText;
+                            let label = ext?.toUpperCase() || "DOC";
+
+                            if (isPdf) {
+                                gradient = "from-red-900/40 to-red-950/80";
+                                iconColor = "text-red-400";
+                                iconBg = "bg-red-500/10 border-red-500/20";
+                                label = "PDF";
+                            } else if (isWord) {
+                                gradient = "from-blue-900/40 to-blue-950/80";
+                                iconColor = "text-blue-400";
+                                iconBg = "bg-blue-500/10 border-blue-500/20";
+                                label = "WORD";
+                            } else if (isExcel) {
+                                gradient = "from-emerald-900/40 to-emerald-950/80";
+                                iconColor = "text-emerald-400";
+                                IconComponent = FileSpreadsheet;
+                                iconBg = "bg-emerald-500/10 border-emerald-500/20";
+                                label = "EXCEL";
+                            } else if (isPpt) {
+                                gradient = "from-orange-900/40 to-orange-950/80";
+                                iconColor = "text-orange-400";
+                                IconComponent = FilePresentation;
+                                iconBg = "bg-orange-500/10 border-orange-500/20";
+                                label = "POWERPOINT";
+                            }
+
+                            return (
+                                <div className={`absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br ${gradient} border border-white/5`}>
+                                    <div className={`w-16 h-16 rounded-2xl ${iconBg} flex items-center justify-center mb-3 backdrop-blur-sm border shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                                        <IconComponent className={`w-8 h-8 ${iconColor}`} />
+                                    </div>
+                                    <span className={`text-[10px] uppercase tracking-widest ${iconColor} font-bold opacity-80`}>
+                                        {label}
+                                    </span>
+                                    <span className="text-[10px] text-white/40 mt-1 max-w-[80%] truncate px-2 text-center">{item.name}</span>
+                                </div>
+                            );
+                        }
+
+                        return null;
+                    })()}
+
+                    {/* Image / Video Thumbnail */}
+                    {!isAudio && (
                         <>
                             {error && (
                                 <div className="absolute inset-0 bg-neutral-900 flex items-center justify-center">
@@ -773,21 +839,32 @@ function MediaCard({
                                 </div>
                             )}
 
+                            {/* Only show image tag if there's a thumbnail link AND it's not a document we just handled (unless it has a specific thumbnail) */}
+                            {/* Ideally, if a PDF has a thumbnail, we might want to show it. */}
+                            {/* But for now, let's prioritize the Rich Card for docs unless they are external with explicit thumbs */}
+
                             <img
                                 src={isExternal && item.thumbnailLink
                                     ? item.thumbnailLink
                                     : `/api/cloud/thumbnail?c=${cloudAccountId}&f=${item.id}&s=${thumbSize}&t=${encodeURIComponent(item.thumbnailLink || '')}&v=2`
                                 }
                                 alt={item.name}
-                                className={`absolute inset-0 w-full h-full object-cover transform group-hover:scale-105 transition duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
+                                className={`absolute inset-0 w-full h-full object-cover transform group-hover:scale-105 transition duration-500 ${loaded ? "opacity-100" : "opacity-0"} ${isAudio ? 'hidden' : ''}`}
                                 onLoad={(e) => {
-                                    setLoaded(true);
-                                    if (!isVideo) {
-                                        const img = e.currentTarget;
-                                        if (img.naturalWidth && img.naturalHeight) {
-                                            const naturalRatio = img.naturalWidth / img.naturalHeight;
-                                            if (Math.abs(naturalRatio - aspectRatio) > 0.1) {
-                                                setRealAspectRatio(naturalRatio);
+                                    // If we are showing a Rich Card (isDoc or isAudio), we don't care about this image loading
+                                    const ext = item.name.split('.').pop()?.toLowerCase();
+                                    const isPdf = ext === 'pdf' || item.mimeType === 'application/pdf';
+                                    const isDoc = isPdf || ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(ext || '');
+
+                                    if (!isDoc && !isAudio) {
+                                        setLoaded(true);
+                                        if (!isVideo) {
+                                            const img = e.currentTarget;
+                                            if (img.naturalWidth && img.naturalHeight) {
+                                                const naturalRatio = img.naturalWidth / img.naturalHeight;
+                                                if (Math.abs(naturalRatio - aspectRatio) > 0.1) {
+                                                    setRealAspectRatio(naturalRatio);
+                                                }
                                             }
                                         }
                                     }
@@ -795,56 +872,42 @@ function MediaCard({
                                 onError={() => setError(true)}
                                 referrerPolicy="no-referrer"
                                 loading={loadingStrategy}
+                                // Hide image if we are determining it's a doc to show the rich card instead
+                                // Currently we don't have a clean way to check 'isDoc' here without duplicating logic
+                                // But CSS z-index logic: Rich Card is above img? No, img is usually above.
+                                // Let's use style to hide it if it's a known doc type
+                                style={{
+                                    display: (item.mimeType?.startsWith('audio/') ||
+                                        ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(item.name.split('.').pop()?.toLowerCase() || ''))
+                                        ? 'none' : 'block'
+                                }}
                             />
-
-                            {/* Document Overlay (PDF/Office) */}
-                            {(() => {
-                                const ext = item.name.split('.').pop()?.toLowerCase();
-                                const isPdf = ext === 'pdf' || item.mimeType === 'application/pdf';
-                                const isWord = ['doc', 'docx'].includes(ext || '') || item.mimeType?.includes('word');
-                                const isExcel = ['xls', 'xlsx', 'csv'].includes(ext || '') || item.mimeType?.includes('spreadsheet') || item.mimeType?.includes('excel');
-                                const isPpt = ['ppt', 'pptx'].includes(ext || '') || item.mimeType?.includes('presentation') || item.mimeType?.includes('powerpoint');
-
-                                if (isPdf || isWord || isExcel || isPpt) {
-                                    return (
-                                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-neutral-900 border border-neutral-800">
-                                            {isPdf && <FileText className="w-12 h-12 text-red-500 mb-2" />}
-                                            {isWord && <FileText className="w-12 h-12 text-blue-500 mb-2" />}
-                                            {isExcel && <FileSpreadsheet className="w-12 h-12 text-green-500 mb-2" />}
-                                            {isPpt && <FilePresentation className="w-12 h-12 text-orange-500 mb-2" />}
-                                            <span className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold">
-                                                {ext?.toUpperCase() || 'DOC'}
-                                            </span>
-                                        </div>
-                                    );
-                                }
-                                return null;
-                            })()}
-
-                            {isVideo && (loaded || isExternal) && (
-                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                    <div className="w-16 h-16 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center border-2 border-white/30 shadow-xl">
-                                        <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M8 5v14l11-7z" />
-                                        </svg>
-                                    </div>
-                                </div>
-                            )}
-
-                            {enableWatermark && loaded && !isVideo && (
-                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                    <div className="opacity-30 max-w-[40%] max-h-[40%]">
-                                        <img
-                                            src={studioLogo || "/favicon-white.svg"}
-                                            alt="Watermark"
-                                            className="w-full h-full object-contain drop-shadow-lg"
-                                            style={{ filter: 'opacity(0.6)' }}
-                                        />
-                                    </div>
-                                </div>
-                            )}
                         </>
                     )}
+
+                    {isVideo && (loaded || isExternal) && (
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div className="w-16 h-16 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center border-2 border-white/30 shadow-xl">
+                                <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M8 5v14l11-7z" />
+                                </svg>
+                            </div>
+                        </div>
+                    )}
+
+                    {enableWatermark && loaded && !isVideo && (
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div className="opacity-30 max-w-[40%] max-h-[40%]">
+                                <img
+                                    src={studioLogo || "/favicon-white.svg"}
+                                    alt="Watermark"
+                                    className="w-full h-full object-contain drop-shadow-lg"
+                                    style={{ filter: 'opacity(0.6)' }}
+                                />
+                            </div>
+                        </div>
+                    )}
+
                 </div>
 
                 <div
@@ -878,7 +941,7 @@ function MediaCard({
                     </button>
                 )}
             </div>
-        </motion.div>
+        </motion.div >
     );
 }
 
