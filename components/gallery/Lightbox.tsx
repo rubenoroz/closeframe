@@ -406,37 +406,110 @@ export default function Lightbox({
                                 />
                             </div>
                         ) : (
-                            <div className="relative max-w-full max-h-full flex items-center justify-center group">
-                                <img
-                                    src={currentFile.thumbnailLink
-                                        ? currentFile.thumbnailLink.replace("=s220", `=s${lowResDownloads ? 1200 : 1600}`)
-                                        : `/api/cloud/thumbnail?c=${cloudAccountId}&f=${currentFile.id}&s=${lowResDownloads ? 1200 : 1600}`
-                                    }
-                                    alt={currentFile.name}
-                                    className="max-w-full max-h-[80vh] object-contain shadow-2xl rounded-lg border border-white/5"
-                                    referrerPolicy="no-referrer"
-                                />
-                                {/* Download overlay removed per user request */}
-                                {enableWatermark && (
-                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                        {studioLogo ? (
-                                            <div className="opacity-25 max-w-[30%] max-h-[30%]">
-                                                <img
-                                                    src={studioLogo}
-                                                    alt=""
-                                                    className="w-full h-full object-contain drop-shadow-lg"
-                                                    style={{ filter: 'grayscale(100%) brightness(200%) contrast(100%)' }}
+                            /* Check for PDF/Office Document */
+                            (() => {
+                                const ext = currentFile.name.split('.').pop()?.toLowerCase();
+                                const isPdf = ext === 'pdf' || currentFile.mimeType === 'application/pdf';
+                                // Office docs need Google Docs Viewer
+                                const isWord = ['doc', 'docx'].includes(ext || '') || currentFile.mimeType?.includes('word');
+                                const isExcel = ['xls', 'xlsx', 'csv'].includes(ext || '') || currentFile.mimeType?.includes('spreadsheet') || currentFile.mimeType?.includes('excel');
+                                const isPpt = ['ppt', 'pptx'].includes(ext || '') || currentFile.mimeType?.includes('presentation') || currentFile.mimeType?.includes('powerpoint');
+
+                                const isOffice = isWord || isExcel || isPpt;
+
+                                if (isPdf) {
+                                    // Native PDF Viewer
+                                    // Use webViewLink if available (Google Drive's viewer), otherwise fallback to our proxy for raw file
+                                    const pdfSrc = currentFile.webViewLink
+                                        ? currentFile.webViewLink.replace('/view?usp=drivesdk', '/preview')
+                                        : `/api/cloud/download-direct?c=${cloudAccountId}&f=${currentFile.id}&n=${encodeURIComponent(currentFile.name)}`;
+
+                                    return (
+                                        <div className="w-full h-full max-w-6xl flex flex-col bg-white rounded-lg overflow-hidden shadow-2xl">
+                                            <iframe
+                                                src={pdfSrc}
+                                                className="w-full h-full min-h-[80vh]"
+                                                title={currentFile.name}
+                                            />
+                                        </div>
+                                    );
+                                }
+
+                                if (isOffice) {
+                                    // Google Docs Viewer - needs a publicly accessible URL.
+                                    // Our /api/cloud/download-direct might be protected by auth headers/cookies which Google's viewer can't see unless public.
+                                    // However, for Google Drive, we can use the webViewLink (embed link) directly!
+
+                                    if (currentFile.webViewLink) {
+                                        const embedUrl = currentFile.webViewLink.replace('/view?usp=drivesdk', '/preview');
+                                        return (
+                                            <div className="w-full h-full max-w-6xl flex flex-col bg-white rounded-lg overflow-hidden shadow-2xl">
+                                                <iframe
+                                                    src={embedUrl}
+                                                    className="w-full h-full min-h-[80vh]"
+                                                    title={currentFile.name}
                                                 />
                                             </div>
-                                        ) : watermarkText ? (
-                                            <div className="text-white/30 font-bold text-2xl md:text-4xl tracking-widest uppercase drop-shadow-lg select-none"
-                                                style={{ textShadow: '0 2px 8px rgba(0,0,0,0.5)' }}>
-                                                {watermarkText}
+                                        );
+                                    } else {
+                                        // Fallback if no webViewLink (e.g. generic provider or error)
+                                        // Show friendly message
+                                        return (
+                                            <div className="flex flex-col items-center justify-center p-10 bg-neutral-900/80 rounded-2xl border border-white/10 text-center max-w-md">
+                                                <div className="w-20 h-20 bg-white/5 rounded-2xl flex items-center justify-center mb-6">
+                                                    <Download className="w-10 h-10 text-white/50" />
+                                                </div>
+                                                <h3 className="text-xl font-bold text-white mb-2">Vista previa no disponible</h3>
+                                                <p className="text-neutral-400 text-sm mb-6">
+                                                    Este documento no se puede previsualizar directamente. Por favor, descárgalo para verlo.
+                                                </p>
+                                                <button
+                                                    onClick={() => handleDownloadFormat("jpg")}
+                                                    className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full font-bold transition flex items-center gap-2"
+                                                >
+                                                    <Download className="w-4 h-4" />
+                                                    Descargar Documento
+                                                </button>
                                             </div>
-                                        ) : null}
+                                        );
+                                    }
+                                }
+
+                                // Default Image Fallback
+                                return (
+                                    <div className="relative max-w-full max-h-full flex items-center justify-center group">
+                                        <img
+                                            src={currentFile.thumbnailLink
+                                                ? currentFile.thumbnailLink.replace("=s220", `=s${lowResDownloads ? 1200 : 1600}`)
+                                                : `/api/cloud/thumbnail?c=${cloudAccountId}&f=${currentFile.id}&s=${lowResDownloads ? 1200 : 1600}`
+                                            }
+                                            alt={currentFile.name}
+                                            className="max-w-full max-h-[80vh] object-contain shadow-2xl rounded-lg border border-white/5"
+                                            referrerPolicy="no-referrer"
+                                        />
+                                        {/* Download overlay removed per user request */}
+                                        {enableWatermark && (
+                                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                                {studioLogo ? (
+                                                    <div className="opacity-25 max-w-[30%] max-h-[30%]">
+                                                        <img
+                                                            src={studioLogo}
+                                                            alt=""
+                                                            className="w-full h-full object-contain drop-shadow-lg"
+                                                            style={{ filter: 'grayscale(100%) brightness(200%) contrast(100%)' }}
+                                                        />
+                                                    </div>
+                                                ) : watermarkText ? (
+                                                    <div className="text-white/30 font-bold text-2xl md:text-4xl tracking-widest uppercase drop-shadow-lg select-none"
+                                                        style={{ textShadow: '0 2px 8px rgba(0,0,0,0.5)' }}>
+                                                        {watermarkText}
+                                                    </div>
+                                                ) : null}
+                                            </div>
+                                        )}
                                     </div>
-                                )}
-                            </div>
+                                );
+                            })()
                         )}
                     </motion.div>
 
@@ -459,8 +532,9 @@ export default function Lightbox({
                             )}
                         </div>
                     </div>
-                </div>
-            )}
-        </AnimatePresence>
+                </div >
+            )
+            }
+        </AnimatePresence >
     );
 }

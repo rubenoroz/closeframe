@@ -5,6 +5,7 @@ export interface CloudFile {
     mimeType: string;
     thumbnailLink?: string;
     webContentLink?: string;
+    webViewLink?: string;
     size?: string;
     modifiedTime?: string;
     imageMediaMetadata?: {

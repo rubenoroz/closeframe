@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Camera, Folder, Heart, Loader2, Maximize2, CheckCircle2, Circle, Download, X, Music } from "lucide-react";
+import { Camera, Folder, Heart, Loader2, Maximize2, CheckCircle2, Circle, Download, X, Music, FileText, FileSpreadsheet, FileBox as FilePresentation } from "lucide-react";
 import Lightbox from "./Lightbox";
 import { Skeleton } from "@/components/Skeleton";
 import GalleryLoaderGrid from "./GalleryLoaderGrid";
@@ -796,6 +796,30 @@ function MediaCard({
                                 referrerPolicy="no-referrer"
                                 loading={loadingStrategy}
                             />
+
+                            {/* Document Overlay (PDF/Office) */}
+                            {(() => {
+                                const ext = item.name.split('.').pop()?.toLowerCase();
+                                const isPdf = ext === 'pdf' || item.mimeType === 'application/pdf';
+                                const isWord = ['doc', 'docx'].includes(ext || '') || item.mimeType?.includes('word');
+                                const isExcel = ['xls', 'xlsx', 'csv'].includes(ext || '') || item.mimeType?.includes('spreadsheet') || item.mimeType?.includes('excel');
+                                const isPpt = ['ppt', 'pptx'].includes(ext || '') || item.mimeType?.includes('presentation') || item.mimeType?.includes('powerpoint');
+
+                                if (isPdf || isWord || isExcel || isPpt) {
+                                    return (
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-neutral-900 border border-neutral-800">
+                                            {isPdf && <FileText className="w-12 h-12 text-red-500 mb-2" />}
+                                            {isWord && <FileText className="w-12 h-12 text-blue-500 mb-2" />}
+                                            {isExcel && <FileSpreadsheet className="w-12 h-12 text-green-500 mb-2" />}
+                                            {isPpt && <FilePresentation className="w-12 h-12 text-orange-500 mb-2" />}
+                                            <span className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold">
+                                                {ext?.toUpperCase() || 'DOC'}
+                                            </span>
+                                        </div>
+                                    );
+                                }
+                                return null;
+                            })()}
 
                             {isVideo && (loaded || isExternal) && (
                                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">

@@ -23,7 +23,7 @@ export class GoogleDriveProvider implements CloudProvider {
 
         const res = await drive.files.list({
             q: `'${safeFolderId}' in parents and mimeType != 'application/vnd.google-apps.folder' and trashed = false`,
-            fields: "files(id, name, mimeType, thumbnailLink, webContentLink, imageMediaMetadata, videoMediaMetadata, size, modifiedTime)",
+            fields: "files(id, name, mimeType, thumbnailLink, webContentLink, webViewLink, imageMediaMetadata, videoMediaMetadata, size, modifiedTime)",
             pageSize: 1000, // Increased page size for flattening efficiency
         });
 
@@ -57,6 +57,7 @@ export class GoogleDriveProvider implements CloudProvider {
                 thumbnailLink: thumbnailLink || undefined,
                 previewLink: file.webContentLink || undefined,
                 downloadLink: file.webContentLink || undefined,
+                webViewLink: file.webViewLink || undefined,
                 width: width || undefined,
                 height: height || undefined,
                 lastModified: file.modifiedTime || undefined,

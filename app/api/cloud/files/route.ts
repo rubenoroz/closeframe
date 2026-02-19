@@ -25,7 +25,7 @@ const isValidMediaFile = (f: any) => {
         mime.startsWith('video/') ||
         mime.startsWith('audio/') ||
         mime.includes('zip') ||
-        /\.(jpg|jpeg|png|webp|gif|heic|heif|tiff|tif|mp4|mov|avi|mkv|zip|cr2|nef|arw|dng|orf|raf|rw2|peif|srw|mp3|m4a|wav|aac|ogg|flac)$/i.test(name);
+        /\.(jpg|jpeg|png|webp|gif|heic|heif|tiff|tif|mp4|mov|avi|mkv|zip|cr2|nef|arw|dng|orf|raf|rw2|peif|srw|mp3|m4a|wav|aac|ogg|flac|pdf|doc|docx|xls|xlsx|ppt|pptx)$/i.test(name);
 
     // If it has a mimeType that looks like a file and it's not explicitly a folder, 
     // we'll assume it's media unless it's a known system file
