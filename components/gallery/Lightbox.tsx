@@ -452,6 +452,31 @@ export default function Lightbox({
                                     // We use our proxy so it works even if the file is private in Drive/OneDrive/Box/etc.
 
                                     if (origin) {
+                                        // Check if localhost or private IP
+                                        const isLocal = origin.includes('localhost') || origin.includes('127.0.0.1') || origin.includes('192.168.');
+
+                                        if (isLocal) {
+                                            return (
+                                                <div className="flex flex-col items-center justify-center p-10 bg-neutral-900/80 rounded-2xl border border-white/10 text-center max-w-md">
+                                                    <div className="w-20 h-20 bg-yellow-500/10 rounded-2xl flex items-center justify-center mb-6 border border-yellow-500/20">
+                                                        <Share2 className="w-10 h-10 text-yellow-500" />
+                                                    </div>
+                                                    <h3 className="text-xl font-bold text-white mb-2">Vista previa no disponible en Local</h3>
+                                                    <p className="text-neutral-400 text-sm mb-6">
+                                                        Google Docs Viewer no puede acceder a archivos en tu servidor local ({origin}).<br /><br />
+                                                        <strong>Esta función trabajará correctamente cuando publiques la aplicación en un dominio real.</strong>
+                                                    </p>
+                                                    <button
+                                                        onClick={() => handleDownloadFormat("jpg")}
+                                                        className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-full font-bold transition flex items-center gap-2"
+                                                    >
+                                                        <Download className="w-4 h-4" />
+                                                        Descargar para ver
+                                                    </button>
+                                                </div>
+                                            );
+                                        }
+
                                         const params = new URLSearchParams();
                                         params.append("c", cloudAccountId || "");
                                         params.append("f", currentFile.id);
