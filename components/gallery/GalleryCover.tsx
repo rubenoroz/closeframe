@@ -55,7 +55,7 @@ export default function GalleryCover({
     const scale = parts[2] || 1;
 
     return (
-        <div className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center">
+        <div className="fixed top-0 left-0 w-full h-[100dvh] z-50 bg-black flex flex-col items-center justify-center supports-[height:100dvh]:h-[100dvh]">
             {/* Background Image & Overlay */}
             <div className="absolute inset-0 z-0 select-none overflow-hidden">
                 <img
@@ -71,7 +71,7 @@ export default function GalleryCover({
             </div>
 
             {/* Content Container - Full Screen Absolute */}
-            <div className="absolute inset-0 z-10 p-6 md:p-12 flex flex-col justify-between animate-in fade-in zoom-in duration-1000 slide-in-from-bottom-4">
+            <div className="absolute inset-0 z-10 p-6 md:p-12 flex flex-col justify-between h-full w-full overflow-y-auto overflow-x-hidden animate-in fade-in zoom-in duration-1000 slide-in-from-bottom-4">
 
                 <div className="self-start opacity-80">
                     {logo ? (

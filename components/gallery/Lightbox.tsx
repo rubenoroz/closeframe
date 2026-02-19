@@ -448,8 +448,8 @@ export default function Lightbox({
                                 }
 
                                 if (isOffice) {
-                                    // Google Docs Viewer - needs a publicly accessible URL.
-                                    // We use our proxy so it works even if the file is private in Drive/OneDrive/Box/etc.
+                                    // Microsoft Office Online Viewer - better compatibility for Word/Excel/PPT
+                                    // Requires a publicly accessible URL.
 
                                     if (origin) {
                                         // Check if localhost or private IP
@@ -463,7 +463,7 @@ export default function Lightbox({
                                                     </div>
                                                     <h3 className="text-xl font-bold text-white mb-2">Vista previa no disponible en Local</h3>
                                                     <p className="text-neutral-400 text-sm mb-6">
-                                                        Google Docs Viewer no puede acceder a archivos en tu servidor local ({origin}).<br /><br />
+                                                        El visor de Microsoft Office no puede acceder a archivos en tu servidor local ({origin}).<br /><br />
                                                         <strong>Esta función trabajará correctamente cuando publiques la aplicación en un dominio real.</strong>
                                                     </p>
                                                     <button
@@ -481,9 +481,14 @@ export default function Lightbox({
                                         params.append("c", cloudAccountId || "");
                                         params.append("f", currentFile.id);
                                         params.append("n", currentFile.name);
+                                        // Force inline false for MS Viewer? No, it needs to download it.
+                                        // Actually, MS Viewer fetches the URL. It doesn't matter if it's inline or attachment
+                                        // as long as it gets the file.
 
                                         const proxyUrl = `${origin}/api/cloud/download-direct?${params.toString()}`;
-                                        const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(proxyUrl)}&embedded=true`;
+
+                                        // Use Microsoft Office Online Viewer
+                                        const viewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(proxyUrl)}`;
 
                                         return (
                                             <div className="w-full h-full max-w-6xl flex flex-col bg-white rounded-lg overflow-hidden shadow-2xl">
