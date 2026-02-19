@@ -115,7 +115,7 @@ export default function GalleryCover({
                             onClick={onEnter}
                             className="group relative flex items-center gap-3 px-8 py-3 bg-white/5 hover:bg-white/10 border border-white/20 backdrop-blur-md rounded-full transition-all duration-500 transform hover:scale-105 hover:border-white/40 ring-1 ring-white/10"
                         >
-                            <span className="text-white text-xs md:text-sm uppercase tracking-[0.2em] font-medium pl-1">VER GALERÍA</span>
+                            <span className="text-white text-xs md:text-sm uppercase tracking-[0.2em] font-medium pl-1">ABRIR GALERÍA</span>
                             <ChevronRight className="w-4 h-4 text-white/70 group-hover:text-white group-hover:translate-x-1 transition-all" />
                         </button>
                     </div>
