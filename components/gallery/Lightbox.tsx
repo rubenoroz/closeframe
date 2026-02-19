@@ -48,6 +48,14 @@ export default function Lightbox({
     const audioRef = React.useRef<HTMLAudioElement>(null);
     const currentFile = files[currentIndex];
 
+    const [origin, setOrigin] = useState("");
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            setOrigin(window.location.origin);
+        }
+    }, []);
+
     const isVideo = currentFile.mimeType?.startsWith('video/') || currentFile.isExternal;
     const isAudio = currentFile.mimeType?.startsWith('audio/') || /\.(mp3|m4a|wav|aac|ogg|flac)/i.test(currentFile.name);
 
@@ -441,42 +449,28 @@ export default function Lightbox({
 
                                 if (isOffice) {
                                     // Google Docs Viewer - needs a publicly accessible URL.
-                                    // Our /api/cloud/download-direct might be protected by auth headers/cookies which Google's viewer can't see unless public.
-                                    // However, for Google Drive, we can use the webViewLink (embed link) directly!
+                                    // We use our proxy so it works even if the file is private in Drive/OneDrive/Box/etc.
 
-                                    if (currentFile.webViewLink) {
-                                        const embedUrl = currentFile.webViewLink.replace('/view?usp=drivesdk', '/preview');
+                                    if (origin) {
+                                        const params = new URLSearchParams();
+                                        params.append("c", cloudAccountId || "");
+                                        params.append("f", currentFile.id);
+                                        params.append("n", currentFile.name);
+
+                                        const proxyUrl = `${origin}/api/cloud/download-direct?${params.toString()}`;
+                                        const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(proxyUrl)}&embedded=true`;
+
                                         return (
                                             <div className="w-full h-full max-w-6xl flex flex-col bg-white rounded-lg overflow-hidden shadow-2xl">
                                                 <iframe
-                                                    src={embedUrl}
+                                                    src={viewerUrl}
                                                     className="w-full h-full min-h-[80vh]"
                                                     title={currentFile.name}
                                                 />
                                             </div>
                                         );
-                                    } else {
-                                        // Fallback if no webViewLink (e.g. generic provider or error)
-                                        // Show friendly message
-                                        return (
-                                            <div className="flex flex-col items-center justify-center p-10 bg-neutral-900/80 rounded-2xl border border-white/10 text-center max-w-md">
-                                                <div className="w-20 h-20 bg-white/5 rounded-2xl flex items-center justify-center mb-6">
-                                                    <Download className="w-10 h-10 text-white/50" />
-                                                </div>
-                                                <h3 className="text-xl font-bold text-white mb-2">Vista previa no disponible</h3>
-                                                <p className="text-neutral-400 text-sm mb-6">
-                                                    Este documento no se puede previsualizar directamente. Por favor, descárgalo para verlo.
-                                                </p>
-                                                <button
-                                                    onClick={() => handleDownloadFormat("jpg")}
-                                                    className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full font-bold transition flex items-center gap-2"
-                                                >
-                                                    <Download className="w-4 h-4" />
-                                                    Descargar Documento
-                                                </button>
-                                            </div>
-                                        );
                                     }
+                                    return null; // Wait for origin
                                 }
 
                                 // Default Image Fallback

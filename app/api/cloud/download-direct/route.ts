@@ -35,11 +35,15 @@ export async function GET(req: NextRequest) {
         const authClient = await getFreshAuth(cloudAccountId);
 
         let downloadUrl: string | null = null;
+        let mimeType = "application/octet-stream";
+        let fileName = searchParams.get("n") || "download";
+        let fileSize: string | undefined = undefined;
 
         if (account.provider === "microsoft") {
             const { MicrosoftGraphProvider } = await import("@/lib/cloud/microsoft-provider");
             const provider = new MicrosoftGraphProvider(authClient as string);
             downloadUrl = await provider.getFileContent(fileId);
+            // Microsoft pre-signed URLs usually have valid content-type headers when fetched
 
         } else if (account.provider === "dropbox") {
             const { DropboxProvider } = await import("@/lib/cloud/dropbox-provider");
@@ -53,49 +57,48 @@ export async function GET(req: NextRequest) {
             downloadUrl = await provider.getFileContent(fileId);
 
         } else {
-            // Google Logic - Stream the file directly instead of redirect
-            // This works for private files that don't have public webContentLink
+            // Google Logic - Stream the file directly
             const { google } = await import("googleapis");
             const drive = google.drive({ version: "v3", auth: authClient as any });
 
-            // Get file metadata for content type and name
+            // Get metadata
             const fileMeta = await drive.files.get({
                 fileId: fileId,
                 fields: "name, mimeType, size"
             });
 
-            const fileName = searchParams.get("n") || fileMeta.data.name || "download";
-            const mimeType = fileMeta.data.mimeType || "application/octet-stream";
-            const fileSize = fileMeta.data.size;
+            fileName = searchParams.get("n") || fileMeta.data.name || fileName;
+            mimeType = fileMeta.data.mimeType || mimeType;
+            fileSize = fileMeta.data.size || undefined;
 
-            // Stream the file content directly from Google Drive
             const response = await drive.files.get(
                 { fileId: fileId, alt: "media" },
                 { responseType: "stream" }
             );
 
-            // Build response headers
-            const headers = new Headers();
-            headers.set("Content-Type", mimeType);
-
-            const isInline = searchParams.get("inline") === "true";
-            const disposition = isInline ? "inline" : "attachment";
-            headers.set("Content-Disposition", `${disposition}; filename="${encodeURIComponent(fileName)}"`);
-
-            if (fileSize) {
-                headers.set("Content-Length", fileSize);
-            }
-
-            // Return streaming response
-            return new Response(response.data as any, { headers });
+            // Google returns a readable stream in data
+            return streamResponse(response.data, fileName, mimeType, fileSize, searchParams.get("inline") === "true");
         }
 
         if (!downloadUrl) {
             throw new Error("Could not generate download link");
         }
 
-        // Redirect to the direct cloud URL (Saves 100% Bandwidth)
-        return NextResponse.redirect(downloadUrl);
+        // Universal Proxy Logic for other providers
+        // Fetch the content from the pre-signed/direct URL and stream it to the client
+        // This bypasses CORS and Auth headers issues for the browser
+        const proxyRes = await fetch(downloadUrl);
+
+        if (!proxyRes.ok) {
+            throw new Error(`Proxy Request Failed: ${proxyRes.status}`);
+        }
+
+        // Try to get metadata from headers if not known
+        const contentType = proxyRes.headers.get("content-type") || mimeType;
+        const contentLength = proxyRes.headers.get("content-length") || undefined;
+
+        // @ts-ignore
+        return streamResponse(proxyRes.body, fileName, contentType, contentLength, searchParams.get("inline") === "true");
 
     } catch (error: any) {
         console.error("Direct Download Error:", error?.message || error);
@@ -104,4 +107,27 @@ export async function GET(req: NextRequest) {
             details: error?.message
         }, { status: 500 });
     }
+}
+
+function streamResponse(
+    stream: any,
+    fileName: string,
+    contentType: string,
+    contentLength: string | number | undefined,
+    isInline: boolean
+) {
+    const headers = new Headers();
+    headers.set("Content-Type", contentType);
+
+    // Force inline if requested, otherwise default to attachment
+    // Clean filename for header
+    const safeName = encodeURIComponent(fileName).replace(/['()]/g, escape).replace(/\*/g, '%2A');
+    const disposition = isInline ? "inline" : "attachment";
+    headers.set("Content-Disposition", `${disposition}; filename*=UTF-8''${safeName}`);
+
+    if (contentLength) {
+        headers.set("Content-Length", contentLength.toString());
+    }
+
+    return new Response(stream, { headers });
 }
