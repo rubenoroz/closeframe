@@ -418,11 +418,15 @@ export default function Lightbox({
                                 const isOffice = isWord || isExcel || isPpt;
 
                                 if (isPdf) {
-                                    // Native PDF Viewer
-                                    // Use webViewLink if available (Google Drive's viewer), otherwise fallback to our proxy for raw file
-                                    const pdfSrc = currentFile.webViewLink
-                                        ? currentFile.webViewLink.replace('/view?usp=drivesdk', '/preview')
-                                        : `/api/cloud/download-direct?c=${cloudAccountId}&f=${currentFile.id}&n=${encodeURIComponent(currentFile.name)}`;
+                                    // Native PDF Viewer via Proxy (No Google Auth required)
+                                    // We use our own backend to stream the file content with inline disposition
+                                    const params = new URLSearchParams();
+                                    params.append("c", cloudAccountId || "");
+                                    params.append("f", currentFile.id);
+                                    params.append("n", currentFile.name);
+                                    params.append("inline", "true");
+
+                                    const pdfSrc = `/api/cloud/download-direct?${params.toString()}`;
 
                                     return (
                                         <div className="w-full h-full max-w-6xl flex flex-col bg-white rounded-lg overflow-hidden shadow-2xl">

@@ -77,7 +77,11 @@ export async function GET(req: NextRequest) {
             // Build response headers
             const headers = new Headers();
             headers.set("Content-Type", mimeType);
-            headers.set("Content-Disposition", `attachment; filename="${encodeURIComponent(fileName)}"`);
+
+            const isInline = searchParams.get("inline") === "true";
+            const disposition = isInline ? "inline" : "attachment";
+            headers.set("Content-Disposition", `${disposition}; filename="${encodeURIComponent(fileName)}"`);
+
             if (fileSize) {
                 headers.set("Content-Length", fileSize);
             }
