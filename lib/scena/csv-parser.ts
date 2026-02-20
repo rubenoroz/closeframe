@@ -416,6 +416,7 @@ export function mapPrioridadToPriority(prioridad: string): string {
  * Generate a sample CSV template
  */
 export function generateCsvTemplate(): string {
+    const bom = '\uFEFF';
     const headers = ALL_FIELDS.join(',');
     const sampleRows = [
         '1,Preproducción,Investigación del tema,Análisis y documentación inicial,Director,2026-01-15,2026-01-20,2026-01-22,5,,,Dossier de investigación,Pendiente,Alta',
@@ -425,13 +426,14 @@ export function generateCsvTemplate(): string {
         '5,Producción,Setup de audio,Preparar micrófonos,Sonidista,2026-02-01,2026-02-01,,1,,3,Material grabado,Pendiente,Baja',
         '6,Postproducción,Edición,Primer corte de edición,Editor,2026-02-05,2026-02-15,,10,3,,Primer corte,Pendiente,Alta',
     ];
-    return [headers, ...sampleRows].join('\n');
+    return bom + [headers, ...sampleRows].join('\n');
 }
 
 /**
  * Export tasks to CSV string (Import-compatible)
  */
 export function exportTasksToCsv(tasks: any[], columns: any[]): string {
+    const bom = '\uFEFF';
     const headers = ALL_FIELDS.join(',');
 
     // Helper to escape CSV fields
@@ -525,5 +527,5 @@ export function exportTasksToCsv(tasks: any[], columns: any[]): string {
         ].join(',');
     });
 
-    return [headers, ...rows].join('\n');
+    return bom + [headers, ...rows].join('\n');
 }
