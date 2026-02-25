@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { getProjects, createProject, deleteProject, MindMapProject } from '@/lib/nodos/storage';
 import { Plus, Network, Search, MoreVertical, Trash2 } from 'lucide-react';
 import CsvUploader from '@/components/nodos/CsvUploader';
 import { CreateNodosProjectModal } from '@/components/nodos/CreateNodosProjectModal';
@@ -17,9 +16,21 @@ const CARD_COLORS = [
   'bg-[#e9d6ff] text-black'
 ];
 
+interface NodosProject {
+  id: string;
+  title: string;
+  description: string | null;
+  nodes: any[];
+  edges: any[];
+  isArchived: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export default function DashboardPage() {
   const router = useRouter();
-  const [projects, setProjects] = useState<MindMapProject[]>([]);
+  const [projects, setProjects] = useState<NodosProject[]>([]);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'activos' | 'archivados'>('activos');
 
   // Estado para el menú dropdown
@@ -27,8 +38,22 @@ export default function DashboardPage() {
   const menuRef = useRef<HTMLDivElement>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
+  const fetchProjects = useCallback(async () => {
+    try {
+      const res = await fetch('/api/nodos/projects');
+      if (res.ok) {
+        const data = await res.json();
+        setProjects(data);
+      }
+    } catch (err) {
+      console.error('Error fetching projects:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    setProjects(getProjects());
+    fetchProjects();
 
     // Cerrar dropdown al hacer click fuera
     const handleClickOutside = (event: MouseEvent) => {
@@ -38,7 +63,7 @@ export default function DashboardPage() {
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [fetchProjects]);
 
   const handleCreateNew = () => {
     setShowCreateModal(true);
@@ -48,12 +73,18 @@ export default function DashboardPage() {
     router.push(`/dashboard/nodos/${id}`);
   };
 
-  const handleDelete = (e: React.MouseEvent, id: string) => {
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     if (confirm('¿Seguro que deseas eliminar este proyecto? Esta acción no se puede deshacer.')) {
-      deleteProject(id);
-      setProjects(getProjects());
-      setMenuOpenId(null);
+      try {
+        const res = await fetch(`/api/nodos/projects/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          setProjects(prev => prev.filter(p => p.id !== id));
+          setMenuOpenId(null);
+        }
+      } catch (err) {
+        console.error('Error deleting project:', err);
+      }
     }
   };
 
@@ -114,7 +145,11 @@ export default function DashboardPage() {
 
         {/* Project Grid */}
         <main className="p-8 md:p-12">
-          {projects.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-32">
+              <p className="text-neutral-500">Cargando proyectos...</p>
+            </div>
+          ) : projects.length === 0 ? (
             <div className="text-center py-32 rounded-3xl border border-dashed border-neutral-800 bg-neutral-900/20">
               <p className="text-neutral-500">Aún no hay mapas mentales.</p>
               <button onClick={handleCreateNew} className="mt-4 text-white font-medium hover:underline">
@@ -123,7 +158,7 @@ export default function DashboardPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 ml:grid-cols-3 lg:grid-cols-4 gap-4">
-              {projects.sort((a, b) => b.updatedAt - a.updatedAt).map((project, index) => {
+              {projects.map((project, index) => {
                 // Asignar un color visual basado en el índice para igualar Scena
                 const colorClass = CARD_COLORS[index % CARD_COLORS.length];
                 const isMenuOpen = menuOpenId === project.id;
@@ -164,7 +199,7 @@ export default function DashboardPage() {
                       <p className="text-[13px] mt-3 leading-relaxed opacity-80 line-clamp-3">
                         Última edición: {new Date(project.updatedAt).toLocaleDateString()}
                         <br />
-                        Contenido: {project.nodes.length} Nodos y {project.edges.length} Conexiones mapeadas en memoria.
+                        Contenido: {(project.nodes as any[]).length} Nodos y {(project.edges as any[]).length} Conexiones mapeadas.
                       </p>
                     </div>
                   </div>

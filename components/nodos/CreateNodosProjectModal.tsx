@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Calendar, Check, ChevronsUpDown, Search } from "lucide-react";
-import { createProject, saveProject } from "@/lib/nodos/storage";
+import { X, Calendar, Check, ChevronsUpDown, Search, Loader2 } from "lucide-react";
 
 interface Booking {
     id: string;
@@ -32,6 +31,8 @@ export function CreateNodosProjectModal({ isOpen, onClose, onProjectCreated }: C
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
     const [selectedId, setSelectedId] = useState<string>("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     // Dropdown state
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -105,19 +106,38 @@ export function CreateNodosProjectModal({ isOpen, onClose, onProjectCreated }: C
         }
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!name.trim()) return;
+        setIsSubmitting(true);
+        setError(null);
 
-        const newProject = createProject(name.trim());
-        // Save description into the first node's data
-        if (description.trim() && newProject.nodes.length > 0) {
-            newProject.nodes[0].data.description = description.trim();
-            saveProject(newProject);
+        try {
+            const isInternal = internalBookings.some(b => b.id === selectedId);
+            const isExternal = externalEvents.some(e => e.id === selectedId);
+
+            const payload: any = { title: name.trim(), description: description.trim() || null };
+            if (isInternal) payload.bookingId = selectedId;
+            else if (isExternal) payload.externalEventId = selectedId;
+
+            const res = await fetch('/api/nodos/projects', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+
+            if (!res.ok) {
+                throw new Error('Error al crear el proyecto');
+            }
+
+            const project = await res.json();
+            onProjectCreated(project.id);
+            onClose();
+        } catch (err: any) {
+            setError(err.message || 'No se pudo crear el proyecto.');
+        } finally {
+            setIsSubmitting(false);
         }
-
-        onProjectCreated(newProject.id);
-        onClose();
     };
 
     // Filtering
@@ -273,16 +293,29 @@ export function CreateNodosProjectModal({ isOpen, onClose, onProjectCreated }: C
                             />
                         </div>
 
+                        {error && (
+                            <div className="text-red-500 text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
+                                {error}
+                            </div>
+                        )}
+
                         <div className="flex justify-end gap-3 pt-2">
-                            <Button type="button" variant="ghost" onClick={onClose}>
+                            <Button type="button" variant="ghost" onClick={onClose} disabled={isSubmitting}>
                                 Cancelar
                             </Button>
                             <Button
                                 type="submit"
                                 className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                                disabled={!name.trim()}
+                                disabled={isSubmitting || !name.trim()}
                             >
-                                Crear Proyecto
+                                {isSubmitting ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                        Creando...
+                                    </>
+                                ) : (
+                                    "Crear Proyecto"
+                                )}
                             </Button>
                         </div>
                     </form>

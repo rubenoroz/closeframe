@@ -26,7 +26,6 @@ import MindMapEdge from '@/components/nodos/MindMapEdge';
 import ContextMenu from '@/components/nodos/ContextMenu';
 import PropertiesPanel from '@/components/nodos/PropertiesPanel';
 import SearchMenu from '@/components/nodos/SearchMenu';
-import { getProject, saveProject, MindMapProject } from '@/lib/nodos/storage';
 
 import { Plus, ChevronLeft } from 'lucide-react';
 
@@ -40,7 +39,7 @@ const edgeTypes = {
 
 function FlowCanvas({ projectId }: { projectId: string }) {
   const router = useRouter();
-  const [project, setProject] = useState<MindMapProject | null>(null);
+  const [project, setProject] = useState<any>(null);
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
@@ -51,31 +50,38 @@ function FlowCanvas({ projectId }: { projectId: string }) {
 
   // Load project on mount
   useEffect(() => {
-    const p = getProject(projectId);
-    if (!p) {
-      router.push('/dashboard/nodos');
-      return;
-    }
-    setProject(p);
-    setNodes(p.nodes || []);
-    setEdges(p.edges || []);
+    const loadProject = async () => {
+      try {
+        const res = await fetch(`/api/nodos/projects/${projectId}`);
+        if (!res.ok) {
+          router.push('/dashboard/nodos');
+          return;
+        }
+        const p = await res.json();
+        setProject(p);
+        setNodes(p.nodes || []);
+        setEdges(p.edges || []);
 
-    // Fit view after small delay
-    setTimeout(() => {
-      fitView({ duration: 800, padding: 0.5, maxZoom: 1 });
-    }, 100);
+        setTimeout(() => {
+          fitView({ duration: 800, padding: 0.5, maxZoom: 1 });
+        }, 100);
+      } catch {
+        router.push('/dashboard/nodos');
+      }
+    };
+    loadProject();
   }, [projectId, router, setNodes, setEdges, fitView]);
 
-  // Auto-save logic whenever nodes or edges mutate (debounce)
+  // Auto-save to database whenever nodes or edges mutate (debounce)
   useEffect(() => {
     if (project && nodes.length > 0) {
       const timeoutId = setTimeout(() => {
-        saveProject({
-          ...project,
-          nodes,
-          edges,
-        });
-      }, 500);
+        fetch(`/api/nodos/projects/${project.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nodes, edges }),
+        }).catch(err => console.error('Auto-save error:', err));
+      }, 1000);
       return () => clearTimeout(timeoutId);
     }
   }, [nodes, edges, project]);

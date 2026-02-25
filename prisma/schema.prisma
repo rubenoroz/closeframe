@@ -59,6 +59,7 @@ model User {
   referredBy             Referral[]            @relation("ReferredUser")
   referralAssignments    ReferralAssignment[]
   scenaProjects          ScenaProject[]
+  nodosProjects          NodosProject[]
   sessions               Session[]
   stripeConnectAccount   StripeConnectAccount?
   plan                   Plan?                 @relation(fields: [planId], references: [id])
@@ -189,6 +190,7 @@ model Booking {
   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   payment       Payment?
   scenaProjects ScenaProject[]
+  nodosProjects NodosProject[]
 }
 
 model Plan {
@@ -824,4 +826,22 @@ enum PayoutStatus {
   PROCESSING
   COMPLETED
   FAILED
+}
+
+model NodosProject {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  nodes       Json     @default("[]")
+  edges       Json     @default("[]")
+  isArchived  Boolean  @default(false)
+  ownerId     String
+  bookingId   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  booking     Booking? @relation(fields: [bookingId], references: [id])
+
+  @@index([ownerId])
+  @@index([bookingId])
 }
