@@ -39,7 +39,9 @@ export default function DashboardPage() {
   }, []);
 
   const handleCreateNew = () => {
-    const newProject = createProject("Nuevo Proyecto");
+    const name = prompt('¿Cómo se llamará tu proyecto?');
+    if (!name || !name.trim()) return;
+    const newProject = createProject(name.trim());
     router.push(`/dashboard/nodos/${newProject.id}`);
   };
 

@@ -249,13 +249,14 @@ function FlowCanvas({ projectId }: { projectId: string }) {
   return (
     <>
       {/* Top Bar Overlay */}
-      <div className="absolute top-6 left-6 z-50">
+      <div className="absolute top-6 left-6 z-50 flex items-center gap-3">
         <button
           onClick={() => router.push('/dashboard/nodos')}
           className="w-10 h-10 bg-neutral-900 border border-neutral-800 hover:bg-neutral-800 rounded-full flex items-center justify-center text-white transition-colors shadow-lg group"
         >
           <ChevronLeft size={20} className="group-hover:-translate-x-0.5 transition-transform" />
         </button>
+        <span className="text-white/70 text-xs font-medium tracking-wide">{project.title}</span>
       </div>
 
       <ReactFlow
