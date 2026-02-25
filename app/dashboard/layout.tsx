@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { Camera, LayoutGrid, Plus, Settings, LogOut, CalendarDays, ChevronDown, User, Users, Monitor, CreditCard, Menu, X, Sun, Moon, Shield, Wallet } from "lucide-react";
+import { Camera, LayoutGrid, Plus, Settings, LogOut, CalendarDays, ChevronDown, User, Users, Monitor, CreditCard, Menu, X, Sun, Moon, Shield, Wallet, Network } from "lucide-react";
 import Image from "next/image";
 import { ScenaIcon } from "@/components/icons/ScenaIcon";
 import { cn } from "@/lib/utils";
@@ -42,6 +42,9 @@ export default function DashboardLayout({
         ...(showScena
             ? [{ href: "/dashboard/scena", label: "Scena", icon: <ScenaIcon className="w-5 h-5" /> }]
             : []),
+
+        // Nodos Mind Mapping (placed below Scena as requested)
+        { href: "/dashboard/nodos", label: "Nodos", icon: <Network className="w-5 h-5" /> },
 
         { href: "/dashboard/clouds", label: "Nubes conectadas", icon: <Settings className="w-5 h-5" /> },
 
