@@ -256,7 +256,7 @@ function FlowCanvas({ projectId }: { projectId: string }) {
         >
           <ChevronLeft size={20} className="group-hover:-translate-x-0.5 transition-transform" />
         </button>
-        <span className="text-white/70 text-xs font-medium tracking-wide">{project.title}</span>
+        <span className="text-white text-sm font-semibold tracking-tight">{project.title}</span>
       </div>
 
       <ReactFlow

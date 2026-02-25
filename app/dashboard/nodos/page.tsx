@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { getProjects, createProject, deleteProject, MindMapProject } from '@/lib/nodos/storage';
 import { Plus, Network, Search, MoreVertical, Trash2 } from 'lucide-react';
 import CsvUploader from '@/components/nodos/CsvUploader';
+import { CreateNodosProjectModal } from '@/components/nodos/CreateNodosProjectModal';
 
 // Colores disponibles de Nodos para simular la asignación de color en tarjetas
 const CARD_COLORS = [
@@ -24,6 +25,7 @@ export default function DashboardPage() {
   // Estado para el menú dropdown
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   useEffect(() => {
     setProjects(getProjects());
@@ -39,10 +41,11 @@ export default function DashboardPage() {
   }, []);
 
   const handleCreateNew = () => {
-    const name = prompt('¿Cómo se llamará tu proyecto?');
-    if (!name || !name.trim()) return;
-    const newProject = createProject(name.trim());
-    router.push(`/dashboard/nodos/${newProject.id}`);
+    setShowCreateModal(true);
+  };
+
+  const handleProjectCreated = (id: string) => {
+    router.push(`/dashboard/nodos/${id}`);
   };
 
   const handleDelete = (e: React.MouseEvent, id: string) => {
@@ -170,6 +173,12 @@ export default function DashboardPage() {
             </div>
           )}
         </main>
+
+        <CreateNodosProjectModal
+          isOpen={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          onProjectCreated={handleProjectCreated}
+        />
       </div>
     </div>
   );
