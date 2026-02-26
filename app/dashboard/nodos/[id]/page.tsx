@@ -203,25 +203,17 @@ function FlowCanvas({ projectId }: { projectId: string }) {
   // Track connection start to distinguish click from drag
   const connectStartRef = useRef<{ nodeId: string; handleId: string; x: number; y: number; time: number } | null>(null);
 
-  const onConnectStart = useCallback((_: any, params: { nodeId: string | null; handleId: string | null }) => {
+  const onConnectStart = useCallback((event: any, params: { nodeId: string | null; handleId: string | null }) => {
+    const e = event as MouseEvent | TouchEvent;
+    const clientX = 'clientX' in e ? e.clientX : (e as TouchEvent).touches?.[0]?.clientX || 0;
+    const clientY = 'clientY' in e ? e.clientY : (e as TouchEvent).touches?.[0]?.clientY || 0;
     connectStartRef.current = {
       nodeId: params.nodeId || '',
       handleId: params.handleId || '',
-      x: 0, y: 0,
+      x: clientX,
+      y: clientY,
       time: Date.now(),
     };
-  }, []);
-
-  // Capture mouse position at actual mouseDown for distance calc
-  React.useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (connectStartRef.current && connectStartRef.current.x === 0) {
-        connectStartRef.current.x = e.clientX;
-        connectStartRef.current.y = e.clientY;
-      }
-    };
-    window.addEventListener('mousedown', handler, true);
-    return () => window.removeEventListener('mousedown', handler, true);
   }, []);
 
   const onConnectEnd = useCallback((event: MouseEvent | TouchEvent) => {
@@ -237,12 +229,15 @@ function FlowCanvas({ projectId }: { projectId: string }) {
     const elapsed = Date.now() - start.time;
 
     // Click: small movement + quick release → QuickAdd
+    // Defer to next tick so React Flow finishes its connection cleanup first
     if (distance < 10 && elapsed < 500) {
-      const direction = start.handleId.replace('-source', '').replace('-target', '');
-      const node = getNode(start.nodeId);
-      if (node) {
-        onQuickAdd(start.nodeId, (node.data as any).color || 'default', direction);
-      }
+      setTimeout(() => {
+        const direction = start.handleId.replace('-source', '').replace('-target', '');
+        const node = getNode(start.nodeId);
+        if (node) {
+          onQuickAdd(start.nodeId, (node.data as any).color || 'default', direction);
+        }
+      }, 0);
     }
   }, [getNode, onQuickAdd]);
 
@@ -352,6 +347,7 @@ function FlowCanvas({ projectId }: { projectId: string }) {
         fitView
         colorMode="dark"
         connectionMode={ConnectionMode.Loose}
+        edgesReconnectable={false}
         proOptions={{ hideAttribution: true }}
       >
         <Controls showInteractive={false} />
