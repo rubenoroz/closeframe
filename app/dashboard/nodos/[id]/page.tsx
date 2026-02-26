@@ -344,7 +344,6 @@ function FlowCanvas({ projectId }: { projectId: string }) {
           onPaneClick={onPaneClick}
           fitView
           colorMode="dark"
-          connectionMode={ConnectionMode.Loose}
           edgesReconnectable={false}
           proOptions={{ hideAttribution: true }}
         >
