@@ -121,7 +121,9 @@ export function ProjectList({ canCreate = true }: { canCreate?: boolean }) {
 
     const handleDelete = (projectId: string) => {
         setProjectToDelete(projectId);
-        setIsDeleteModalOpen(true);
+        // Add a 250ms delay so the DropdownMenu can finish its closing
+        // animation and focus management before opening the modal.
+        setTimeout(() => setIsDeleteModalOpen(true), 250);
     };
 
     const confirmDelete = async () => {
@@ -314,7 +316,10 @@ export function ProjectList({ canCreate = true }: { canCreate?: boolean }) {
                                                                 <Archive className="mr-2 h-4 w-4" /> Archivar
                                                             </DropdownMenuItem>
                                                             <DropdownMenuItem
-                                                                onClick={() => handleDelete(project.id)}
+                                                                onSelect={(e) => {
+                                                                    e.preventDefault();
+                                                                    handleDelete(project.id);
+                                                                }}
                                                                 className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-900/10"
                                                             >
                                                                 <Trash2 className="mr-2 h-4 w-4" /> Eliminar
@@ -326,7 +331,10 @@ export function ProjectList({ canCreate = true }: { canCreate?: boolean }) {
                                                                 <Undo2 className="mr-2 h-4 w-4" /> Desarchivar
                                                             </DropdownMenuItem>
                                                             <DropdownMenuItem
-                                                                onClick={() => handleDelete(project.id)}
+                                                                onSelect={(e) => {
+                                                                    e.preventDefault();
+                                                                    handleDelete(project.id);
+                                                                }}
                                                                 className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-900/10"
                                                             >
                                                                 <Trash2 className="mr-2 h-4 w-4" /> Eliminar

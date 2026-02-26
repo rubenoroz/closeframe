@@ -31,7 +31,14 @@ export function ConfirmModal({
 }: ConfirmModalProps) {
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 sm:max-w-[425px]">
+            <DialogContent
+                onInteractOutside={(e) => {
+                    // Prevent the dialog from immediately closing if the click was part of a dropdown menu interaction
+                    // or if the mouse was released outside the dialog during the opening phase.
+                    e.preventDefault();
+                }}
+                className="bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 sm:max-w-[425px]"
+            >
                 <DialogHeader>
                     <DialogTitle className="text-neutral-900 dark:text-neutral-100">{title}</DialogTitle>
                     <DialogDescription className="text-neutral-600 dark:text-neutral-400">

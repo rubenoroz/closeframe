@@ -47,7 +47,7 @@ function FlowCanvas({ projectId }: { projectId: string }) {
   const [menu, setMenu] = useState<{ id: string, top: number, left: number } | null>(null);
   const [selectedNode, setSelectedNode] = useState<any>(null);
 
-  const { fitView, getNode, deleteElements, screenToFlowPosition } = useReactFlow();
+  const { fitView, getNode, getNodes, getEdges, deleteElements, screenToFlowPosition } = useReactFlow();
 
   // Flag to prevent onConnect from firing during QuickAdd
   const isQuickAddingRef = useRef(false);
@@ -193,9 +193,25 @@ function FlowCanvas({ projectId }: { projectId: string }) {
       // Block connections triggered by React Flow during QuickAdd
       if (isQuickAddingRef.current) return;
       setEdges((eds) => {
+        // Prevent strictly self-connecting a node to itself
         if (params.source === params.target) return eds;
-        const filteredEdges = eds.filter(e => !(e.source === params.source && e.target === params.target) && !(e.source === params.target && e.target === params.source));
-        return addEdge({ ...params, type: 'mindmap', animated: true, markerEnd: { type: MarkerType.ArrowClosed, color: '#6b6b6b' } }, filteredEdges);
+
+        // Bypass React Flow's addEdge function because it aggressively deduplicates by source+target
+        // even if we supply a unique ID and different handles.
+        const uniqueEdgeId = `e${params.source}-${params.target}-${params.sourceHandle}-${params.targetHandle}`;
+
+        // Don't add if this EXACT connection already exists
+        if (eds.some(e => e.id === uniqueEdgeId)) return eds;
+
+        const newEdge: Edge = {
+          ...params as any,
+          id: uniqueEdgeId,
+          type: 'mindmap',
+          animated: true,
+          markerEnd: { type: MarkerType.ArrowClosed, color: '#6b6b6b' }
+        };
+
+        return [...eds, newEdge];
       });
     },
     [setEdges]
@@ -242,25 +258,32 @@ function FlowCanvas({ projectId }: { projectId: string }) {
     setMenu(null);
   }, [menu, setNodes, setEdges]);
 
-  // Delete selected nodes with Delete/Backspace key
-  React.useEffect(() => {
+  // Restored and fixed custom keyboard listener for absolute multi-delete reliability
+  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Delete' || e.key === 'Backspace') {
         const tag = (e.target as HTMLElement)?.tagName;
         if (tag === 'INPUT' || tag === 'TEXTAREA') return;
 
-        const selectedNodes = nodes.filter(n => n.selected);
-        const selectedEdges = edges.filter(e => e.selected);
-        if (selectedNodes.length === 0 && selectedEdges.length === 0) return;
+        // Force synchronous read of currently selected items to prevent closure staleness
+        const currentNodes = getNodes();
+        const currentEdges = getEdges();
 
-        e.preventDefault();
-        deleteElements({ nodes: selectedNodes, edges: selectedEdges });
-        setSelectedNode(null);
+        const selectedNodes = currentNodes.filter(n => n.selected);
+        const selectedEdges = currentEdges.filter(e => e.selected);
+
+        if (selectedNodes.length > 0 || selectedEdges.length > 0) {
+          e.preventDefault();
+          // Use direct state updates instead of deleteElements to bypass RF internal batching bugs
+          setNodes(nds => nds.filter(n => !n.selected));
+          setEdges(eds => eds.filter(e => !e.selected && !selectedNodes.some(n => n.id === e.source || n.id === e.target)));
+          setSelectedNode(null);
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [nodes, edges, deleteElements, setSelectedNode]);
+  }, [getNodes, getEdges, setNodes, setEdges, setSelectedNode]);
 
   const NODOS_COLORS = ['#ffcfea', '#d0dbff', '#fff7cf', '#ffd6d6', '#d4ffd6', '#e9d6ff'];
 
