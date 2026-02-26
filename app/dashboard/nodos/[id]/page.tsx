@@ -253,10 +253,21 @@ function FlowCanvas({ projectId }: { projectId: string }) {
 
   const deleteNode = useCallback(() => {
     if (!menu) return;
-    setNodes((nds) => nds.filter((node) => node.id !== menu.id));
-    setEdges((eds) => eds.filter((edge) => edge.source !== menu.id && edge.target !== menu.id));
+
+    // Check if the right-clicked node is part of a current multi-selection
+    const isSelected = nodes.some(n => n.id === menu.id && n.selected);
+
+    if (isSelected) {
+      const selectedNodeIds = new Set(nodes.filter(n => n.selected).map(n => n.id));
+      setNodes(nds => nds.filter(n => !selectedNodeIds.has(n.id)));
+      setEdges(eds => eds.filter(e => !selectedNodeIds.has(e.source) && !selectedNodeIds.has(e.target)));
+    } else {
+      // Just delete the specific node right-clicked
+      setNodes((nds) => nds.filter((node) => node.id !== menu.id));
+      setEdges((eds) => eds.filter((edge) => edge.source !== menu.id && edge.target !== menu.id));
+    }
     setMenu(null);
-  }, [menu, setNodes, setEdges]);
+  }, [menu, nodes, setNodes, setEdges]);
 
   // Restored and fixed custom keyboard listener for absolute multi-delete reliability
   useEffect(() => {
