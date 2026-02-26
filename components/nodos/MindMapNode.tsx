@@ -2,12 +2,46 @@ import React, { memo, useState } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { FileText, ChevronDown, ChevronRight, Plus } from 'lucide-react';
 
+// QuickAdd button overlay positioned on top of a handle
+function QuickAddButton({ direction, onClick, isCustomColor, baseColor }: {
+    direction: 'top' | 'bottom' | 'left' | 'right';
+    onClick: (e: React.MouseEvent, direction: string) => void;
+    isCustomColor: boolean;
+    baseColor: string;
+}) {
+    const positionStyles: Record<string, React.CSSProperties> = {
+        top: { top: -7, left: '50%', transform: 'translateX(-50%)' },
+        bottom: { bottom: -7, left: '50%', transform: 'translateX(-50%)' },
+        left: { left: -7, top: '50%', transform: 'translateY(-50%)' },
+        right: { right: -7, top: '50%', transform: 'translateY(-50%)' },
+    };
+
+    return (
+        <button
+            className={`absolute z-30 w-[14px] h-[14px] rounded-full border flex items-center justify-center cursor-pointer transition-all duration-200 hover:scale-125 group ${isCustomColor ? 'bg-white' : 'bg-neutral-800'}`}
+            style={{
+                ...positionStyles[direction],
+                borderColor: isCustomColor ? baseColor : '#525252',
+            }}
+            onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                onClick(e, direction);
+            }}
+            onMouseDown={(e) => {
+                e.stopPropagation();
+            }}
+        >
+            <Plus size={10} strokeWidth={3} className={`opacity-0 group-hover:opacity-100 transition-opacity ${isCustomColor ? 'text-neutral-800' : 'text-neutral-300'}`} />
+        </button>
+    );
+}
+
 export default memo(({ id, data, selected }: any) => {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
 
     const onQuickAddClick = (e: React.MouseEvent, direction: string) => {
-        e.stopPropagation();
         if (data.onQuickAdd) {
             data.onQuickAdd(id, data.color, direction);
         }
@@ -43,57 +77,28 @@ export default memo(({ id, data, selected }: any) => {
             onMouseLeave={() => setIsHovered(false)}
         >
 
-            {/* Top Handles */}
-            <Handle
-                type="target"
-                position={Position.Top}
-                id="top-target"
-                className={`group flex items-center justify-center !w-[14px] !h-[14px] !border-[1px] transition-all duration-200 z-20 cursor-pointer ${isCustomColor ? '!bg-white' : '!bg-neutral-800'}`}
-                style={isCustomColor ? { borderColor: baseColor } : { borderColor: '#525252' }}
-                onClick={(e) => onQuickAddClick(e, 'top')}
-            >
-                <Plus size={10} strokeWidth={3} className={`opacity-0 group-hover:opacity-100 transition-opacity ${isCustomColor ? 'text-neutral-800' : 'text-neutral-300'}`} />
-            </Handle>
-            <Handle type="source" position={Position.Top} id="top-source" className="!w-[14px] !h-[14px] bg-transparent border-transparent opacity-0 pointer-events-none" />
+            {/* Hidden Handles for connections (no onClick — those are handled by QuickAdd buttons) */}
+            <Handle type="target" position={Position.Top} id="top-target" className="!w-[14px] !h-[14px] !bg-transparent !border-transparent opacity-0" />
+            <Handle type="source" position={Position.Top} id="top-source" className="!w-[14px] !h-[14px] !bg-transparent !border-transparent opacity-0 pointer-events-none" />
 
-            {/* Bottom Handles */}
-            <Handle
-                type="source"
-                position={Position.Bottom}
-                id="bottom-source"
-                className={`group flex items-center justify-center !w-[14px] !h-[14px] !border-[1px] transition-all duration-200 z-20 cursor-pointer ${isCustomColor ? '!bg-white' : '!bg-neutral-800'}`}
-                style={isCustomColor ? { borderColor: baseColor } : { borderColor: '#525252' }}
-                onClick={(e) => onQuickAddClick(e, 'bottom')}
-            >
-                <Plus size={10} strokeWidth={3} className={`opacity-0 group-hover:opacity-100 transition-opacity ${isCustomColor ? 'text-neutral-800' : 'text-neutral-300'}`} />
-            </Handle>
-            <Handle type="target" position={Position.Bottom} id="bottom-target" className="!w-[14px] !h-[14px] bg-transparent border-transparent opacity-0 pointer-events-none" />
+            <Handle type="source" position={Position.Bottom} id="bottom-source" className="!w-[14px] !h-[14px] !bg-transparent !border-transparent opacity-0" />
+            <Handle type="target" position={Position.Bottom} id="bottom-target" className="!w-[14px] !h-[14px] !bg-transparent !border-transparent opacity-0 pointer-events-none" />
 
-            {/* Left Handles */}
-            <Handle
-                type="target"
-                position={Position.Left}
-                id="left-target"
-                className={`group flex items-center justify-center !w-[14px] !h-[14px] !border-[1px] transition-all duration-200 z-20 cursor-pointer ${isCustomColor ? '!bg-white' : '!bg-neutral-800'}`}
-                style={isCustomColor ? { borderColor: baseColor } : { borderColor: '#525252' }}
-                onClick={(e) => onQuickAddClick(e, 'left')}
-            >
-                <Plus size={10} strokeWidth={3} className={`opacity-0 group-hover:opacity-100 transition-opacity ${isCustomColor ? 'text-neutral-800' : 'text-neutral-300'}`} />
-            </Handle>
-            <Handle type="source" position={Position.Left} id="left-source" className="!w-[14px] !h-[14px] bg-transparent border-transparent opacity-0 pointer-events-none" />
+            <Handle type="target" position={Position.Left} id="left-target" className="!w-[14px] !h-[14px] !bg-transparent !border-transparent opacity-0" />
+            <Handle type="source" position={Position.Left} id="left-source" className="!w-[14px] !h-[14px] !bg-transparent !border-transparent opacity-0 pointer-events-none" />
 
-            {/* Right Handles */}
-            <Handle
-                type="source"
-                position={Position.Right}
-                id="right-source"
-                className={`group flex items-center justify-center !w-[14px] !h-[14px] !border-[1px] transition-all duration-200 z-20 cursor-pointer ${isCustomColor ? '!bg-white' : '!bg-neutral-800'}`}
-                style={isCustomColor ? { borderColor: baseColor } : { borderColor: '#525252' }}
-                onClick={(e) => onQuickAddClick(e, 'right')}
-            >
-                <Plus size={10} strokeWidth={3} className={`opacity-0 group-hover:opacity-100 transition-opacity ${isCustomColor ? 'text-neutral-800' : 'text-neutral-300'}`} />
-            </Handle>
-            <Handle type="target" position={Position.Right} id="right-target" className="!w-[14px] !h-[14px] bg-transparent border-transparent opacity-0 pointer-events-none" />
+            <Handle type="source" position={Position.Right} id="right-source" className="!w-[14px] !h-[14px] !bg-transparent !border-transparent opacity-0" />
+            <Handle type="target" position={Position.Right} id="right-target" className="!w-[14px] !h-[14px] !bg-transparent !border-transparent opacity-0 pointer-events-none" />
+
+            {/* QuickAdd overlay buttons — these sit ON TOP of handles and reliably capture clicks */}
+            {isHovered && (
+                <>
+                    <QuickAddButton direction="top" onClick={onQuickAddClick} isCustomColor={isCustomColor} baseColor={baseColor} />
+                    <QuickAddButton direction="bottom" onClick={onQuickAddClick} isCustomColor={isCustomColor} baseColor={baseColor} />
+                    <QuickAddButton direction="left" onClick={onQuickAddClick} isCustomColor={isCustomColor} baseColor={baseColor} />
+                    <QuickAddButton direction="right" onClick={onQuickAddClick} isCustomColor={isCustomColor} baseColor={baseColor} />
+                </>
+            )}
 
             {/* Node Content based on Shape */}
             {shape === 'card' && (
