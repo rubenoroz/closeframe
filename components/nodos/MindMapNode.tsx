@@ -3,7 +3,7 @@ import { Handle, Position } from '@xyflow/react';
 import { FileText, ChevronDown, ChevronRight, Plus } from 'lucide-react';
 import { useQuickAdd } from './QuickAddContext';
 
-// QuickAdd button overlay positioned on top of a handle
+// QuickAdd button — positioned OUTSIDE the node, beyond the handle
 function QuickAddButton({ direction, onClick, isCustomColor, baseColor }: {
     direction: 'top' | 'bottom' | 'left' | 'right';
     onClick: (e: React.MouseEvent, direction: string) => void;
@@ -11,15 +11,15 @@ function QuickAddButton({ direction, onClick, isCustomColor, baseColor }: {
     baseColor: string;
 }) {
     const positionStyles: Record<string, React.CSSProperties> = {
-        top: { top: -7, left: '50%', transform: 'translateX(-50%)' },
-        bottom: { bottom: -7, left: '50%', transform: 'translateX(-50%)' },
-        left: { left: -7, top: '50%', transform: 'translateY(-50%)' },
-        right: { right: -7, top: '50%', transform: 'translateY(-50%)' },
+        top: { top: -24, left: '50%', transform: 'translateX(-50%)' },
+        bottom: { bottom: -24, left: '50%', transform: 'translateX(-50%)' },
+        left: { left: -24, top: '50%', transform: 'translateY(-50%)' },
+        right: { right: -24, top: '50%', transform: 'translateY(-50%)' },
     };
 
     return (
         <button
-            className={`absolute z-30 w-[14px] h-[14px] rounded-full border flex items-center justify-center cursor-pointer transition-all duration-200 hover:scale-125 group ${isCustomColor ? 'bg-white' : 'bg-neutral-800'}`}
+            className={`absolute z-30 w-[16px] h-[16px] rounded-full border flex items-center justify-center cursor-pointer transition-all duration-200 hover:scale-125 group ${isCustomColor ? 'bg-white/90 hover:bg-white' : 'bg-neutral-800 hover:bg-neutral-700'}`}
             style={{
                 ...positionStyles[direction],
                 borderColor: isCustomColor ? baseColor : '#525252',
@@ -33,7 +33,7 @@ function QuickAddButton({ direction, onClick, isCustomColor, baseColor }: {
                 e.stopPropagation();
             }}
         >
-            <Plus size={10} strokeWidth={3} className={`opacity-0 group-hover:opacity-100 transition-opacity ${isCustomColor ? 'text-neutral-800' : 'text-neutral-300'}`} />
+            <Plus size={10} strokeWidth={3} className={`${isCustomColor ? 'text-neutral-800' : 'text-neutral-300'}`} />
         </button>
     );
 }
@@ -64,6 +64,14 @@ export default function MindMapNode({ id, data, selected }: any) {
         line: `min-w-[100px] font-medium rounded-none flex items-center justify-center pb-1 ${selected ? 'opacity-100 scale-[1.05] border-b-[4px]' : 'opacity-80 hover:opacity-100 border-b-[2px]'} !border-t-0 !border-l-0 !border-r-0`
     };
 
+    // Handle style: visible circles for drag-to-connect
+    const handleStyle = (pos: 'top' | 'bottom' | 'left' | 'right') => ({
+        borderColor: isCustomColor ? baseColor : '#525252',
+    });
+
+    const handleClass = `!w-[12px] !h-[12px] !border-[1.5px] transition-all duration-200 z-20 ${isCustomColor ? '!bg-white/80 hover:!bg-white' : '!bg-neutral-700 hover:!bg-neutral-600'}`;
+    const hiddenHandleClass = '!w-[12px] !h-[12px] !bg-transparent !border-transparent pointer-events-none';
+
     return (
         <div
             className={`relative transition-all duration-300 ease-in-out backdrop-blur-md ${currentStyle} ${shapeClasses[shape as keyof typeof shapeClasses]}`}
@@ -79,21 +87,21 @@ export default function MindMapNode({ id, data, selected }: any) {
             onMouseLeave={() => setIsHovered(false)}
         >
 
-            {/* Hidden Handles for connections (no onClick — those are handled by QuickAdd buttons) */}
-            <Handle type="target" position={Position.Top} id="top-target" className="!w-[14px] !h-[14px] !bg-transparent !border-transparent opacity-0" />
-            <Handle type="source" position={Position.Top} id="top-source" className="!w-[14px] !h-[14px] !bg-transparent !border-transparent opacity-0 pointer-events-none" />
+            {/* Connection handles — visible, draggable for creating connections */}
+            <Handle type="target" position={Position.Top} id="top-target" className={handleClass} style={handleStyle('top')} />
+            <Handle type="source" position={Position.Top} id="top-source" className={hiddenHandleClass} />
 
-            <Handle type="source" position={Position.Bottom} id="bottom-source" className="!w-[14px] !h-[14px] !bg-transparent !border-transparent opacity-0" />
-            <Handle type="target" position={Position.Bottom} id="bottom-target" className="!w-[14px] !h-[14px] !bg-transparent !border-transparent opacity-0 pointer-events-none" />
+            <Handle type="source" position={Position.Bottom} id="bottom-source" className={handleClass} style={handleStyle('bottom')} />
+            <Handle type="target" position={Position.Bottom} id="bottom-target" className={hiddenHandleClass} />
 
-            <Handle type="target" position={Position.Left} id="left-target" className="!w-[14px] !h-[14px] !bg-transparent !border-transparent opacity-0" />
-            <Handle type="source" position={Position.Left} id="left-source" className="!w-[14px] !h-[14px] !bg-transparent !border-transparent opacity-0 pointer-events-none" />
+            <Handle type="target" position={Position.Left} id="left-target" className={handleClass} style={handleStyle('left')} />
+            <Handle type="source" position={Position.Left} id="left-source" className={hiddenHandleClass} />
 
-            <Handle type="source" position={Position.Right} id="right-source" className="!w-[14px] !h-[14px] !bg-transparent !border-transparent opacity-0" />
-            <Handle type="target" position={Position.Right} id="right-target" className="!w-[14px] !h-[14px] !bg-transparent !border-transparent opacity-0 pointer-events-none" />
+            <Handle type="source" position={Position.Right} id="right-source" className={handleClass} style={handleStyle('right')} />
+            <Handle type="target" position={Position.Right} id="right-target" className={hiddenHandleClass} />
 
-            {/* QuickAdd overlay buttons — these sit ON TOP of handles and reliably capture clicks */}
-            {isHovered && (
+            {/* QuickAdd buttons — appear OUTSIDE the node, beyond the handles */}
+            {(isHovered || selected) && (
                 <>
                     <QuickAddButton direction="top" onClick={onQuickAddClick} isCustomColor={isCustomColor} baseColor={baseColor} />
                     <QuickAddButton direction="bottom" onClick={onQuickAddClick} isCustomColor={isCustomColor} baseColor={baseColor} />

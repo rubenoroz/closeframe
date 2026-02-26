@@ -284,6 +284,13 @@ function FlowCanvas({ projectId }: { projectId: string }) {
           <ChevronLeft size={20} className="group-hover:-translate-x-0.5 transition-transform" />
         </button>
         <span className="text-white text-sm font-semibold tracking-tight">{project.title}</span>
+        <button
+          onClick={addNewNode}
+          className="w-8 h-8 bg-neutral-900/90 border border-neutral-700 hover:bg-emerald-600 hover:border-emerald-500 rounded-full flex items-center justify-center text-neutral-400 hover:text-white transition-all shadow-lg"
+          title="Añadir nodo independiente"
+        >
+          <Plus size={16} />
+        </button>
       </div>
 
       <QuickAddContext.Provider value={onQuickAdd}>
@@ -319,14 +326,7 @@ function FlowCanvas({ projectId }: { projectId: string }) {
         />
       )}
 
-      {/* Discrete add node button */}
-      <button
-        onClick={addNewNode}
-        className="absolute bottom-6 right-6 z-50 w-10 h-10 bg-neutral-900/80 border border-neutral-800 hover:bg-neutral-800 rounded-full flex items-center justify-center text-neutral-400 hover:text-white transition-all shadow-lg hover:scale-110 active:scale-95"
-        title="Añadir nodo independiente"
-      >
-        <Plus size={18} />
-      </button>
+
 
       <PropertiesPanel
         node={selectedNode}
