@@ -19,23 +19,11 @@ function SmartHandle({ type, position, handleId, direction, isCustomColor, baseC
     isOverlapping?: boolean;
 }) {
     const quickAdd = useQuickAdd();
-    const mouseDownPos = useRef<{ x: number; y: number } | null>(null);
 
-    const onMouseDown = useCallback((e: React.MouseEvent) => {
-        mouseDownPos.current = { x: e.clientX, y: e.clientY };
-        // DON'T stopPropagation — let React Flow start its connection tracking for drag-to-connect
-    }, []);
-
-    const onMouseUp = useCallback((e: React.MouseEvent) => {
-        if (!mouseDownPos.current) return;
-        const dx = e.clientX - mouseDownPos.current.x;
-        const dy = e.clientY - mouseDownPos.current.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        mouseDownPos.current = null;
-
-        // If barely moved, treat as click → QuickAdd
-        if (distance < 5 && quickAdd) {
+    const handleClick = useCallback((e: React.MouseEvent) => {
+        if (quickAdd) {
             e.stopPropagation();
+            e.preventDefault();
             quickAdd(nodeId, color, direction);
         }
     }, [quickAdd, nodeId, color, direction]);
@@ -52,8 +40,7 @@ function SmartHandle({ type, position, handleId, direction, isCustomColor, baseC
                 : `group flex items-center justify-center !w-[14px] !h-[14px] !border-[1.5px] transition-all duration-200 z-20 !cursor-pointer ${isCustomColor ? '!bg-white/90 hover:!bg-white' : '!bg-neutral-800 hover:!bg-neutral-700'}`
             }
             style={isOverlapping ? {} : { borderColor: isCustomColor ? baseColor : '#525252' }}
-            onMouseDown={onMouseDown}
-            onMouseUp={onMouseUp}
+            onClick={handleClick}
         >
             {!isOverlapping && (
                 <Plus size={10} strokeWidth={3} className={`transition-opacity ${isCustomColor ? 'text-neutral-800' : 'text-neutral-300'}`} style={{ opacity: 0.7 }} />
