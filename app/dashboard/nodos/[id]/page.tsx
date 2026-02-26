@@ -47,7 +47,7 @@ function FlowCanvas({ projectId }: { projectId: string }) {
   const [menu, setMenu] = useState<{ id: string, top: number, left: number } | null>(null);
   const [selectedNode, setSelectedNode] = useState<any>(null);
 
-  const { fitView, getNode, deleteElements } = useReactFlow();
+  const { fitView, getNode, deleteElements, screenToFlowPosition } = useReactFlow();
 
   // Load project on mount
   useEffect(() => {
@@ -252,11 +252,10 @@ function FlowCanvas({ projectId }: { projectId: string }) {
     const newNodeId = `node-${Date.now()}`;
     const randomColor = NODOS_COLORS[Math.floor(Math.random() * NODOS_COLORS.length)];
 
-    // Place near center of the viewport
-    const position = {
-      x: 200 + Math.random() * 200,
-      y: 200 + Math.random() * 200,
-    };
+    // Convert viewport center to flow coordinates
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+    const position = screenToFlowPosition({ x: centerX, y: centerY });
 
     const newNode = {
       id: newNodeId,
@@ -268,7 +267,7 @@ function FlowCanvas({ projectId }: { projectId: string }) {
 
     setNodes((nds) => [...nds.map(n => ({ ...n, selected: false })), newNode]);
     setSelectedNode(newNode);
-  }, [setNodes, setSelectedNode]);
+  }, [setNodes, setSelectedNode, screenToFlowPosition]);
 
   if (!project) return null;
 
