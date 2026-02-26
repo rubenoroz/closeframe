@@ -151,10 +151,12 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
         });
     }, [processedData, tasks, collapsedTasks, showArchivedTasks, activeItem, searchTerm]);
 
+    const pointerSensorOptions = useMemo(() => ({
+        activationConstraint: { distance: 3 },
+    }), []);
+
     const sensors = useSensors(
-        useSensor(PointerSensor, {
-            activationConstraint: { distance: 3 },
-        })
+        useSensor(PointerSensor, pointerSensorOptions)
     );
 
     const columnsId = useMemo(() => columns.map((col) => col.id), [columns]);
