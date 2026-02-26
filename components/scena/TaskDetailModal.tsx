@@ -2,16 +2,17 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { X, Plus, Trash2, Eye, EyeOff, ChevronDown, ChevronRight } from "lucide-react";
 import { createPortal } from "react-dom";
-import { FetchedTask } from "@/types/scena";
+import { FetchedTask, FetchedColumn } from "@/types/scena";
 
 interface TaskDetailModalProps {
     task: FetchedTask | null;
     projectId: string;
+    columns?: FetchedColumn[];
     onClose: () => void;
     onTaskUpdate: (updatedTask?: Partial<FetchedTask>) => void;
 }
 
-export function TaskDetailModal({ task, projectId, onClose, onTaskUpdate }: TaskDetailModalProps) {
+export function TaskDetailModal({ task, projectId, columns = [], onClose, onTaskUpdate }: TaskDetailModalProps) {
     const [mounted, setMounted] = useState(false);
     const [title, setTitle] = useState(task?.title || "");
     const [description, setDescription] = useState(task?.description || "");
@@ -33,6 +34,7 @@ export function TaskDetailModal({ task, projectId, onClose, onTaskUpdate }: Task
     const [newChecklistItem, setNewChecklistItem] = useState("");
     const [subtaskTitle, setSubtaskTitle] = useState("");
     const [showSubtasks, setShowSubtasks] = useState(true);
+    const [currentColumnId, setCurrentColumnId] = useState(task?.columnId || "");
 
     useEffect(() => {
         setMounted(true);
@@ -227,6 +229,32 @@ export function TaskDetailModal({ task, projectId, onClose, onTaskUpdate }: Task
                             </div>
                         </div>
                     </div>
+
+                    {/* Column / Status */}
+                    {columns.length > 0 && (
+                        <div>
+                            <label className="text-sm font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
+                                Columna / Estado
+                            </label>
+                            <div className="mt-2">
+                                <select
+                                    value={currentColumnId}
+                                    onChange={(e) => {
+                                        const newColId = e.target.value;
+                                        setCurrentColumnId(newColId);
+                                        saveField("columnId", newColId);
+                                    }}
+                                    className="w-full p-2.5 border border-neutral-200 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 focus:ring-2 focus:ring-blue-500 appearance-none"
+                                >
+                                    {columns.map(col => (
+                                        <option key={col.id} value={col.id}>
+                                            {col.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Priority */}
                     <div>

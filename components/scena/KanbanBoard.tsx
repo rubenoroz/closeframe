@@ -522,6 +522,7 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
                     key={selectedTask.id}
                     task={selectedTask}
                     projectId={projectId}
+                    columns={columns}
                     onClose={handleCloseModal}
                     onTaskUpdate={handleTaskUpdate}
                 />
