@@ -7,7 +7,7 @@ import { useQuickAdd } from './QuickAddContext';
 // - Click (mouseDown+mouseUp < 5px movement) → QuickAdd
 // - Drag (mouseDown+move > 5px) → React Flow connection (default behavior)
 // Edge reconnection is disabled at the ReactFlow level, so RF won't detach existing edges
-function SmartHandle({ type, position, handleId, direction, isCustomColor, baseColor, nodeId, color }: {
+function SmartHandle({ type, position, handleId, direction, isCustomColor, baseColor, nodeId, color, isOverlapping = false }: {
     type: 'source' | 'target';
     position: Position;
     handleId: string;
@@ -16,6 +16,7 @@ function SmartHandle({ type, position, handleId, direction, isCustomColor, baseC
     baseColor: string;
     nodeId: string;
     color: string;
+    isOverlapping?: boolean;
 }) {
     const quickAdd = useQuickAdd();
     const mouseDownPos = useRef<{ x: number; y: number } | null>(null);
@@ -33,23 +34,30 @@ function SmartHandle({ type, position, handleId, direction, isCustomColor, baseC
         mouseDownPos.current = null;
 
         // If barely moved, treat as click → QuickAdd
-        if (distance < 5 && quickAdd) {
+        if (distance < 5 && quickAdd && !isOverlapping) {
             e.stopPropagation();
             quickAdd(nodeId, color, direction);
         }
-    }, [quickAdd, nodeId, color, direction]);
+    }, [quickAdd, nodeId, color, direction, isOverlapping]);
 
+    // For overlapping handles, they share the physical space. The base handle renders visually. 
+    // The overlapping handle is invisible but interactable.
     return (
         <Handle
             type={type}
             position={position}
             id={handleId}
-            className={`group flex items-center justify-center !w-[14px] !h-[14px] !border-[1.5px] transition-all duration-200 z-20 !cursor-pointer ${isCustomColor ? '!bg-white/90 hover:!bg-white' : '!bg-neutral-800 hover:!bg-neutral-700'}`}
-            style={{ borderColor: isCustomColor ? baseColor : '#525252', cursor: 'pointer' }}
+            className={isOverlapping
+                ? `!w-[14px] !h-[14px] !bg-transparent !border-transparent z-30 cursor-crosshair`
+                : `group flex items-center justify-center !w-[14px] !h-[14px] !border-[1.5px] transition-all duration-200 z-20 !cursor-pointer ${isCustomColor ? '!bg-white/90 hover:!bg-white' : '!bg-neutral-800 hover:!bg-neutral-700'}`
+            }
+            style={isOverlapping ? {} : { borderColor: isCustomColor ? baseColor : '#525252' }}
             onMouseDown={onMouseDown}
             onMouseUp={onMouseUp}
         >
-            <Plus size={10} strokeWidth={3} className={`transition-opacity ${isCustomColor ? 'text-neutral-800' : 'text-neutral-300'}`} style={{ opacity: 0.7 }} />
+            {!isOverlapping && (
+                <Plus size={10} strokeWidth={3} className={`transition-opacity ${isCustomColor ? 'text-neutral-800' : 'text-neutral-300'}`} style={{ opacity: 0.7 }} />
+            )}
         </Handle>
     );
 }
@@ -92,19 +100,19 @@ export default function MindMapNode({ id, data, selected }: any) {
 
             {/* Top */}
             <SmartHandle type="target" position={Position.Top} handleId="top-target" direction="top" isCustomColor={isCustomColor} baseColor={baseColor} nodeId={id} color={data.color} />
-            <Handle type="source" position={Position.Top} id="top-source" className={hiddenClass} />
+            <SmartHandle type="source" position={Position.Top} handleId="top-source" direction="top" isCustomColor={isCustomColor} baseColor={baseColor} nodeId={id} color={data.color} isOverlapping />
 
             {/* Bottom */}
-            <SmartHandle type="source" position={Position.Bottom} handleId="bottom-source" direction="bottom" isCustomColor={isCustomColor} baseColor={baseColor} nodeId={id} color={data.color} />
-            <Handle type="target" position={Position.Bottom} id="bottom-target" className={hiddenClass} />
+            <SmartHandle type="target" position={Position.Bottom} handleId="bottom-target" direction="bottom" isCustomColor={isCustomColor} baseColor={baseColor} nodeId={id} color={data.color} />
+            <SmartHandle type="source" position={Position.Bottom} handleId="bottom-source" direction="bottom" isCustomColor={isCustomColor} baseColor={baseColor} nodeId={id} color={data.color} isOverlapping />
 
             {/* Left */}
             <SmartHandle type="target" position={Position.Left} handleId="left-target" direction="left" isCustomColor={isCustomColor} baseColor={baseColor} nodeId={id} color={data.color} />
-            <Handle type="source" position={Position.Left} id="left-source" className={hiddenClass} />
+            <SmartHandle type="source" position={Position.Left} handleId="left-source" direction="left" isCustomColor={isCustomColor} baseColor={baseColor} nodeId={id} color={data.color} isOverlapping />
 
             {/* Right */}
-            <SmartHandle type="source" position={Position.Right} handleId="right-source" direction="right" isCustomColor={isCustomColor} baseColor={baseColor} nodeId={id} color={data.color} />
-            <Handle type="target" position={Position.Right} id="right-target" className={hiddenClass} />
+            <SmartHandle type="target" position={Position.Right} handleId="right-target" direction="right" isCustomColor={isCustomColor} baseColor={baseColor} nodeId={id} color={data.color} />
+            <SmartHandle type="source" position={Position.Right} handleId="right-source" direction="right" isCustomColor={isCustomColor} baseColor={baseColor} nodeId={id} color={data.color} isOverlapping />
 
             {/* Node Content based on Shape */}
             {shape === 'card' && (
