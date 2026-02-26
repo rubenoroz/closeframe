@@ -5,8 +5,13 @@ export default function PropertiesPanel({ node, onClose, onUpdate }: any) {
     if (!node) return null;
 
     return (
-        <div className="absolute top-4 right-4 w-80 bg-neutral-900/90 backdrop-blur-xl border border-neutral-800 rounded-2xl shadow-2xl overflow-hidden z-40 flex flex-col transition-all">
-            <div className="flex items-center justify-between p-4 border-b border-neutral-800">
+        <div className="fixed md:absolute bottom-0 md:bottom-auto md:top-4 left-0 md:left-auto right-0 md:right-4 w-full md:w-80 bg-neutral-900/95 backdrop-blur-xl border-t md:border border-neutral-800 rounded-t-2xl md:rounded-b-2xl shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.5)] md:shadow-2xl z-40 flex flex-col transition-transform duration-300 pb-safe md:pb-0">
+            {/* Grab handle for bottom sheet aesthetic on mobile */}
+            <div className="w-full flex justify-center pt-3 pb-1 md:hidden opacity-50">
+                <div className="w-12 h-1.5 bg-neutral-600 rounded-full" />
+            </div>
+
+            <div className="flex items-center justify-between px-4 pb-4 pt-2 md:pt-4 border-b border-neutral-800">
                 <h3 className="text-sm font-semibold text-white">Propiedades del Nodo</h3>
                 <button onClick={onClose} className="p-1 hover:bg-neutral-800 rounded-md text-neutral-400 hover:text-white transition-colors">
                     <X size={16} />

@@ -2,6 +2,7 @@
 import React, { useCallback, useMemo, useState } from "react";
 import {
     PointerSensor,
+    TouchSensor,
     useSensor,
     useSensors,
 } from "@dnd-kit/core";
@@ -155,8 +156,13 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
         activationConstraint: { distance: 3 },
     }), []);
 
+    const touchSensorOptions = useMemo(() => ({
+        activationConstraint: { delay: 250, tolerance: 5 },
+    }), []);
+
     const sensors = useSensors(
-        useSensor(PointerSensor, pointerSensorOptions)
+        useSensor(PointerSensor, pointerSensorOptions),
+        useSensor(TouchSensor, touchSensorOptions)
     );
 
     const columnsId = useMemo(() => columns.map((col) => col.id), [columns]);

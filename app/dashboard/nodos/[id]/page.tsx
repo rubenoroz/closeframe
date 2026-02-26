@@ -327,20 +327,22 @@ function FlowCanvas({ projectId }: { projectId: string }) {
   return (
     <>
       {/* Top Bar Overlay */}
-      <div className="absolute top-6 left-6 z-50 flex items-center gap-3">
-        <button
-          onClick={() => router.push('/dashboard/nodos')}
-          className="w-10 h-10 bg-neutral-900 border border-neutral-800 hover:bg-neutral-800 rounded-full flex items-center justify-center text-white transition-colors shadow-lg group"
-        >
-          <ChevronLeft size={20} className="group-hover:-translate-x-0.5 transition-transform" />
-        </button>
-        <span className="text-white text-sm font-semibold tracking-tight">{project.title}</span>
+      <div className="absolute top-4 left-4 md:top-6 md:left-6 right-4 md:right-auto z-50 flex items-center justify-between md:justify-start gap-3 pointer-events-none">
+        <div className="flex items-center gap-3 pointer-events-auto">
+          <button
+            onClick={() => router.push('/dashboard/nodos')}
+            className="w-10 h-10 bg-neutral-900 border border-neutral-800 hover:bg-neutral-800 rounded-full flex items-center justify-center text-white transition-colors shadow-lg group"
+          >
+            <ChevronLeft size={20} className="group-hover:-translate-x-0.5 transition-transform" />
+          </button>
+          <span className="text-white text-sm font-semibold tracking-tight line-clamp-1 max-w-[150px] md:max-w-xs">{project.title}</span>
+        </div>
         <button
           onClick={addNewNode}
-          className="w-8 h-8 bg-neutral-900/90 border border-neutral-700 hover:bg-emerald-600 hover:border-emerald-500 rounded-full flex items-center justify-center text-neutral-400 hover:text-white transition-all shadow-lg"
+          className="w-10 h-10 md:w-8 md:h-8 bg-neutral-900/90 border border-neutral-700 hover:bg-emerald-600 hover:border-emerald-500 rounded-full flex items-center justify-center text-neutral-400 hover:text-white transition-all shadow-lg pointer-events-auto"
           title="Añadir nodo independiente"
         >
-          <Plus size={16} />
+          <Plus size={18} className="md:w-4 md:h-4" />
         </button>
       </div>
 
@@ -360,6 +362,9 @@ function FlowCanvas({ projectId }: { projectId: string }) {
           colorMode="dark"
           edgesReconnectable={false}
           proOptions={{ hideAttribution: true }}
+          preventScrolling={true}
+          panOnDrag={true}
+          selectionOnDrag={false}
         >
           <Controls showInteractive={false} />
           <Background variant={BackgroundVariant.Dots} gap={24} size={2} color="#1f1f1f" />

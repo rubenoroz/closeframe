@@ -196,10 +196,10 @@ export function ProjectList({ canCreate = true }: { canCreate?: boolean }) {
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-8">
                 {/* Tabs */}
-                <div className="flex gap-6 mb-8 border-b border-neutral-200 dark:border-neutral-800">
+                <div className="flex gap-6 mb-8 border-b border-neutral-200 dark:border-neutral-800 overflow-x-auto scrollbar-hide">
                     <button
                         onClick={() => setView('active')}
-                        className={`pb-3 px-1 text-sm font-medium transition-all relative ${view === 'active'
+                        className={`pb-3 px-1 text-sm font-medium transition-all relative whitespace-nowrap ${view === 'active'
                             ? 'text-emerald-600 dark:text-emerald-400'
                             : 'text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'
                             }`}
@@ -211,7 +211,7 @@ export function ProjectList({ canCreate = true }: { canCreate?: boolean }) {
                     </button>
                     <button
                         onClick={() => setView('archived')}
-                        className={`pb-3 px-1 text-sm font-medium transition-all relative ${view === 'archived'
+                        className={`pb-3 px-1 text-sm font-medium transition-all relative whitespace-nowrap ${view === 'archived'
                             ? 'text-emerald-600 dark:text-emerald-400'
                             : 'text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'
                             }`}
