@@ -34,11 +34,11 @@ function SmartHandle({ type, position, handleId, direction, isCustomColor, baseC
         mouseDownPos.current = null;
 
         // If barely moved, treat as click → QuickAdd
-        if (distance < 5 && quickAdd && !isOverlapping) {
+        if (distance < 5 && quickAdd) {
             e.stopPropagation();
             quickAdd(nodeId, color, direction);
         }
-    }, [quickAdd, nodeId, color, direction, isOverlapping]);
+    }, [quickAdd, nodeId, color, direction]);
 
     // For overlapping handles, they share the physical space. The base handle renders visually. 
     // The overlapping handle is invisible but interactable.
