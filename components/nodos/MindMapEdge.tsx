@@ -36,8 +36,8 @@ export default function MindMapEdge({
                 markerEnd={markerEnd}
                 style={{
                     ...style,
-                    strokeWidth: 2,
-                    stroke: '#404040',
+                    strokeWidth: 2.5,
+                    stroke: '#6b6b6b',
                     transition: 'stroke 0.3s ease',
                 }}
             />

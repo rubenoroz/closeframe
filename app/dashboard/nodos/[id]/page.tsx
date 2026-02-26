@@ -140,7 +140,7 @@ function FlowCanvas({ projectId }: { projectId: string }) {
       targetHandle,
       type: 'mindmap',
       animated: true,
-      markerEnd: { type: MarkerType.ArrowClosed, color: '#404040' }
+      markerEnd: { type: MarkerType.ArrowClosed, color: '#6b6b6b' }
     };
 
     setNodes((nds) => {
@@ -182,7 +182,7 @@ function FlowCanvas({ projectId }: { projectId: string }) {
     (params: Connection | Edge) => setEdges((eds) => {
       if (params.source === params.target) return eds;
       const filteredEdges = eds.filter(e => !(e.source === params.source && e.target === params.target) && !(e.source === params.target && e.target === params.source));
-      return addEdge({ ...params, type: 'mindmap', animated: true, markerEnd: { type: MarkerType.ArrowClosed, color: '#404040' } }, filteredEdges);
+      return addEdge({ ...params, type: 'mindmap', animated: true, markerEnd: { type: MarkerType.ArrowClosed, color: '#6b6b6b' } }, filteredEdges);
     }),
     [setEdges]
   );
