@@ -76,6 +76,10 @@ export async function POST(req: Request) {
             }
         }
 
+        // Pick a random pastel color for the first node
+        const NODOS_COLORS = ['#ffcfea', '#d0dbff', '#fff7cf', '#ffd6d6', '#d4ffd6', '#e9d6ff'];
+        const randomColor = NODOS_COLORS[Math.floor(Math.random() * NODOS_COLORS.length)];
+
         // Create with a default initial node
         const initialNodes = [
             {
@@ -86,7 +90,7 @@ export async function POST(req: Request) {
                     label: title,
                     description: description || 'Idea central',
                     shape: 'card',
-                    color: 'default'
+                    color: randomColor
                 },
             }
         ];

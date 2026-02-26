@@ -26,6 +26,7 @@ import MindMapEdge from '@/components/nodos/MindMapEdge';
 import ContextMenu from '@/components/nodos/ContextMenu';
 import PropertiesPanel from '@/components/nodos/PropertiesPanel';
 import SearchMenu from '@/components/nodos/SearchMenu';
+import { QuickAddContext } from '@/components/nodos/QuickAddContext';
 
 import { Plus, ChevronLeft } from 'lucide-react';
 
@@ -73,18 +74,13 @@ function FlowCanvas({ projectId }: { projectId: string }) {
   }, [projectId, router, setNodes, setEdges, fitView]);
 
   // Auto-save to database whenever nodes or edges mutate (debounce)
-  // Strip non-serializable functions (like onQuickAdd) before sending
   useEffect(() => {
     if (project && nodes.length > 0) {
       const timeoutId = setTimeout(() => {
-        const cleanNodes = nodes.map(n => ({
-          ...n,
-          data: { ...n.data, onQuickAdd: undefined },
-        }));
         fetch(`/api/nodos/projects/${project.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nodes: cleanNodes, edges }),
+          body: JSON.stringify({ nodes, edges }),
         }).catch(err => console.error('Auto-save error:', err));
       }, 1000);
       return () => clearTimeout(timeoutId);
@@ -132,7 +128,7 @@ function FlowCanvas({ projectId }: { projectId: string }) {
       id: newNodeId,
       type: 'mindmap',
       position: newNodePosition,
-      data: { label: 'Nuevo Nodo', color: color || 'default', shape: 'card', onQuickAdd },
+      data: { label: 'Nuevo Nodo', color: color || 'default', shape: 'card' },
       selected: true,
     };
 
@@ -157,12 +153,7 @@ function FlowCanvas({ projectId }: { projectId: string }) {
     setTimeout(() => fitView({ nodes: [{ id: newNodeId }], duration: 800, padding: 0.5, maxZoom: 1 }), 50);
   }, [getNode, setNodes, setEdges, setSelectedNode, fitView]);
 
-  React.useEffect(() => {
-    setNodes(nds => nds.map(n => ({
-      ...n,
-      data: { ...n.data, onQuickAdd }
-    })));
-  }, [onQuickAdd, setNodes]);
+
 
   const onSelectionChange = useCallback(({ nodes }: any) => {
     if (nodes.length === 1) {
@@ -270,25 +261,27 @@ function FlowCanvas({ projectId }: { projectId: string }) {
         <span className="text-white text-sm font-semibold tracking-tight">{project.title}</span>
       </div>
 
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        onSelectionChange={onSelectionChange}
-        onNodeContextMenu={onNodeContextMenu}
-        onPaneClick={onPaneClick}
-        fitView
-        colorMode="dark"
-        connectionMode={ConnectionMode.Loose}
-        proOptions={{ hideAttribution: true }}
-      >
-        <Controls showInteractive={false} />
-        <Background variant={BackgroundVariant.Dots} gap={24} size={2} color="#1f1f1f" />
-      </ReactFlow>
+      <QuickAddContext.Provider value={onQuickAdd}>
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          onSelectionChange={onSelectionChange}
+          onNodeContextMenu={onNodeContextMenu}
+          onPaneClick={onPaneClick}
+          fitView
+          colorMode="dark"
+          connectionMode={ConnectionMode.Loose}
+          proOptions={{ hideAttribution: true }}
+        >
+          <Controls showInteractive={false} />
+          <Background variant={BackgroundVariant.Dots} gap={24} size={2} color="#1f1f1f" />
+        </ReactFlow>
+      </QuickAddContext.Provider>
 
       {menu && (
         <ContextMenu

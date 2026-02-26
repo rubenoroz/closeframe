@@ -1,6 +1,7 @@
-import React, { memo, useState } from 'react';
+import React, { useState } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { FileText, ChevronDown, ChevronRight, Plus } from 'lucide-react';
+import { useQuickAdd } from './QuickAddContext';
 
 // QuickAdd button overlay positioned on top of a handle
 function QuickAddButton({ direction, onClick, isCustomColor, baseColor }: {
@@ -37,13 +38,14 @@ function QuickAddButton({ direction, onClick, isCustomColor, baseColor }: {
     );
 }
 
-export default memo(({ id, data, selected }: any) => {
+export default function MindMapNode({ id, data, selected }: any) {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
+    const quickAdd = useQuickAdd();
 
     const onQuickAddClick = (e: React.MouseEvent, direction: string) => {
-        if (data.onQuickAdd) {
-            data.onQuickAdd(id, data.color, direction);
+        if (quickAdd) {
+            quickAdd(id, data.color, direction);
         }
     };
 
@@ -143,4 +145,4 @@ export default memo(({ id, data, selected }: any) => {
 
         </div>
     );
-});
+}
