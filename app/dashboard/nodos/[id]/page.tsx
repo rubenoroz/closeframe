@@ -73,13 +73,18 @@ function FlowCanvas({ projectId }: { projectId: string }) {
   }, [projectId, router, setNodes, setEdges, fitView]);
 
   // Auto-save to database whenever nodes or edges mutate (debounce)
+  // Strip non-serializable functions (like onQuickAdd) before sending
   useEffect(() => {
     if (project && nodes.length > 0) {
       const timeoutId = setTimeout(() => {
+        const cleanNodes = nodes.map(n => ({
+          ...n,
+          data: { ...n.data, onQuickAdd: undefined },
+        }));
         fetch(`/api/nodos/projects/${project.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nodes, edges }),
+          body: JSON.stringify({ nodes: cleanNodes, edges }),
         }).catch(err => console.error('Auto-save error:', err));
       }, 1000);
       return () => clearTimeout(timeoutId);
