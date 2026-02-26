@@ -226,25 +226,50 @@ function FlowCanvas({ projectId }: { projectId: string }) {
     setMenu(null);
   }, [menu, setNodes, setEdges]);
 
+  // Delete selected nodes with Delete/Backspace key
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        // Don't delete if user is typing in an input/textarea
+        const tag = (e.target as HTMLElement)?.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+        const selectedNodes = nodes.filter(n => n.selected);
+        if (selectedNodes.length === 0) return;
+
+        const selectedIds = new Set(selectedNodes.map(n => n.id));
+        setNodes(nds => nds.filter(n => !selectedIds.has(n.id)));
+        setEdges(eds => eds.filter(e => !selectedIds.has(e.source) && !selectedIds.has(e.target)));
+        setSelectedNode(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [nodes, setNodes, setEdges, setSelectedNode]);
+
+  const NODOS_COLORS = ['#ffcfea', '#d0dbff', '#fff7cf', '#ffd6d6', '#d4ffd6', '#e9d6ff'];
+
   const addNewNode = useCallback(() => {
     const newNodeId = `node-${Date.now()}`;
-    const center = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+    const randomColor = NODOS_COLORS[Math.floor(Math.random() * NODOS_COLORS.length)];
 
+    // Place near center of the viewport
     const position = {
-      x: center.x - 90,
-      y: center.y - 40,
+      x: 200 + Math.random() * 200,
+      y: 200 + Math.random() * 200,
     };
 
-    setNodes((nds) => nds.concat({
+    const newNode = {
       id: newNodeId,
       type: 'mindmap',
       position,
-      data: { label: 'Nuevo Nodo', color: 'default', shape: 'card', onQuickAdd },
+      data: { label: 'Nuevo Nodo', color: randomColor, shape: 'card' },
       selected: true,
-    }));
+    };
 
-    setSelectedNode({ id: newNodeId, data: { label: 'Nuevo Nodo', color: 'default', shape: 'card', onQuickAdd } });
-  }, [setNodes, setSelectedNode, onQuickAdd]);
+    setNodes((nds) => [...nds.map(n => ({ ...n, selected: false })), newNode]);
+    setSelectedNode(newNode);
+  }, [setNodes, setSelectedNode]);
 
   if (!project) return null;
 
@@ -288,10 +313,20 @@ function FlowCanvas({ projectId }: { projectId: string }) {
           id={menu.id}
           top={menu.top}
           left={menu.left}
+          label={nodes.find(n => n.id === menu.id)?.data?.label as string}
           onDuplicate={duplicateNode}
           onDelete={deleteNode}
         />
       )}
+
+      {/* Discrete add node button */}
+      <button
+        onClick={addNewNode}
+        className="absolute bottom-6 right-6 z-50 w-10 h-10 bg-neutral-900/80 border border-neutral-800 hover:bg-neutral-800 rounded-full flex items-center justify-center text-neutral-400 hover:text-white transition-all shadow-lg hover:scale-110 active:scale-95"
+        title="Añadir nodo independiente"
+      >
+        <Plus size={18} />
+      </button>
 
       <PropertiesPanel
         node={selectedNode}

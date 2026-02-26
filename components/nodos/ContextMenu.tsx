@@ -5,30 +5,26 @@ interface ContextMenuProps {
     id: string;
     top: number;
     left: number;
-    right?: number;
-    bottom?: number;
+    label?: string;
     onDuplicate: () => void;
     onDelete: () => void;
-    className?: string;
 }
 
 export default function ContextMenu({
     id,
     top,
     left,
-    right,
-    bottom,
+    label,
     onDuplicate,
     onDelete,
-    className = '',
 }: ContextMenuProps) {
     return (
         <div
-            style={{ top, left, right, bottom }}
-            className={`absolute z-50 flex flex-col bg-neutral-900 border border-neutral-800 rounded-lg shadow-2xl overflow-hidden min-w-[160px] ${className}`}
+            style={{ top, left }}
+            className="fixed z-[100] flex flex-col bg-neutral-900 border border-neutral-800 rounded-lg shadow-2xl overflow-hidden min-w-[160px]"
         >
-            <div className="px-3 py-2 text-xs font-semibold text-neutral-500 border-b border-neutral-800 bg-neutral-950/50">
-                Nodo: {id}
+            <div className="px-3 py-2 text-xs font-semibold text-neutral-500 border-b border-neutral-800 bg-neutral-950/50 truncate max-w-[200px]">
+                {label || id}
             </div>
             <button
                 className="flex items-center gap-2 px-3 py-2 text-sm text-neutral-300 hover:bg-neutral-800 hover:text-white transition-colors text-left"
