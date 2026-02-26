@@ -92,7 +92,7 @@ export function KanbanView({
                     </SortableContext>
 
                     <button
-                        className="w-[300px] h-[60px] rounded-xl border border-dashed border-neutral-300 dark:border-neutral-700 hover:border-emerald-500/50 hover:bg-neutral-100 dark:hover:bg-neutral-800/50 flex items-center justify-center text-neutral-500 transition-colors shrink-0"
+                        className="min-w-[85vw] sm:min-w-[300px] w-[85vw] sm:w-[300px] max-w-[85vw] sm:max-w-[300px] flex-shrink-0 h-[60px] rounded-xl border border-dashed border-neutral-300 dark:border-neutral-700 hover:border-emerald-500/50 hover:bg-neutral-100 dark:hover:bg-neutral-800/50 flex items-center justify-center text-neutral-500 transition-colors"
                         onClick={onAddColumn}
                     >
                         <Plus className="w-4 h-4 mr-2" />

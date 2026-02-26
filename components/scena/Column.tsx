@@ -95,7 +95,7 @@ export function Column({
             }}
             style={dynamicStyle}
             {...attributes}
-            className={`w-[300px] flex flex-col flex-shrink-0 h-full rounded-xl shadow-sm transition-all duration-200 ${isDragging ? "shadow-xl scale-[1.02]" : ""
+            className={`min-w-[85vw] sm:min-w-[300px] w-[85vw] sm:w-[300px] max-w-[85vw] sm:max-w-[300px] flex flex-col flex-shrink-0 h-full rounded-xl shadow-sm transition-all duration-200 ${isDragging ? "shadow-xl scale-[1.02]" : ""
                 }`}
         >
             {/* Header */}
