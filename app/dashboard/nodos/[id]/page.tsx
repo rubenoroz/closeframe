@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   ReactFlow,
@@ -26,6 +26,7 @@ import MindMapEdge from '@/components/nodos/MindMapEdge';
 import ContextMenu from '@/components/nodos/ContextMenu';
 import PropertiesPanel from '@/components/nodos/PropertiesPanel';
 import SearchMenu from '@/components/nodos/SearchMenu';
+import { QuickAddContext } from '@/components/nodos/QuickAddContext';
 
 import { Plus, ChevronLeft } from 'lucide-react';
 
@@ -200,46 +201,7 @@ function FlowCanvas({ projectId }: { projectId: string }) {
 
   const onPaneClick = useCallback(() => setMenu(null), [setMenu]);
 
-  // Track connection start to distinguish click from drag
-  const connectStartRef = useRef<{ nodeId: string; handleId: string; x: number; y: number; time: number } | null>(null);
 
-  const onConnectStart = useCallback((event: any, params: { nodeId: string | null; handleId: string | null }) => {
-    const e = event as MouseEvent | TouchEvent;
-    const clientX = 'clientX' in e ? e.clientX : (e as TouchEvent).touches?.[0]?.clientX || 0;
-    const clientY = 'clientY' in e ? e.clientY : (e as TouchEvent).touches?.[0]?.clientY || 0;
-    connectStartRef.current = {
-      nodeId: params.nodeId || '',
-      handleId: params.handleId || '',
-      x: clientX,
-      y: clientY,
-      time: Date.now(),
-    };
-  }, []);
-
-  const onConnectEnd = useCallback((event: MouseEvent | TouchEvent) => {
-    const start = connectStartRef.current;
-    connectStartRef.current = null;
-    if (!start || !start.nodeId) return;
-
-    const clientX = 'clientX' in event ? event.clientX : event.changedTouches?.[0]?.clientX || 0;
-    const clientY = 'clientY' in event ? event.clientY : event.changedTouches?.[0]?.clientY || 0;
-    const dx = clientX - start.x;
-    const dy = clientY - start.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    const elapsed = Date.now() - start.time;
-
-    // Click: small movement + quick release → QuickAdd
-    // Defer to next tick so React Flow finishes its connection cleanup first
-    if (distance < 10 && elapsed < 500) {
-      setTimeout(() => {
-        const direction = start.handleId.replace('-source', '').replace('-target', '');
-        const node = getNode(start.nodeId);
-        if (node) {
-          onQuickAdd(start.nodeId, (node.data as any).color || 'default', direction);
-        }
-      }, 0);
-    }
-  }, [getNode, onQuickAdd]);
 
   const duplicateNode = useCallback(() => {
     if (!menu) return;
@@ -331,28 +293,28 @@ function FlowCanvas({ projectId }: { projectId: string }) {
         </button>
       </div>
 
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        onConnectStart={onConnectStart}
-        onConnectEnd={onConnectEnd}
-        onSelectionChange={onSelectionChange}
-        onNodeContextMenu={onNodeContextMenu}
-        onPaneClick={onPaneClick}
-        fitView
-        colorMode="dark"
-        connectionMode={ConnectionMode.Loose}
-        edgesReconnectable={false}
-        proOptions={{ hideAttribution: true }}
-      >
-        <Controls showInteractive={false} />
-        <Background variant={BackgroundVariant.Dots} gap={24} size={2} color="#1f1f1f" />
-      </ReactFlow>
+      <QuickAddContext.Provider value={onQuickAdd}>
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          onSelectionChange={onSelectionChange}
+          onNodeContextMenu={onNodeContextMenu}
+          onPaneClick={onPaneClick}
+          fitView
+          colorMode="dark"
+          connectionMode={ConnectionMode.Loose}
+          edgesReconnectable={false}
+          proOptions={{ hideAttribution: true }}
+        >
+          <Controls showInteractive={false} />
+          <Background variant={BackgroundVariant.Dots} gap={24} size={2} color="#1f1f1f" />
+        </ReactFlow>
+      </QuickAddContext.Provider>
 
 
       {menu && (

@@ -1,6 +1,58 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { FileText, ChevronDown, ChevronRight, Plus } from 'lucide-react';
+import { useQuickAdd } from './QuickAddContext';
+
+// SmartHandle: distinguishes click from drag on a React Flow Handle
+// - Click (mouseDown+mouseUp < 5px movement) → QuickAdd
+// - Drag (mouseDown+move > 5px) → React Flow connection (default behavior)
+// Edge reconnection is disabled at the ReactFlow level, so RF won't detach existing edges
+function SmartHandle({ type, position, handleId, direction, isCustomColor, baseColor, nodeId, color }: {
+    type: 'source' | 'target';
+    position: Position;
+    handleId: string;
+    direction: string;
+    isCustomColor: boolean;
+    baseColor: string;
+    nodeId: string;
+    color: string;
+}) {
+    const quickAdd = useQuickAdd();
+    const mouseDownPos = useRef<{ x: number; y: number } | null>(null);
+
+    const onMouseDown = useCallback((e: React.MouseEvent) => {
+        mouseDownPos.current = { x: e.clientX, y: e.clientY };
+        // DON'T stopPropagation — let React Flow start its connection tracking for drag-to-connect
+    }, []);
+
+    const onMouseUp = useCallback((e: React.MouseEvent) => {
+        if (!mouseDownPos.current) return;
+        const dx = e.clientX - mouseDownPos.current.x;
+        const dy = e.clientY - mouseDownPos.current.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        mouseDownPos.current = null;
+
+        // If barely moved, treat as click → QuickAdd
+        if (distance < 5 && quickAdd) {
+            e.stopPropagation();
+            quickAdd(nodeId, color, direction);
+        }
+    }, [quickAdd, nodeId, color, direction]);
+
+    return (
+        <Handle
+            type={type}
+            position={position}
+            id={handleId}
+            className={`group flex items-center justify-center !w-[14px] !h-[14px] !border-[1.5px] transition-all duration-200 z-20 !cursor-pointer ${isCustomColor ? '!bg-white/90 hover:!bg-white' : '!bg-neutral-800 hover:!bg-neutral-700'}`}
+            style={{ borderColor: isCustomColor ? baseColor : '#525252', cursor: 'pointer' }}
+            onMouseDown={onMouseDown}
+            onMouseUp={onMouseUp}
+        >
+            <Plus size={10} strokeWidth={3} className={`transition-opacity ${isCustomColor ? 'text-neutral-800' : 'text-neutral-300'}`} style={{ opacity: 0.7 }} />
+        </Handle>
+    );
+}
 
 export default function MindMapNode({ id, data, selected }: any) {
     const [isCollapsed, setIsCollapsed] = useState(false);
@@ -21,10 +73,7 @@ export default function MindMapNode({ id, data, selected }: any) {
         line: `min-w-[100px] font-medium rounded-none flex items-center justify-center pb-1 ${selected ? 'opacity-100 scale-[1.05] border-b-[4px]' : 'opacity-80 hover:opacity-100 border-b-[2px]'} !border-t-0 !border-l-0 !border-r-0`
     };
 
-    const handleClass = `group flex items-center justify-center !w-[14px] !h-[14px] !border-[1.5px] transition-all duration-200 z-20 cursor-pointer ${isCustomColor ? '!bg-white/90 hover:!bg-white' : '!bg-neutral-800 hover:!bg-neutral-700'}`;
-    const handleStyle = { borderColor: isCustomColor ? baseColor : '#525252' };
     const hiddenClass = '!w-[14px] !h-[14px] !bg-transparent !border-transparent opacity-0 pointer-events-none';
-    const plusClass = `opacity-0 group-hover:opacity-100 transition-opacity ${isCustomColor ? 'text-neutral-800' : 'text-neutral-300'}`;
 
     return (
         <div
@@ -41,28 +90,20 @@ export default function MindMapNode({ id, data, selected }: any) {
             onMouseLeave={() => setIsHovered(false)}
         >
 
-            {/* Top handles */}
-            <Handle type="target" position={Position.Top} id="top-target" className={handleClass} style={handleStyle}>
-                <Plus size={10} strokeWidth={3} className={plusClass} />
-            </Handle>
+            {/* Top */}
+            <SmartHandle type="target" position={Position.Top} handleId="top-target" direction="top" isCustomColor={isCustomColor} baseColor={baseColor} nodeId={id} color={data.color} />
             <Handle type="source" position={Position.Top} id="top-source" className={hiddenClass} />
 
-            {/* Bottom handles */}
-            <Handle type="source" position={Position.Bottom} id="bottom-source" className={handleClass} style={handleStyle}>
-                <Plus size={10} strokeWidth={3} className={plusClass} />
-            </Handle>
+            {/* Bottom */}
+            <SmartHandle type="source" position={Position.Bottom} handleId="bottom-source" direction="bottom" isCustomColor={isCustomColor} baseColor={baseColor} nodeId={id} color={data.color} />
             <Handle type="target" position={Position.Bottom} id="bottom-target" className={hiddenClass} />
 
-            {/* Left handles */}
-            <Handle type="target" position={Position.Left} id="left-target" className={handleClass} style={handleStyle}>
-                <Plus size={10} strokeWidth={3} className={plusClass} />
-            </Handle>
+            {/* Left */}
+            <SmartHandle type="target" position={Position.Left} handleId="left-target" direction="left" isCustomColor={isCustomColor} baseColor={baseColor} nodeId={id} color={data.color} />
             <Handle type="source" position={Position.Left} id="left-source" className={hiddenClass} />
 
-            {/* Right handles */}
-            <Handle type="source" position={Position.Right} id="right-source" className={handleClass} style={handleStyle}>
-                <Plus size={10} strokeWidth={3} className={plusClass} />
-            </Handle>
+            {/* Right */}
+            <SmartHandle type="source" position={Position.Right} handleId="right-source" direction="right" isCustomColor={isCustomColor} baseColor={baseColor} nodeId={id} color={data.color} />
             <Handle type="target" position={Position.Right} id="right-target" className={hiddenClass} />
 
             {/* Node Content based on Shape */}
