@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   ReactFlow,
@@ -49,6 +49,9 @@ function FlowCanvas({ projectId }: { projectId: string }) {
 
   const { fitView, getNode, deleteElements, screenToFlowPosition } = useReactFlow();
 
+  // Flag to prevent onConnect from firing during QuickAdd
+  const isQuickAddingRef = useRef(false);
+
   // Load project on mount
   useEffect(() => {
     const loadProject = async () => {
@@ -94,6 +97,9 @@ function FlowCanvas({ projectId }: { projectId: string }) {
   const onQuickAdd = useCallback((sourceNodeId: string, color: string, direction: string = 'right') => {
     const sourceNode = getNode(sourceNodeId);
     if (!sourceNode) return;
+
+    // Block onConnect from firing while we create the node+edge
+    isQuickAddingRef.current = true;
 
     const newNodeId = `node-${Date.now()}`;
     let newNodePosition = { ...sourceNode.position };
@@ -150,7 +156,11 @@ function FlowCanvas({ projectId }: { projectId: string }) {
     setEdges((eds) => eds.concat(newEdge));
     setSelectedNode(newNode);
 
-    setTimeout(() => fitView({ nodes: [{ id: newNodeId }], duration: 800, padding: 0.5, maxZoom: 1 }), 50);
+    setTimeout(() => {
+      fitView({ nodes: [{ id: newNodeId }], duration: 800, padding: 0.5, maxZoom: 1 });
+      // Allow onConnect again after RF has fully processed
+      isQuickAddingRef.current = false;
+    }, 200);
   }, [getNode, setNodes, setEdges, setSelectedNode, fitView]);
 
 
@@ -179,11 +189,15 @@ function FlowCanvas({ projectId }: { projectId: string }) {
   }, [setNodes, selectedNode]);
 
   const onConnect = useCallback(
-    (params: Connection | Edge) => setEdges((eds) => {
-      if (params.source === params.target) return eds;
-      const filteredEdges = eds.filter(e => !(e.source === params.source && e.target === params.target) && !(e.source === params.target && e.target === params.source));
-      return addEdge({ ...params, type: 'mindmap', animated: true, markerEnd: { type: MarkerType.ArrowClosed, color: '#6b6b6b' } }, filteredEdges);
-    }),
+    (params: Connection | Edge) => {
+      // Block connections triggered by React Flow during QuickAdd
+      if (isQuickAddingRef.current) return;
+      setEdges((eds) => {
+        if (params.source === params.target) return eds;
+        const filteredEdges = eds.filter(e => !(e.source === params.source && e.target === params.target) && !(e.source === params.target && e.target === params.source));
+        return addEdge({ ...params, type: 'mindmap', animated: true, markerEnd: { type: MarkerType.ArrowClosed, color: '#6b6b6b' } }, filteredEdges);
+      });
+    },
     [setEdges]
   );
 
