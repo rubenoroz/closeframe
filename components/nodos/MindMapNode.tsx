@@ -1,40 +1,54 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { FileText, ChevronDown, ChevronRight, Plus } from 'lucide-react';
 import { useQuickAdd } from './QuickAddContext';
 
-// QuickAdd button — positioned OUTSIDE the node, beyond the handle
-function QuickAddButton({ direction, onClick, isCustomColor, baseColor }: {
-    direction: 'top' | 'bottom' | 'left' | 'right';
-    onClick: (e: React.MouseEvent, direction: string) => void;
+// A Handle wrapper that distinguishes click from drag:
+// - Click (mouseDown + mouseUp with < 5px movement) → QuickAdd
+// - Drag (mouseDown + move > 5px) → React Flow connection (default behavior)
+function SmartHandle({ type, position, handleId, direction, isCustomColor, baseColor, onQuickAdd, nodeId, color }: {
+    type: 'source' | 'target';
+    position: Position;
+    handleId: string;
+    direction: string;
     isCustomColor: boolean;
     baseColor: string;
+    onQuickAdd: ((nodeId: string, color: string, direction: string) => void) | null;
+    nodeId: string;
+    color: string;
 }) {
-    const positionStyles: Record<string, React.CSSProperties> = {
-        top: { top: -24, left: '50%', transform: 'translateX(-50%)' },
-        bottom: { bottom: -24, left: '50%', transform: 'translateX(-50%)' },
-        left: { left: -24, top: '50%', transform: 'translateY(-50%)' },
-        right: { right: -24, top: '50%', transform: 'translateY(-50%)' },
-    };
+    const mouseDownPos = useRef<{ x: number; y: number } | null>(null);
+
+    const onMouseDown = useCallback((e: React.MouseEvent) => {
+        mouseDownPos.current = { x: e.clientX, y: e.clientY };
+    }, []);
+
+    const onMouseUp = useCallback((e: React.MouseEvent) => {
+        if (!mouseDownPos.current) return;
+        const dx = e.clientX - mouseDownPos.current.x;
+        const dy = e.clientY - mouseDownPos.current.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        mouseDownPos.current = null;
+
+        // If barely moved, treat as a click → QuickAdd
+        if (distance < 5 && onQuickAdd) {
+            e.stopPropagation();
+            onQuickAdd(nodeId, color, direction);
+        }
+    }, [onQuickAdd, nodeId, color, direction]);
 
     return (
-        <button
-            className={`absolute z-30 w-[16px] h-[16px] rounded-full border flex items-center justify-center cursor-pointer transition-all duration-200 hover:scale-125 group ${isCustomColor ? 'bg-white/90 hover:bg-white' : 'bg-neutral-800 hover:bg-neutral-700'}`}
-            style={{
-                ...positionStyles[direction],
-                borderColor: isCustomColor ? baseColor : '#525252',
-            }}
-            onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                onClick(e, direction);
-            }}
-            onMouseDown={(e) => {
-                e.stopPropagation();
-            }}
+        <Handle
+            type={type}
+            position={position}
+            id={handleId}
+            className={`group flex items-center justify-center !w-[14px] !h-[14px] !border-[1.5px] transition-all duration-200 z-20 cursor-pointer ${isCustomColor ? '!bg-white/90 hover:!bg-white' : '!bg-neutral-800 hover:!bg-neutral-700'}`}
+            style={{ borderColor: isCustomColor ? baseColor : '#525252' }}
+            onMouseDown={onMouseDown}
+            onMouseUp={onMouseUp}
         >
-            <Plus size={10} strokeWidth={3} className={`${isCustomColor ? 'text-neutral-800' : 'text-neutral-300'}`} />
-        </button>
+            <Plus size={10} strokeWidth={3} className={`opacity-0 group-hover:opacity-100 transition-opacity ${isCustomColor ? 'text-neutral-800' : 'text-neutral-300'}`} />
+        </Handle>
     );
 }
 
@@ -42,12 +56,6 @@ export default function MindMapNode({ id, data, selected }: any) {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
     const quickAdd = useQuickAdd();
-
-    const onQuickAddClick = (e: React.MouseEvent, direction: string) => {
-        if (quickAdd) {
-            quickAdd(id, data.color, direction);
-        }
-    };
 
     // Dynamic color styles
     const baseColor = data.color || 'default';
@@ -64,13 +72,8 @@ export default function MindMapNode({ id, data, selected }: any) {
         line: `min-w-[100px] font-medium rounded-none flex items-center justify-center pb-1 ${selected ? 'opacity-100 scale-[1.05] border-b-[4px]' : 'opacity-80 hover:opacity-100 border-b-[2px]'} !border-t-0 !border-l-0 !border-r-0`
     };
 
-    // Handle style: visible circles for drag-to-connect
-    const handleStyle = (pos: 'top' | 'bottom' | 'left' | 'right') => ({
-        borderColor: isCustomColor ? baseColor : '#525252',
-    });
-
-    const handleClass = `!w-[12px] !h-[12px] !border-[1.5px] transition-all duration-200 z-20 ${isCustomColor ? '!bg-white/80 hover:!bg-white' : '!bg-neutral-700 hover:!bg-neutral-600'}`;
-    const hiddenHandleClass = '!w-[12px] !h-[12px] !bg-transparent !border-transparent pointer-events-none';
+    // Hidden handles paired with each visible handle (needed for bidirectional connections)
+    const hiddenClass = '!w-[14px] !h-[14px] !bg-transparent !border-transparent opacity-0 pointer-events-none';
 
     return (
         <div
@@ -87,28 +90,21 @@ export default function MindMapNode({ id, data, selected }: any) {
             onMouseLeave={() => setIsHovered(false)}
         >
 
-            {/* Connection handles — visible, draggable for creating connections */}
-            <Handle type="target" position={Position.Top} id="top-target" className={handleClass} style={handleStyle('top')} />
-            <Handle type="source" position={Position.Top} id="top-source" className={hiddenHandleClass} />
+            {/* Top: visible target handle (click=QuickAdd, drag=connect) */}
+            <SmartHandle type="target" position={Position.Top} handleId="top-target" direction="top" isCustomColor={isCustomColor} baseColor={baseColor} onQuickAdd={quickAdd} nodeId={id} color={data.color} />
+            <Handle type="source" position={Position.Top} id="top-source" className={hiddenClass} />
 
-            <Handle type="source" position={Position.Bottom} id="bottom-source" className={handleClass} style={handleStyle('bottom')} />
-            <Handle type="target" position={Position.Bottom} id="bottom-target" className={hiddenHandleClass} />
+            {/* Bottom: visible source handle */}
+            <SmartHandle type="source" position={Position.Bottom} handleId="bottom-source" direction="bottom" isCustomColor={isCustomColor} baseColor={baseColor} onQuickAdd={quickAdd} nodeId={id} color={data.color} />
+            <Handle type="target" position={Position.Bottom} id="bottom-target" className={hiddenClass} />
 
-            <Handle type="target" position={Position.Left} id="left-target" className={handleClass} style={handleStyle('left')} />
-            <Handle type="source" position={Position.Left} id="left-source" className={hiddenHandleClass} />
+            {/* Left: visible target handle */}
+            <SmartHandle type="target" position={Position.Left} handleId="left-target" direction="left" isCustomColor={isCustomColor} baseColor={baseColor} onQuickAdd={quickAdd} nodeId={id} color={data.color} />
+            <Handle type="source" position={Position.Left} id="left-source" className={hiddenClass} />
 
-            <Handle type="source" position={Position.Right} id="right-source" className={handleClass} style={handleStyle('right')} />
-            <Handle type="target" position={Position.Right} id="right-target" className={hiddenHandleClass} />
-
-            {/* QuickAdd buttons — appear OUTSIDE the node, beyond the handles */}
-            {(isHovered || selected) && (
-                <>
-                    <QuickAddButton direction="top" onClick={onQuickAddClick} isCustomColor={isCustomColor} baseColor={baseColor} />
-                    <QuickAddButton direction="bottom" onClick={onQuickAddClick} isCustomColor={isCustomColor} baseColor={baseColor} />
-                    <QuickAddButton direction="left" onClick={onQuickAddClick} isCustomColor={isCustomColor} baseColor={baseColor} />
-                    <QuickAddButton direction="right" onClick={onQuickAddClick} isCustomColor={isCustomColor} baseColor={baseColor} />
-                </>
-            )}
+            {/* Right: visible source handle */}
+            <SmartHandle type="source" position={Position.Right} handleId="right-source" direction="right" isCustomColor={isCustomColor} baseColor={baseColor} onQuickAdd={quickAdd} nodeId={id} color={data.color} />
+            <Handle type="target" position={Position.Right} id="right-target" className={hiddenClass} />
 
             {/* Node Content based on Shape */}
             {shape === 'card' && (

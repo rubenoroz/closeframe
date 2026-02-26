@@ -47,7 +47,7 @@ function FlowCanvas({ projectId }: { projectId: string }) {
   const [menu, setMenu] = useState<{ id: string, top: number, left: number } | null>(null);
   const [selectedNode, setSelectedNode] = useState<any>(null);
 
-  const { fitView, getNode } = useReactFlow();
+  const { fitView, getNode, deleteElements } = useReactFlow();
 
   // Load project on mount
   useEffect(() => {
@@ -230,22 +230,21 @@ function FlowCanvas({ projectId }: { projectId: string }) {
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Delete' || e.key === 'Backspace') {
-        // Don't delete if user is typing in an input/textarea
         const tag = (e.target as HTMLElement)?.tagName;
         if (tag === 'INPUT' || tag === 'TEXTAREA') return;
 
         const selectedNodes = nodes.filter(n => n.selected);
-        if (selectedNodes.length === 0) return;
+        const selectedEdges = edges.filter(e => e.selected);
+        if (selectedNodes.length === 0 && selectedEdges.length === 0) return;
 
-        const selectedIds = new Set(selectedNodes.map(n => n.id));
-        setNodes(nds => nds.filter(n => !selectedIds.has(n.id)));
-        setEdges(eds => eds.filter(e => !selectedIds.has(e.source) && !selectedIds.has(e.target)));
+        e.preventDefault();
+        deleteElements({ nodes: selectedNodes, edges: selectedEdges });
         setSelectedNode(null);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [nodes, setNodes, setEdges, setSelectedNode]);
+  }, [nodes, edges, deleteElements, setSelectedNode]);
 
   const NODOS_COLORS = ['#ffcfea', '#d0dbff', '#fff7cf', '#ffd6d6', '#d4ffd6', '#e9d6ff'];
 
