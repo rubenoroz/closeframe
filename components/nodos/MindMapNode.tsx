@@ -1,61 +1,10 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { FileText, ChevronDown, ChevronRight, Plus } from 'lucide-react';
-import { useQuickAdd } from './QuickAddContext';
-
-// A Handle wrapper that distinguishes click from drag:
-// - Click (mouseDown + mouseUp with < 5px movement) → QuickAdd
-// - Drag (mouseDown + move > 5px) → React Flow connection (default behavior)
-function SmartHandle({ type, position, handleId, direction, isCustomColor, baseColor, onQuickAdd, nodeId, color }: {
-    type: 'source' | 'target';
-    position: Position;
-    handleId: string;
-    direction: string;
-    isCustomColor: boolean;
-    baseColor: string;
-    onQuickAdd: ((nodeId: string, color: string, direction: string) => void) | null;
-    nodeId: string;
-    color: string;
-}) {
-    const mouseDownPos = useRef<{ x: number; y: number } | null>(null);
-
-    const onMouseDown = useCallback((e: React.MouseEvent) => {
-        mouseDownPos.current = { x: e.clientX, y: e.clientY };
-    }, []);
-
-    const onMouseUp = useCallback((e: React.MouseEvent) => {
-        if (!mouseDownPos.current) return;
-        const dx = e.clientX - mouseDownPos.current.x;
-        const dy = e.clientY - mouseDownPos.current.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        mouseDownPos.current = null;
-
-        // If barely moved, treat as a click → QuickAdd
-        if (distance < 5 && onQuickAdd) {
-            e.stopPropagation();
-            onQuickAdd(nodeId, color, direction);
-        }
-    }, [onQuickAdd, nodeId, color, direction]);
-
-    return (
-        <Handle
-            type={type}
-            position={position}
-            id={handleId}
-            className={`group flex items-center justify-center !w-[14px] !h-[14px] !border-[1.5px] transition-all duration-200 z-20 cursor-pointer ${isCustomColor ? '!bg-white/90 hover:!bg-white' : '!bg-neutral-800 hover:!bg-neutral-700'}`}
-            style={{ borderColor: isCustomColor ? baseColor : '#525252' }}
-            onMouseDown={onMouseDown}
-            onMouseUp={onMouseUp}
-        >
-            <Plus size={10} strokeWidth={3} className={`opacity-0 group-hover:opacity-100 transition-opacity ${isCustomColor ? 'text-neutral-800' : 'text-neutral-300'}`} />
-        </Handle>
-    );
-}
 
 export default function MindMapNode({ id, data, selected }: any) {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
-    const quickAdd = useQuickAdd();
 
     // Dynamic color styles
     const baseColor = data.color || 'default';
@@ -72,8 +21,10 @@ export default function MindMapNode({ id, data, selected }: any) {
         line: `min-w-[100px] font-medium rounded-none flex items-center justify-center pb-1 ${selected ? 'opacity-100 scale-[1.05] border-b-[4px]' : 'opacity-80 hover:opacity-100 border-b-[2px]'} !border-t-0 !border-l-0 !border-r-0`
     };
 
-    // Hidden handles paired with each visible handle (needed for bidirectional connections)
+    const handleClass = `group flex items-center justify-center !w-[14px] !h-[14px] !border-[1.5px] transition-all duration-200 z-20 cursor-pointer ${isCustomColor ? '!bg-white/90 hover:!bg-white' : '!bg-neutral-800 hover:!bg-neutral-700'}`;
+    const handleStyle = { borderColor: isCustomColor ? baseColor : '#525252' };
     const hiddenClass = '!w-[14px] !h-[14px] !bg-transparent !border-transparent opacity-0 pointer-events-none';
+    const plusClass = `opacity-0 group-hover:opacity-100 transition-opacity ${isCustomColor ? 'text-neutral-800' : 'text-neutral-300'}`;
 
     return (
         <div
@@ -90,20 +41,28 @@ export default function MindMapNode({ id, data, selected }: any) {
             onMouseLeave={() => setIsHovered(false)}
         >
 
-            {/* Top: visible target handle (click=QuickAdd, drag=connect) */}
-            <SmartHandle type="target" position={Position.Top} handleId="top-target" direction="top" isCustomColor={isCustomColor} baseColor={baseColor} onQuickAdd={quickAdd} nodeId={id} color={data.color} />
+            {/* Top handles */}
+            <Handle type="target" position={Position.Top} id="top-target" className={handleClass} style={handleStyle}>
+                <Plus size={10} strokeWidth={3} className={plusClass} />
+            </Handle>
             <Handle type="source" position={Position.Top} id="top-source" className={hiddenClass} />
 
-            {/* Bottom: visible source handle */}
-            <SmartHandle type="source" position={Position.Bottom} handleId="bottom-source" direction="bottom" isCustomColor={isCustomColor} baseColor={baseColor} onQuickAdd={quickAdd} nodeId={id} color={data.color} />
+            {/* Bottom handles */}
+            <Handle type="source" position={Position.Bottom} id="bottom-source" className={handleClass} style={handleStyle}>
+                <Plus size={10} strokeWidth={3} className={plusClass} />
+            </Handle>
             <Handle type="target" position={Position.Bottom} id="bottom-target" className={hiddenClass} />
 
-            {/* Left: visible target handle */}
-            <SmartHandle type="target" position={Position.Left} handleId="left-target" direction="left" isCustomColor={isCustomColor} baseColor={baseColor} onQuickAdd={quickAdd} nodeId={id} color={data.color} />
+            {/* Left handles */}
+            <Handle type="target" position={Position.Left} id="left-target" className={handleClass} style={handleStyle}>
+                <Plus size={10} strokeWidth={3} className={plusClass} />
+            </Handle>
             <Handle type="source" position={Position.Left} id="left-source" className={hiddenClass} />
 
-            {/* Right: visible source handle */}
-            <SmartHandle type="source" position={Position.Right} handleId="right-source" direction="right" isCustomColor={isCustomColor} baseColor={baseColor} onQuickAdd={quickAdd} nodeId={id} color={data.color} />
+            {/* Right handles */}
+            <Handle type="source" position={Position.Right} id="right-source" className={handleClass} style={handleStyle}>
+                <Plus size={10} strokeWidth={3} className={plusClass} />
+            </Handle>
             <Handle type="target" position={Position.Right} id="right-target" className={hiddenClass} />
 
             {/* Node Content based on Shape */}
@@ -145,7 +104,6 @@ export default function MindMapNode({ id, data, selected }: any) {
                     {data.label}
                 </div>
             )}
-
 
         </div>
     );
