@@ -254,11 +254,14 @@ function FlowCanvas({ projectId }: { projectId: string }) {
   const deleteNode = useCallback(() => {
     if (!menu) return;
 
+    // Force synchronous read of currently selected items to prevent closure staleness
+    const currentNodes = getNodes();
+
     // Check if the right-clicked node is part of a current multi-selection
-    const isSelected = nodes.some(n => n.id === menu.id && n.selected);
+    const isSelected = currentNodes.some(n => n.id === menu.id && n.selected);
 
     if (isSelected) {
-      const selectedNodeIds = new Set(nodes.filter(n => n.selected).map(n => n.id));
+      const selectedNodeIds = new Set(currentNodes.filter(n => n.selected).map(n => n.id));
       setNodes(nds => nds.filter(n => !selectedNodeIds.has(n.id)));
       setEdges(eds => eds.filter(e => !selectedNodeIds.has(e.source) && !selectedNodeIds.has(e.target)));
     } else {
@@ -267,7 +270,7 @@ function FlowCanvas({ projectId }: { projectId: string }) {
       setEdges((eds) => eds.filter((edge) => edge.source !== menu.id && edge.target !== menu.id));
     }
     setMenu(null);
-  }, [menu, nodes, setNodes, setEdges]);
+  }, [menu, getNodes, setNodes, setEdges]);
 
   // Restored and fixed custom keyboard listener for absolute multi-delete reliability
   useEffect(() => {
