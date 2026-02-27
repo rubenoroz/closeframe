@@ -77,7 +77,7 @@ export function Task({
         isDragging,
     } = sortable;
 
-    const style = {
+    const style: React.CSSProperties = {
         transition: isDragging ? 'none' : 'transform 150ms ease, opacity 150ms ease',
         transform: isOverlay ? undefined : CSS.Transform.toString(transform),
         marginLeft: level > 0 ? `${level * 16}px` : '0',
@@ -85,6 +85,7 @@ export function Task({
         opacity: isDragging ? 0 : 1,
         borderLeftWidth: level > 0 ? '3px' : '0',
         borderLeftColor: level > 0 ? '#CBD5E1' : 'transparent',
+        touchAction: 'none',
     };
 
     const subtasksCount = children?.length || 0;

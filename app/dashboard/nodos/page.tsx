@@ -94,10 +94,10 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0E0E0E] text-neutral-200 font-sans">
-      <div className="mx-auto w-full max-w-[1400px]">
+    <div className="min-h-screen bg-[#0E0E0E] text-neutral-200 font-sans flex flex-col -m-4 md:-m-8 lg:-m-12">
+      <div className="mx-auto w-full w-full">
         {/* Superior Top Bar as seen in Scena */}
-        <header className="flex items-center justify-between px-8 md:px-12 py-5 bg-[#141414] border-b border-[#1E1E1E]">
+        <header className="flex items-center justify-between px-8 md:px-12 p-4 md:py-2 md:pt-2 md:pb-4 border-b border-[#1E1E1E] bg-[#141414]">
           <div className="flex items-center gap-3">
             <Network size={24} className="text-emerald-500" />
             <h1 className="text-xl font-semibold text-white tracking-tight">Mis Proyectos</h1>

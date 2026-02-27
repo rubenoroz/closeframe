@@ -326,50 +326,53 @@ function FlowCanvas({ projectId }: { projectId: string }) {
 
   return (
     <>
-      {/* Top Bar Overlay */}
-      <div className="absolute top-4 left-4 md:top-6 md:left-6 right-4 md:right-auto z-50 flex items-center justify-between md:justify-start gap-3 pointer-events-none">
+      {/* Top Bar */}
+      <div className="shrink-0 relative z-50 flex items-center justify-between md:justify-start gap-3 p-4 md:pt-6 md:pb-4 pointer-events-none bg-neutral-900 border-b border-neutral-800 md:bg-transparent md:border-none">
         <div className="flex items-center gap-3 pointer-events-auto">
           <button
             onClick={() => router.push('/dashboard/nodos')}
-            className="w-10 h-10 bg-neutral-900 border border-neutral-800 hover:bg-neutral-800 rounded-full flex items-center justify-center text-white transition-colors shadow-lg group"
+            className="w-10 h-10 md:w-8 md:h-8 bg-neutral-800 md:bg-neutral-900 border border-neutral-700 md:border-neutral-800 hover:bg-neutral-700 md:hover:bg-neutral-800 rounded-full flex items-center justify-center text-white transition-colors shadow-lg group shrink-0"
           >
             <ChevronLeft size={20} className="group-hover:-translate-x-0.5 transition-transform" />
           </button>
-          <span className="text-white text-sm font-semibold tracking-tight line-clamp-1 max-w-[150px] md:max-w-xs">{project.title}</span>
+          <span className="text-white text-sm font-semibold tracking-tight line-clamp-1 max-w-[180px] md:max-w-xs">{project.title}</span>
         </div>
         <button
           onClick={addNewNode}
-          className="w-10 h-10 md:w-8 md:h-8 bg-neutral-900/90 border border-neutral-700 hover:bg-emerald-600 hover:border-emerald-500 rounded-full flex items-center justify-center text-neutral-400 hover:text-white transition-all shadow-lg pointer-events-auto"
+          className="w-10 h-10 md:w-8 md:h-8 bg-emerald-600 md:bg-neutral-900/90 border border-emerald-500 md:border-neutral-700 hover:bg-emerald-500 md:hover:border-emerald-500 rounded-full flex items-center justify-center text-white md:text-neutral-400 md:hover:text-white transition-all shadow-lg pointer-events-auto shrink-0"
           title="Añadir nodo independiente"
         >
           <Plus size={18} className="md:w-4 md:h-4" />
         </button>
       </div>
 
-      <QuickAddContext.Provider value={onQuickAdd}>
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          nodeTypes={nodeTypes}
-          edgeTypes={edgeTypes}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          onSelectionChange={onSelectionChange}
-          onNodeContextMenu={onNodeContextMenu}
-          onPaneClick={onPaneClick}
-          fitView
-          colorMode="dark"
-          edgesReconnectable={false}
-          proOptions={{ hideAttribution: true }}
-          preventScrolling={true}
-          panOnDrag={true}
-          selectionOnDrag={false}
-        >
-          <Controls showInteractive={false} />
-          <Background variant={BackgroundVariant.Dots} gap={24} size={2} color="#1f1f1f" />
-        </ReactFlow>
-      </QuickAddContext.Provider>
+      <div className="flex-1 relative w-full h-full">
+        <QuickAddContext.Provider value={onQuickAdd}>
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onSelectionChange={onSelectionChange}
+            onNodeContextMenu={onNodeContextMenu}
+            onPaneClick={onPaneClick}
+            fitView
+            colorMode="dark"
+            edgesReconnectable={false}
+            proOptions={{ hideAttribution: true }}
+            preventScrolling={true}
+            panOnDrag={true}
+            selectionOnDrag={false}
+            fitViewOptions={{ padding: 0.2 }}
+          >
+            <Controls showInteractive={false} />
+            <Background variant={BackgroundVariant.Dots} gap={24} size={2} color="#1f1f1f" />
+          </ReactFlow>
+        </QuickAddContext.Provider>
+      </div>
 
 
       {menu && (
@@ -407,7 +410,7 @@ function MapPage() {
   if (!id) return null;
 
   return (
-    <div style={{ width: '100%', height: '100vh', background: '#030303', position: 'relative' }}>
+    <div className="w-[calc(100%+2rem)] md:w-[calc(100%+4rem)] lg:w-[calc(100%+6rem)] h-[calc(100dvh-3.5rem)] md:h-[100dvh] bg-[#030303] flex flex-col relative overflow-hidden -m-4 md:-m-8 lg:-m-12">
       <ReactFlowProvider>
         <FlowCanvas projectId={id} />
       </ReactFlowProvider>

@@ -141,3 +141,9 @@ body {
   will-change: transform;
   backface-visibility: hidden;
 }
+
+/* Fix for React Flow zoom controls being cut off at the bottom of the screen */
+.react-flow__controls {
+  bottom: 50px !important;
+  left: 15px !important;
+}

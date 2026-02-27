@@ -1,7 +1,7 @@
 "use client";
 import React, { useCallback, useMemo, useState } from "react";
 import {
-    PointerSensor,
+    MouseSensor,
     TouchSensor,
     useSensor,
     useSensors,
@@ -152,7 +152,7 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
         });
     }, [processedData, tasks, collapsedTasks, showArchivedTasks, activeItem, searchTerm]);
 
-    const pointerSensorOptions = useMemo(() => ({
+    const mouseSensorOptions = useMemo(() => ({
         activationConstraint: { distance: 3 },
     }), []);
 
@@ -161,7 +161,7 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
     }), []);
 
     const sensors = useSensors(
-        useSensor(PointerSensor, pointerSensorOptions),
+        useSensor(MouseSensor, mouseSensorOptions),
         useSensor(TouchSensor, touchSensorOptions)
     );
 
