@@ -13,8 +13,18 @@ export default async function NodosPage() {
     const userId = session.user.id;
 
     // Check plan permissions
-    const { canUseFeature } = await import("@/lib/features/service");
+    const { canUseFeature, getFeatureLimit } = await import("@/lib/features/service");
     const isAllowed = await canUseFeature(userId, 'nodosAccess') || (session.user.role as any) === 'SUPERADMIN' || (session.user.role as any) === 'ADMIN';
+
+    // Check project creation limits
+    const limit = await getFeatureLimit(userId, 'maxNodosProjects');
+    const ownedProjectsCount = await prisma.nodosProject.count({
+        where: { ownerId: userId }
+    });
+
+    // Superadmins can always create. Others depend on limit.
+    const isSuperAdmin = (session.user.role as any) === 'SUPERADMIN';
+    const canCreate = isSuperAdmin || (limit === -1) || ((limit !== null) && (ownedProjectsCount < limit));
 
     // Even if NOT allowed to create, they might be collaborating.
     // However, usually we show a restricted message if the feature is totally off.
@@ -65,7 +75,7 @@ export default async function NodosPage() {
     return (
         <div className="flex flex-col h-full">
             <NodosDashboardClient
-                canCreate={isAllowed}
+                canCreate={isAllowed && canCreate}
                 initialInvitations={invitations}
             />
         </div>

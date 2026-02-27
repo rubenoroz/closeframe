@@ -9,7 +9,7 @@ export const PLANS = {
             maxProjects: 3,
             maxCloudAccounts: 1,
             maxScenaProjects: 0,
-            maxNodosProjects: 1,
+            maxNodosProjects: 0,
             commissionPercentage: 15, // 15% commission for Free
         },
         features: {
