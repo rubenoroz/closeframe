@@ -76,6 +76,8 @@ export default async function NodosPage() {
         <div className="flex flex-col h-full">
             <NodosDashboardClient
                 canCreate={isAllowed && canCreate}
+                limit={limit}
+                ownedCount={ownedProjectsCount}
                 initialInvitations={invitations}
             />
         </div>
