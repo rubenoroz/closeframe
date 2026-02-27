@@ -79,7 +79,7 @@ export default function MomentosBar({
                     onClick={() => onMomentoChange(null)}
                     className={cn(
                         "relative flex-shrink-0 px-5 py-2.5 text-sm font-light tracking-wide transition-all duration-300 border",
-                        layoutType === "editorial" ? "rounded-none" : "rounded-full",
+                        layoutType === "editorial" ? "rounded-md" : "rounded-full",
                         (activeMomentoId === null || activeMomentoId === 'all')
                             ? (isDark
                                 ? "bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.3)]"
@@ -105,7 +105,7 @@ export default function MomentosBar({
                             onClick={() => onMomentoChange(momento.id)}
                             className={cn(
                                 "relative flex-shrink-0 px-5 py-2.5 text-sm font-light tracking-wide transition-all duration-300 border",
-                                layoutType === "editorial" ? "rounded-none" : "rounded-full",
+                                layoutType === "editorial" ? "rounded-md" : "rounded-full",
                                 isActive
                                     ? (isDark
                                         ? "bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.3)]"
@@ -138,7 +138,7 @@ export default function MomentosBar({
                             {isSearchOpen ? (
                                 <div className={cn(
                                     "flex items-center gap-2 px-4 py-2 border backdrop-blur-md transition-all",
-                                    layoutType === "editorial" ? "rounded-none" : "rounded-full",
+                                    layoutType === "editorial" ? "rounded-md" : "rounded-full",
                                     isDark
                                         ? "bg-black/40 border-white/20"
                                         : "bg-white/40 border-black/10"
@@ -170,7 +170,7 @@ export default function MomentosBar({
                                     onClick={handleSearchToggle}
                                     className={cn(
                                         "p-2.5 border transition-all duration-300",
-                                        layoutType === "editorial" ? "rounded-none" : "rounded-full",
+                                        layoutType === "editorial" ? "rounded-md" : "rounded-full",
                                         isDark
                                             ? "bg-black/40 border-white/10 text-neutral-400 hover:bg-white/10 hover:text-white hover:border-white/30 backdrop-blur-md"
                                             : "bg-white/40 border-black/5 text-neutral-600 hover:bg-black/5 hover:text-black hover:border-black/20 backdrop-blur-md"

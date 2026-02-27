@@ -916,7 +916,7 @@ function MediaCard({
             className={cn(
                 "relative w-full overflow-hidden cursor-pointer group transition-all duration-300",
                 layoutType === "editorial"
-                    ? "rounded-none border-0 bg-black h-full"
+                    ? "rounded-md border-0 bg-black h-full"
                     : "rounded-xl border-2 bg-neutral-800",
                 isSelected
                     ? (layoutType === "editorial" ? "ring-inset ring-4 ring-emerald-500 shadow-none z-10" : "border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]")
