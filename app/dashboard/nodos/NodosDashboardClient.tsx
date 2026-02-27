@@ -184,27 +184,25 @@ export default function DashboardPage({
               />
             </div>
 
-            {limit !== 0 && <CsvUploader onProjectCreated={(id: string) => router.push(`/dashboard/nodos/${id}`)} />}
+            <CsvUploader onProjectCreated={(id: string) => router.push(`/dashboard/nodos/${id}`)} />
 
-            {limit !== 0 && (
-              canCreate ? (
-                <button
-                  onClick={handleCreateNew}
-                  className="px-4 py-2 bg-[#059669] hover:bg-[#047857] text-white text-sm font-medium rounded-md transition-all flex items-center gap-2 active:scale-95"
-                >
-                  <Plus size={16} />
-                  <span>Nuevo Proyecto</span>
-                </button>
-              ) : (
-                <button
-                  disabled
-                  className="px-4 py-2 bg-neutral-800 text-neutral-500 text-sm font-medium rounded-md cursor-not-allowed flex items-center gap-2"
-                  title="Límite de proyectos alcanzado"
-                >
-                  <Plus size={16} />
-                  <span>Límite Alcanzado</span>
-                </button>
-              )
+            {canCreate ? (
+              <button
+                onClick={handleCreateNew}
+                className="px-4 py-2 bg-[#059669] hover:bg-[#047857] text-white text-sm font-medium rounded-md transition-all flex items-center gap-2 active:scale-95"
+              >
+                <Plus size={16} />
+                <span>Nuevo Proyecto</span>
+              </button>
+            ) : (
+              <button
+                disabled
+                className="px-4 py-2 bg-neutral-800 text-neutral-500 text-sm font-medium rounded-md cursor-not-allowed flex items-center gap-2"
+                title="Límite de proyectos alcanzado"
+              >
+                <Plus size={16} />
+                <span>Límite Alcanzado</span>
+              </button>
             )}
           </div>
         </header>
@@ -251,19 +249,13 @@ export default function DashboardPage({
           ) : projects.length === 0 ? (
             <div className="text-center py-32 rounded-3xl border border-dashed border-neutral-800 bg-neutral-900/20">
               <p className="text-neutral-500">Aún no hay mapas mentales.</p>
-              {limit !== 0 ? (
-                canCreate ? (
-                  <button onClick={handleCreateNew} className="mt-4 text-white font-medium hover:underline">
-                    Crear el primero
-                  </button>
-                ) : (
-                  <p className="mt-4 text-sm text-amber-600 dark:text-amber-500 font-medium">
-                    Has alcanzado el límite de proyectos de tu plan.
-                  </p>
-                )
+              {canCreate ? (
+                <button onClick={handleCreateNew} className="mt-4 text-white font-medium hover:underline">
+                  Crear el primero
+                </button>
               ) : (
-                <p className="mt-4 text-sm text-neutral-500 italic">
-                  No tienes permiso para crear proyectos en este plan.
+                <p className="mt-4 text-sm text-amber-600 dark:text-amber-500 font-medium">
+                  Has alcanzado el límite de proyectos de tu plan.
                 </p>
               )}
             </div>
