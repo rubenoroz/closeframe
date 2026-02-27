@@ -36,8 +36,8 @@ function SmartHandle({ type, position, handleId, direction, isCustomColor, baseC
             position={position}
             id={handleId}
             className={isOverlapping
-                ? `!w-[14px] !h-[14px] !bg-transparent !border-transparent z-30 cursor-crosshair before:content-[''] before:absolute before:-inset-3 before:z-10`
-                : `group flex items-center justify-center !w-[14px] !h-[14px] !border-[1.5px] transition-all duration-200 z-20 !cursor-pointer ${isCustomColor ? '!bg-white/90 hover:!bg-white' : '!bg-neutral-800 hover:!bg-neutral-700'} before:content-[''] before:absolute before:-inset-3 before:z-10`
+                ? `!w-[14px] !h-[14px] !bg-transparent !border-transparent z-30 cursor-crosshair before:content-[''] before:absolute before:-inset-0 md:before:-inset-3 before:z-10`
+                : `group flex items-center justify-center !w-[14px] !h-[14px] !border-[1.5px] transition-all duration-200 z-20 !cursor-pointer ${isCustomColor ? '!bg-white/90 hover:!bg-white' : '!bg-neutral-800 hover:!bg-neutral-700'} before:content-[''] before:absolute before:-inset-0 md:before:-inset-3 before:z-10`
             }
             style={isOverlapping ? {} : { borderColor: isCustomColor ? baseColor : '#525252' }}
             onClick={handleClick}
@@ -72,7 +72,7 @@ export default function MindMapNode({ id, data, selected }: any) {
 
     return (
         <div
-            className={`relative transition-all duration-300 ease-in-out backdrop-blur-md ${currentStyle} ${shapeClasses[shape as keyof typeof shapeClasses]}`}
+            className={`relative transition-all duration-300 ease-in-out backdrop-blur-md touch-none ${currentStyle} ${shapeClasses[shape as keyof typeof shapeClasses]}`}
             style={
                 isCustomColor && shape !== 'line'
                     ? {
