@@ -385,7 +385,7 @@ export default function CloserGalleryClient({
 
     // Determine config based on plan and project settings
     const effectiveDownloadEnabled = project.downloadEnabled;
-    const effectiveZipEnabled = plan?.config?.zipDownloadsEnabled ?? false;
+    const effectiveZipEnabled = project.planLimits?.zipDownloadsEnabled ?? true;
 
     return (
         <div className="bg-neutral-900 min-h-screen">
