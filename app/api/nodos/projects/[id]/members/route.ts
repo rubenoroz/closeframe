@@ -17,7 +17,7 @@ async function canManageProject(userId: string, projectId: string) {
     if (project.ownerId === userId) return true;
 
     // Check if member with ADMIN role
-    const member = project.members.find((m) => m.userId === userId);
+    const member = project.members.find((m: { userId: string; role: string }) => m.userId === userId);
     return member?.role === "ADMIN";
 }
 
@@ -54,7 +54,7 @@ export async function GET(
 
         // Verify access (owner or member)
         const isOwner = project.ownerId === session.user.id;
-        const isMember = project.members.some(m => m.userId === session.user.id);
+        const isMember = project.members.some((m: { userId: string }) => m.userId === session.user.id);
 
         if (!isOwner && !isMember) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -62,7 +62,7 @@ export async function GET(
 
         // Add owner to members if not already present (virtual)
         let allMembers = [...project.members];
-        if (!project.members.some(m => m.userId === project.ownerId)) {
+        if (!project.members.some((m: { userId: string }) => m.userId === project.ownerId)) {
             allMembers = [
                 {
                     id: "owner",
