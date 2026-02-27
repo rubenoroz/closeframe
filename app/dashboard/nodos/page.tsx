@@ -24,7 +24,8 @@ export default async function NodosPage() {
 
     // Superadmins can always create. Others depend on limit.
     const isSuperAdmin = (session.user.role as any) === 'SUPERADMIN';
-    const canCreate = isSuperAdmin || (limit === -1) || ((limit !== null) && (ownedProjectsCount < limit));
+    const effectiveLimit = isSuperAdmin ? -1 : limit;
+    const canCreate = isSuperAdmin || (effectiveLimit === -1) || ((effectiveLimit !== null) && (ownedProjectsCount < effectiveLimit));
 
     // Even if NOT allowed to create, they might be collaborating.
     // However, usually we show a restricted message if the feature is totally off.
@@ -76,7 +77,7 @@ export default async function NodosPage() {
         <div className="flex flex-col h-full">
             <NodosDashboardClient
                 canCreate={isAllowed && canCreate}
-                limit={limit}
+                limit={effectiveLimit}
                 ownedCount={ownedProjectsCount}
                 initialInvitations={invitations}
             />

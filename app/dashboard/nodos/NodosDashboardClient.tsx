@@ -184,9 +184,9 @@ export default function DashboardPage({
               />
             </div>
 
-            {limit !== 0 && (limit !== null) && <CsvUploader onProjectCreated={(id: string) => router.push(`/dashboard/nodos/${id}`)} />}
+            {limit !== 0 && <CsvUploader onProjectCreated={(id: string) => router.push(`/dashboard/nodos/${id}`)} />}
 
-            {limit !== 0 && (limit !== null) && (
+            {limit !== 0 && (
               canCreate ? (
                 <button
                   onClick={handleCreateNew}
@@ -251,7 +251,7 @@ export default function DashboardPage({
           ) : projects.length === 0 ? (
             <div className="text-center py-32 rounded-3xl border border-dashed border-neutral-800 bg-neutral-900/20">
               <p className="text-neutral-500">Aún no hay mapas mentales.</p>
-              {limit !== 0 && (limit !== null) ? (
+              {limit !== 0 ? (
                 canCreate ? (
                   <button onClick={handleCreateNew} className="mt-4 text-white font-medium hover:underline">
                     Crear el primero
