@@ -7,11 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, Trash2, UserPlus, Shield } from "lucide-react";
+import { Loader2, Trash2, UserPlus, Users, Network } from "lucide-react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 
-// Types
 interface Member {
     id: string;
     userId: string;
@@ -31,12 +30,12 @@ interface Invitation {
     token: string;
 }
 
-interface ShareProjectModalProps {
+interface NodosShareModalProps {
     projectId: string;
     trigger?: React.ReactNode;
 }
 
-export function ShareProjectModal({ projectId, trigger }: ShareProjectModalProps) {
+export function NodosShareModal({ projectId, trigger }: NodosShareModalProps) {
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [members, setMembers] = useState<Member[]>([]);
@@ -49,12 +48,10 @@ export function ShareProjectModal({ projectId, trigger }: ShareProjectModalProps
     const [isAdmin, setIsAdmin] = useState(false);
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-    const router = useRouter();
-
     const fetchMembers = async () => {
         setLoading(true);
         try {
-            const res = await fetch(`/api/scena/projects/${projectId}/members`);
+            const res = await fetch(`/api/nodos/projects/${projectId}/members`);
             if (!res.ok) throw new Error("Error cargando colaboradores");
             const data = await res.json();
 
@@ -68,9 +65,7 @@ export function ShareProjectModal({ projectId, trigger }: ShareProjectModalProps
             setCurrentUserId(uid);
 
             if (uid) {
-                // Find if current user is owner (direct check via project data or role field)
-                // in members list, we added 'OWNER' role manually in the API if same as ownerId
-                const currentUserMember = data.members.find((m: any) => m.userId === uid);
+                const currentUserMember = data.members.find((m: Member) => m.userId === uid);
                 setIsAdmin(currentUserMember?.role === "ADMIN" || currentUserMember?.role === "OWNER");
             }
         } catch (error) {
@@ -91,7 +86,7 @@ export function ShareProjectModal({ projectId, trigger }: ShareProjectModalProps
         setInviteLoading(true);
 
         try {
-            const res = await fetch(`/api/scena/projects/${projectId}/members`, {
+            const res = await fetch(`/api/nodos/projects/${projectId}/members`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email, role }),
@@ -115,7 +110,7 @@ export function ShareProjectModal({ projectId, trigger }: ShareProjectModalProps
 
     const handleUpdateRole = async (memberId: string, newRole: string) => {
         try {
-            const res = await fetch(`/api/scena/projects/${projectId}/members/${memberId}`, {
+            const res = await fetch(`/api/nodos/projects/${projectId}/members/${memberId}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ role: newRole }),
@@ -134,7 +129,7 @@ export function ShareProjectModal({ projectId, trigger }: ShareProjectModalProps
         if (!confirm("¿Seguro que deseas eliminar a este colaborador?")) return;
 
         try {
-            const res = await fetch(`/api/scena/projects/${projectId}/members/${memberId}`, {
+            const res = await fetch(`/api/nodos/projects/${projectId}/members/${memberId}`, {
                 method: "DELETE",
             });
 
@@ -147,11 +142,11 @@ export function ShareProjectModal({ projectId, trigger }: ShareProjectModalProps
         }
     };
 
-    const handleCancelInvite = async (invitationId: string) => {
-        if (!confirm("¿Cancelar esta invitación?")) return;
+    const handleCancelInvitation = async (invitationId: string) => {
+        if (!confirm("¿Seguro que deseas cancelar esta invitación?")) return;
 
         try {
-            const res = await fetch(`/api/scena/invitations/${invitationId}`, {
+            const res = await fetch(`/api/nodos/projects/${projectId}/invitations/${invitationId}`, {
                 method: "DELETE",
             });
 
@@ -165,7 +160,7 @@ export function ShareProjectModal({ projectId, trigger }: ShareProjectModalProps
     };
 
     const copyInviteLink = (token: string) => {
-        const url = `${window.location.origin}/invite/accept?token=${token}`;
+        const url = `${window.location.origin}/dashboard/nodos?accept=${token}`;
         navigator.clipboard.writeText(url);
         toast.success("Enlace copiado al portapapeles");
     };
@@ -173,20 +168,23 @@ export function ShareProjectModal({ projectId, trigger }: ShareProjectModalProps
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                {trigger || <Button variant="outline" size="sm" className="gap-2"><UserPlus size={14} /> Compartir</Button>}
+                {trigger || (
+                    <Button variant="outline" size="sm" className="gap-2 bg-neutral-900 border-neutral-800 hover:bg-neutral-800 text-white">
+                        <UserPlus size={14} /> Compartir
+                    </Button>
+                )}
             </DialogTrigger>
             <DialogContent className="sm:max-w-md bg-[#141414] border-neutral-800 text-white p-0 overflow-hidden rounded-2xl">
                 <div className="p-6 border-b border-neutral-800 bg-neutral-900/20">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2 text-lg font-bold">
-                            <Shield size={22} className="text-emerald-500" />
+                            <Network size={22} className="text-emerald-500" />
                             Colaboradores del proyecto
                         </DialogTitle>
                     </DialogHeader>
                 </div>
 
                 <div className="p-6 space-y-6">
-                    {/* Invite Form - Only for Admins/Owners */}
                     {isAdmin && (
                         <form onSubmit={handleInvite} className="flex gap-2 items-end p-4 rounded-xl bg-neutral-900/50 border border-neutral-800/50">
                             <div className="grid gap-2 flex-1">
@@ -229,7 +227,6 @@ export function ShareProjectModal({ projectId, trigger }: ShareProjectModalProps
                             <div className="flex justify-center p-8"><Loader2 className="animate-spin text-emerald-500" /></div>
                         ) : (
                             <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1 custom-scrollbar">
-                                {/* Members List */}
                                 {members.map((member) => {
                                     const isSelf = member.userId === currentUserId;
                                     const isOwner = member.role === 'OWNER';
@@ -256,10 +253,10 @@ export function ShareProjectModal({ projectId, trigger }: ShareProjectModalProps
                                                 {isAdmin && !isOwner && !isSelf ? (
                                                     <div className="flex items-center gap-1">
                                                         <Select
-                                                            defaultValue={member.role}
+                                                            value={member.role}
                                                             onValueChange={(v) => handleUpdateRole(member.id, v)}
                                                         >
-                                                            <SelectTrigger className="h-7 w-[100px] bg-transparent border-none text-[10px] font-bold text-neutral-400 hover:text-white hover:bg-neutral-800 px-2">
+                                                            <SelectTrigger className="h-7 w-[90px] bg-transparent border-none text-[10px] font-bold text-neutral-400 hover:text-white hover:bg-neutral-800 px-2">
                                                                 <SelectValue />
                                                             </SelectTrigger>
                                                             <SelectContent className="bg-neutral-900 border-neutral-800 text-white">
@@ -278,8 +275,10 @@ export function ShareProjectModal({ projectId, trigger }: ShareProjectModalProps
                                                         </Button>
                                                     </div>
                                                 ) : (
-                                                    <div className={`text-[10px] px-2 py-0.5 rounded-full border font-bold uppercase tracking-tighter ${isOwner ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-neutral-900 text-neutral-500 border-neutral-800"
-                                                        }`}>
+                                                    <div className={cn(
+                                                        "text-[10px] px-2 py-0.5 rounded-full border font-bold uppercase tracking-tighter",
+                                                        isOwner ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-neutral-900 text-neutral-500 border-neutral-800"
+                                                    )}>
                                                         {isOwner ? 'Propietario' : member.role}
                                                     </div>
                                                 )}
@@ -288,7 +287,6 @@ export function ShareProjectModal({ projectId, trigger }: ShareProjectModalProps
                                     );
                                 })}
 
-                                {/* Pending Invitations */}
                                 {invitations.map((invite) => (
                                     <div key={invite.id} className="flex items-center justify-between p-3 rounded-xl bg-[#111111] border border-emerald-500/10">
                                         <div className="flex items-center gap-3">
@@ -316,8 +314,9 @@ export function ShareProjectModal({ projectId, trigger }: ShareProjectModalProps
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    className="h-7 w-7 text-neutral-600 hover:text-red-500 rounded-full"
-                                                    onClick={() => handleCancelInvite(invite.id)}
+                                                    className="h-7 w-7 text-neutral-600 hover:text-red-500 hover:bg-red-500/10 rounded-full transition-all"
+                                                    onClick={() => handleCancelInvitation(invite.id)}
+                                                    title="Cancelar invitación"
                                                 >
                                                     <Trash2 size={12} />
                                                 </Button>
@@ -328,7 +327,8 @@ export function ShareProjectModal({ projectId, trigger }: ShareProjectModalProps
 
                                 {members.length === 0 && invitations.length === 0 && (
                                     <div className="text-center text-sm text-neutral-600 py-12 border-2 border-dashed border-neutral-900 rounded-3xl bg-neutral-900/5">
-                                        No hay miembros aún.
+                                        <Users className="w-8 h-8 mx-auto mb-3 opacity-20" />
+                                        No hay colaboradores aún.
                                     </div>
                                 )}
                             </div>

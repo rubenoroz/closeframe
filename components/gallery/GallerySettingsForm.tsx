@@ -135,93 +135,42 @@ export default function GallerySettingsForm({
 
     return (
         <div className={cn("space-y-8", className)}>
+            <div className="mt-2 space-y-6 animate-in slide-in-from-top-2 fade-in duration-300">
+                {/* Music Picker */}
+                <div>
+                    <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-3 block">Música de Fondo</label>
+                    <MusicPicker
+                        selectedTrackId={data.musicTrackId || null}
+                        onSelect={(id) => {
+                            const newData = { ...data, musicTrackId: id || "" };
+                            if (id) newData.musicEnabled = true;
+                            onChange(newData);
+                        }}
+                    />
+                </div>
 
-            {/* A - CLOSER GALLERY PREMIUM SECTION */}
-            <div className={`p-5 rounded-2xl border-2 transition-all ${data.isCloserGallery
-                ? "bg-neutral-900 border-emerald-500 shadow-xl shadow-emerald-900/10"
-                : isLight ? "bg-neutral-50 border-neutral-100" : "bg-neutral-800/20 border-neutral-800"
-                }`}>
-                <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${data.isCloserGallery ? "bg-emerald-500 text-white" : "bg-neutral-700 text-neutral-400"
-                            }`}>
-                            <Sparkles className="w-5 h-5" />
-                        </div>
-                        <div>
-                            <h3 className={`font-medium ${data.isCloserGallery ? (isLight ? "text-neutral-900" : "text-white") : "text-neutral-500"}`}>
-                                Experiencia Closer
-                            </h3>
-                            <p className="text-[10px] text-neutral-500 uppercase tracking-widest">Galería Premium</p>
-                        </div>
-                    </div>
-
+                {/* Autoplay Toggle */}
+                <div className="flex items-center gap-3 pl-1">
                     <label className="relative inline-flex items-center cursor-pointer">
                         <input
                             type="checkbox"
                             className="sr-only peer"
-                            checked={data.isCloserGallery}
-                            disabled={!planLimits?.closerGalleries}
-                            onChange={(e) => {
-                                if (!planLimits?.closerGalleries) return;
-                                update('isCloserGallery', e.target.checked);
-                            }}
+                            checked={data.musicEnabled}
+                            onChange={(e) => update('musicEnabled', e.target.checked)}
                         />
-                        <div className="w-11 h-6 bg-neutral-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500 peer-disabled:opacity-50"></div>
+                        <div className="w-9 h-5 bg-neutral-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
                     </label>
+                    <span className="text-xs text-neutral-400 font-medium">Reproducción automática</span>
                 </div>
 
-                {!planLimits?.closerGalleries && (
-                    <div className="mt-2 text-[10px] text-amber-500 flex items-center gap-2 bg-amber-500/10 p-2 rounded-lg">
-                        <AlertCircle className="w-3 h-3" />
-                        La Experiencia Closer requiere un Plan Superior.
-                    </div>
-                )}
-
-                {data.isCloserGallery && (
-                    <div className="mt-6 space-y-6 animate-in slide-in-from-top-2 fade-in duration-300">
-                        {/* Music Picker */}
-                        <div>
-                            <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-3 block">Música de Fondo</label>
-                            <MusicPicker
-                                selectedTrackId={data.musicTrackId || null}
-                                onSelect={(id) => {
-                                    const newData = { ...data, musicTrackId: id || "" };
-                                    if (id) newData.musicEnabled = true;
-                                    onChange(newData);
-                                }}
-                            />
-                        </div>
-
-                        {/* Autoplay Toggle */}
-                        <div className="flex items-center gap-3 pl-1">
-                            <label className="relative inline-flex items-center cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    className="sr-only peer"
-                                    checked={data.musicEnabled}
-                                    onChange={(e) => update('musicEnabled', e.target.checked)}
-                                />
-                                <div className="w-9 h-5 bg-neutral-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
-                            </label>
-                            <span className="text-xs text-neutral-400 font-medium">Reproducción automática</span>
-                        </div>
 
 
-
-                    </div>
-                )}
-
-                {!data.isCloserGallery && (
-                    <p className="text-xs text-neutral-500 mt-2 pl-14">
-                        Activa para habilitar navegación por momentos, música y diseño inmersivo.
-                    </p>
-                )}
             </div>
 
-            {/* B - COLLABORATIVE GALLERY SECTION (Only for Closer Galleries) */}
+            {/* B - COLLABORATIVE GALLERY SECTION (Always visible edit mode) */}
             {/* Only show if we have a project ID (Edit Mode) */}
             {
-                data.isCloserGallery && projectId && (
+                projectId && (
                     <div className={`p-5 rounded-2xl border-2 transition-all ${isLight ? "bg-neutral-50 border-neutral-100" : "bg-neutral-800/20 border-neutral-800"}`}>
                         <CollaborativeSettings
                             projectId={projectId}
@@ -230,9 +179,10 @@ export default function GallerySettingsForm({
                     </div>
                 )
             }
+
             {/* If Create Mode, show Collaborative option explicitly if Drive */}
             {
-                data.isCloserGallery && !projectId && (
+                !projectId && (
                     <div className={`rounded-2xl p-4 sm:p-6 border transition-all ${data.isCollaborative
                         ? "bg-gradient-to-br from-violet-500/10 to-indigo-500/10 border-violet-500/20"
                         : isLight ? "bg-neutral-50 border-neutral-100" : "bg-neutral-800/30 border-neutral-800"
@@ -369,7 +319,6 @@ export default function GallerySettingsForm({
                     </div>
                 )
             }
-
             {/* General Settings */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -1109,8 +1058,7 @@ export default function GallerySettingsForm({
                             />
                         )}
                     </>
-                )
-            }
-        </div >
+                )}
+        </div>
     );
 }

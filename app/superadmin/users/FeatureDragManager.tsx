@@ -23,7 +23,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { PLANS, getPlanConfig } from "@/lib/plans.config";
-import { Check, Lock, Shield, Star, Crown, LayoutGrid, List, Calendar, Image as ImageIcon, MousePointerClick, Download, Sparkles, Music, Video, Youtube, Users } from "lucide-react";
+import { Check, Lock, Shield, Star, Crown, LayoutGrid, List, Calendar, Image as ImageIcon, MousePointerClick, Download, Sparkles, Music, Video, Youtube, Users, Network } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Define all possible features with metadata
@@ -41,12 +41,15 @@ const ALL_FEATURES = [
     // Booking
     { id: "bookingConfig", label: "Config. Reservas", icon: Calendar, description: "Ventana y anticipación personalizada" },
 
-    // Closer Gallery (Premium)
-    { id: "closerGallery", label: "Closer Gallery", icon: Sparkles, description: "Galerías premium con efectos" },
+    // Closer Gallery (Native)
     { id: "musicGallery", label: "Música en Galerías", icon: Music, description: "Añadir música de fondo" },
     { id: "videoGallery", label: "Video en Galerías", icon: Video, description: "Soporte para video en galerías" },
     { id: "externalVideoAuth", label: "Videos Externos", icon: Youtube, description: "YouTube/Vimeo integrado" },
     { id: "collaborativeGalleries", label: "Galerías Colaborativas", icon: Users, description: "Subidas por QR desde invitados" },
+
+    // Advanced Tools
+    { id: "scenaAccess", label: "Acceso a Scena", icon: LayoutGrid, description: "Permitir crear proyectos Scena" },
+    { id: "nodosAccess", label: "Acceso a Nodos", icon: Network, description: "Permitir crear proyectos Nodos" },
 ];
 
 interface FeatureDragManagerProps {
@@ -382,27 +385,6 @@ export default function FeatureDragManager({ userPlanId, currentOverrides, onCha
                     </div>
                 </div>
 
-                {/* Closer Gallery Limit - only show if closerGallery is enabled */}
-                {(activeItems.includes('closerGallery') || basePlanStats.features?.closerGallery) && (
-                    <div className="mt-4">
-                        <label className="block text-[10px] text-neutral-500 mb-1.5">Límite Closer Gallery</label>
-                        <input
-                            type="number"
-                            min="-1"
-                            placeholder={String((basePlanStats.limits as any)?.closerGalleryLimit ?? "∞")}
-                            value={currentOverrides?.limits?.closerGalleryLimit ?? ""}
-                            onChange={(e) => {
-                                const val = e.target.value === "" ? undefined : parseInt(e.target.value);
-                                onChange({
-                                    ...currentOverrides,
-                                    limits: { ...currentOverrides?.limits, closerGalleryLimit: val }
-                                });
-                            }}
-                            className="w-full max-w-[150px] px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-white text-sm focus:outline-none focus:border-amber-500 placeholder-neutral-600"
-                        />
-                        <p className="text-[9px] text-neutral-600 mt-1">-1 = ilimitado</p>
-                    </div>
-                )}
             </div>
         </div>
     );

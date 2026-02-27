@@ -28,7 +28,8 @@ import PropertiesPanel from '@/components/nodos/PropertiesPanel';
 import SearchMenu from '@/components/nodos/SearchMenu';
 import { QuickAddContext } from '@/components/nodos/QuickAddContext';
 
-import { Plus, ChevronLeft } from 'lucide-react';
+import { Plus, ChevronLeft, Users } from 'lucide-react';
+import { NodosShareModal } from '@/components/nodos/NodosShareModal';
 
 const nodeTypes = {
   mindmap: MindMapNode,
@@ -337,13 +338,16 @@ function FlowCanvas({ projectId }: { projectId: string }) {
           </button>
           <span className="text-white text-sm font-semibold tracking-tight line-clamp-1 max-w-[180px] md:max-w-xs">{project.title}</span>
         </div>
-        <button
-          onClick={addNewNode}
-          className="w-10 h-10 md:w-8 md:h-8 bg-emerald-600 md:bg-neutral-900/90 border border-emerald-500 md:border-neutral-700 hover:bg-emerald-500 md:hover:border-emerald-500 rounded-full flex items-center justify-center text-white md:text-neutral-400 md:hover:text-white transition-all shadow-lg pointer-events-auto shrink-0"
-          title="Añadir nodo independiente"
-        >
-          <Plus size={18} className="md:w-4 md:h-4" />
-        </button>
+        <div className="flex items-center gap-2 pointer-events-auto">
+          <NodosShareModal projectId={project.id} />
+          <button
+            onClick={addNewNode}
+            className="w-10 h-10 md:w-8 md:h-8 bg-emerald-600 md:bg-neutral-900/90 border border-emerald-500 md:border-neutral-700 hover:bg-emerald-500 md:hover:border-emerald-500 rounded-full flex items-center justify-center text-white md:text-neutral-400 md:hover:text-white transition-all shadow-lg shrink-0"
+            title="Añadir nodo independiente"
+          >
+            <Plus size={18} className="md:w-4 md:h-4" />
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 relative w-full h-full">

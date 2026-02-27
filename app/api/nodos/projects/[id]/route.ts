@@ -2,6 +2,8 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { NextResponse } from "next/server";
 
+const prismaAny = prisma as any;
+
 export const dynamic = 'force-dynamic';
 
 // GET a single project by ID
@@ -14,10 +16,13 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
         const { id } = await params;
 
-        const project = await prisma.nodosProject.findFirst({
+        const project = await prismaAny.nodosProject.findFirst({
             where: {
                 id,
-                ownerId: session.user.id,
+                OR: [
+                    { ownerId: session.user.id },
+                    { members: { some: { userId: session.user.id } } }
+                ],
             },
         });
 
@@ -44,9 +49,15 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         const body = await req.json();
         const { title, description, nodes, edges } = body;
 
-        // Verify ownership
-        const existing = await prisma.nodosProject.findFirst({
-            where: { id, ownerId: session.user.id },
+        // Verify access (owner or member)
+        const existing = await prismaAny.nodosProject.findFirst({
+            where: {
+                id,
+                OR: [
+                    { ownerId: session.user.id },
+                    { members: { some: { userId: session.user.id } } }
+                ],
+            },
         });
 
         if (!existing) {
@@ -60,6 +71,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
                 ...(description !== undefined && { description }),
                 ...(nodes !== undefined && { nodes }),
                 ...(edges !== undefined && { edges }),
+                ...(body.isArchived !== undefined && { isArchived: body.isArchived }),
             },
         });
 
@@ -80,20 +92,38 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
 
         const { id } = await params;
 
-        // Verify ownership
-        const existing = await prisma.nodosProject.findFirst({
-            where: { id, ownerId: session.user.id },
+        // Find the project and check membership
+        const project = await prismaAny.nodosProject.findUnique({
+            where: { id },
+            include: { members: { where: { userId: session.user.id } } }
         });
 
-        if (!existing) {
+        if (!project) {
             return new NextResponse("Project not found", { status: 404 });
         }
 
-        await prisma.nodosProject.delete({
-            where: { id },
-        });
+        // If user is the owner, delete the entire project
+        if (project.ownerId === session.user.id) {
+            await prisma.nodosProject.delete({
+                where: { id },
+            });
+            return NextResponse.json({ success: true, action: "deleted" });
+        }
 
-        return NextResponse.json({ success: true });
+        // If user is a member but not the owner, only remove their membership
+        if (project.members && project.members.length > 0) {
+            await prismaAny.nodosMember.delete({
+                where: {
+                    projectId_userId: {
+                        projectId: id,
+                        userId: session.user.id
+                    }
+                }
+            });
+            return NextResponse.json({ success: true, action: "removed_membership" });
+        }
+
+        return new NextResponse("Forbidden", { status: 403 });
     } catch (error) {
         console.error("[NODOS_PROJECT_DELETE]", error);
         return new NextResponse("Internal Error", { status: 500 });

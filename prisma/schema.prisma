@@ -64,6 +64,8 @@ model User {
   stripeConnectAccount   StripeConnectAccount?
   plan                   Plan?                 @relation(fields: [planId], references: [id])
   tasks                  Task[]                @relation("TaskAssignees")
+  sentNodosInvitations   NodosInvitation[]     @relation("NodosSentInvitations")
+  nodosMemberships       NodosMember[]
 }
 
 model SystemSettings {
@@ -852,9 +854,46 @@ model NodosProject {
   bookingId   String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  booking     Booking? @relation(fields: [bookingId], references: [id])
+  owner       User              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  booking     Booking?          @relation(fields: [bookingId], references: [id])
+  members     NodosMember[]
+  invitations NodosInvitation[]
 
   @@index([ownerId])
   @@index([bookingId])
 }
+
+model NodosMember {
+  id        String       @id @default(cuid())
+  projectId String
+  userId    String
+  role      String       @default("VIEWER")
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  project   NodosProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+}
+
+model NodosInvitation {
+  id        String       @id @default(cuid())
+  projectId String
+  email     String
+  token     String       @unique
+  role      String       @default("VIEWER")
+  status    String       @default("PENDING")
+  senderId  String
+  expiresAt DateTime
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  project   NodosProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sender    User         @relation("NodosSentInvitations", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([email])
+  @@index([token])
+}
+

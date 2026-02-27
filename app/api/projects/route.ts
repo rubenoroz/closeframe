@@ -160,16 +160,7 @@ export async function POST(request: Request) {
             passwordProtected = true;
         }
 
-        // [SECURE] Enforce Feature Limits based on Plan
-        if (isCloserGallery) {
-            const allowed = await canUseFeature(session.user.id, 'closerGalleries');
-            if (!allowed) {
-                return NextResponse.json({
-                    error: "Your plan does not support Closer Galleries. Please upgrade.",
-                    code: "PLAN_LIMIT_REACHED"
-                }, { status: 403 });
-            }
-        }
+
 
         if (isCollaborative) {
             const allowed = await canUseFeature(session.user.id, 'collaborativeGalleries');
@@ -232,8 +223,8 @@ export async function POST(request: Request) {
             },
         });
 
-        // [NEW] Create "Moment" folders in Drive if requested
-        if (isCloserGallery && moments && Array.isArray(moments) && moments.length > 0) {
+        // Create "Moment" folders in Drive if requested
+        if (moments && Array.isArray(moments) && moments.length > 0) {
             try {
                 // Get fresh auth for this account
                 const auth = await getFreshGoogleAuth(cloudAccountId);
@@ -313,14 +304,8 @@ export async function PATCH(request: NextRequest) {
         // Video and other fields...
         if (enableVideoTab !== undefined) updateData.enableVideoTab = enableVideoTab;
 
-        // Enforce Closer Gallery restriction
+        // Enforce Closer Gallery restriction (Deprecated gating)
         if (isCloserGallery !== undefined) {
-            if (isCloserGallery === true) {
-                const allowed = await canUseFeature(session.user.id, 'closerGalleries');
-                if (!allowed) {
-                    return NextResponse.json({ error: "Your plan does not support Closer Galleries" }, { status: 403 });
-                }
-            }
             updateData.isCloserGallery = isCloserGallery;
         }
 

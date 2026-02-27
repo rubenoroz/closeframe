@@ -2,6 +2,8 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { NextResponse } from "next/server";
 
+const prismaAny = prisma as any;
+
 export const dynamic = 'force-dynamic';
 
 // GET all projects for the current user
@@ -12,9 +14,12 @@ export async function GET(req: Request) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
-        const projects = await prisma.nodosProject.findMany({
+        const projects = await prismaAny.nodosProject.findMany({
             where: {
-                ownerId: session.user.id,
+                OR: [
+                    { ownerId: session.user.id },
+                    { members: { some: { userId: session.user.id } } }
+                ],
             },
             orderBy: {
                 updatedAt: 'desc',
@@ -41,6 +46,14 @@ export async function POST(req: Request) {
 
         if (!title) {
             return new NextResponse("Missing project title", { status: 400 });
+        }
+
+        // Feature Gating
+        const { canUseFeature } = await import("@/lib/features/service");
+        const isAllowed = await canUseFeature(session.user.id, 'nodosAccess') || (session.user.role as any) === 'SUPERADMIN' || (session.user.role as any) === 'ADMIN';
+
+        if (!isAllowed) {
+            return new NextResponse("Tu plan no permite crear proyectos Nodos", { status: 403 });
         }
 
         // Resolve external event to booking if needed
@@ -95,7 +108,7 @@ export async function POST(req: Request) {
             }
         ];
 
-        const project = await prisma.nodosProject.create({
+        const project = await prismaAny.nodosProject.create({
             data: {
                 title,
                 description: description || null,

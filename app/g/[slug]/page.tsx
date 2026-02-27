@@ -228,45 +228,43 @@ export default async function PublicGalleryPage({ params }: Props) {
         }
     };
 
-    // [CLOSER GALLERY LOGIC]
-    // If project is marked as Closer Gallery AND plan allows it
-    if (project.isCloserGallery && features.closerGallery) {
-        // Fetch Closer Gallery Structure (Momentos)
-        const { GalleryIndexer } = await import("@/lib/gallery/indexer");
-        const indexer = new GalleryIndexer();
+    // [CLOSER GALLERY LOGIC] - Now Mandatory for all (Deprecating PublicGalleryClient)
+    const { GalleryIndexer } = await import("@/lib/gallery/indexer");
+    const indexer = new GalleryIndexer();
 
-        try {
-            const structure = await indexer.indexGallery(project.cloudAccountId, project.rootFolderId, project.id);
+    try {
+        const structure = await indexer.indexGallery(project.cloudAccountId, project.rootFolderId, project.id);
 
-            // Import Client Component dynamically or directly
-            const { default: CloserGalleryClient } = await import("@/components/gallery/CloserGalleryClient");
+        // Import Client Component dynamically or directly
+        const { default: CloserGalleryClient } = await import("@/components/gallery/CloserGalleryClient");
 
-            return (
-                <CloserGalleryClient
-                    project={enhancedProject}
-                    structure={structure}
-                    // studioProfile={project.user} // REMOVED - Incompatible
-                    businessName={project.user?.businessName}
-                    businessLogo={project.user?.businessLogo}
-                    businessWebsite={project.user?.businessWebsite}
-                    theme={project.user?.theme}
-                    businessLogoScale={project.user?.businessLogoScale}
+        return (
+            <CloserGalleryClient
+                project={enhancedProject}
+                structure={structure}
+                businessName={project.user?.businessName}
+                businessLogo={project.user?.businessLogo}
+                businessWebsite={project.user?.businessWebsite}
+                theme={project.user?.theme}
+                businessLogoScale={project.user?.businessLogoScale}
 
-                    collaborativeSections={collaborativeSections}
-                    debugMessage={"HARDCODED_TEST_" + Date.now()}
-                    plan={project.user.plan}
-                />
-            );
-        } catch (error) {
-            console.error("Error indexing Closer Gallery:", error);
-            // Fallback to standard gallery if indexing fails? Or show error?
-            // For now, let's fallback to standard to avoid white screen, or simple error page.
-            // But usually this means Drive issues.
-        }
+                collaborativeSections={collaborativeSections}
+                debugMessage={"CHRONOFRAME_UNIFIED_" + Date.now()}
+                plan={project.user.plan}
+            />
+        );
+    } catch (error) {
+        console.error("Error indexing Gallery:", error);
+        // If indexing fails, we still try to show something, but PublicGalleryClient is deprecated.
+        // We'll show an error or a minimal version for now.
+        return (
+            <div className="min-h-screen bg-black text-white flex items-center justify-center p-6 text-center">
+                <div>
+                    <h1 className="text-xl font-medium mb-2">No pudimos cargar la galería</h1>
+                    <p className="text-neutral-500 text-sm">Asegúrate de que la carpeta en Drive siga existiendo.</p>
+                </div>
+            </div>
+        );
     }
-
-    return (
-        <PublicGalleryClient project={enhancedProject} />
-    );
 }
 

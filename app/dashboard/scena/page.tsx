@@ -60,12 +60,10 @@ export default async function ScenaPage() {
 
     return (
         <div className="flex flex-col h-full">
-            {invitations.length > 0 && (
-                <div className="p-6 pb-0">
-                    <InvitationList initialInvitations={invitations} />
-                </div>
-            )}
-            <ProjectList canCreate={canCreate} />
+            <ProjectList
+                canCreate={canCreate}
+                initialInvitations={invitations}
+            />
         </div>
     );
 }

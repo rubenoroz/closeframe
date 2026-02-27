@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Plus, MoreVertical, Archive, Trash2, Undo2, FolderOpen, Calendar, Copy, Search, X, Upload } from "lucide-react";
+import { Plus, MoreVertical, Archive, Trash2, Undo2, FolderOpen, Calendar, Copy, Search, X, Upload, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -13,6 +13,7 @@ import {
 import { CreateProjectModal } from "./CreateProjectModal";
 import { CsvImportModal } from "./CsvImportModal";
 import { ConfirmModal } from "./ConfirmModal";
+import { InvitationList } from "./InvitationList";
 import { useRouter } from "next/navigation";
 import { ScenaIcon } from "@/components/icons/ScenaIcon";
 
@@ -30,11 +31,18 @@ interface Project {
 }
 
 
-export function ProjectList({ canCreate = true }: { canCreate?: boolean }) {
+export function ProjectList({
+    canCreate = true,
+    initialInvitations = []
+}: {
+    canCreate?: boolean;
+    initialInvitations?: any[];
+}) {
     const router = useRouter();
     const [projects, setProjects] = useState<Project[]>([]);
+    const [invitations, setInvitations] = useState<any[]>(initialInvitations);
     const [loading, setLoading] = useState(true);
-    const [view, setView] = useState<'active' | 'archived'>('active');
+    const [view, setView] = useState<'active' | 'archived' | 'invitations'>('active');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
@@ -221,6 +229,23 @@ export function ProjectList({ canCreate = true }: { canCreate?: boolean }) {
                             <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-600 dark:bg-emerald-400 rounded-t-full" />
                         )}
                     </button>
+                    <button
+                        onClick={() => setView('invitations')}
+                        className={`pb-3 px-1 text-sm font-medium transition-all relative whitespace-nowrap flex items-center gap-2 ${view === 'invitations'
+                            ? 'text-emerald-600 dark:text-emerald-400'
+                            : 'text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'
+                            }`}
+                    >
+                        Invitaciones
+                        {invitations.length > 0 && (
+                            <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-emerald-500 px-1.5 text-[10px] font-bold text-white">
+                                {invitations.length}
+                            </span>
+                        )}
+                        {view === 'invitations' && (
+                            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-600 dark:bg-emerald-400 rounded-t-full" />
+                        )}
+                    </button>
                 </div>
 
                 {loading ? (
@@ -228,6 +253,10 @@ export function ProjectList({ canCreate = true }: { canCreate?: boolean }) {
                         {[1, 2, 3].map(i => (
                             <div key={i} className="h-48 rounded-2xl bg-neutral-100 dark:bg-neutral-800 animate-pulse" />
                         ))}
+                    </div>
+                ) : view === 'invitations' ? (
+                    <div className="max-w-5xl">
+                        <InvitationList initialInvitations={invitations} />
                     </div>
                 ) : filteredProjects.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -308,7 +337,7 @@ export function ProjectList({ canCreate = true }: { canCreate?: boolean }) {
                                             </DropdownMenuItem>
 
                                             {/* Only Owner can Archive/Delete */}
-                                            {currentUserId === project.ownerId && (
+                                            {currentUserId === project.ownerId ? (
                                                 <>
                                                     {view === 'active' ? (
                                                         <>
@@ -342,6 +371,16 @@ export function ProjectList({ canCreate = true }: { canCreate?: boolean }) {
                                                         </>
                                                     )}
                                                 </>
+                                            ) : (
+                                                <DropdownMenuItem
+                                                    onSelect={(e) => {
+                                                        e.preventDefault();
+                                                        handleDelete(project.id);
+                                                    }}
+                                                    className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-900/10"
+                                                >
+                                                    <LogOut className="mr-2 h-4 w-4" /> Salir del proyecto
+                                                </DropdownMenuItem>
                                             )}
                                         </DropdownMenuContent>
                                     </DropdownMenu>
@@ -369,9 +408,12 @@ export function ProjectList({ canCreate = true }: { canCreate?: boolean }) {
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
                 onConfirm={confirmDelete}
-                title="Eliminar Proyecto"
-                description="¿Estás seguro de eliminar este proyecto permanentemente? Esta acción no se puede deshacer."
-                confirmText="Eliminar"
+                title={projects.find(p => p.id === projectToDelete)?.ownerId === currentUserId ? "Eliminar Proyecto" : "Salir del Proyecto"}
+                description={projects.find(p => p.id === projectToDelete)?.ownerId === currentUserId
+                    ? "¿Estás seguro de eliminar este proyecto permanentemente? Esta acción no se puede deshacer."
+                    : "¿Estás seguro de salir de este proyecto? Ya no aparecerá en tu panel, pero seguirá disponible para el dueño y otros miembros."
+                }
+                confirmText={projects.find(p => p.id === projectToDelete)?.ownerId === currentUserId ? "Eliminar" : "Salir"}
                 isDestructive
             />
         </div>
