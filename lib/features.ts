@@ -26,14 +26,15 @@ import {
     Zap,
     QrCode,
     Smartphone,
-    Copy
+    Copy,
+    Network
 } from "lucide-react";
 
 export interface FeatureDefinition {
     id: string;
     label: string;
     description: string;
-    category: 'profile' | 'gallery' | 'booking' | 'system' | 'analytics' | 'collaboration' | 'monetization' | 'scena' | 'video' | 'payments';
+    category: 'profile' | 'gallery' | 'booking' | 'system' | 'analytics' | 'collaboration' | 'monetization' | 'scena' | 'nodos' | 'video' | 'payments';
     type: 'boolean' | 'number' | 'select';
     icon?: any;
     defaultValue?: any;
@@ -466,7 +467,7 @@ export const FEATURE_POOL: FeatureDefinition[] = [
         id: "maxProjects",
         label: "Límite de Galerías",
         description: "Galerías activas (-1 = Ilimitado)",
-        category: "system",
+        category: "gallery",
         type: "number",
         defaultValue: 1,
         icon: Folder
@@ -727,6 +728,24 @@ export const FEATURE_POOL: FeatureDefinition[] = [
         defaultValue: 0,
         icon: Folder
     },
+    {
+        id: "nodosAccess",
+        label: "Acceso Nodos (Mindmap)",
+        description: "Acceso al gestor de ideas y diagramas",
+        category: "nodos",
+        type: "boolean",
+        defaultValue: false,
+        icon: Network
+    },
+    {
+        id: "maxNodosProjects",
+        label: "Límite Proyectos Nodos",
+        description: "Límite de tableros de ideas (0 = Solo invitado, -1 = Ilimitado)",
+        category: "nodos",
+        type: "number",
+        defaultValue: 0,
+        icon: Folder
+    },
 
     {
         id: "imageSelection",
@@ -839,16 +858,18 @@ export const FEATURE_POOL: FeatureDefinition[] = [
         defaultValue: false
     },
 
-    // --- CLOSER GALLERIES (Premium) ---
+    // --- CLOSER GALLERIES (Premium) - DEPRECATED (Now Default) ---
+    /*
     {
         id: "closerGalleries",
         label: "Galerías Closer",
         description: "Galerías profesionales con todas las funciones premium",
         category: "gallery",
         type: "boolean",
-        defaultValue: false,
+        defaultValue: true,
         icon: ImageIcon
     },
+    */
     {
         id: "collaborativeGalleries",
         label: "Galerías Colaborativas QR",

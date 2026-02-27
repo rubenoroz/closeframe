@@ -60,7 +60,6 @@ export interface PlanLimits {
     galleryCover?: boolean;
     passwordProtection?: boolean;
     customFonts?: boolean;
-    closerGalleries?: boolean;
     collaborativeGalleries?: boolean;
     zipDownloadsEnabled?: boolean;
 }
@@ -116,9 +115,7 @@ export default function GallerySettingsForm({
     useEffect(() => {
         console.log("--- GallerySettingsForm DEBUG ---");
         console.log("Plan Limits:", planLimits);
-        console.log("Closer Enabled in Plan?", planLimits?.closerGalleries);
-        console.log("Current Form Data isCloserGallery:", data.isCloserGallery);
-    }, [planLimits, data.isCloserGallery]);
+    }, [planLimits]);
 
     const update = (field: keyof GallerySettingsData, value: any) => {
         let newData = { ...data, [field]: value };

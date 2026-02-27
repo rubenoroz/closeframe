@@ -23,7 +23,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { PLANS, getPlanConfig } from "@/lib/plans.config";
-import { Check, Lock, Shield, Star, Crown, LayoutGrid, List, Calendar, Image as ImageIcon, MousePointerClick, Download, Sparkles, Music, Video, Youtube, Users, Network } from "lucide-react";
+import { Check, Lock, Shield, Star, Crown, LayoutGrid, List, Calendar, Image as ImageIcon, MousePointerClick, Download, Sparkles, Music, Video, Youtube, Users, Network, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Define all possible features with metadata
@@ -40,6 +40,7 @@ const ALL_FEATURES = [
 
     // Booking
     { id: "bookingConfig", label: "Config. Reservas", icon: Calendar, description: "Ventana y anticipación personalizada" },
+    { id: "bookingPayments", label: "Pagos en Reservas", icon: CreditCard, description: "Aceptar pagos con tarjeta" },
 
     // Closer Gallery (Native)
     { id: "musicGallery", label: "Música en Galerías", icon: Music, description: "Añadir música de fondo" },
@@ -329,7 +330,7 @@ export default function FeatureDragManager({ userPlanId, currentOverrides, onCha
 
                 <div className="grid grid-cols-3 gap-3">
                     <div>
-                        <label className="block text-[10px] text-neutral-500 mb-1.5">Máx. Proyectos</label>
+                        <label className="block text-[10px] text-neutral-500 mb-1.5">Máx. Galerías</label>
                         <input
                             type="number"
                             min="-1"
@@ -345,6 +346,42 @@ export default function FeatureDragManager({ userPlanId, currentOverrides, onCha
                             className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-white text-sm focus:outline-none focus:border-amber-500 placeholder-neutral-600"
                         />
                         <p className="text-[9px] text-neutral-600 mt-1">-1 = ilimitado</p>
+                    </div>
+
+                    <div>
+                        <label className="block text-[10px] text-neutral-500 mb-1.5">Máx. Proyectos Scena</label>
+                        <input
+                            type="number"
+                            min="-1"
+                            placeholder={String(basePlanStats.limits?.maxScenaProjects ?? "∞")}
+                            value={currentOverrides?.limits?.maxScenaProjects ?? ""}
+                            onChange={(e) => {
+                                const val = e.target.value === "" ? undefined : parseInt(e.target.value);
+                                onChange({
+                                    ...currentOverrides,
+                                    limits: { ...currentOverrides?.limits, maxScenaProjects: val }
+                                });
+                            }}
+                            className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-white text-sm focus:outline-none focus:border-amber-500 placeholder-neutral-600"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-[10px] text-neutral-500 mb-1.5">Máx. Proyectos Nodos</label>
+                        <input
+                            type="number"
+                            min="-1"
+                            placeholder={String(basePlanStats.limits?.maxNodosProjects ?? "∞")}
+                            value={currentOverrides?.limits?.maxNodosProjects ?? ""}
+                            onChange={(e) => {
+                                const val = e.target.value === "" ? undefined : parseInt(e.target.value);
+                                onChange({
+                                    ...currentOverrides,
+                                    limits: { ...currentOverrides?.limits, maxNodosProjects: val }
+                                });
+                            }}
+                            className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-white text-sm focus:outline-none focus:border-amber-500 placeholder-neutral-600"
+                        />
                     </div>
 
                     <div>
@@ -382,6 +419,25 @@ export default function FeatureDragManager({ userPlanId, currentOverrides, onCha
                             className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-white text-sm focus:outline-none focus:border-amber-500 placeholder-neutral-600"
                         />
                         <p className="text-[9px] text-neutral-600 mt-1">-1 = ilimitado</p>
+                    </div>
+
+                    <div>
+                        <label className="block text-[10px] text-neutral-500 mb-1.5">Comisión (%)</label>
+                        <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            placeholder={String(basePlanStats.limits?.commissionPercentage ?? "0")}
+                            value={currentOverrides?.limits?.commissionPercentage ?? ""}
+                            onChange={(e) => {
+                                const val = e.target.value === "" ? undefined : parseInt(e.target.value);
+                                onChange({
+                                    ...currentOverrides,
+                                    limits: { ...currentOverrides?.limits, commissionPercentage: val }
+                                });
+                            }}
+                            className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-white text-sm focus:outline-none focus:border-amber-500 placeholder-neutral-600"
+                        />
                     </div>
                 </div>
 

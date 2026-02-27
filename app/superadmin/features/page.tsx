@@ -152,7 +152,7 @@ export default function FeaturesMatrixPage() {
         });
 
     // Ordered list of categories as requested
-    const categoryOrder = ['profile', 'gallery', 'booking', 'scena', 'collaboration', 'monetization', 'analytics', 'system'];
+    const categoryOrder = ['profile', 'gallery', 'booking', 'scena', 'nodos', 'collaboration', 'monetization', 'analytics', 'system'];
 
     // Get all unique categories for tabs and sort them
     const allCategories = Array.from(new Set(enhancedFeatures.map(f => f.category))).sort((a, b) => {
@@ -188,6 +188,7 @@ export default function FeaturesMatrixPage() {
         collaboration: 'Colaboración',
         monetization: 'Monetización',
         scena: 'Scena (Kanban)',
+        nodos: 'Nodos (Mindmap)',
         video: 'Video',
         payments: 'Pagos'
     };

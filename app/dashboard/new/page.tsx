@@ -47,7 +47,7 @@ export default function NewProjectPage() {
         headerImageFocus: "50,50",
         coverImage: "",
         coverImageFocus: "50,50",
-        isCloserGallery: false,
+        isCloserGallery: true,
         isCollaborative: false, // NEW: Allow setting this on creation
         moments: [], // NEW
         musicTrackId: undefined,
@@ -76,7 +76,6 @@ export default function NewProjectPage() {
         galleryCover?: boolean;
         customFonts?: boolean;
         passwordProtection?: boolean;
-        closerGalleries?: boolean;
         collaborativeGalleries?: boolean;
         zipDownloadsEnabled?: boolean;
     } | null>(null);
@@ -110,7 +109,6 @@ export default function NewProjectPage() {
                         galleryCover: f.galleryCover ?? f.coverImage ?? false,
                         customFonts: f.customFonts ?? false,
                         passwordProtection: f.passwordProtection ?? true,
-                        closerGalleries: f.closerGalleries ?? false,
                         collaborativeGalleries: f.collaborativeGalleries ?? false,
                         zipDownloadsEnabled: f.zipDownloadsEnabled ?? false,
                     });
@@ -175,7 +173,7 @@ export default function NewProjectPage() {
                     coverImageFocus: formData.coverImageFocus,
                     musicTrackId: formData.musicTrackId,
                     musicEnabled: formData.musicEnabled,
-                    isCloserGallery: formData.isCloserGallery,
+                    isCloserGallery: true,
                     isCollaborative: formData.isCollaborative, // Send flag
                     moments: formData.moments, // Send moments to be created
                     zipFileId: formData.zipFileId,

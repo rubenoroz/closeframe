@@ -49,11 +49,25 @@ export async function POST(req: Request) {
         }
 
         // Feature Gating
-        const { canUseFeature } = await import("@/lib/features/service");
+        const { canUseFeature, getFeatureLimit } = await import("@/lib/features/service");
         const isAllowed = await canUseFeature(session.user.id, 'nodosAccess') || (session.user.role as any) === 'SUPERADMIN' || (session.user.role as any) === 'ADMIN';
 
         if (!isAllowed) {
             return new NextResponse("Tu plan no permite crear proyectos Nodos", { status: 403 });
+        }
+
+        // Limit Check
+        const limit = await getFeatureLimit(session.user.id, 'maxNodosProjects');
+        if (limit !== null && limit !== -1) {
+            const count = await prisma.nodosProject.count({
+                where: { ownerId: session.user.id }
+            });
+
+            if (count >= limit) {
+                return NextResponse.json({
+                    error: `Has alcanzado el límite de ${limit} proyectos Nodos para tu plan.`
+                }, { status: 403 });
+            }
         }
 
         // Resolve external event to booking if needed

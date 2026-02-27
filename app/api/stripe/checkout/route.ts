@@ -82,31 +82,21 @@ export async function POST(req: NextRequest) {
                 return NextResponse.json({ error: "No connected Stripe account found" }, { status: 400 });
             }
 
-            // Get effective plan config with limits
-            const planConfig = user.plan?.config ? JSON.parse(JSON.stringify(user.plan.config)) : {};
-            const limits = planConfig.limits || {};
+            // Get commission percentage from plan limits (respecting superadmin overrides)
+            const { getFeatureLimit } = await import("@/lib/features/service");
+            let commissionPercent = await getFeatureLimit(user.id, 'commissionPercentage');
 
-            // Get commission percentage from plan limits (search in this order: user specific override -> plan default -> global default)
-            // Note: limits are flattened in getEffectivePlanConfig but here we might be accessing raw plan config
-            // Ideally we should use a helper, but for now let's access specific plan defaults if not on user plan
-
-            // Actually, we can just look at the Plans config based on plan name if config is empty
-            const planName = user.plan?.name || "FREE";
-            const defaultCommission = 15; // Fallback
-
-            let commissionPercent = limits.commissionPercentage;
-
-            if (commissionPercent === undefined) {
-                // Try to find in static config based on plan name
+            if (commissionPercent === null || commissionPercent === undefined) {
+                // Fallback to plan default if no override exists
+                const planName = user.plan?.name || "FREE";
                 const { PLANS } = require("@/lib/plans.config");
                 const staticPlan = Object.values(PLANS).find((p: any) => p.name === planName) as any;
-                commissionPercent = staticPlan?.limits?.commissionPercentage ?? defaultCommission;
+                commissionPercent = staticPlan?.limits?.commissionPercentage ?? 15;
             }
 
-            // Calculate fee
-            // Amount is in dollars/pesos, convert to cents first
+            const finalCommission = Number(commissionPercent);
             const amountInCents = Math.round(amount * 100);
-            const applicationFeeAmount = Math.round(amountInCents * (commissionPercent / 100));
+            const applicationFeeAmount = Math.round(amountInCents * (finalCommission / 100));
 
             const checkoutSession = await stripe.checkout.sessions.create(
                 {

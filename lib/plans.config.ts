@@ -9,6 +9,7 @@ export const PLANS = {
             maxProjects: 3,
             maxCloudAccounts: 1,
             maxScenaProjects: 0,
+            maxNodosProjects: 1,
             commissionPercentage: 15, // 15% commission for Free
         },
         features: {
@@ -40,6 +41,7 @@ export const PLANS = {
             maxProjects: 50,
             maxCloudAccounts: 2,
             maxScenaProjects: 3,
+            maxNodosProjects: 5,
             commissionPercentage: 12, // 12% commission for Family
         },
         features: {
@@ -72,6 +74,7 @@ export const PLANS = {
             maxProjects: 100,
             maxCloudAccounts: 2,
             maxScenaProjects: 10,
+            maxNodosProjects: 20,
             commissionPercentage: 5, // 5% commission for Pro
         },
         features: {
@@ -103,6 +106,7 @@ export const PLANS = {
             maxProjects: -1,
             maxCloudAccounts: -1,
             maxScenaProjects: -1,
+            maxNodosProjects: -1,
             commissionPercentage: 0, // 0% commission for Studio
         },
         features: {
@@ -135,6 +139,7 @@ export const PLANS = {
             maxProjects: -1,
             maxCloudAccounts: -1,
             maxScenaProjects: -1,
+            maxNodosProjects: -1,
             commissionPercentage: 0, // 0% commission for Agency
         },
         features: {

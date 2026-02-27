@@ -88,7 +88,6 @@ export default function DashboardPage() {
         allowedHighRes?: boolean;
         passwordProtection?: boolean;
         galleryCover?: boolean;
-        closerGalleries?: boolean;
         collaborativeGalleries?: boolean;
         zipDownloadsEnabled?: boolean;
         customFonts?: boolean;
@@ -204,7 +203,6 @@ export default function DashboardPage() {
                             allowedHighRes: f.highResDownloads ?? false,
                             passwordProtection: f.passwordProtection ?? true,
                             galleryCover: f.galleryCover ?? f.coverImage ?? false,
-                            closerGalleries: f.closerGalleries ?? false,
                             collaborativeGalleries: f.collaborativeGalleries ?? false,
                             zipDownloadsEnabled: f.zipDownloadsEnabled ?? false,
                             customFonts: f.customFonts ?? false
@@ -218,7 +216,6 @@ export default function DashboardPage() {
                             allowedHighRes: features.highResDownloads ?? false,
                             passwordProtection: features.passwordProtection ?? true,
                             galleryCover: features.galleryCover ?? features.coverImage ?? false,
-                            closerGalleries: features.closerGalleries ?? false,
                             collaborativeGalleries: features.collaborativeGalleries ?? false,
                             zipDownloadsEnabled: features.zipDownloadsEnabled ?? false,
                             customFonts: features.customFonts ?? false
@@ -235,7 +232,6 @@ export default function DashboardPage() {
                                 allowedHighRes: limits.highResDownloads ?? false,
                                 passwordProtection: limits.passwordProtection ?? true,
                                 galleryCover: limits.coverImage ?? limits.galleryCover ?? false,
-                                closerGalleries: limits.closerGalleries ?? false,
                                 collaborativeGalleries: limits.collaborativeGalleries ?? false,
                                 zipDownloadsEnabled: limits.zipDownloadsEnabled ?? false,
                                 customFonts: limits.customFonts ?? false
@@ -756,15 +752,6 @@ export default function DashboardPage() {
                                     </div>
                                 </div>
 
-                                {(project as any).isCloserGallery && (
-                                    <div className={`absolute bottom-0 right-0 p-1.5 rounded-tl-lg rounded-br-2xl shadow-lg z-10 flex items-center gap-1.5 px-3 border-t border-l ${isLight
-                                        ? "bg-neutral-100 border-neutral-200 text-emerald-600"
-                                        : "bg-neutral-900 border-neutral-800 text-emerald-500"
-                                        }`}>
-                                        <Sparkles className="w-3.5 h-3.5" />
-                                        <span className="text-[10px] font-bold uppercase tracking-tighter">Closer</span>
-                                    </div>
-                                )}
                             </div>
                         ))}
                     </div>

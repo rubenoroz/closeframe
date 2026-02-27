@@ -212,7 +212,7 @@ export async function POST(request: Request) {
                 videoFolderId: enableVideoTab ? videoFolderId : null,
                 downloadVideoHdEnabled: downloadVideoHdEnabled ?? true,
                 downloadVideoRawEnabled: downloadVideoRawEnabled ?? false,
-                isCloserGallery: isCloserGallery ?? false,
+                isCloserGallery: true,
                 isCollaborative: isCollaborative ?? false, // Save collaborative status
                 // Zip file
                 zipFileId: zipFileId || null,
@@ -304,10 +304,8 @@ export async function PATCH(request: NextRequest) {
         // Video and other fields...
         if (enableVideoTab !== undefined) updateData.enableVideoTab = enableVideoTab;
 
-        // Enforce Closer Gallery restriction (Deprecated gating)
-        if (isCloserGallery !== undefined) {
-            updateData.isCloserGallery = isCloserGallery;
-        }
+        // Professional features enabled by default
+        updateData.isCloserGallery = true;
 
         // Enforce Collaborative Gallery restriction
         if (isCollaborative !== undefined) {
