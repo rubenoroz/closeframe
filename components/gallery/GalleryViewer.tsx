@@ -120,8 +120,9 @@ export default function GalleryViewer({
     }, [files, zipFileId]);
 
     const toggleSelect = useCallback((id: string) => {
-        // [NEW] Prevent selection if ZIP downloads are disabled or static only
-        if (zipDownloadsEnabled === false || zipDownloadsEnabled === 'static_only') return;
+        // [FIX] Permit selection if zipDownloadsEnabled is not explicitly false.
+        // Even if 'static_only', we should allow selection for downloading specific items.
+        if (zipDownloadsEnabled === false) return;
 
         setSelectedIds((prev) => {
             const next = new Set(prev);
@@ -426,8 +427,9 @@ export default function GalleryViewer({
 
     // Derived download state
     const anyDownloadEnabled = downloadEnabled && (downloadJpgEnabled || downloadRawEnabled);
-    // [NEW] Logic for dynamic ZIPs availability
-    const dynamicZipEnabled = anyDownloadEnabled && zipDownloadsEnabled === true;
+    // [FIX] Allow dynamic selection and zip for specific files if zip downloads are not explicitly disabled.
+    // 'static_only' allows individual file selection for selective downloads.
+    const dynamicZipEnabled = anyDownloadEnabled && zipDownloadsEnabled !== false;
     // [UPDATED] Logic for static ZIP availability - show button if:
     // 1. Downloads are enabled
     // 2. There's a staticZipFile (either from explicit zipFileId OR auto-detected)

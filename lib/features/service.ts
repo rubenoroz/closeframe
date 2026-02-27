@@ -63,6 +63,7 @@ export async function getFeatureAccess(userId: string, featureKey: string): Prom
             const val = overrides.features[featureKey];
             if (typeof val === 'boolean') return { allowed: val, limit: null };
             if (typeof val === 'number') return { allowed: true, limit: val };
+            if (typeof val === 'string') return { allowed: val !== 'false', limit: null };
             if (val === null) return { allowed: true, limit: null };
         }
 
@@ -77,6 +78,7 @@ export async function getFeatureAccess(userId: string, featureKey: string): Prom
             const val = overrides[featureKey];
             if (typeof val === 'boolean') return { allowed: val, limit: null };
             if (typeof val === 'number') return { allowed: true, limit: val };
+            if (typeof val === 'string') return { allowed: val !== 'false', limit: null };
             if (val === null) return { allowed: true, limit: null };
         }
     }
@@ -111,6 +113,7 @@ export async function getFeatureAccess(userId: string, featureKey: string): Prom
         if (config.features && featureKey in config.features) {
             const val = config.features[featureKey];
             if (typeof val === 'boolean') return { allowed: val, limit: null };
+            if (typeof val === 'string') return { allowed: val !== 'false', limit: null };
             // If the feature key points to a limit directly? Usually defaults structure is features: { key: boolean }, limits: { key: number }
             // But sometimes mixed. Let's assume features are booleans here.
         }
