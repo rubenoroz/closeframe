@@ -34,8 +34,10 @@ interface Props {
     preloadedFiles?: CloudFile[];
     onVideoPlay?: () => void;
     onVideoPause?: () => void;
-    layoutType?: "mosaic" | "grid";
+    layoutType?: "mosaic" | "grid" | "editorial" | string;
     profileUrl?: string; // [NEW]
+    likesEnabled?: boolean; // [NEW]
+    initialLikes?: string[]; // [NEW] array of fileIds
 }
 
 // ... CloudFile interface ...
@@ -66,7 +68,9 @@ export default function GalleryViewer({
     preloadedFiles,
     onVideoPlay,
     onVideoPause,
-    profileUrl
+    profileUrl,
+    likesEnabled = false, // [NEW]
+    initialLikes = [], // [NEW]
 }: Props) {
     const [files, setFiles] = useState<CloudFile[]>(preloadedFiles || []);
     // [FIX] If preloadedFiles are provided, we don't need to load
@@ -76,17 +80,19 @@ export default function GalleryViewer({
     const [currentIndex, setCurrentIndex] = useState(0);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [isDownloading, setIsDownloading] = useState(false);
+    const [likedFileIds, setLikedFileIds] = useState<Set<string>>(new Set(initialLikes)); // [NEW]
+    const [showOnlyLiked, setShowOnlyLiked] = useState<boolean>(false); // [NEW]
 
     // [NEW] Separate media content from static ZIP resources
     // [FIX] Apply maxImages limit here, not during file loading
-    const mediaFiles = useMemo(() => {
+    const baseMediaFiles = useMemo(() => {
         console.log("[GalleryViewer] files input:", files.length, files.slice(0, 2));
         const media = files.filter(f =>
             !f.mimeType?.includes('zip') &&
             !f.mimeType?.includes('compressed') &&
             !f.name.toLowerCase().endsWith('.zip')
         );
-        console.log("[GalleryViewer] mediaFiles after filter:", media.length);
+        console.log("[GalleryViewer] baseMediaFiles after filter:", media.length);
         // Apply maxImages limit only to displayable media
         if (maxImages && maxImages > 0) {
             console.log("[GalleryViewer] Applying maxImages limit:", maxImages, "to", media.length, "media files");
@@ -94,6 +100,11 @@ export default function GalleryViewer({
         }
         return media;
     }, [files, maxImages]);
+
+    const mediaFiles = useMemo(() => {
+        if (!showOnlyLiked) return baseMediaFiles;
+        return baseMediaFiles.filter(f => likedFileIds.has(f.id));
+    }, [baseMediaFiles, showOnlyLiked, likedFileIds]);
 
     // [UPDATED] Use explicit zipFileId from project settings instead of auto-detecting
     // Falls back to auto-detect if zipFileId is not set (for backwards compatibility)
@@ -126,6 +137,55 @@ export default function GalleryViewer({
     const clearSelection = () => setSelectedIds(new Set());
     // [Updated] Only select from VISIBLE media files
     const selectAll = () => setSelectedIds(new Set(mediaFiles.map(f => f.id)));
+
+    const handleToggleLike = useCallback(async (fileId: string) => {
+        if (!projectId || !likesEnabled) return;
+
+        // Optimistic update
+        setLikedFileIds(prev => {
+            const next = new Set(prev);
+            if (next.has(fileId)) {
+                next.delete(fileId);
+            } else {
+                next.add(fileId);
+            }
+            return next;
+        });
+
+        try {
+            const response = await fetch(`/api/projects/${projectId}/likes`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ fileId }),
+            });
+
+            if (!response.ok) {
+                // Revert on error
+                console.error("Failed to toggle like");
+                setLikedFileIds(prev => {
+                    const next = new Set(prev);
+                    if (next.has(fileId)) {
+                        next.delete(fileId);
+                    } else {
+                        next.add(fileId);
+                    }
+                    return next;
+                });
+            }
+        } catch (error) {
+            console.error("Error toggling like:", error);
+            // Revert on error
+            setLikedFileIds(prev => {
+                const next = new Set(prev);
+                if (next.has(fileId)) {
+                    next.delete(fileId);
+                } else {
+                    next.add(fileId);
+                }
+                return next;
+            });
+        }
+    }, [projectId, likesEnabled]);
 
     // Distribution logic for masonry using mediaFiles
     const columns = useMemo(() => {
@@ -383,38 +443,39 @@ export default function GalleryViewer({
                 } pointer-events-none`}>
                 <div className="flex items-center gap-3 text-lg font-light pointer-events-auto">
                     {/* ... Logo/Name ... */}
-                    {studioLogo ? (
-                        profileUrl ? (
-                            <a
-                                href={profileUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="h-8 flex items-center justify-center overflow-hidden transition-transform duration-300 origin-left hover:opacity-80"
-                                style={{ transform: `scale(${studioLogoScale / 100})` }}
-                            >
-                                <img src={studioLogo} alt={studioName} className="h-full w-auto object-contain max-w-none" />
-                            </a>
+                    {layoutType !== "editorial" && (
+                        studioLogo ? (
+                            profileUrl ? (
+                                <a
+                                    href={profileUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="h-8 flex items-center justify-center overflow-hidden transition-transform duration-300 origin-left hover:opacity-80"
+                                    style={{ transform: `scale(${studioLogoScale / 100})` }}
+                                >
+                                    <img src={studioLogo} alt={studioName} className="h-full w-auto object-contain max-w-none" />
+                                </a>
+                            ) : (
+                                <div
+                                    className="h-8 flex items-center justify-center overflow-hidden transition-transform duration-300 origin-left"
+                                    style={{ transform: `scale(${studioLogoScale / 100})` }}
+                                >
+                                    <img src={studioLogo} alt={studioName} className="h-full w-auto object-contain max-w-none" />
+                                </div>
+                            )
                         ) : (
-                            <div
-                                className="h-8 flex items-center justify-center overflow-hidden transition-transform duration-300 origin-left"
-                                style={{ transform: `scale(${studioLogoScale / 100})` }}
-                            >
-                                <img src={studioLogo} alt={studioName} className="h-full w-auto object-contain max-w-none" />
-                            </div>
-                        )
-                    ) : (
-                        profileUrl ? (
-                            <a href={profileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                                <Camera className={`w-5 h-5 ${theme === 'light' ? 'text-emerald-600' : 'text-emerald-500'}`} />
-                                <span className={`tracking-tight font-medium ${theme === 'light' ? 'text-neutral-900' : 'text-white'}`}>{studioName}</span>
-                            </a>
-                        ) : (
-                            <>
-                                <Camera className={`w-5 h-5 ${theme === 'light' ? 'text-emerald-600' : 'text-emerald-500'}`} />
-                                <span className={`tracking-tight font-medium ${theme === 'light' ? 'text-neutral-900' : 'text-white'}`}>{studioName}</span>
-                            </>
-                        )
-                    )}
+                            profileUrl ? (
+                                <a href={profileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                                    <Camera className={`w-5 h-5 ${theme === 'light' ? 'text-emerald-600' : 'text-emerald-500'}`} />
+                                    <span className={`tracking-tight font-medium ${theme === 'light' ? 'text-neutral-900' : 'text-white'}`}>{studioName}</span>
+                                </a>
+                            ) : (
+                                <>
+                                    <Camera className={`w-5 h-5 ${theme === 'light' ? 'text-emerald-600' : 'text-emerald-500'}`} />
+                                    <span className={`tracking-tight font-medium ${theme === 'light' ? 'text-neutral-900' : 'text-white'}`}>{studioName}</span>
+                                </>
+                            )
+                        ))}
                 </div>
                 <div className="flex items-center gap-3 pointer-events-auto">
                     {/* Clear selection only if dynamic zip enabled */}
@@ -443,7 +504,11 @@ export default function GalleryViewer({
             </header>
 
             {/* Main Content */}
-            <main className={`px-4 md:px-8 pb-32 min-h-screen ${className === 'pt-0' ? 'pt-4' : 'pt-28'}`}>
+            <main className={cn(
+                "pb-32 min-h-screen",
+                className === 'pt-0' ? 'pt-4' : 'pt-28',
+                layoutType === "editorial" ? "px-[2px]" : "px-4 md:px-8"
+            )}>
                 {loading ? (
                     <GalleryLoaderGrid theme={theme} />
                 ) : error ? (
@@ -460,7 +525,45 @@ export default function GalleryViewer({
                 ) : (
                     <>
                         {/* Desktop Grid */}
-                        {layoutType === "mosaic" ? (
+                        {layoutType === "editorial" ? (
+                            <div className="hidden md:flex flex-wrap gap-[2px]">
+                                {mediaFiles.map((item, index) => {
+                                    const aspect = (item.width && item.height) ? item.width / item.height : (item.mimeType?.startsWith('video/') ? 1.77 : 1.5);
+                                    return (
+                                        <div
+                                            key={item.id}
+                                            className="relative flex-grow"
+                                            style={{
+                                                height: '35vh',
+                                                flexBasis: `calc(35vh * ${aspect})`,
+                                                maxWidth: '100%'
+                                            }}
+                                        >
+                                            <MediaCard
+                                                item={item}
+                                                index={index}
+                                                cloudAccountId={cloudAccountId}
+                                                downloadEnabled={anyDownloadEnabled}
+                                                selectionEnabled={dynamicZipEnabled}
+                                                enableWatermark={enableWatermark}
+                                                watermarkText={watermarkText}
+                                                studioLogo={studioLogo}
+                                                isSelected={selectedIds.has(item.id)}
+                                                onSelect={() => toggleSelect(item.id)}
+                                                onView={() => openLightbox(index)}
+                                                lowResThumbnails={lowResThumbnails}
+                                                layoutType={layoutType}
+                                                likesEnabled={likesEnabled}
+                                                isLiked={likedFileIds.has(item.id)}
+                                                onToggleLike={() => handleToggleLike(item.id)}
+                                            />
+                                        </div>
+                                    );
+                                })}
+                                {/* Hack to prevent last row from over-expanding if it has few items */}
+                                <div className="flex-grow-[10] h-0"></div>
+                            </div>
+                        ) : layoutType === "mosaic" ? (
                             <div className="hidden md:grid grid-cols-4 gap-1 items-start">
                                 {columns.map((col, colIdx) => (
                                     <div key={colIdx} className="flex flex-col gap-1">
@@ -482,6 +585,9 @@ export default function GalleryViewer({
                                                     onView={() => openLightbox(originalIndex)}
                                                     lowResThumbnails={lowResThumbnails}
                                                     layoutType={layoutType}
+                                                    likesEnabled={likesEnabled}
+                                                    isLiked={likedFileIds.has(item.id)}
+                                                    onToggleLike={() => handleToggleLike(item.id)}
                                                 />
                                             );
                                         })}
@@ -506,13 +612,54 @@ export default function GalleryViewer({
                                         onView={() => openLightbox(index)}
                                         lowResThumbnails={lowResThumbnails}
                                         layoutType={layoutType}
+                                        likesEnabled={likesEnabled}
+                                        isLiked={likedFileIds.has(item.id)}
+                                        onToggleLike={() => handleToggleLike(item.id)}
                                     />
                                 ))}
                             </div>
                         )}
 
                         {/* Mobile Grid */}
-                        {layoutType === "mosaic" ? (
+                        {layoutType === "editorial" ? (
+                            <div className="flex md:hidden flex-wrap gap-[2px]">
+                                {mediaFiles.map((item, index) => {
+                                    const aspect = (item.width && item.height) ? item.width / item.height : (item.mimeType?.startsWith('video/') ? 1.77 : 1.5);
+                                    return (
+                                        <div
+                                            key={item.id}
+                                            className="relative flex-grow"
+                                            style={{
+                                                height: '20vh',
+                                                flexBasis: `calc(20vh * ${aspect})`,
+                                                maxWidth: '100%'
+                                            }}
+                                        >
+                                            <MediaCard
+                                                item={item}
+                                                index={index}
+                                                cloudAccountId={cloudAccountId}
+                                                downloadEnabled={anyDownloadEnabled}
+                                                selectionEnabled={dynamicZipEnabled}
+                                                enableWatermark={enableWatermark}
+                                                watermarkText={watermarkText}
+                                                studioLogo={studioLogo}
+                                                isSelected={selectedIds.has(item.id)}
+                                                onSelect={() => toggleSelect(item.id)}
+                                                onView={() => openLightbox(index)}
+                                                lowResThumbnails={lowResThumbnails}
+                                                layoutType={layoutType}
+                                                likesEnabled={likesEnabled}
+                                                isLiked={likedFileIds.has(item.id)}
+                                                onToggleLike={() => handleToggleLike(item.id)}
+                                            />
+                                        </div>
+                                    );
+                                })}
+                                {/* Hack to prevent last row from over-expanding if it has few items */}
+                                <div className="flex-grow-[10] h-0"></div>
+                            </div>
+                        ) : layoutType === "mosaic" ? (
                             <div className="grid md:hidden grid-cols-2 gap-1 items-start">
                                 {mobileColumns.map((col, colIdx) => (
                                     <div key={colIdx} className="flex flex-col gap-1">
@@ -534,6 +681,9 @@ export default function GalleryViewer({
                                                     onView={() => openLightbox(originalIndex)}
                                                     lowResThumbnails={lowResThumbnails}
                                                     layoutType={layoutType}
+                                                    likesEnabled={likesEnabled}
+                                                    isLiked={likedFileIds.has(item.id)}
+                                                    onToggleLike={() => handleToggleLike(item.id)}
                                                 />
                                             );
                                         })}
@@ -558,6 +708,9 @@ export default function GalleryViewer({
                                         onView={() => openLightbox(index)}
                                         lowResThumbnails={lowResThumbnails}
                                         layoutType={layoutType}
+                                        likesEnabled={likesEnabled}
+                                        isLiked={likedFileIds.has(item.id)}
+                                        onToggleLike={() => handleToggleLike(item.id)}
                                     />
                                 ))}
                             </div>
@@ -584,11 +737,15 @@ export default function GalleryViewer({
                 lowResDownloads={lowResDownloads}
                 onVideoPlay={onVideoPlay}
                 onVideoPause={onVideoPause}
+                likesEnabled={likesEnabled} // [NEW]
+                likedFileIds={likedFileIds} // [NEW]
+                onToggleLike={handleToggleLike} // [NEW]
+                projectId={projectId} // [NEW]
             />
 
-            {/* Bottom Bar for Batch Download (Only if Dynamic ZIP is Enabled) */}
+            {/* Bottom Bar for Batch Download and Likes Filter */}
             {
-                dynamicZipEnabled && (
+                (dynamicZipEnabled || likesEnabled) && (
                     <footer className={`fixed bottom-0 left-0 right-0 transition-all border-t px-4 md:px-8 py-3 md:py-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 md:gap-0 z-40 ${theme === 'light'
                         ? 'bg-white/90 backdrop-blur-xl border-neutral-100 shadow-[0_-10px_40px_rgba(0,0,0,0.02)]'
                         : 'bg-neutral-900/90 backdrop-blur-xl border-neutral-800'
@@ -605,42 +762,59 @@ export default function GalleryViewer({
                             )}
                             {/* Mobile selection buttons */}
                             <div className="md:hidden">
-                                {selectedIds.size === 0 ? (
-                                    <button
-                                        onClick={selectAll}
-                                        className={`text-xs transition font-medium ${theme === 'light' ? 'text-neutral-500' : 'text-neutral-400'}`}
-                                    >
-                                        Seleccionar todas
-                                    </button>
-                                ) : (
-                                    <button
-                                        onClick={clearSelection}
-                                        className={`text-xs transition font-medium ${theme === 'light' ? 'text-neutral-400' : 'text-neutral-400'}`}
-                                    >
-                                        Desmarcar
-                                    </button>
+                                {dynamicZipEnabled && (
+                                    selectedIds.size === 0 ? (
+                                        <button
+                                            onClick={selectAll}
+                                            className={`text-xs transition font-medium ${theme === 'light' ? 'text-neutral-500' : 'text-neutral-400'}`}
+                                        >
+                                            Seleccionar todas
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={clearSelection}
+                                            className={`text-xs transition font-medium ${theme === 'light' ? 'text-neutral-400' : 'text-neutral-400'}`}
+                                        >
+                                            Desmarcar
+                                        </button>
+                                    )
                                 )}
                             </div>
                         </div>
                         <div className="flex items-center gap-3 md:gap-6">
+                            {likesEnabled && (
+                                <button
+                                    onClick={() => setShowOnlyLiked(!showOnlyLiked)}
+                                    className={`text-xs md:text-sm transition font-medium flex items-center gap-1.5 px-3 py-1.5 rounded-full border ${showOnlyLiked
+                                        ? (theme === 'light' ? 'bg-red-50 text-red-500 border-red-200' : 'bg-red-500/20 text-red-400 border-red-500/30')
+                                        : (theme === 'light' ? 'text-neutral-500 hover:text-black hover:bg-neutral-100 border-transparent' : 'text-neutral-400 hover:text-white hover:bg-white/10 border-transparent')
+                                        }`}
+                                    title="Mostrar solo favoritas"
+                                >
+                                    <Heart className={cn("w-4 h-4", showOnlyLiked && "fill-current")} />
+                                    <span className="hidden sm:inline">Favoritas {showOnlyLiked ? `(${mediaFiles.length})` : ''}</span>
+                                </button>
+                            )}
                             {/* Desktop selection buttons */}
-                            <div className="hidden md:block">
-                                {selectedIds.size === 0 ? (
-                                    <button
-                                        onClick={selectAll}
-                                        className={`text-sm transition font-medium ${theme === 'light' ? 'text-neutral-500 hover:text-black' : 'text-neutral-400 hover:text-white'}`}
-                                    >
-                                        Seleccionar todas
-                                    </button>
-                                ) : (
-                                    <button
-                                        onClick={clearSelection}
-                                        className={`text-sm transition font-medium ${theme === 'light' ? 'text-neutral-400 hover:text-red-500' : 'text-neutral-400 hover:text-white'}`}
-                                    >
-                                        Desmarcar todas
-                                    </button>
-                                )}
-                            </div>
+                            {dynamicZipEnabled && (
+                                <div className="hidden md:block">
+                                    {selectedIds.size === 0 ? (
+                                        <button
+                                            onClick={selectAll}
+                                            className={`text-sm transition font-medium ${theme === 'light' ? 'text-neutral-500 hover:text-black' : 'text-neutral-400 hover:text-white'}`}
+                                        >
+                                            Seleccionar todas
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={clearSelection}
+                                            className={`text-sm transition font-medium ${theme === 'light' ? 'text-neutral-400 hover:text-red-500' : 'text-neutral-400 hover:text-white'}`}
+                                        >
+                                            Desmarcar todas
+                                        </button>
+                                    )}
+                                </div>
+                            )}
                             <div className="flex items-center gap-2 flex-1 md:flex-none">
                                 {downloadJpgEnabled && (
                                     <div className="relative group flex-1 md:flex-none">
@@ -696,7 +870,10 @@ function MediaCard({
     onView,
     selectionEnabled = true,
     layoutType = "mosaic",
-    lowResThumbnails = false
+    lowResThumbnails = false,
+    likesEnabled = false, // [NEW]
+    isLiked = false, // [NEW]
+    onToggleLike, // [NEW]
 }: {
     item: CloudFile;
     index: number;
@@ -709,8 +886,11 @@ function MediaCard({
     onSelect: () => void;
     onView: () => void;
     selectionEnabled?: boolean;
-    layoutType?: "mosaic" | "grid";
+    layoutType?: "mosaic" | "grid" | "editorial" | string;
     lowResThumbnails?: boolean;
+    likesEnabled?: boolean; // [NEW]
+    isLiked?: boolean; // [NEW]
+    onToggleLike?: () => void; // [NEW]
 }) {
     const [loaded, setLoaded] = useState(false);
     const [error, setError] = useState(false);
@@ -733,12 +913,19 @@ function MediaCard({
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: (index % 10) * 0.05 }}
-            className={`relative w-full rounded-xl bg-neutral-800 overflow-hidden cursor-pointer group border-2 transition-all duration-300 ${isSelected ? "border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]" : "border-transparent"
-                }`}
+            className={cn(
+                "relative w-full overflow-hidden cursor-pointer group transition-all duration-300",
+                layoutType === "editorial"
+                    ? "rounded-none border-0 bg-black h-full"
+                    : "rounded-xl border-2 bg-neutral-800",
+                isSelected
+                    ? (layoutType === "editorial" ? "ring-inset ring-4 ring-emerald-500 shadow-none z-10" : "border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]")
+                    : (layoutType === "editorial" ? "border-0" : "border-transparent")
+            )}
         >
             <div
-                className="relative"
-                style={{
+                className={cn("relative", layoutType === "editorial" ? "w-full h-full" : "")}
+                style={layoutType === "editorial" ? {} : {
                     aspectRatio: layoutType === "grid"
                         ? (isVideo ? 1.77 : 1.5)
                         : (realAspectRatio || aspectRatio)
@@ -919,9 +1106,20 @@ function MediaCard({
                     </div>
                 </div>
 
-                <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition duration-300 pointer-events-none">
-                    <span className="text-xs text-neutral-200 truncate block">{item.name}</span>
-                </div>
+                {layoutType === "editorial" ? (
+                    <div className="absolute inset-x-0 bottom-0 p-4 md:p-6 opacity-0 group-hover:opacity-100 transition duration-500 pointer-events-none flex flex-col justify-end bg-gradient-to-t from-black/80 via-black/30 to-transparent">
+                        <div className="w-full text-left">
+                            <span className="text-lg md:text-xl font-bold text-white drop-shadow-md truncate block">{item.name.replace(/\.[^/.]+$/, "")}</span>
+                            <span className="text-[10px] md:text-xs font-medium text-white/80 drop-shadow-sm uppercase tracking-wider block mt-1">
+                                {item.name.split('.').pop() || 'IMG'} • {item.size ? (Number(item.size) / 1024 / 1024).toFixed(1) + ' MB' : 'High Res'}
+                            </span>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition duration-300 pointer-events-none">
+                        <span className="text-xs text-neutral-200 truncate block">{item.name}</span>
+                    </div>
+                )}
 
                 {downloadEnabled && selectionEnabled && (
                     <button
@@ -930,7 +1128,7 @@ function MediaCard({
                             onSelect();
                         }}
                         className={cn(
-                            "absolute top-3 right-3 p-1.5 rounded-full backdrop-blur-md transition-all duration-300 z-50 shadow-lg border",
+                            "absolute top-3 right-3 p-1.5 rounded-full backdrop-blur-md transition-all duration-300 z-20 shadow-lg border",
                             isSelected
                                 ? "bg-emerald-500 text-white border-emerald-400 opacity-100 scale-100"
                                 : "bg-black/40 text-white/80 border-white/20 opacity-100 scale-100 hover:bg-black/60"
@@ -938,6 +1136,23 @@ function MediaCard({
                         style={{ opacity: 1 }}
                     >
                         {isSelected ? <CheckCircle2 className="w-4 h-4" /> : <Circle className="w-4 h-4" />}
+                    </button>
+                )}
+
+                {likesEnabled && (
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if (onToggleLike) onToggleLike();
+                        }}
+                        className={cn(
+                            "absolute top-3 left-3 p-1.5 rounded-full backdrop-blur-md transition-all duration-300 z-20 shadow-[0_2px_10px_rgba(0,0,0,0.3)] border",
+                            isLiked
+                                ? "bg-red-500/90 text-white border-red-400 opacity-100 scale-100"
+                                : "bg-black/50 text-white/90 border-white/30 opacity-100 md:opacity-0 group-hover:opacity-100 scale-100 md:scale-90 hover:scale-100 hover:bg-black/70"
+                        )}
+                    >
+                        <Heart className={cn("w-4 h-4", isLiked && "fill-current")} />
                     </button>
                 )}
             </div>

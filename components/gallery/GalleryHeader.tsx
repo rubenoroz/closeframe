@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
+import { cn } from "@/lib/utils";
 
 interface GalleryHeaderProps {
     title: string;
@@ -8,12 +9,13 @@ interface GalleryHeaderProps {
     fontSize?: number; // Percentage (50-150), default 100
     color: string;
     background: "dark" | "light";
+    layoutType?: string; // [NEW] "grid", "mosaic", "editorial"
     logo?: string | null;
     coverImage?: string | null;
     coverImageFocus?: string | null; // "x,y" format (0-100)
     cloudAccountId?: string;
-    profileUrl?: string; // [NEW] Optional profile link
-    date?: string | null; // [NEW]
+    profileUrl?: string; // Optional profile link
+    date?: string | null;
 }
 
 export default function GalleryHeader({
@@ -22,6 +24,7 @@ export default function GalleryHeader({
     fontSize = 100,
     color,
     background,
+    layoutType,
     logo,
     coverImage,
     coverImageFocus,
@@ -61,10 +64,68 @@ export default function GalleryHeader({
     // Calculate font size scale
     const fontScale = fontSize / 100;
 
+    // Logo Rendering Logic
+    const renderLogo = () => {
+        if (logo) {
+            // Client Logo
+            return profileUrl ? (
+                <a href={profileUrl} target="_blank" rel="noopener noreferrer" className={cn(
+                    "relative hover:opacity-80 transition-opacity block",
+                    layoutType === "editorial" ? "h-12 md:h-16 w-auto" : "h-16 w-auto max-w-[200px]"
+                )}>
+                    <img
+                        src={logo}
+                        alt="Studio Logo"
+                        className={cn(
+                            "h-full w-auto",
+                            layoutType === "editorial" ? "object-left object-contain" : "object-contain"
+                        )}
+                    />
+                </a>
+            ) : (
+                <div className={cn(
+                    "relative block",
+                    layoutType === "editorial" ? "h-12 md:h-16 w-auto" : "h-16 w-auto max-w-[200px]"
+                )}>
+                    <img
+                        src={logo}
+                        alt="Studio Logo"
+                        className={cn(
+                            "h-full w-auto",
+                            layoutType === "editorial" ? "object-left object-contain" : "object-contain"
+                        )}
+                    />
+                </div>
+            );
+        } else {
+            // Default Closerlens Logo (Fallback)
+            return (
+                <div className={cn(
+                    "relative opacity-80 block",
+                    layoutType === "editorial" ? "h-6 md:h-8 w-auto" : "h-8 w-auto"
+                )}>
+                    <img
+                        src={background === "light" ? "/closerlens-logo-qr.svg" : "/logo-white.svg"}
+                        alt="Closerlens"
+                        className={cn(
+                            "h-full w-auto",
+                            layoutType === "editorial" ? "object-left object-contain" : "object-contain"
+                        )}
+                    />
+                </div>
+            );
+        }
+    };
+
     return (
         <div
-            className={`relative py-16 md:py-24 text-center transition-colors duration-500 flex flex-col items-center justify-center gap-4 overflow-hidden ${background === "light" ? "bg-white" : "bg-black"
-                }`}
+            className={cn(
+                "relative transition-colors duration-500 overflow-hidden",
+                background === "light" ? "bg-white" : "bg-black",
+                layoutType === "editorial"
+                    ? "py-12 md:py-20 px-6 md:px-12 text-left flex flex-col justify-end min-h-[40vh] md:min-h-[50vh]"
+                    : "py-16 md:py-24 text-center flex flex-col items-center justify-center gap-4"
+            )}
         >
             {/* Cover Image Background */}
             {coverImageUrl && (
@@ -80,54 +141,49 @@ export default function GalleryHeader({
                             }}
                         />
                     </div>
-                    <div className={`absolute inset-0 ${background === "light"
-                        ? "bg-white/70 backdrop-blur-sm"
-                        : "bg-black/60 backdrop-blur-sm"
-                        }`} />
+                    {/* Dark/Light overlay gradient for editorial to ensure text readability */}
+                    {layoutType === "editorial" ? (
+                        <div className={cn(
+                            "absolute inset-0",
+                            background === "light"
+                                ? "bg-gradient-to-t from-white via-white/80 to-transparent backdrop-blur-[2px]"
+                                : "bg-gradient-to-t from-black via-black/80 to-transparent backdrop-blur-[2px]"
+                        )} />
+                    ) : (
+                        <div className={cn(
+                            "absolute inset-0 backdrop-blur-sm",
+                            background === "light" ? "bg-white/70" : "bg-black/60"
+                        )} />
+                    )}
                 </>
             )}
 
+            {/* Absolute Logo for Editorial Layout (Top Left) */}
+            {layoutType === "editorial" && (
+                <div className="absolute top-6 left-6 md:top-12 md:left-12 z-20 drop-shadow-md">
+                    {renderLogo()}
+                </div>
+            )}
+
             {/* Content */}
-            <div className="relative z-10 flex flex-col items-center gap-4">
-                {/* Logo Logic: Client Logo OR Default Closeframe Logo */}
-                {logo ? (
-                    // Client Logo
-                    profileUrl ? (
-                        <a href={profileUrl} target="_blank" rel="noopener noreferrer" className="relative h-16 w-auto max-w-[200px] hover:opacity-80 transition-opacity">
-                            <img
-                                src={logo}
-                                alt="Studio Logo"
-                                className="h-full w-auto object-contain"
-                            />
-                        </a>
-                    ) : (
-                        <div className="relative h-16 w-auto max-w-[200px]">
-                            <img
-                                src={logo}
-                                alt="Studio Logo"
-                                className="h-full w-auto object-contain"
-                            />
-                        </div>
-                    )
-                ) : (
-                    // Default Closerlens Logo (Fallback)
-                    <div className="relative h-8 w-auto opacity-80">
-                        <img
-                            src={background === "light" ? "/closerlens-logo-qr.svg" : "/logo-white.svg"}
-                            alt="Closerlens"
-                            className="h-full w-auto object-contain"
-                        />
-                    </div>
-                )}
+            <div className={cn(
+                "relative z-10 flex flex-col",
+                layoutType === "editorial" ? "items-start gap-6 max-w-4xl" : "items-center gap-4"
+            )}>
+                {/* Logo for Non-Editorial Layouts */}
+                {layoutType !== "editorial" && renderLogo()}
 
                 {/* Gallery Title */}
                 <h1
-                    className={`text-2xl md:text-3xl font-light tracking-wide ${background === "light" ? "text-neutral-800" : "text-white/90"
-                        }`}
+                    className={cn(
+                        "font-light tracking-wide",
+                        background === "light" ? "text-neutral-800" : "text-white/90",
+                        layoutType === "editorial" ? "text-4xl md:text-6xl font-normal leading-tight mx-0" : "text-2xl md:text-3xl"
+                    )}
                     style={{
                         fontFamily: fontFamily !== "Inter" ? `'${fontFamily}', sans-serif` : "inherit",
                         color: color !== "#FFFFFF" ? color : undefined,
-                        fontSize: `${fontScale}em`
+                        fontSize: layoutType !== "editorial" ? `${fontScale}em` : undefined // Override fontScale for editorial sizing or use it as a multiplier
                     }}
                 >
                     {title}

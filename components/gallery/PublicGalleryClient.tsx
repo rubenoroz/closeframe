@@ -42,6 +42,7 @@ interface PublicGalleryClientProps {
         isCloserGallery?: boolean;
         musicTrackId?: string | null;
         musicEnabled?: boolean;
+        likesEnabled?: boolean; // [NEW]
 
         // [NEW] Collaborative Sections
         collaborativeSections?: { id: string; name: string; driveFolderId: string }[];
@@ -99,6 +100,31 @@ export default function PublicGalleryClient({ project }: PublicGalleryClientProp
     const [activeSectionId, setActiveSectionId] = useState<string>("all");
     const [collaborativeFiles, setCollaborativeFiles] = useState<any[]>([]);
     const [isLoadingCollaborative, setIsLoadingCollaborative] = useState(false);
+
+    // [NEW] Likes State
+    const [initialLikes, setInitialLikes] = useState<string[]>([]);
+    const [isLoadingLikes, setIsLoadingLikes] = useState(project.likesEnabled ? true : false);
+
+    // [NEW] Fetch Initial Likes
+    useEffect(() => {
+        if (!project.likesEnabled) return;
+
+        const fetchLikes = async () => {
+            try {
+                const res = await fetch(`/api/projects/${project.id}/likes`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setInitialLikes(data.likes || []);
+                }
+            } catch (error) {
+                console.error("Error fetching likes:", error);
+            } finally {
+                setIsLoadingLikes(false);
+            }
+        };
+
+        fetchLikes();
+    }, [project.id, project.likesEnabled]);
 
     // [NEW] Fetch Collaborative Content
     useEffect(() => {
@@ -244,6 +270,7 @@ export default function PublicGalleryClient({ project }: PublicGalleryClientProp
                 coverImageFocus={project.headerImageFocus}
                 cloudAccountId={project.cloudAccountId}
                 date={project.date} // [NEW]
+                layoutType={project.layoutType} // [NEW]
             />
 
             {/* Media Tabs (Photos/Videos) - hidden until mounted to avoid flash */}
@@ -291,6 +318,10 @@ export default function PublicGalleryClient({ project }: PublicGalleryClientProp
                     <Loader2 className={`w-8 h-8 animate-spin ${headerBackground === 'light' ? 'text-neutral-900' : 'text-white'}`} />
                     <p className={`mt-2 text-sm ${headerBackground === 'light' ? 'text-neutral-500' : 'text-neutral-400'}`}>Cargando fotos...</p>
                 </div>
+            ) : isLoadingLikes ? (
+                <div className="flex flex-col items-center justify-center py-20">
+                    <Loader2 className={`w-8 h-8 animate-spin ${headerBackground === 'light' ? 'text-neutral-900' : 'text-white'}`} />
+                </div>
             ) : (
                 <GalleryViewer
                     key={activeTab}
@@ -324,6 +355,8 @@ export default function PublicGalleryClient({ project }: PublicGalleryClientProp
                     zipDownloadsEnabled={project.planLimits?.zipDownloadsEnabled ?? true}
                     zipFileId={project.zipFileId || null}
                     layoutType={project.layoutType}
+                    likesEnabled={project.likesEnabled || false} // [NEW]
+                    initialLikes={initialLikes} // [NEW]
                 />
             )}
 

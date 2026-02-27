@@ -169,10 +169,23 @@ model Project {
   musicTrackId            String?
   isCollaborative         Boolean               @default(false)
   profileOrder            Int                   @default(0)
+  likesEnabled            Boolean               @default(false)
   collaborativeGallery    CollaborativeGallery?
   externalVideos          ExternalVideo[]
   cloudAccount            CloudAccount          @relation(fields: [cloudAccountId], references: [id])
+  photoLikes              PhotoLike[]
   user                    User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PhotoLike {
+  id        String   @id @default(cuid())
+  projectId String
+  fileId    String
+  createdAt DateTime @default(now())
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, fileId])
+  @@index([projectId])
 }
 
 model Booking {

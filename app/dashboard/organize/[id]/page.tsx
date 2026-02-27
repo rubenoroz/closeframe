@@ -273,11 +273,12 @@ export default function OrganizePage() {
                     downloadRawEnabled: project.downloadRawEnabled === true,
                     enableVideoTab: project.enableVideoTab === true,
                     downloadVideoHdEnabled: project.downloadVideoHdEnabled !== false,
-                    downloadVideoRawEnabled: project.downloadVideoRawEnabled === true,
+                    downloadVideoRawEnabled: project.downloadVideoRawEnabled === true, // [FIX] Restored
                     zipFileId: project.zipFileId || "",
                     zipFileName: project.zipFileName || "",
                     coverImage: project.coverImage || "",
                     coverImageFocus: project.coverImageFocus || "50,50",
+                    likesEnabled: project.likesEnabled || false, // [NEW]
                     slug: project.slug // Needed for link display if we add it
                 });
 

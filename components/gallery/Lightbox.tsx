@@ -2,7 +2,7 @@
 
 import React, { useEffect, useCallback, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ChevronLeft, ChevronRight, Download, Share2, Loader2, Play, Pause, Music as MusicIcon, Volume2 } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Download, Share2, Loader2, Play, Pause, Music as MusicIcon, Volume2, Heart } from "lucide-react";
 
 import { CloudFile } from "@/types/cloud";
 
@@ -22,6 +22,10 @@ interface LightboxProps {
     lowResMaxWidth?: number;
     onVideoPlay?: () => void;
     onVideoPause?: () => void;
+    likesEnabled?: boolean; // [NEW]
+    likedFileIds?: Set<string>; // [NEW]
+    onToggleLike?: (fileId: string) => void; // [NEW]
+    projectId?: string; // [FIX] Added to allow analytics if needed, or matched properties from viewer
 }
 
 export default function Lightbox({
@@ -39,7 +43,11 @@ export default function Lightbox({
     lowResDownloads = false,
     lowResMaxWidth = 1200,
     onVideoPlay,
-    onVideoPause
+    onVideoPause,
+    likesEnabled = false, // [NEW]
+    likedFileIds = new Set(), // [NEW]
+    onToggleLike, // [NEW]
+    projectId, // [FIX]
 }: LightboxProps) {
     const [isDownloading, setIsDownloading] = useState<string | null>(null);
     const [audioIsPlaying, setAudioIsPlaying] = useState(false);
@@ -50,24 +58,30 @@ export default function Lightbox({
 
     const [origin, setOrigin] = useState("");
 
+    // [FIX] Moved protective check to the end of hooks to prevent React hook mismatch
+
     useEffect(() => {
         if (typeof window !== 'undefined') {
             setOrigin(window.location.origin);
         }
     }, []);
+    const isVideo = currentFile?.mimeType?.startsWith('video/') || currentFile?.isExternal;
+    const isAudio = currentFile?.mimeType?.startsWith('audio/') || (currentFile && /\.(mp3|m4a|wav|aac|ogg|flac)/i.test(currentFile.name));
 
-    const isVideo = currentFile.mimeType?.startsWith('video/') || currentFile.isExternal;
-    const isAudio = currentFile.mimeType?.startsWith('audio/') || /\.(mp3|m4a|wav|aac|ogg|flac)/i.test(currentFile.name);
+    const isLiked = currentFile ? likedFileIds.has(currentFile.id) : false; // [NEW]
 
     const handleNext = useCallback(() => {
+        if (files.length === 0) return;
         onNavigate((currentIndex + 1) % files.length);
     }, [currentIndex, files.length, onNavigate]);
 
     const handlePrev = useCallback(() => {
+        if (files.length === 0) return;
         onNavigate((currentIndex - 1 + files.length) % files.length);
     }, [currentIndex, files.length, onNavigate]);
 
     const handleDownloadFormat = async (format: "jpg" | "hd" | "raw") => {
+        if (!currentFile) return;
         let fileId: string | undefined;
         let fileName = currentFile.name;
 
@@ -217,7 +231,7 @@ export default function Lightbox({
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, [isOpen, handleNext, handlePrev, onClose, onVideoPause]);
 
-    if (!isOpen) return null;
+    if (!isOpen || !currentFile) return null;
 
     return (
         <AnimatePresence>
@@ -272,6 +286,21 @@ export default function Lightbox({
                             >
                                 {isDownloading === "raw" ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
                                 {isVideo ? 'Alta Res' : 'Original RAW'}
+                            </button>
+                        )}
+                        {likesEnabled && (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (onToggleLike) onToggleLike(currentFile.id);
+                                }}
+                                className={`p-2 rounded-full transition backdrop-blur-md border ${isLiked
+                                    ? "bg-red-500/90 text-white border-red-400 hover:bg-red-600/90"
+                                    : "bg-white/5 hover:bg-white/10 text-white border-white/10"
+                                    }`}
+                                title={isLiked ? "Quitar de favoritas" : "Marcar como favorita"}
+                            >
+                                <Heart className={`w-4 h-4 ${isLiked ? "fill-current" : ""}`} />
                             </button>
                         )}
                         <button className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-white transition backdrop-blur-md border border-white/10 text-sm font-medium">

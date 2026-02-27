@@ -62,6 +62,7 @@ interface Project {
     musicTrackId?: string;
     musicEnabled?: boolean;
     date?: string; // [NEW]
+    likesEnabled?: boolean; // [NEW]
 }
 
 export default function DashboardPage() {
@@ -134,7 +135,7 @@ export default function DashboardPage() {
         zipFileId: string;
         zipFileName: string;
         public: boolean;
-        layoutType: "mosaic" | "grid" | string;
+        layoutType: "mosaic" | "grid" | "editorial" | string;
         isCloserGallery: boolean;
         musicTrackId: string;
         musicEnabled: boolean;
@@ -142,6 +143,7 @@ export default function DashboardPage() {
         moments?: string[];
         date?: string;
         slug?: string;
+        likesEnabled: boolean; // [NEW]
     }>({
         name: "",
         coverImage: "",
@@ -169,6 +171,7 @@ export default function DashboardPage() {
         isCloserGallery: false,
         musicTrackId: "",
         musicEnabled: false,
+        likesEnabled: false, // [NEW]
     });
 
 
@@ -297,6 +300,7 @@ export default function DashboardPage() {
             musicTrackId: project.musicTrackId || "",
             musicEnabled: project.musicEnabled || false,
             date: project.date || "", // [NEW]
+            likesEnabled: project.likesEnabled || false, // [NEW]
         });
         setActiveMenu(null);
     };
@@ -340,6 +344,7 @@ export default function DashboardPage() {
                     musicTrackId: editData.musicTrackId,
                     musicEnabled: editData.musicEnabled,
                     date: editData.date, // [NEW]
+                    likesEnabled: editData.likesEnabled, // [NEW]
                 })
             });
 
@@ -395,6 +400,7 @@ export default function DashboardPage() {
                     musicTrackId: editData.musicTrackId,
                     musicEnabled: editData.musicEnabled,
                     date: editData.date, // [FIX] Include date in organize save
+                    likesEnabled: editData.likesEnabled, // [NEW]
                 })
             });
 

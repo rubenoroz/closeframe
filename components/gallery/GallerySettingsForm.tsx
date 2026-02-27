@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { UploadCloud, Folder, Loader2, AlertCircle, ArrowLeft, PlusCircle, Check, Mail, Zap, Info, Cloud, ChevronRight, Layout, Download, ImageIcon, Music, Settings, X, Trash2, Sparkles, Copy, Calendar, Link as LinkIcon, Lock, Users } from "lucide-react";
+import { UploadCloud, Folder, Loader2, AlertCircle, ArrowLeft, PlusCircle, Check, Mail, Zap, Info, Cloud, ChevronRight, Layout, Download, ImageIcon, Music, Settings, X, Trash2, Sparkles, Copy, Calendar, Link as LinkIcon, Lock, Users, LayoutDashboard, Grid2X2, AlignLeft } from "lucide-react";
 import MusicPicker from "@/components/MusicPicker";
 import FocalPointPicker from "@/components/FocalPointPicker";
 import ZipFilePicker from "@/components/ZipFilePicker";
@@ -25,7 +25,7 @@ export interface GallerySettingsData {
     headerFontSize: number;
     headerColor: string;
     headerBackground: "dark" | "light";
-    layoutType: "mosaic" | "grid";
+    layoutType: "mosaic" | "grid" | "editorial" | string;
     headerImage: string;
     headerImageFocus: string;
 
@@ -36,6 +36,7 @@ export interface GallerySettingsData {
     musicTrackId?: string; // Changed from string | null to string to match dashboard/page.tsx state
     musicEnabled: boolean;
     enableWatermark: boolean;
+    likesEnabled: boolean; // [NEW]
 
     // Downloads
     downloadEnabled: boolean;
@@ -659,26 +660,36 @@ export default function GallerySettingsForm({
                 {/* Layout */}
                 <div className="mt-6">
                     <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-2 block">Diseño de la Galería</label>
-                    <div className="flex gap-3">
+                    <div className="flex gap-3 flex-wrap sm:flex-nowrap">
                         <button
                             type="button"
                             onClick={() => update('layoutType', "mosaic")}
-                            className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all ${data.layoutType === "mosaic"
+                            className={`flex-1 py-3 px-2 rounded-xl text-sm font-medium transition-all ${data.layoutType === "mosaic"
                                 ? "bg-emerald-600 text-white shadow-lg shadow-emerald-500/20"
                                 : isLight ? "bg-white text-neutral-600 border border-neutral-200 hover:border-neutral-300" : "bg-neutral-800 text-neutral-400 border border-neutral-700 hover:border-neutral-600"
                                 }`}
                         >
-                            🧩 Mosaico
+                            <span className="flex items-center gap-2 justify-center"><LayoutDashboard className="w-4 h-4" />Mosaico</span>
                         </button>
                         <button
                             type="button"
                             onClick={() => update('layoutType', "grid")}
-                            className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all ${data.layoutType === "grid"
+                            className={`flex-1 py-3 px-2 rounded-xl text-sm font-medium transition-all ${data.layoutType === "grid"
                                 ? "bg-emerald-600 text-white shadow-lg shadow-emerald-500/20"
                                 : isLight ? "bg-white text-neutral-600 border border-neutral-200 hover:border-neutral-300" : "bg-neutral-800 text-neutral-400 border border-neutral-700 hover:border-neutral-600"
                                 }`}
                         >
-                            🔳 Cuadrícula
+                            <span className="flex items-center gap-2 justify-center"><Grid2X2 className="w-4 h-4" />Cuadrícula</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => update('layoutType', "editorial")}
+                            className={`flex-1 py-3 px-2 rounded-xl text-sm font-medium transition-all ${data.layoutType === "editorial"
+                                ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
+                                : isLight ? "bg-white text-neutral-600 border border-neutral-200 hover:border-neutral-300" : "bg-neutral-800 text-neutral-400 border border-neutral-700 hover:border-neutral-600"
+                                }`}
+                        >
+                            <span className="flex items-center gap-2 justify-center"><AlignLeft className="w-4 h-4" />Editorial</span>
                         </button>
                     </div>
                     {data.layoutType === "mosaic" && (
@@ -985,6 +996,32 @@ export default function GallerySettingsForm({
                                 onChange={(e) => update('enableWatermark', e.target.checked)}
                                 className="w-5 h-5 accent-emerald-500 rounded bg-neutral-700"
                             />
+                        </label>
+                    </div>
+
+                    {/* Likes */}
+                    <div className={`${isLight ? 'bg-neutral-50 border-neutral-100' : 'bg-neutral-800/50 border-neutral-800'} p-4 rounded-2xl border md:col-span-2`}>
+                        <label className="flex items-center justify-between cursor-pointer">
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                                    <svg className="w-4 h-4 text-emerald-500" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                                    </svg>
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-medium">Permitir "Me gusta" (Favoritas)</span>
+                                    <span className="text-[10px] text-neutral-500">Los clientes podrán seleccionar sus fotos favoritas.</span>
+                                </div>
+                            </div>
+                            <label className="relative inline-flex items-center cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    className="sr-only peer"
+                                    checked={data.likesEnabled}
+                                    onChange={(e) => update('likesEnabled', e.target.checked)}
+                                />
+                                <div className="w-9 h-5 bg-neutral-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                            </label>
                         </label>
                     </div>
                 </div>

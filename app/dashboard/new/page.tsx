@@ -60,7 +60,8 @@ export default function NewProjectPage() {
         downloadVideoHdEnabled: true,
         downloadVideoRawEnabled: false,
         zipFileId: "",
-        zipFileName: ""
+        zipFileName: "",
+        likesEnabled: false // [NEW]
     };
 
     // Data to save

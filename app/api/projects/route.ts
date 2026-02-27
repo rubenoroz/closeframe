@@ -285,7 +285,7 @@ export async function PATCH(request: NextRequest) {
             coverImage, coverImageFocus,
             zipFileId, zipFileName,
             layoutType, public: isPublic,
-            isCloserGallery, musicTrackId, musicEnabled, isCollaborative // [NEW]
+            isCloserGallery, musicTrackId, musicEnabled, isCollaborative, likesEnabled // [NEW]
         } = body;
 
         console.log("[API] PATCH Project Payload:", { id, name, category, date, isCloserGallery }); // [DEBUG]
@@ -360,6 +360,7 @@ export async function PATCH(request: NextRequest) {
         if (layoutType !== undefined) updateData.layoutType = layoutType;
         if (musicTrackId !== undefined) updateData.musicTrackId = musicTrackId;
         if (musicEnabled !== undefined) updateData.musicEnabled = musicEnabled; // [NEW]
+        if (likesEnabled !== undefined) updateData.likesEnabled = likesEnabled; // [NEW]
 
         // Handle public status based on password
         if (typeof password === 'string' && password.trim() !== "") {

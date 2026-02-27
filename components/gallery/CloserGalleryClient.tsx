@@ -60,6 +60,31 @@ export default function CloserGalleryClient({
     const isMusicEnabled = !!project.musicTrackId;
     const musicTrack = isMusicEnabled ? getTrackById(project.musicTrackId) : null;
 
+    // Likes State
+    const [initialLikes, setInitialLikes] = useState<string[]>([]);
+    const [isLoadingLikes, setIsLoadingLikes] = useState(project.likesEnabled ? true : false);
+
+    // Fetch Initial Likes
+    useEffect(() => {
+        if (!project.likesEnabled) return;
+
+        const fetchLikes = async () => {
+            try {
+                const res = await fetch(`/api/projects/${project.id}/likes`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setInitialLikes(data.likes || []);
+                }
+            } catch (error) {
+                console.error("Error fetching likes:", error);
+            } finally {
+                setIsLoadingLikes(false);
+            }
+        };
+
+        fetchLikes();
+    }, [project.id, project.likesEnabled]);
+
     // 3. Derived Momentos with Virtual Video Chip (for photographer momentos only)
     const displayPhotographerMomentos = useMemo(() => {
         if (!project.enableVideoTab) return photographerMomentos;
@@ -373,12 +398,11 @@ export default function CloserGalleryClient({
                 background="dark" // Always dark for Closer
                 logo={businessLogo}
                 cloudAccountId={project.cloudAccountId}
-                // Optional: We could use project.headerImage if we wanted a hero, 
-                // but Closer usually is clean. Let's start clean or use headerImage if set.
                 coverImage={project.headerImage}
                 coverImageFocus={project.headerImageFocus}
                 profileUrl={profileUrl}
                 date={project.date} // [NEW]
+                layoutType={project.layoutType} // [NEW]
             />
 
             {/* Single Merged Navigation Bar */}
@@ -421,7 +445,7 @@ export default function CloserGalleryClient({
             )}
 
             {/* Main Gallery Viewer */}
-            {isLoadingFiles ? (
+            {(isLoadingFiles || isLoadingLikes) ? (
                 <GalleryLoaderGrid theme="dark" />
             ) : (
                 <GalleryViewer
@@ -452,6 +476,8 @@ export default function CloserGalleryClient({
                     zipDownloadsEnabled={effectiveZipEnabled}
                     zipFileId={project.zipFileId}
                     layoutType={isVideoTabActive ? "grid" : project.layoutType}
+                    likesEnabled={project.likesEnabled || false} // [NEW]
+                    initialLikes={initialLikes} // [NEW]
 
                     theme="dark"
                     mediaType={isVideoTabActive ? "videos" : "photos"}
