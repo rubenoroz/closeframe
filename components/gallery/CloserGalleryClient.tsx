@@ -429,6 +429,7 @@ export default function CloserGalleryClient({
                         totalCount={isLoadingFiles ? undefined : galleryFiles.length}
                         searchTerm={searchTerm}
                         onSearchChange={setSearchTerm}
+                        layoutType={project.layoutType}
                     />
                 );
             })()}

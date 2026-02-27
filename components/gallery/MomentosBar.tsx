@@ -20,6 +20,8 @@ interface MomentosBarProps {
     // New: search
     searchTerm?: string;
     onSearchChange?: (term: string) => void;
+    // New: layoutType
+    layoutType?: "mosaic" | "grid" | "editorial" | string;
 }
 
 export default function MomentosBar({
@@ -30,7 +32,8 @@ export default function MomentosBar({
     counts,
     totalCount,
     searchTerm = "",
-    onSearchChange
+    onSearchChange,
+    layoutType = "mosaic"
 }: MomentosBarProps) {
     const scrollRef = useRef<HTMLDivElement>(null);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -62,7 +65,10 @@ export default function MomentosBar({
             {/* Chips Row */}
             <div
                 ref={scrollRef}
-                className="pointer-events-auto max-w-full overflow-x-auto flex items-center gap-2 px-6 pb-2 scrollbar-none no-scrollbar mask-gradient touch-pan-x"
+                className={cn(
+                    "pointer-events-auto max-w-full overflow-x-auto flex items-center px-6 pb-2 scrollbar-none no-scrollbar mask-gradient touch-pan-x",
+                    layoutType === "editorial" ? "gap-[2px]" : "gap-2"
+                )}
                 style={{
                     maskImage: 'linear-gradient(to right, transparent, black 10%, black 90%, transparent)',
                     WebkitMaskImage: 'linear-gradient(to right, transparent, black 10%, black 90%, transparent)'
@@ -72,7 +78,8 @@ export default function MomentosBar({
                 <button
                     onClick={() => onMomentoChange(null)}
                     className={cn(
-                        "relative flex-shrink-0 px-5 py-2.5 rounded-full text-sm font-light tracking-wide transition-all duration-300 border",
+                        "relative flex-shrink-0 px-5 py-2.5 text-sm font-light tracking-wide transition-all duration-300 border",
+                        layoutType === "editorial" ? "rounded-none" : "rounded-full",
                         (activeMomentoId === null || activeMomentoId === 'all')
                             ? (isDark
                                 ? "bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.3)]"
@@ -97,7 +104,8 @@ export default function MomentosBar({
                             key={momento.id}
                             onClick={() => onMomentoChange(momento.id)}
                             className={cn(
-                                "relative flex-shrink-0 px-5 py-2.5 rounded-full text-sm font-light tracking-wide transition-all duration-300 border",
+                                "relative flex-shrink-0 px-5 py-2.5 text-sm font-light tracking-wide transition-all duration-300 border",
+                                layoutType === "editorial" ? "rounded-none" : "rounded-full",
                                 isActive
                                     ? (isDark
                                         ? "bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.3)]"
@@ -129,7 +137,8 @@ export default function MomentosBar({
                         <div className="flex items-center">
                             {isSearchOpen ? (
                                 <div className={cn(
-                                    "flex items-center gap-2 px-4 py-2 rounded-full border backdrop-blur-md transition-all",
+                                    "flex items-center gap-2 px-4 py-2 border backdrop-blur-md transition-all",
+                                    layoutType === "editorial" ? "rounded-none" : "rounded-full",
                                     isDark
                                         ? "bg-black/40 border-white/20"
                                         : "bg-white/40 border-black/10"
@@ -160,7 +169,8 @@ export default function MomentosBar({
                                 <button
                                     onClick={handleSearchToggle}
                                     className={cn(
-                                        "p-2.5 rounded-full border transition-all duration-300",
+                                        "p-2.5 border transition-all duration-300",
+                                        layoutType === "editorial" ? "rounded-none" : "rounded-full",
                                         isDark
                                             ? "bg-black/40 border-white/10 text-neutral-400 hover:bg-white/10 hover:text-white hover:border-white/30 backdrop-blur-md"
                                             : "bg-white/40 border-black/5 text-neutral-600 hover:bg-black/5 hover:text-black hover:border-black/20 backdrop-blur-md"
