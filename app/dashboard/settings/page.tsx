@@ -451,7 +451,22 @@ export default function SettingsPage() {
                                         ? "bg-neutral-50 border-neutral-200 text-neutral-900 focus:bg-white focus:border-emerald-500/50"
                                         : "bg-neutral-900/50 border-neutral-800 text-neutral-100 focus:border-emerald-500/50"
                                 )}
-                                placeholder="Tu nombre o estudio"
+                                placeholder="Tu nombre personal"
+                            />
+                        </div>
+                        <div className="space-y-2 md:space-y-3">
+                            <label className="text-[9px] md:text-[10px] font-bold opacity-40 uppercase tracking-widest ml-1">Nombre de Marca / Sitio</label>
+                            <input
+                                type="text"
+                                value={user.businessName}
+                                onChange={(e) => setUser({ ...user, businessName: e.target.value })}
+                                className={cn(
+                                    "w-full border rounded-lg md:rounded-xl px-4 md:px-5 py-3 md:py-4 outline-none transition-all text-sm",
+                                    isLight
+                                        ? "bg-neutral-50 border-neutral-200 text-neutral-900 focus:bg-white focus:border-emerald-500/50"
+                                        : "bg-neutral-900/50 border-neutral-800 text-neutral-100 focus:border-emerald-500/50"
+                                )}
+                                placeholder="Ej: Crisaalida"
                             />
                         </div>
                         <div className="space-y-3">

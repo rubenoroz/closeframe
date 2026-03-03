@@ -39,7 +39,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         return { title: 'User Not Found | Closerlens' };
     }
 
-    const titlePrefix = user.businessName || user.name || "Closerlens";
+    const titlePrefix = user.businessName || username || user.name || "Closerlens";
 
     // Attempt logic to extract description from Bio/Hero
     let profileDesc = "Closerlens Public Profile";
@@ -80,7 +80,7 @@ export default async function LabsProfilePage({ params }: Props) {
         // Fallback: default content based on user info
         content = {
             header: {
-                logoText: user.businessName || user.name || "Closerlens",
+                logoText: user.businessName || user.username || user.name || "Closerlens",
                 navigation: [
                     { label: "Home", url: "#home" },
                     { label: "About", url: "#about" },

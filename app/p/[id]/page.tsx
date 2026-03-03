@@ -6,6 +6,7 @@ import { Instagram, Globe, Mail, Camera, Linkedin, Youtube, Video, ExternalLink 
 import GalleryPreviewCard from "@/components/gallery/GalleryPreviewCard";
 import ProfileCTA from "@/components/profile/ProfileCTA";
 import { getEffectivePlanConfig } from "@/lib/plans.config";
+import { Metadata } from "next";
 
 interface Props {
     params: Promise<{
@@ -15,6 +16,22 @@ interface Props {
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+    const { id } = await params;
+    const user = await prisma.user.findUnique({
+        where: { id },
+        select: { name: true, businessName: true, username: true }
+    });
+
+    if (!user) return { title: "Perfil no encontrado" };
+
+    const titlePrefix = user.businessName || user.username || user.name || "Closerlens";
+    return {
+        title: `Closerlens - ${titlePrefix}`,
+        description: `Perfil profesional de ${titlePrefix} en Closerlens`,
+    };
+}
 
 export default async function PublicProfilePage({ params }: Props) {
     const { id } = await params;
@@ -98,7 +115,7 @@ export default async function PublicProfilePage({ params }: Props) {
     const isCTAAllowed = effectiveConfig.features?.callToAction ?? isProfessionalProfile;
     const isCustomFieldsAllowed = effectiveConfig.features?.customFields ?? isProfessionalProfile;
 
-    const brandingName = user.businessName || user.name || "CloserLens Studio";
+    const brandingName = user.businessName || user.username || user.name || "Closerlens";
     const publicProjects = user.projects || [];
     const isLight = user.theme !== 'dark'; // Default to light (beige) theme
 
