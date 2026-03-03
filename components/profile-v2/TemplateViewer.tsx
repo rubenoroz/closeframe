@@ -419,6 +419,25 @@ export function TemplateViewer({ data, userId }: Props) {
                     .carousel-testimonials .owl-dot.active span {
                         background: #000 !important;
                     }
+
+                    /* Responsive Desktop Adjustments */
+                    @media (min-width: 992px) {
+                        .hero-desktop-offset {
+                            margin-left: -200px !important;
+                            max-width: 600px !important;
+                        }
+                        .about-desktop-offset {
+                            margin-left: -200px !important;
+                            width: calc(100% + 400px) !important;
+                        }
+                        .about-desktop-title-offset {
+                            margin-left: 150px !important;
+                        }
+                        .services-desktop-offset {
+                            transform: translate(${data.servicesConfig?.offsetLeft || 0}px, ${-(data.servicesConfig?.offsetTop || 0)}px) !important;
+                            width: calc(100% + ${data.servicesConfig?.widthAddition || 0}px) !important;
+                        }
+                    }
                 `
 
 
@@ -505,13 +524,11 @@ export function TemplateViewer({ data, userId }: Props) {
                             <div className="row">
                                 <div className="col-12">
                                     <div
-                                        className="hero-content-box p-4 p-md-5 rounded-3"
+                                        className="hero-content-box p-4 p-md-5 rounded-3 hero-desktop-offset"
                                         style={{
                                             backgroundColor: 'rgba(255, 255, 255, 0.07)',
                                             backdropFilter: 'blur(5px)',
                                             border: '1px solid rgba(255, 255, 255, 0.1)',
-                                            marginLeft: '-200px',
-                                            maxWidth: '600px',
                                             width: '100%'
                                         }}
                                         data-aos="fade-up"
@@ -583,16 +600,14 @@ export function TemplateViewer({ data, userId }: Props) {
                         <div className="row">
                             <div className="col-12">
                                 <div
-                                    className="about-content-box p-4 p-md-4 rounded-3"
+                                    className="about-content-box p-4 p-md-4 rounded-3 about-desktop-offset"
                                     style={{
                                         backgroundColor: 'rgba(0,0,0,0.03)',
-                                        border: '1px solid rgba(0,0,0,0.05)',
-                                        marginLeft: '-200px',
-                                        width: 'calc(100% + 400px)'
+                                        border: '1px solid rgba(0,0,0,0.05)'
                                     }}
                                     data-aos="fade-up"
                                 >
-                                    <h1 className="display-4 fw-bold text-uppercase" style={{ marginLeft: '150px' }}>{data.about.title}</h1>
+                                    <h1 className="display-4 fw-bold text-uppercase about-desktop-title-offset">{data.about.title}</h1>
                                     <p
                                         className="lead mt-4 mb-0"
                                         style={{
@@ -621,10 +636,7 @@ export function TemplateViewer({ data, userId }: Props) {
             {data.servicesConfig?.visible !== false && (
                 <section className="bg-dark overflow-hidden" style={{ paddingTop: '1rem', paddingBottom: 'calc(3rem + 10px)' }}>
                     <div className="container">
-                        <div className="row" style={{
-                            transform: `translate(${data.servicesConfig?.offsetLeft || 0}px, ${-(data.servicesConfig?.offsetTop || 0)}px)`,
-                            width: `calc(100% + ${data.servicesConfig?.widthAddition || 0}px)`
-                        }}>
+                        <div className="row services-desktop-offset">
                             {data.services?.map((service, index) => (
                                 <div key={index} className="col-md-4 mb-4 mb-md-0" data-aos="fade-up" data-aos-delay={index * 100}>
                                     {service.image ? (
