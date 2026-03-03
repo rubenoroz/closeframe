@@ -531,6 +531,17 @@ export default function ProfileV2Page() {
             <div className="space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
+                  <label className="block text-sm font-semibold text-gray-300 mb-1.5">Nombre de Marca / Sitio (SEO)</label>
+                  <input
+                    type="text"
+                    className="w-full bg-[#222] border-[#333] border text-white rounded-lg p-3 text-base focus:ring-2 focus:ring-[#888] outline-none transition-shadow"
+                    value={data.businessName || ""}
+                    onChange={(e) => setData({ ...data, businessName: e.target.value })}
+                    placeholder="El nombre de tu empresa"
+                  />
+                  <p className="text-[10px] text-gray-500 mt-1">Este nombre aparecerá en la pestaña del navegador.</p>
+                </div>
+                <div>
                   <label className="block text-sm font-semibold text-gray-300 mb-1.5">Texto del Logo</label>
                   <input
                     type="text"

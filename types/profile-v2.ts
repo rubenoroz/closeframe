@@ -136,6 +136,7 @@ export interface TemplateContent {
         column2: string[];
         column3: string[];
     };
+    businessName?: string;
 }
 
 export const defaultTemplateContent: TemplateContent = {

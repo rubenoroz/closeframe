@@ -466,7 +466,7 @@ export default function SettingsPage() {
                                         ? "bg-neutral-50 border-neutral-200 text-neutral-900 focus:bg-white focus:border-emerald-500/50"
                                         : "bg-neutral-900/50 border-neutral-800 text-neutral-100 focus:border-emerald-500/50"
                                 )}
-                                placeholder="Ej: Crisaalida"
+                                placeholder="El nombre de tu empresa"
                             />
                         </div>
                         <div className="space-y-3">
