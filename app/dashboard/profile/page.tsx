@@ -1058,45 +1058,62 @@ export default function ProfileV2Page() {
                           )}
                         </div>
                       </div>
-                      <div className="grid grid-cols-3 gap-2">
-                        <div>
-                          <label className="block text-[8px] font-bold text-gray-500 uppercase mb-1">Ancho (px)</label>
+                      <div className="grid grid-cols-1 gap-3 bg-[#1A1A1A] p-3 rounded-lg border border-[#333]">
+                        <div className="flex flex-col gap-1.5">
+                          <div className="flex justify-between items-center">
+                            <label className="text-[9px] font-bold text-gray-500 uppercase">Ancho</label>
+                            <span className="text-[9px] font-mono text-gray-400">{service.imageWidth || 80}px</span>
+                          </div>
                           <input
-                            type="number"
-                            className="w-full bg-[#1A1A1A] border-[#444] text-white border rounded p-1.5 text-xs font-mono"
+                            type="range"
+                            min="20"
+                            max="400"
+                            className="w-full h-1.5 bg-[#333] rounded-lg appearance-none cursor-pointer accent-white"
                             value={service.imageWidth || 80}
                             onChange={(e) => {
                               const newServices = [...data.services];
-                              newServices[idx].imageWidth = parseInt(e.target.value) || 0;
+                              newServices[idx].imageWidth = parseInt(e.target.value);
                               setData({ ...data, services: newServices });
                             }}
                           />
                         </div>
-                        <div>
-                          <label className="block text-[8px] font-bold text-gray-500 uppercase mb-1">Nudge Y</label>
-                          <input
-                            type="number"
-                            className="w-full bg-[#1A1A1A] border-[#444] text-white border rounded p-1.5 text-xs font-mono"
-                            value={service.imageOffsetTop || 0}
-                            onChange={(e) => {
-                              const newServices = [...data.services];
-                              newServices[idx].imageOffsetTop = parseInt(e.target.value) || 0;
-                              setData({ ...data, services: newServices });
-                            }}
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[8px] font-bold text-gray-500 uppercase mb-1">Nudge X</label>
-                          <input
-                            type="number"
-                            className="w-full bg-[#1A1A1A] border-[#444] text-white border rounded p-1.5 text-xs font-mono"
-                            value={service.imageOffsetLeft || 0}
-                            onChange={(e) => {
-                              const newServices = [...data.services];
-                              newServices[idx].imageOffsetLeft = parseInt(e.target.value) || 0;
-                              setData({ ...data, services: newServices });
-                            }}
-                          />
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="flex flex-col gap-1.5">
+                            <div className="flex justify-between items-center">
+                              <label className="text-[9px] font-bold text-gray-500 uppercase">Nudge Y</label>
+                              <span className="text-[9px] font-mono text-gray-400">{service.imageOffsetTop || 0}px</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="-100"
+                              max="100"
+                              className="w-full h-1.5 bg-[#333] rounded-lg appearance-none cursor-pointer accent-white"
+                              value={service.imageOffsetTop || 0}
+                              onChange={(e) => {
+                                const newServices = [...data.services];
+                                newServices[idx].imageOffsetTop = parseInt(e.target.value);
+                                setData({ ...data, services: newServices });
+                              }}
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1.5">
+                            <div className="flex justify-between items-center">
+                              <label className="text-[9px] font-bold text-gray-500 uppercase">Nudge X</label>
+                              <span className="text-[9px] font-mono text-gray-400">{service.imageOffsetLeft || 0}px</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="-100"
+                              max="100"
+                              className="w-full h-1.5 bg-[#333] rounded-lg appearance-none cursor-pointer accent-white"
+                              value={service.imageOffsetLeft || 0}
+                              onChange={(e) => {
+                                const newServices = [...data.services];
+                                newServices[idx].imageOffsetLeft = parseInt(e.target.value);
+                                setData({ ...data, services: newServices });
+                              }}
+                            />
+                          </div>
                         </div>
                       </div>
                     </div>
