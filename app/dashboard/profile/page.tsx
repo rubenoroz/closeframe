@@ -84,151 +84,82 @@ export default function ProfileV2Page() {
     })
   );
 
+  // Generador Base64 para evitar depender del file system local en Vercel
+  const processFileAsBase64 = (file: File, callback: (base64: string) => void) => {
+    if (file.size > 2 * 1024 * 1024) {
+      alert("La imagen es demasiado grande. El límite es 2MB.");
+      setIsUploading(false);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      let result = event.target?.result as string;
+      if (file.type === 'image/svg+xml' || file.name.endsWith('.svg')) {
+        if (!result.startsWith('data:image/svg+xml')) {
+          result = result.replace('data:image/octet-stream', 'data:image/svg+xml')
+            .replace('data:text/plain', 'data:image/svg+xml');
+        }
+      }
+      callback(result);
+      setIsUploading(false);
+    };
+    reader.onerror = () => {
+      alert("Error al procesar la imagen.");
+      setIsUploading(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
   // Function to handle file upload
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     setIsUploading(true);
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-      const res = await fetch('/api/profile-v2/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const result = await res.json();
-      if (result.url) {
-        setData({ ...data, header: { ...data.header, logoImage: result.url } });
-      } else {
-        alert("Error al subir el archivo.");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Error de conexión al subir.");
-    } finally {
-      setIsUploading(false);
-    }
+    processFileAsBase64(file, (base64) => {
+      setData({ ...data, header: { ...data.header, logoImage: base64 } });
+    });
   };
 
   const handleHeroUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     setIsUploading(true);
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-      const res = await fetch('/api/profile-v2/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const result = await res.json();
-      if (result.url) {
-        setData({ ...data, hero: { ...data.hero, image: result.url } });
-      } else {
-        alert("Error al subir el archivo.");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Error de conexión al subir.");
-    } finally {
-      setIsUploading(false);
-    }
+    processFileAsBase64(file, (base64) => {
+      setData({ ...data, hero: { ...data.hero, image: base64 } });
+    });
   };
 
   const handleServiceUpload = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     setIsUploading(true);
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-      const res = await fetch('/api/profile-v2/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const result = await res.json();
-      if (result.url) {
-        const newServices = [...data.services];
-        newServices[index].image = result.url;
-        setData({ ...data, services: newServices });
-      } else {
-        alert("Error al subir el archivo.");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Error de conexión al subir.");
-    } finally {
-      setIsUploading(false);
-    }
+    processFileAsBase64(file, (base64) => {
+      const newServices = [...data.services];
+      newServices[index].image = base64;
+      setData({ ...data, services: newServices });
+    });
   };
 
   const handleProjectUpload = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     setIsUploading(true);
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-      const res = await fetch('/api/profile-v2/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const result = await res.json();
-      if (result.url) {
-        const newProjects = [...data.projects];
-        newProjects[index].image = result.url;
-        setData({ ...data, projects: newProjects });
-      } else {
-        alert("Error al subir el archivo.");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Error de conexión al subir.");
-    } finally {
-      setIsUploading(false);
-    }
+    processFileAsBase64(file, (base64) => {
+      const newProjects = [...data.projects];
+      newProjects[index].image = base64;
+      setData({ ...data, projects: newProjects });
+    });
   };
 
   const handleProjectDetailUpload = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     setIsUploading(true);
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-      const res = await fetch('/api/profile-v2/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const result = await res.json();
-      if (result.url) {
-        const newProjects = [...data.projects];
-        newProjects[index].details.detailImage = result.url;
-        setData({ ...data, projects: newProjects });
-      } else {
-        alert("Error al subir el archivo.");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Error de conexión al subir.");
-    } finally {
-      setIsUploading(false);
-    }
+    processFileAsBase64(file, (base64) => {
+      const newProjects = [...data.projects];
+      newProjects[index].details.detailImage = base64;
+      setData({ ...data, projects: newProjects });
+    });
   };
 
   useEffect(() => {
