@@ -4,7 +4,7 @@ import { auth } from "@/auth";
 import { nanoid } from "nanoid";
 import bcrypt from "bcryptjs";
 import { google } from "googleapis";
-import { getFreshGoogleAuth } from "@/lib/cloud/google-auth";
+import { getFreshAuth } from "@/lib/cloud/auth-factory";
 import { canUseFeature, getFeatureAccess, getEffectiveFeatures } from "@/lib/features/service"; // [SECURE]
 
 // GET: List all projects for the current user
@@ -27,39 +27,73 @@ export async function GET() {
         const enhancedProjects = await Promise.all(projects.map(async (project: any) => {
             try {
                 // Use centralized auth utility to get a fresh client
-                const auth = await getFreshGoogleAuth(project.cloudAccount.id);
-                const drive = google.drive({ version: "v3", auth });
+                // This now supports Google, Microsoft, Dropbox via getFreshAuth
+                const authClient = await getFreshAuth(project.cloudAccount.id);
 
-                // First, check root folder for subfolders
-                const res = await drive.files.list({
-                    q: `'${project.rootFolderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
-                    fields: "files(id, name)",
-                });
+                // Initialize health object
+                let health = {
+                    web: false,
+                    jpg: false,
+                    raw: false,
+                    cloudDisconnected: false
+                };
 
-                const folders = res.data.files || [];
-                let names = folders.map((f: any) => f.name?.toLowerCase());
+                // Logic for Google Drive health (existing)
+                if (project.cloudAccount.provider === "google") {
+                    const drive = google.drive({ version: "v3", auth: authClient as any });
 
-                // Check if there's a "Fotografias" subfolder - if so, look inside it
-                const fotografiasFolder = folders.find((f: any) => f.name?.toLowerCase() === "fotografias");
-                if (fotografiasFolder) {
-                    const subRes = await drive.files.list({
-                        q: `'${fotografiasFolder.id}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
-                        fields: "files(name)",
+                    // First, check root folder for subfolders
+                    const res = await drive.files.list({
+                        q: `'${project.rootFolderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
+                        fields: "files(id, name)",
                     });
-                    const subFolders = subRes.data.files || [];
-                    names = subFolders.map((f: any) => f.name?.toLowerCase());
+
+                    const folders = res.data.files || [];
+                    let names = folders.map((f: any) => f.name?.toLowerCase());
+
+                    // Check if there's a "Fotografias" subfolder - if so, look inside it
+                    const fotografiasFolder = folders.find((f: any) => f.name?.toLowerCase() === "fotografias");
+                    if (fotografiasFolder) {
+                        const subRes = await drive.files.list({
+                            q: `'${fotografiasFolder.id}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
+                            fields: "files(name)",
+                        });
+                        const subFolders = subRes.data.files || [];
+                        names = subFolders.map((f: any) => f.name?.toLowerCase());
+                    }
+
+                    health.web = names.includes("webjpg");
+                    health.jpg = names.includes("jpg");
+                    health.raw = names.includes("raw");
+                } else {
+                    // For other providers, we just mark as connected for now 
+                    // until specific subfolder health logic is implemented
+                    health.web = true;
+                    health.jpg = true;
+                    health.raw = true;
                 }
+
+                return { ...project, health };
+            } catch (err: any) {
+                console.error(`[API] Health check failed for project ${project.id}:`, err.message);
+
+                // Detect if it's an authentication error
+                const isAuthError = err.status === 401 ||
+                    err.code === 401 ||
+                    err.message?.includes("invalid_grant") ||
+                    err.message?.includes("invalid_request") ||
+                    err.message?.toLowerCase().includes("unauthorized") ||
+                    err.message?.toLowerCase().includes("expired");
 
                 return {
                     ...project,
                     health: {
-                        web: names.includes("webjpg"),
-                        jpg: names.includes("jpg"),
-                        raw: names.includes("raw"),
+                        web: false,
+                        jpg: false,
+                        raw: false,
+                        cloudDisconnected: isAuthError
                     }
                 };
-            } catch (err) {
-                return { ...project, health: null };
             }
         }));
 
@@ -227,7 +261,7 @@ export async function POST(request: Request) {
         if (moments && Array.isArray(moments) && moments.length > 0) {
             try {
                 // Get fresh auth for this account
-                const auth = await getFreshGoogleAuth(cloudAccountId);
+                const auth = await getFreshAuth(cloudAccountId);
                 const drive = google.drive({ version: "v3", auth });
 
                 // Create folders in paralell

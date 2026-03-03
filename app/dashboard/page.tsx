@@ -8,7 +8,7 @@ import {
     MoreHorizontal, Trash2, Layout, Copy, AlertCircle,
     ChevronRight, Check, Image as ImageIcon, Video,
     Folder, Download, Type, X, Shield, Sparkles,
-    Link as LinkIcon, MoreVertical, Loader2, Save
+    Link as LinkIcon, MoreVertical, Loader2, Save, RefreshCw
 } from "lucide-react";
 import { Skeleton } from "@/components/Skeleton";
 import DriveFilePicker from "@/components/DriveFilePicker";
@@ -55,6 +55,7 @@ interface Project {
         web: boolean;
         jpg: boolean;
         raw: boolean;
+        cloudDisconnected: boolean;
     };
     zipFileId?: string;
     zipFileName?: string;
@@ -571,189 +572,230 @@ export default function DashboardPage() {
                     </div>
                 ) : (
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {filteredProjects.map(project => (
-                            <div key={project.id} className={`group border rounded-2xl p-5 transition-all duration-300 flex flex-col min-h-[220px] relative ${isLight ? "bg-white border-neutral-100 hover:border-emerald-500 hover:shadow-xl hover:shadow-neutral-200/50" : "bg-neutral-900 border-neutral-800 hover:border-neutral-700"
-                                }`}>
-                                {project.passwordProtected ? (
-                                    <div className="absolute top-0 right-0 p-1.5 bg-emerald-600 text-white rounded-bl-lg rounded-tr-2xl shadow-lg z-10 flex items-center gap-1 px-2.5">
-                                        <Shield className="w-3 h-3" />
-                                        <span className="text-[10px] font-bold uppercase tracking-tighter">Protegida</span>
-                                    </div>
-                                ) : project.public ? (
-                                    <div className="absolute top-0 right-0 p-1.5 bg-blue-500 text-white rounded-bl-lg rounded-tr-2xl shadow-lg z-10 flex items-center gap-1 px-2.5">
-                                        <ExternalLink className="w-3 h-3" />
-                                        <span className="text-[10px] font-bold uppercase tracking-tighter">Pública</span>
-                                    </div>
-                                ) : (
-                                    <div className="absolute top-0 right-0 p-1.5 bg-neutral-500 text-white rounded-bl-lg rounded-tr-2xl shadow-lg z-10 flex items-center gap-1 px-2.5 opacity-50">
-                                        <Shield className="w-3 h-3 grayscale" />
-                                        <span className="text-[10px] font-bold uppercase tracking-tighter">Privada</span>
-                                    </div>
-                                )}
-
-
-
-                                {/* Header with Preview */}
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className="flex items-center gap-3">
-                                        <Link
-                                            href={`/g/${project.slug}`}
-                                            target="_blank"
-                                            className={`relative overflow-hidden rounded-lg hover:ring-2 hover:ring-emerald-500 transition group/folder ${project.coverImage
-                                                ? 'w-16 h-16'
-                                                : `${isLight ? 'bg-neutral-100' : 'bg-neutral-800'} p-3`
-                                                }`}
-                                        >
-                                            {project.coverImage ? (
-                                                <img
-                                                    src={`/api/cloud/thumbnail?c=${project.cloudAccountId}&f=${project.coverImage}&s=200`}
-                                                    alt={project.name}
-                                                    className="w-full h-full object-cover rounded-lg group-hover/folder:scale-110 transition-transform duration-300"
-                                                />
-                                            ) : (
-                                                <Folder className={`w-6 h-6 ${isLight ? 'text-neutral-400' : 'text-neutral-300'} group-hover/folder:text-emerald-500`} />
-                                            )}
-                                        </Link>
-
-                                    </div>
-                                </div>
-
-                                <div className="absolute top-12 right-5 flex items-center gap-1">
-                                    {/* Visit gallery button */}
-                                    <Link
-                                        href={`/g/${project.slug}`}
-                                        target="_blank"
-                                        className={`p-2.5 rounded-full transition ${isLight ? 'bg-neutral-50 text-neutral-400 hover:bg-emerald-500 hover:text-white' : 'bg-white/5 text-neutral-400 hover:text-white hover:bg-white/10'}`}
-                                        title="Visitar galería"
-                                    >
-                                        <ExternalLink className="w-4 h-4" />
-                                    </Link>
-
-                                    {/* Copy link button */}
-                                    <button
-                                        onClick={() => copyPublicLink(project.slug, project.id)}
-                                        className={`p-2.5 rounded-full transition relative ${copiedId === project.id
-                                            ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30'
-                                            : isLight ? 'bg-neutral-50 text-neutral-400 hover:bg-emerald-500 hover:text-white' : 'bg-white/5 text-neutral-400 hover:text-white'
-                                            }`}
-                                        title="Copiar enlace público"
-                                    >
-                                        {copiedId === project.id ? <Check className="w-4 h-4" /> : <LinkIcon className="w-4 h-4" />}
-                                    </button>
-
-                                    <div className="relative">
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setActiveMenu(activeMenu === project.id ? null : project.id);
-                                            }}
-                                            className="p-2 rounded-full hover:bg-white/5 text-neutral-500 hover:text-white transition"
-                                        >
-                                            <MoreVertical className="w-5 h-5" />
-                                        </button>
-
-                                        {activeMenu === project.id && (
-                                            <div
-                                                className={`absolute right-0 mt-2 w-56 border rounded-xl shadow-2xl z-[100] py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 ${isLight ? "bg-white border-neutral-200 shadow-neutral-200" : "bg-neutral-900 border-neutral-800 shadow-black"
-                                                    }`}
-                                                onClick={(e) => e.stopPropagation()}
-                                            >
-                                                <div className={`px-4 py-2 text-[10px] uppercase tracking-widest border-b mb-1 opacity-50 ${isLight ? 'border-neutral-100' : 'border-white/5'}`}>
-                                                    Gestión
-                                                </div>
-                                                <button
-                                                    onClick={() => openSettings(project)}
-                                                    className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 transition ${isLight ? "text-neutral-700 hover:bg-neutral-50" : "text-neutral-300 hover:bg-white/5"
-                                                        }`}
-                                                >
-                                                    <Settings className="w-4 h-4" /> Ajustes de Galería
-                                                </button>
-
-                                                <button
-                                                    onClick={() => router.push(`/dashboard/organize/${project.id}`)}
-                                                    className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 transition ${isLight ? "text-neutral-700 hover:bg-neutral-50" : "text-neutral-300 hover:bg-white/5"
-                                                        }`}
-                                                >
-                                                    <Layout className="w-4 h-4" /> Organizar Fotos y Videos
-                                                </button>
-
-                                                <div className={`h-px my-1 ${isLight ? 'bg-neutral-100' : 'bg-neutral-800'}`}></div>
-                                                <button
-                                                    onClick={() => {
-                                                        setDeleteConfirm(project.id);
-                                                        setActiveMenu(null);
-                                                    }}
-                                                    className="w-full px-4 py-2.5 text-left text-sm text-red-500 hover:bg-red-500/10 flex items-center gap-3 transition font-medium"
-                                                >
-                                                    <Trash2 className="w-4 h-4" /> Eliminar Galería
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Content */}
-                                <div className="flex-1">
-                                    <h3 className="text-lg font-medium group-hover:text-emerald-400 transition truncate pr-2">
-                                        {project.name}
-                                    </h3>
-                                    <p className="text-xs text-neutral-500 mb-6 flex items-center gap-2">
-                                        Enlazado a: <span className="text-neutral-400 truncate w-full">{project.cloudAccount.email}</span>
-                                    </p>
-                                </div>
-
-                                {/* Health Indicators Section */}
-                                <div className="mt-auto space-y-3">
-                                    {!project.health?.web && (
-                                        <div className="flex items-center gap-2 text-[10px] text-orange-400 bg-orange-400/5 px-2 py-1 rounded-md border border-orange-400/20">
-                                            <AlertCircle className="w-3 h-3 flex-shrink-0" />
-                                            <span>Falta carpeta <b>webjpg</b>: La galería podría cargar lento.</span>
+                        {filteredProjects.map(project => {
+                            const isDisconnected = project.health?.cloudDisconnected;
+                            return (
+                                <div key={project.id} className={`group border rounded-2xl p-5 transition-all duration-300 flex flex-col min-h-[220px] relative ${isDisconnected
+                                    ? "bg-red-500/5 border-red-500/50 hover:border-red-500 hover:shadow-xl hover:shadow-red-500/10"
+                                    : isLight
+                                        ? "bg-white border-neutral-100 hover:border-emerald-500 hover:shadow-xl hover:shadow-neutral-200/50"
+                                        : "bg-neutral-900 border-neutral-800 hover:border-neutral-700"
+                                    }`}>
+                                    {project.passwordProtected ? (
+                                        <div className="absolute top-0 right-0 p-1.5 bg-emerald-600 text-white rounded-bl-lg rounded-tr-2xl shadow-lg z-10 flex items-center gap-1 px-2.5">
+                                            <Shield className="w-3 h-3" />
+                                            <span className="text-[10px] font-bold uppercase tracking-tighter">Protegida</span>
+                                        </div>
+                                    ) : project.public ? (
+                                        <div className="absolute top-0 right-0 p-1.5 bg-blue-500 text-white rounded-bl-lg rounded-tr-2xl shadow-lg z-10 flex items-center gap-1 px-2.5">
+                                            <ExternalLink className="w-3 h-3" />
+                                            <span className="text-[10px] font-bold uppercase tracking-tighter">Pública</span>
+                                        </div>
+                                    ) : (
+                                        <div className="absolute top-0 right-0 p-1.5 bg-neutral-500 text-white rounded-bl-lg rounded-tr-2xl shadow-lg z-10 flex items-center gap-1 px-2.5 opacity-50">
+                                            <Shield className="w-3 h-3 grayscale" />
+                                            <span className="text-[10px] font-bold uppercase tracking-tighter">Privada</span>
                                         </div>
                                     )}
 
-                                    <div className="flex items-center gap-2 py-3 border-t border-white/5">
-                                        <div className="flex gap-1.5">
-                                            <div className="flex flex-col gap-0.5">
-                                                <span
-                                                    className={`px-2 py-1 rounded text-[9px] font-black tracking-widest uppercase border transition-colors text-center ${project.health?.web
-                                                        ? isLight ? "bg-blue-600 text-white border-blue-700" : "bg-blue-500 text-white border-blue-600"
-                                                        : isLight ? "bg-neutral-100 text-neutral-400 border-neutral-200" : "bg-neutral-800 text-neutral-600 border-transparent opacity-40"
-                                                        }`}
-                                                >
-                                                    WEB
-                                                </span>
-                                            </div>
-                                            <div className="flex flex-col gap-0.5">
-                                                <span
-                                                    className={`px-2 py-1 rounded text-[9px] font-black tracking-widest uppercase border transition-colors text-center ${project.health?.jpg
-                                                        ? isLight ? "bg-emerald-600 text-white border-emerald-700" : "bg-emerald-500 text-white border-emerald-600"
-                                                        : isLight ? "bg-neutral-100 text-neutral-400 border-neutral-200" : "bg-neutral-800 text-neutral-600 border-transparent opacity-40"
-                                                        }`}
-                                                >
-                                                    JPG
-                                                </span>
-                                            </div>
-                                            <div className="flex flex-col gap-0.5">
-                                                <span
-                                                    className={`px-2 py-1 rounded text-[9px] font-black tracking-widest uppercase border transition-colors text-center ${project.health?.raw
-                                                        ? isLight ? "bg-orange-600 text-white border-orange-700" : "bg-orange-500 text-white border-orange-600"
-                                                        : isLight ? "bg-neutral-100 text-neutral-400 border-neutral-200" : "bg-neutral-800 text-neutral-600 border-transparent opacity-40"
-                                                        }`}
-                                                >
-                                                    RAW
-                                                </span>
-                                            </div>
+                                    {isDisconnected && (
+                                        <div className="absolute top-0 left-0 p-1.5 bg-red-600 text-white rounded-br-lg rounded-tl-2xl shadow-lg z-20 flex items-center gap-1.5 px-3">
+                                            <AlertCircle className="w-3.5 h-3.5 animate-pulse" />
+                                            <span className="text-[10px] font-black uppercase tracking-widest">Nube Desconectada</span>
                                         </div>
+                                    )}
 
-                                        <div className={`flex items-center gap-2 text-[10px] font-medium ${isLight ? 'text-neutral-400' : 'text-neutral-500'}`}>
-                                            <Calendar className="w-3 h-3" />
-                                            {new Date(project.createdAt).toLocaleDateString()}
+
+
+                                    {/* Header with Preview */}
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div className="flex items-center gap-3">
+                                            <Link
+                                                href={`/g/${project.slug}`}
+                                                target="_blank"
+                                                className={`relative overflow-hidden rounded-lg hover:ring-2 hover:ring-emerald-500 transition group/folder ${project.coverImage
+                                                    ? 'w-16 h-16'
+                                                    : `${isLight ? 'bg-neutral-100' : 'bg-neutral-800'} p-3`
+                                                    }`}
+                                            >
+                                                {project.coverImage ? (
+                                                    <img
+                                                        src={`/api/cloud/thumbnail?c=${project.cloudAccountId}&f=${project.coverImage}&s=200`}
+                                                        alt={project.name}
+                                                        className="w-full h-full object-cover rounded-lg group-hover/folder:scale-110 transition-transform duration-300"
+                                                    />
+                                                ) : (
+                                                    <Folder className={`w-6 h-6 ${isLight ? 'text-neutral-400' : 'text-neutral-300'} group-hover/folder:text-emerald-500`} />
+                                                )}
+                                            </Link>
+
+                                        </div>
+                                    </div>
+
+                                    <div className="absolute top-12 right-5 flex items-center gap-1">
+                                        {/* Visit gallery button */}
+                                        <Link
+                                            href={`/g/${project.slug}`}
+                                            target="_blank"
+                                            className={`p-2.5 rounded-full transition ${isLight ? 'bg-neutral-50 text-neutral-400 hover:bg-emerald-500 hover:text-white' : 'bg-white/5 text-neutral-400 hover:text-white hover:bg-white/10'}`}
+                                            title="Visitar galería"
+                                        >
+                                            <ExternalLink className="w-4 h-4" />
+                                        </Link>
+
+                                        {/* Copy link button */}
+                                        <button
+                                            onClick={() => copyPublicLink(project.slug, project.id)}
+                                            className={`p-2.5 rounded-full transition relative ${copiedId === project.id
+                                                ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30'
+                                                : isLight ? 'bg-neutral-50 text-neutral-400 hover:bg-emerald-500 hover:text-white' : 'bg-white/5 text-neutral-400 hover:text-white'
+                                                }`}
+                                            title="Copiar enlace público"
+                                        >
+                                            {copiedId === project.id ? <Check className="w-4 h-4" /> : <LinkIcon className="w-4 h-4" />}
+                                        </button>
+
+                                        {/* Reauthorize account button (ONLY IF DISCONNECTED) */}
+                                        {isDisconnected && (
+                                            <Link
+                                                href="/dashboard/clouds"
+                                                className="p-2.5 rounded-full bg-red-500 text-white shadow-lg shadow-red-500/40 animate-pulse hover:scale-110 transition-transform"
+                                                title="Re-conectar nube ahora"
+                                            >
+                                                <RefreshCw className="w-4 h-4" />
+                                            </Link>
+                                        )}
+
+                                        <div className="relative">
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setActiveMenu(activeMenu === project.id ? null : project.id);
+                                                }}
+                                                className="p-2 rounded-full hover:bg-white/5 text-neutral-500 hover:text-white transition"
+                                            >
+                                                <MoreVertical className="w-5 h-5" />
+                                            </button>
+
+                                            {activeMenu === project.id && (
+                                                <div
+                                                    className={`absolute right-0 mt-2 w-56 border rounded-xl shadow-2xl z-[100] py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 ${isLight ? "bg-white border-neutral-200 shadow-neutral-200" : "bg-neutral-900 border-neutral-800 shadow-black"
+                                                        }`}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <div className={`px-4 py-2 text-[10px] uppercase tracking-widest border-b mb-1 opacity-50 ${isLight ? 'border-neutral-100' : 'border-white/5'}`}>
+                                                        Gestión
+                                                    </div>
+                                                    <button
+                                                        onClick={() => openSettings(project)}
+                                                        className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 transition ${isLight ? "text-neutral-700 hover:bg-neutral-50" : "text-neutral-300 hover:bg-white/5"
+                                                            }`}
+                                                    >
+                                                        <Settings className="w-4 h-4" /> Ajustes de Galería
+                                                    </button>
+
+                                                    <button
+                                                        onClick={() => router.push(`/dashboard/organize/${project.id}`)}
+                                                        className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 transition ${isLight ? "text-neutral-700 hover:bg-neutral-50" : "text-neutral-300 hover:bg-white/5"
+                                                            }`}
+                                                    >
+                                                        <Layout className="w-4 h-4" /> Organizar Fotos y Videos
+                                                    </button>
+
+                                                    <div className={`h-px my-1 ${isLight ? 'bg-neutral-100' : 'bg-neutral-800'}`}></div>
+                                                    <button
+                                                        onClick={() => {
+                                                            setDeleteConfirm(project.id);
+                                                            setActiveMenu(null);
+                                                        }}
+                                                        className="w-full px-4 py-2.5 text-left text-sm text-red-500 hover:bg-red-500/10 flex items-center gap-3 transition font-medium"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" /> Eliminar Galería
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Content */}
+                                    <div className="flex-1">
+                                        <h3 className="text-lg font-medium group-hover:text-emerald-400 transition truncate pr-2">
+                                            {project.name}
+                                        </h3>
+                                        <p className="text-xs text-neutral-500 mb-6 flex items-center gap-2">
+                                            Enlazado a: <span className="text-neutral-400 truncate w-full">{project.cloudAccount.email}</span>
+                                        </p>
+                                    </div>
+
+                                    {/* Health Indicators Section */}
+                                    <div className="mt-auto space-y-3">
+                                        {isDisconnected ? (
+                                            <div className="flex flex-col gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-xl mt-2">
+                                                <div className="flex items-center gap-2 text-[10px] font-bold text-red-400 uppercase tracking-widest">
+                                                    <AlertCircle className="w-3.5 h-3.5" />
+                                                    Acceso Denegado / Token Expirado
+                                                </div>
+                                                <p className="text-[9px] text-red-400/80 leading-tight">
+                                                    Tu cuenta de {project.cloudAccount.provider} requiere re-autorización.
+                                                    Tus clientes no podrán ver fotos pesadas.
+                                                </p>
+                                                <Link
+                                                    href="/dashboard/clouds"
+                                                    className="mt-1 w-full py-1.5 bg-red-600 text-white text-[9px] font-black uppercase tracking-tighter rounded-lg text-center hover:bg-red-500 transition-colors"
+                                                >
+                                                    Solucionar Ahora
+                                                </Link>
+                                            </div>
+                                        ) : !project.health?.web && (
+                                            <div className="flex items-center gap-2 text-[10px] text-orange-400 bg-orange-400/5 px-2 py-1 rounded-md border border-orange-400/20">
+                                                <AlertCircle className="w-3 h-3 flex-shrink-0" />
+                                                <span>Falta carpeta <b>webjpg</b>: La galería podría cargar lento.</span>
+                                            </div>
+                                        )}
+
+                                        <div className="flex items-center gap-2 py-3 border-t border-white/5">
+                                            <div className="flex gap-1.5">
+                                                <div className="flex flex-col gap-0.5">
+                                                    <span
+                                                        className={`px-2 py-1 rounded text-[9px] font-black tracking-widest uppercase border transition-colors text-center ${project.health?.web
+                                                            ? isLight ? "bg-blue-600 text-white border-blue-700" : "bg-blue-500 text-white border-blue-600"
+                                                            : isLight ? "bg-neutral-100 text-neutral-400 border-neutral-200" : "bg-neutral-800 text-neutral-600 border-transparent opacity-40"
+                                                            }`}
+                                                    >
+                                                        WEB
+                                                    </span>
+                                                </div>
+                                                <div className="flex flex-col gap-0.5">
+                                                    <span
+                                                        className={`px-2 py-1 rounded text-[9px] font-black tracking-widest uppercase border transition-colors text-center ${project.health?.jpg
+                                                            ? isLight ? "bg-emerald-600 text-white border-emerald-700" : "bg-emerald-500 text-white border-emerald-600"
+                                                            : isLight ? "bg-neutral-100 text-neutral-400 border-neutral-200" : "bg-neutral-800 text-neutral-600 border-transparent opacity-40"
+                                                            }`}
+                                                    >
+                                                        JPG
+                                                    </span>
+                                                </div>
+                                                <div className="flex flex-col gap-0.5">
+                                                    <span
+                                                        className={`px-2 py-1 rounded text-[9px] font-black tracking-widest uppercase border transition-colors text-center ${project.health?.raw
+                                                            ? isLight ? "bg-orange-600 text-white border-orange-700" : "bg-orange-500 text-white border-orange-600"
+                                                            : isLight ? "bg-neutral-100 text-neutral-400 border-neutral-200" : "bg-neutral-800 text-neutral-600 border-transparent opacity-40"
+                                                            }`}
+                                                    >
+                                                        RAW
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <div className={`flex items-center gap-2 text-[10px] font-medium ${isLight ? 'text-neutral-400' : 'text-neutral-500'}`}>
+                                                <Calendar className="w-3 h-3" />
+                                                {new Date(project.createdAt).toLocaleDateString()}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
 
