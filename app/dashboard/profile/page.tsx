@@ -359,17 +359,15 @@ export default function ProfileV2Page() {
                       {colorConf.label}
                     </label>
                     <div className="flex items-center gap-3 bg-[#161616] border border-[#2a2a2a] rounded-xl p-2.5 transition-all focus-within:border-gray-500 shadow-inner">
-                      <div className="relative w-10 h-10 rounded-lg shrink-0 overflow-hidden ring-1 ring-white/10 shadow-lg">
-                        <input
-                          type="color"
-                          className="absolute -top-4 -left-4 w-20 h-20 cursor-pointer border-0 p-0 scale-150"
-                          value={currentColors[colorConf.key as keyof typeof currentColors]}
-                          onChange={(e) => setData({ ...data, colors: { ...currentColors, [colorConf.key]: e.target.value } })}
-                        />
-                      </div>
+                      <input
+                        type="color"
+                        className="w-10 h-10 rounded-lg cursor-pointer bg-transparent border-0 p-0 flex-shrink-0 ring-1 ring-white/10 shadow-lg"
+                        value={currentColors[colorConf.key as keyof typeof currentColors]}
+                        onChange={(e) => setData({ ...data, colors: { ...currentColors, [colorConf.key]: e.target.value } })}
+                      />
                       <input
                         type="text"
-                        className="flex-1 bg-transparent border-0 focus:ring-0 p-0 text-sm font-bold text-white uppercase tracking-widest outline-none font-mono"
+                        className="flex-1 min-w-0 bg-transparent border-0 focus:ring-0 p-0 text-sm font-bold text-white uppercase tracking-widest outline-none font-mono"
                         value={currentColors[colorConf.key as keyof typeof currentColors]}
                         onChange={(e) => setData({ ...data, colors: { ...currentColors, [colorConf.key]: e.target.value } })}
                       />
