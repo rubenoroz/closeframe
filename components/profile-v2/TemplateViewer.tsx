@@ -445,6 +445,28 @@ export function TemplateViewer({ data, userId }: Props) {
                         }
                     }
 
+                    .mobile-nav-overlay {
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100vw;
+                        height: 100vh;
+                        background: #000000e6;
+                        backdrop-filter: blur(10px);
+                        z-index: 1065;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        opacity: 0;
+                        pointer-events: none;
+                        transition: opacity 0.3s ease;
+                    }
+                    .menu-is-open .mobile-nav-overlay {
+                        opacity: 1;
+                        pointer-events: auto;
+                    }
+
                     /* Responsive Desktop Adjustments */
                     @media (min-width: 992px) {
                         .hero-desktop-offset {
@@ -545,6 +567,46 @@ export function TemplateViewer({ data, userId }: Props) {
                     </div>
                 </div>
             </nav>
+
+            {/* Mobile Navigation Overlay */}
+            <div className="mobile-nav-overlay d-lg-none">
+                <ul className="mb-0 list-unstyled text-center p-0">
+                    {data.header.navigation
+                        .filter((nav) => nav.visible !== false)
+                        .map((nav, index) => (
+                            <li key={index} className="mb-4">
+                                <a
+                                    href={nav.url}
+                                    style={{ color: '#fff', fontSize: '1.5rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', textDecoration: 'none' }}
+                                    onClick={(e) => {
+                                        if (nav.url.startsWith('#')) {
+                                            e.preventDefault();
+                                            const target = document.querySelector(nav.url);
+                                            if (target) {
+                                                target.scrollIntoView({ behavior: 'smooth' });
+                                            }
+                                        }
+                                        document.body.classList.remove('menu-is-open');
+                                    }}
+                                >
+                                    {nav.label}
+                                </a>
+                            </li>
+                        ))}
+                </ul>
+                <ul className="social-icons d-flex align-items-center mt-5 list-unstyled gap-3" style={{ zIndex: 1060 }}>
+                    {data.header.socials.map((social, index) => {
+                        const iconClass = social.icon.includes('fa-') ? social.icon : `fa-brands fa-${social.icon}`;
+                        return (
+                            <li key={index}>
+                                <a href={social.url} target="_blank" rel="noopener noreferrer" style={{ color: '#fff', fontSize: '1.5rem' }}>
+                                    <i className={iconClass}></i>
+                                </a>
+                            </li>
+                        );
+                    })}
+                </ul>
+            </div>
 
             {/* Hero Section */}
             {data.hero.visible !== false && (
