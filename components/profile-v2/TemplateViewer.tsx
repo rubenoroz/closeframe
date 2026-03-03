@@ -426,6 +426,19 @@ export function TemplateViewer({ data, userId }: Props) {
                         background: #000 !important;
                     }
 
+                    /* Responsive Mobile Adjustments */
+                    @media (max-width: 991px) {
+                        #home::after {
+                            background-size: cover !important;
+                            background-position: center center !important;
+                        }
+                        .menu-is-open .toggler {
+                            z-index: 1070 !important;
+                            opacity: 1 !important;
+                            color: #fff !important;
+                        }
+                    }
+
                     /* Responsive Desktop Adjustments */
                     @media (min-width: 992px) {
                         .hero-desktop-offset {
@@ -472,10 +485,9 @@ export function TemplateViewer({ data, userId }: Props) {
                             </div>
                         )}
 
-                        {/* Brand / Logo Text (Hidden if image logo is present as per user preference) */}
                         <a className="navbar-brand" href="#" style={{ zIndex: 1060 }}>
                             {data.header.logoImage ? (
-                                <img src={resolveImageUrl(data.header.logoImage)} alt="Logo" style={{ height: '30px', marginRight: '10px' }} className="d-lg-none" />
+                                <img src={resolveImageUrl(data.header.logoImage)} alt="Logo" style={{ height: '45px', marginRight: '10px' }} className="d-lg-none" />
                             ) : data.header.logoText}
                         </a>
 
@@ -513,7 +525,13 @@ export function TemplateViewer({ data, userId }: Props) {
                         </ul>
 
                         {/* Toggler */}
-                        <button className="toggler d-lg-none ml-auto">
+                        <button
+                            className="toggler d-lg-none ml-auto"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                document.body.classList.toggle('menu-is-open');
+                            }}
+                        >
                             <span className="toggler-icon"></span>
                             <span className="toggler-icon"></span>
                             <span className="toggler-icon"></span>
@@ -539,7 +557,7 @@ export function TemplateViewer({ data, userId }: Props) {
                                         }}
                                         data-aos="fade-up"
                                     >
-                                        <h1 className="display-4 fw-bold text-uppercase" style={{ fontSize: '2.5rem' }}>{data.hero.heading}</h1>
+                                        <h1 className="display-4 fw-bold text-uppercase" style={{ fontSize: '2.5rem', color: data.hero.titleColor || '#FFFFFF' }}>{data.hero.heading}</h1>
 
                                         <p
                                             className="lead mt-4 mb-5"
@@ -553,7 +571,7 @@ export function TemplateViewer({ data, userId }: Props) {
                                                 hyphens: 'none',
                                                 wordBreak: 'normal',
                                                 overflowWrap: 'break-word',
-                                                color: undefined
+                                                color: data.hero.descriptionColor || '#E6E6E6'
                                             }}
                                         >
                                             {data.hero.description}
@@ -836,7 +854,8 @@ export function TemplateViewer({ data, userId }: Props) {
                     <div
                         style={{
                             backgroundColor: c.bgWhite, color: '#111827', borderRadius: '24px',
-                            padding: '2rem', width: '90%', maxWidth: '460px',
+                            padding: '1.5rem', width: '95%', maxWidth: '460px',
+                            maxHeight: '95vh', overflowY: 'auto',
                             boxShadow: '0 25px 50px rgba(0,0,0,0.3)',
                             position: 'relative',
                         }}
