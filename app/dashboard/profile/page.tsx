@@ -1096,9 +1096,9 @@ export default function ProfileV2Page() {
                   </div>
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
                 <div>
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Color: Puesto</label>
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 truncate">Color: Puesto</label>
                   <div className="flex items-center gap-2">
                     <input
                       type="color"
@@ -1116,7 +1116,7 @@ export default function ProfileV2Page() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Color: Empresa</label>
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 truncate">Color: Empresa</label>
                   <div className="flex items-center gap-2">
                     <input
                       type="color"
@@ -1134,7 +1134,7 @@ export default function ProfileV2Page() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Color: Periodo</label>
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 truncate">Color: Periodo</label>
                   <div className="flex items-center gap-2">
                     <input
                       type="color"
@@ -1152,7 +1152,7 @@ export default function ProfileV2Page() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Color: Desc</label>
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 truncate">Color: Desc</label>
                   <div className="flex items-center gap-2">
                     <input
                       type="color"
