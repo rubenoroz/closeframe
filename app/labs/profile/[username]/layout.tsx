@@ -2,8 +2,6 @@ import type { Metadata } from 'next'
 import Script from 'next/script'
 
 export const metadata: Metadata = {
-    title: 'Closerlens Labs - New Profile',
-    description: 'Prototipo de nuevo perfil personal',
     robots: 'noindex, nofollow'
 }
 

@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
 import { TemplateViewer } from "@/components/profile-v2/TemplateViewer";
 import { TemplateContent } from "@/types/profile-v2";
+import { Metadata } from 'next';
 
 interface Props {
     params: Promise<{
@@ -11,6 +12,47 @@ interface Props {
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+    const { username } = await params;
+
+    // Fetch user for name/business name
+    const user = await prisma.user.findFirst({
+        where: {
+            username: {
+                equals: username,
+                mode: 'insensitive'
+            }
+        },
+        select: {
+            name: true,
+            businessName: true,
+            profileV2: {
+                select: {
+                    content: true
+                }
+            }
+        }
+    });
+
+    if (!user) {
+        return { title: 'User Not Found | Closerlens' };
+    }
+
+    const titlePrefix = user.businessName || user.name || "Closerlens";
+
+    // Attempt logic to extract description from Bio/Hero
+    let profileDesc = "Closerlens Public Profile";
+    const content = user.profileV2?.content as unknown as TemplateContent;
+    if (content?.hero?.description) {
+        profileDesc = content.hero.description.substring(0, 160);
+    }
+
+    return {
+        title: `Closerlens - ${titlePrefix}`,
+        description: profileDesc,
+    };
+}
 
 export default async function LabsProfilePage({ params }: Props) {
     const { username } = await params;
