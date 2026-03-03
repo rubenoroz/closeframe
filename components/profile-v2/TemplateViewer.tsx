@@ -266,7 +266,11 @@ export function TemplateViewer({ data, userId }: Props) {
                 
                 ${data.servicesConfig?.titleColor ? `.bg-dark h6, .bg-dark i, .bg-dark p, .bg-dark span { color: ${data.servicesConfig.titleColor} !important; }` : ''}
                 
-                ${data.experienceTitleColor ? `#experience h2, #experience h5, #experience h6, #experience p, #experience span { color: ${data.experienceTitleColor} !important; }` : ''}
+                ${data.experienceTitleColor ? `#experience h2 { color: ${data.experienceTitleColor} !important; }` : ''}
+                ${data.experienceItemCompanyColor ? `#experience h5.text-primary.text-uppercase { color: ${data.experienceItemCompanyColor} !important; }` : ''}
+                ${data.experienceItemRoleColor ? `#experience h5.mb-3 { color: ${data.experienceItemRoleColor} !important; }` : ''}
+                ${data.experienceItemPeriodColor ? `#experience .h6.text-gray { color: ${data.experienceItemPeriodColor} !important; }` : ''}
+                ${data.experienceItemDescriptionColor ? `#experience p { color: ${data.experienceItemDescriptionColor} !important; }` : ''}
                 
                 ${data.projectsTitleColor ? `#projects h2 { color: ${data.projectsTitleColor} !important; }` : ''}
                 ${data.projectsItemTitleColor ? `#projects h3, #projects h3.text-white { color: ${data.projectsItemTitleColor} !important; }` : ''}

@@ -93,6 +93,10 @@ export interface TemplateContent {
     }[];
     experienceTitle: string;
     experienceTitleColor?: string;
+    experienceItemRoleColor?: string;
+    experienceItemCompanyColor?: string;
+    experienceItemPeriodColor?: string;
+    experienceItemDescriptionColor?: string;
     experienceVisible?: boolean;
     projects: ProjectItem[];
     projectsTitle: string;

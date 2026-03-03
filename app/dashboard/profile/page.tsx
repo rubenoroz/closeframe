@@ -1065,14 +1065,110 @@ export default function ProfileV2Page() {
                   </button>
                 </div>
               </div>
-              <div>
-                <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Título de la Sección</label>
-                <input
-                  type="text"
-                  className="w-full bg-[#1A1A1A] border-[#444] text-white border rounded-lg p-2 text-sm focus:ring-1 focus:ring-[#666] outline-none"
-                  value={data.experienceTitle}
-                  onChange={(e) => setData({ ...data, experienceTitle: e.target.value })}
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-400 mb-1">Título de la Sección</label>
+                  <input
+                    type="text"
+                    className="w-full bg-[#1A1A1A] border-[#444] text-white border rounded-lg p-2 text-sm focus:ring-1 focus:ring-[#666] outline-none"
+                    value={data.experienceTitle}
+                    onChange={(e) => setData({ ...data, experienceTitle: e.target.value })}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <label className="block text-xs font-semibold text-gray-400 mb-1">Color del Título de Sección</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        className="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0"
+                        value={data.experienceTitleColor || "#ffffff"}
+                        onChange={(e) => setData({ ...data, experienceTitleColor: e.target.value })}
+                      />
+                      <input
+                        type="text"
+                        className="w-full bg-[#1A1A1A] border-[#444] text-white border rounded-lg p-2 text-sm uppercase font-mono focus:ring-1 focus:ring-[#666] outline-none"
+                        value={data.experienceTitleColor || ""}
+                        onChange={(e) => setData({ ...data, experienceTitleColor: e.target.value })}
+                        placeholder="#ffffff"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-2">
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Color: Puesto</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      className="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0"
+                      value={data.experienceItemRoleColor || "#ffffff"}
+                      onChange={(e) => setData({ ...data, experienceItemRoleColor: e.target.value })}
+                    />
+                    <input
+                      type="text"
+                      className="w-full bg-[#1A1A1A] border-[#444] text-white border rounded-lg p-2 text-xs uppercase font-mono"
+                      value={data.experienceItemRoleColor || ""}
+                      onChange={(e) => setData({ ...data, experienceItemRoleColor: e.target.value })}
+                      placeholder="#ffffff"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Color: Empresa</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      className="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0"
+                      value={data.experienceItemCompanyColor || "#ffffff"}
+                      onChange={(e) => setData({ ...data, experienceItemCompanyColor: e.target.value })}
+                    />
+                    <input
+                      type="text"
+                      className="w-full bg-[#1A1A1A] border-[#444] text-white border rounded-lg p-2 text-xs uppercase font-mono"
+                      value={data.experienceItemCompanyColor || ""}
+                      onChange={(e) => setData({ ...data, experienceItemCompanyColor: e.target.value })}
+                      placeholder="#ffffff"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Color: Periodo</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      className="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0"
+                      value={data.experienceItemPeriodColor || "#ffffff"}
+                      onChange={(e) => setData({ ...data, experienceItemPeriodColor: e.target.value })}
+                    />
+                    <input
+                      type="text"
+                      className="w-full bg-[#1A1A1A] border-[#444] text-white border rounded-lg p-2 text-xs uppercase font-mono"
+                      value={data.experienceItemPeriodColor || ""}
+                      onChange={(e) => setData({ ...data, experienceItemPeriodColor: e.target.value })}
+                      placeholder="#ffffff"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Color: Desc</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      className="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0"
+                      value={data.experienceItemDescriptionColor || "#ffffff"}
+                      onChange={(e) => setData({ ...data, experienceItemDescriptionColor: e.target.value })}
+                    />
+                    <input
+                      type="text"
+                      className="w-full bg-[#1A1A1A] border-[#444] text-white border rounded-lg p-2 text-xs uppercase font-mono"
+                      value={data.experienceItemDescriptionColor || ""}
+                      onChange={(e) => setData({ ...data, experienceItemDescriptionColor: e.target.value })}
+                      placeholder="#ffffff"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
             <div className="space-y-6">
