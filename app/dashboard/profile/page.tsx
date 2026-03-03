@@ -784,13 +784,13 @@ export default function ProfileV2Page() {
                   <div className="flex gap-2 items-center">
                     <input
                       type="color"
-                      className="w-8 h-8 rounded cursor-pointer border-0 p-0 bg-transparent"
+                      className="w-10 h-10 rounded cursor-pointer bg-transparent border-0 p-0 flex-shrink-0"
                       value={data.hero.titleColor || "#000000"}
                       onChange={(e) => setData({ ...data, hero: { ...data.hero, titleColor: e.target.value } })}
                     />
                     <input
                       type="text"
-                      className="flex-1 bg-transparent border-[#444] border text-white rounded p-1 text-xs font-mono uppercase"
+                      className="flex-1 bg-[#1A1A1A] border-[#444] border text-white rounded-lg h-10 px-3 text-xs font-mono uppercase"
                       value={data.hero.titleColor || ""}
                       placeholder="Por defecto"
                       onChange={(e) => setData({ ...data, hero: { ...data.hero, titleColor: e.target.value } })}
@@ -802,13 +802,13 @@ export default function ProfileV2Page() {
                   <div className="flex gap-2 items-center">
                     <input
                       type="color"
-                      className="w-8 h-8 rounded cursor-pointer border-0 p-0 bg-transparent"
+                      className="w-10 h-10 rounded cursor-pointer bg-transparent border-0 p-0 flex-shrink-0"
                       value={data.hero.descriptionColor || "#000000"}
                       onChange={(e) => setData({ ...data, hero: { ...data.hero, descriptionColor: e.target.value } })}
                     />
                     <input
                       type="text"
-                      className="flex-1 bg-transparent border-[#444] border text-white rounded p-1 text-xs font-mono uppercase"
+                      className="flex-1 bg-[#1A1A1A] border-[#444] border text-white rounded-lg h-10 px-3 text-xs font-mono uppercase"
                       value={data.hero.descriptionColor || ""}
                       placeholder="Por defecto"
                       onChange={(e) => setData({ ...data, hero: { ...data.hero, descriptionColor: e.target.value } })}
