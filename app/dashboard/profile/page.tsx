@@ -998,7 +998,7 @@ export default function ProfileV2Page() {
                         <label className="block text-xs font-semibold text-gray-300 mb-1">Título</label>
                         <input
                           type="text"
-                          className="w-full bg-[#1A1A1A] border-[#444] text-white border rounded-lg p-2 text-sm focus:ring-1 focus:ring-[#666] outline-none"
+                          className="w-full bg-[#1A1A1A] border-[#444] text-white border rounded-lg p-2 text-sm focus:ring-1 focus:ring-[#666] outline-none font-medium"
                           value={service.title}
                           onChange={(e) => {
                             const newServices = [...data.services];
@@ -1021,6 +1021,86 @@ export default function ProfileV2Page() {
                         />
                       </div>
                     </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-300 mb-1">Imagen del Servicio (Opcional)</label>
+                        <div className="flex gap-2 items-center">
+                          {service.image && (
+                            <div className="w-10 h-10 rounded bg-[#1A1A1A] border border-[#444] p-1 flex-shrink-0">
+                              <img src={service.image} alt="" className="w-full h-full object-contain" />
+                            </div>
+                          )}
+                          <label className="flex-1 cursor-pointer">
+                            <div className="bg-[#1A1A1A] border-[#444] border rounded-lg h-10 px-3 hover:bg-[#2A2A2A] transition-colors flex items-center justify-center text-[10px] font-bold uppercase text-gray-400 gap-2">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                              {service.image ? 'Cambiar Imagen' : 'Subir Imagen'}
+                            </div>
+                            <input
+                              type="file"
+                              className="hidden"
+                              accept="image/*"
+                              onChange={(e) => handleServiceUpload(e, idx)}
+                            />
+                          </label>
+                          {service.image && (
+                            <button
+                              onClick={() => {
+                                const newServices = [...data.services];
+                                newServices[idx].image = "";
+                                setData({ ...data, services: newServices });
+                              }}
+                              className="w-10 h-10 bg-red-500/10 text-red-500 rounded-lg flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors border border-red-500/20"
+                              title="Quitar Imagen"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        <div>
+                          <label className="block text-[8px] font-bold text-gray-500 uppercase mb-1">Ancho (px)</label>
+                          <input
+                            type="number"
+                            className="w-full bg-[#1A1A1A] border-[#444] text-white border rounded p-1.5 text-xs font-mono"
+                            value={service.imageWidth || 80}
+                            onChange={(e) => {
+                              const newServices = [...data.services];
+                              newServices[idx].imageWidth = parseInt(e.target.value) || 0;
+                              setData({ ...data, services: newServices });
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[8px] font-bold text-gray-500 uppercase mb-1">Nudge Y</label>
+                          <input
+                            type="number"
+                            className="w-full bg-[#1A1A1A] border-[#444] text-white border rounded p-1.5 text-xs font-mono"
+                            value={service.imageOffsetTop || 0}
+                            onChange={(e) => {
+                              const newServices = [...data.services];
+                              newServices[idx].imageOffsetTop = parseInt(e.target.value) || 0;
+                              setData({ ...data, services: newServices });
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[8px] font-bold text-gray-500 uppercase mb-1">Nudge X</label>
+                          <input
+                            type="number"
+                            className="w-full bg-[#1A1A1A] border-[#444] text-white border rounded p-1.5 text-xs font-mono"
+                            value={service.imageOffsetLeft || 0}
+                            onChange={(e) => {
+                              const newServices = [...data.services];
+                              newServices[idx].imageOffsetLeft = parseInt(e.target.value) || 0;
+                              setData({ ...data, services: newServices });
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
                     <div>
                       <label className="block text-xs font-semibold text-gray-300 mb-1">Descripción</label>
                       <textarea
