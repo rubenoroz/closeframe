@@ -790,7 +790,7 @@ export default function ProfileV2Page() {
                     />
                     <input
                       type="text"
-                      className="flex-1 bg-[#1A1A1A] border-[#444] border text-white rounded-lg h-10 px-3 text-xs font-mono uppercase"
+                      className="flex-1 min-w-0 bg-[#1A1A1A] border-[#444] border text-white rounded-lg h-10 px-3 text-xs font-mono uppercase"
                       value={data.hero.titleColor || ""}
                       placeholder="Por defecto"
                       onChange={(e) => setData({ ...data, hero: { ...data.hero, titleColor: e.target.value } })}
@@ -808,7 +808,7 @@ export default function ProfileV2Page() {
                     />
                     <input
                       type="text"
-                      className="flex-1 bg-[#1A1A1A] border-[#444] border text-white rounded-lg h-10 px-3 text-xs font-mono uppercase"
+                      className="flex-1 min-w-0 bg-[#1A1A1A] border-[#444] border text-white rounded-lg h-10 px-3 text-xs font-mono uppercase"
                       value={data.hero.descriptionColor || ""}
                       placeholder="Por defecto"
                       onChange={(e) => setData({ ...data, hero: { ...data.hero, descriptionColor: e.target.value } })}
@@ -1108,7 +1108,7 @@ export default function ProfileV2Page() {
                     />
                     <input
                       type="text"
-                      className="w-full bg-[#1A1A1A] border-[#444] text-white border rounded-lg h-10 px-3 text-xs uppercase font-mono"
+                      className="flex-1 min-w-0 bg-[#1A1A1A] border-[#444] text-white border rounded-lg h-10 px-3 text-xs uppercase font-mono"
                       value={data.experienceItemRoleColor || ""}
                       onChange={(e) => setData({ ...data, experienceItemRoleColor: e.target.value })}
                       placeholder="#ffffff"
@@ -1126,7 +1126,7 @@ export default function ProfileV2Page() {
                     />
                     <input
                       type="text"
-                      className="w-full bg-[#1A1A1A] border-[#444] text-white border rounded-lg h-10 px-3 text-xs uppercase font-mono"
+                      className="flex-1 min-w-0 bg-[#1A1A1A] border-[#444] text-white border rounded-lg h-10 px-3 text-xs uppercase font-mono"
                       value={data.experienceItemCompanyColor || ""}
                       onChange={(e) => setData({ ...data, experienceItemCompanyColor: e.target.value })}
                       placeholder="#ffffff"
@@ -1144,7 +1144,7 @@ export default function ProfileV2Page() {
                     />
                     <input
                       type="text"
-                      className="w-full bg-[#1A1A1A] border-[#444] text-white border rounded-lg h-10 px-3 text-xs uppercase font-mono"
+                      className="flex-1 min-w-0 bg-[#1A1A1A] border-[#444] text-white border rounded-lg h-10 px-3 text-xs uppercase font-mono"
                       value={data.experienceItemPeriodColor || ""}
                       onChange={(e) => setData({ ...data, experienceItemPeriodColor: e.target.value })}
                       placeholder="#ffffff"
@@ -1162,7 +1162,7 @@ export default function ProfileV2Page() {
                     />
                     <input
                       type="text"
-                      className="w-full bg-[#1A1A1A] border-[#444] text-white border rounded-lg h-10 px-3 text-xs uppercase font-mono"
+                      className="flex-1 min-w-0 bg-[#1A1A1A] border-[#444] text-white border rounded-lg h-10 px-3 text-xs uppercase font-mono"
                       value={data.experienceItemDescriptionColor || ""}
                       onChange={(e) => setData({ ...data, experienceItemDescriptionColor: e.target.value })}
                       placeholder="#ffffff"
@@ -1308,7 +1308,7 @@ export default function ProfileV2Page() {
                       />
                       <input
                         type="text"
-                        className="w-full bg-[#1A1A1A] border-[#444] text-white border rounded-lg h-10 px-3 text-sm uppercase font-mono"
+                        className="flex-1 min-w-0 bg-[#1A1A1A] border-[#444] text-white border rounded-lg h-10 px-3 text-sm uppercase font-mono"
                         value={data.projectsTitleColor || ""}
                         onChange={(e) => setData({ ...data, projectsTitleColor: e.target.value })}
                         placeholder="#ffffff"
