@@ -268,7 +268,9 @@ export function TemplateViewer({ data, userId }: Props) {
                 
                 ${data.experienceTitleColor ? `#experience h2, #experience h5, #experience h6, #experience p, #experience span { color: ${data.experienceTitleColor} !important; }` : ''}
                 
-                ${data.projectsTitleColor ? `#projects h2, #projects h3, #projects figcaption p { color: ${data.projectsTitleColor} !important; }` : ''}
+                ${data.projectsTitleColor ? `#projects h2 { color: ${data.projectsTitleColor} !important; }` : ''}
+                ${data.projectsItemTitleColor ? `#projects h3, #projects h3.text-white { color: ${data.projectsItemTitleColor} !important; }` : ''}
+                ${data.projectsItemCategoryColor ? `#projects figcaption p { color: ${data.projectsItemCategoryColor} !important; }` : ''}
                 
                 ${data.testimonialsTitleColor ? `#testimonials h2, #testimonials p, #testimonials span, #testimonials strong { color: ${data.testimonialsTitleColor} !important; }` : ''}
                 

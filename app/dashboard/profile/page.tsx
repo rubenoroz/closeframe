@@ -1190,13 +1190,74 @@ export default function ProfileV2Page() {
                   </button>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <input
-                  type="text"
-                  className="w-full bg-[#1A1A1A] border-[#444] text-white border rounded-lg p-2 text-sm"
-                  value={data.projectsTitle}
-                  onChange={(e) => setData({ ...data, projectsTitle: e.target.value })}
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-400 mb-1">Título de la Sección</label>
+                  <input
+                    type="text"
+                    className="w-full bg-[#1A1A1A] border-[#444] text-white border rounded-lg p-2 text-sm"
+                    value={data.projectsTitle}
+                    onChange={(e) => setData({ ...data, projectsTitle: e.target.value })}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <label className="block text-xs font-semibold text-gray-400 mb-1">Color del Título de Sección</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        className="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0"
+                        value={data.projectsTitleColor || "#ffffff"}
+                        onChange={(e) => setData({ ...data, projectsTitleColor: e.target.value })}
+                      />
+                      <input
+                        type="text"
+                        className="w-full bg-[#1A1A1A] border-[#444] text-white border rounded-lg p-2 text-sm uppercase font-mono"
+                        value={data.projectsTitleColor || ""}
+                        onChange={(e) => setData({ ...data, projectsTitleColor: e.target.value })}
+                        placeholder="#ffffff"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div className="flex-1">
+                  <label className="block text-xs font-semibold text-gray-400 mb-1">Color del Elemento: Título de Proyecto</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      className="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0"
+                      value={data.projectsItemTitleColor || "#ffffff"}
+                      onChange={(e) => setData({ ...data, projectsItemTitleColor: e.target.value })}
+                    />
+                    <input
+                      type="text"
+                      className="w-full bg-[#1A1A1A] border-[#444] text-white border rounded-lg p-2 text-sm uppercase font-mono"
+                      value={data.projectsItemTitleColor || ""}
+                      onChange={(e) => setData({ ...data, projectsItemTitleColor: e.target.value })}
+                      placeholder="#ffffff"
+                    />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <label className="block text-xs font-semibold text-gray-400 mb-1">Color del Elemento: Tipo de Proyecto</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      className="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0"
+                      value={data.projectsItemCategoryColor || "#ffffff"}
+                      onChange={(e) => setData({ ...data, projectsItemCategoryColor: e.target.value })}
+                    />
+                    <input
+                      type="text"
+                      className="w-full bg-[#1A1A1A] border-[#444] text-white border rounded-lg p-2 text-sm uppercase font-mono"
+                      value={data.projectsItemCategoryColor || ""}
+                      onChange={(e) => setData({ ...data, projectsItemCategoryColor: e.target.value })}
+                      placeholder="#ffffff"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
             <div className="space-y-6">

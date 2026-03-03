@@ -97,6 +97,8 @@ export interface TemplateContent {
     projects: ProjectItem[];
     projectsTitle: string;
     projectsTitleColor?: string;
+    projectsItemTitleColor?: string;
+    projectsItemCategoryColor?: string;
     projectsVisible?: boolean;
     projectsViewAllText: string;
     testimonials: TestimonialItem[];
