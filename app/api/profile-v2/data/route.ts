@@ -55,11 +55,15 @@ export async function POST(request: Request) {
 
         const data = await request.json();
 
-        // If username is being updated, also update the User table
-        if (data.username) {
+        // Sync essential fields to the User table for global branding consistency
+        const userUpdateData: any = {};
+        if (data.username) userUpdateData.username = data.username;
+        if (data.businessName !== undefined) userUpdateData.businessName = data.businessName;
+
+        if (Object.keys(userUpdateData).length > 0) {
             await prisma.user.update({
                 where: { id: user.id },
-                data: { username: data.username },
+                data: userUpdateData,
             });
         }
 

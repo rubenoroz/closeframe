@@ -39,11 +39,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         return { title: 'User Not Found | Closerlens' };
     }
 
-    const titlePrefix = user.businessName || username || user.name || "Closerlens";
+    const content = user.profileV2?.content as unknown as TemplateContent;
+    const titlePrefix = content?.businessName || user.businessName || username || user.name || "Closerlens";
 
     // Attempt logic to extract description from Bio/Hero
     let profileDesc = "Closerlens Public Profile";
-    const content = user.profileV2?.content as unknown as TemplateContent;
     if (content?.hero?.description) {
         profileDesc = content.hero.description.substring(0, 160);
     }
