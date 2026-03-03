@@ -19,8 +19,13 @@ export const revalidate = 0; // [FIX] Ensure no caching for instant updates
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { slug } = await params;
-    const project = await prisma.project.findUnique({
-        where: { slug },
+    const project = await (prisma.project as any).findFirst({
+        where: {
+            OR: [
+                { slug },
+                { id: slug }
+            ]
+        },
         select: {
             name: true,
             headerTitle: true,
@@ -67,8 +72,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function PublicGalleryPage({ params }: Props) {
     const { slug } = await params;
 
-    const project = await (prisma.project as any).findUnique({
-        where: { slug },
+    const project = await (prisma.project as any).findFirst({
+        where: {
+            OR: [
+                { slug },
+                { id: slug }
+            ]
+        },
         include: {
             user: {
                 select: {

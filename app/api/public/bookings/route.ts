@@ -26,7 +26,7 @@ export async function POST(request: Request) {
                 customerName,
                 customerEmail,
                 customerPhone: body.customerPhone,
-                date: new Date(date),
+                date: new Date(date), // Date ya viene como ISO local del cliente
                 notes: notes || "Booking via Profile CTA",
                 status: "pending"
             }

@@ -51,8 +51,16 @@ export async function GET(request: Request) {
                 where: { id: projectId },
                 select: { fileOrder: true }
             });
-            if ((project as any)?.fileOrder) {
-                fileOrder = JSON.parse(JSON.stringify((project as any).fileOrder));
+            if (project?.fileOrder) {
+                try {
+                    // Check if it's already an array or a string that needs parsing
+                    fileOrder = typeof project.fileOrder === 'string'
+                        ? JSON.parse(project.fileOrder)
+                        : (project.fileOrder as string[]);
+                } catch (e) {
+                    console.error("[API] Error parsing fileOrder:", e);
+                    fileOrder = null;
+                }
             }
         }
         // Use generalized auth factory

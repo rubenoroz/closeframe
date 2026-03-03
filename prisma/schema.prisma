@@ -50,22 +50,23 @@ model User {
   calendarAccounts       CalendarAccount[]
   cloudAccounts          CloudAccount[]
   filters                Filter[]
+  sentNodosInvitations   NodosInvitation[]     @relation("NodosSentInvitations")
+  nodosMemberships       NodosMember[]
+  nodosProjects          NodosProject[]
+  mentions               NoteMention[]
   oauthAccounts          OAuthAccount[]
   projects               Project[]
   sentInvitations        ProjectInvitation[]   @relation("SentInvitations")
   projectMemberships     ProjectMember[]
   projectNotes           ProjectNote[]
-  mentions               NoteMention[]
   referredBy             Referral[]            @relation("ReferredUser")
   referralAssignments    ReferralAssignment[]
   scenaProjects          ScenaProject[]
-  nodosProjects          NodosProject[]
   sessions               Session[]
   stripeConnectAccount   StripeConnectAccount?
   plan                   Plan?                 @relation(fields: [planId], references: [id])
+  profileV2              UserProfileV2?
   tasks                  Task[]                @relation("TaskAssignees")
-  sentNodosInvitations   NodosInvitation[]     @relation("NodosSentInvitations")
-  nodosMemberships       NodosMember[]
 }
 
 model SystemSettings {
@@ -73,6 +74,15 @@ model SystemSettings {
   key       String   @unique
   value     String
   updatedAt DateTime @updatedAt
+}
+
+model UserProfileV2 {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  content   Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Account {
@@ -141,7 +151,6 @@ model Project {
   public                  Boolean               @default(true)
   layoutType              String                @default("grid")
   userId                  String
-  date                    DateTime?
   createdAt               DateTime              @default(now())
   updatedAt               DateTime              @updatedAt
   headerTitle             String?
@@ -166,16 +175,17 @@ model Project {
   zipFileName             String?
   isCloserGallery         Boolean               @default(false)
   momentsOrder            Json?
-  momentsHidden           Json?
   musicEnabled            Boolean               @default(false)
   musicTrackId            String?
   isCollaborative         Boolean               @default(false)
   profileOrder            Int                   @default(0)
+  momentsHidden           Json?
+  date                    DateTime?
   likesEnabled            Boolean               @default(false)
   collaborativeGallery    CollaborativeGallery?
   externalVideos          ExternalVideo[]
-  cloudAccount            CloudAccount          @relation(fields: [cloudAccountId], references: [id])
   photoLikes              PhotoLike[]
+  cloudAccount            CloudAccount          @relation(fields: [cloudAccountId], references: [id])
   user                    User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
@@ -203,9 +213,9 @@ model Booking {
   customerPhone String?
   endDate       DateTime?
   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nodosProjects NodosProject[]
   payment       Payment?
   scenaProjects ScenaProject[]
-  nodosProjects NodosProject[]
 }
 
 model Plan {
@@ -614,9 +624,9 @@ model ProjectNote {
   userId    String
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
+  mentions  NoteMention[]
   project   ScenaProject  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  mentions  NoteMention[]
 
   @@index([projectId])
   @@index([userId])
@@ -790,6 +800,60 @@ model ReferralClick {
   @@index([createdAt])
 }
 
+model NodosProject {
+  id          String            @id @default(cuid())
+  title       String
+  description String?
+  nodes       Json              @default("[]")
+  edges       Json              @default("[]")
+  isArchived  Boolean           @default(false)
+  ownerId     String
+  bookingId   String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  invitations NodosInvitation[]
+  members     NodosMember[]
+  booking     Booking?          @relation(fields: [bookingId], references: [id])
+  owner       User              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId])
+  @@index([bookingId])
+}
+
+model NodosMember {
+  id        String       @id @default(cuid())
+  projectId String
+  userId    String
+  role      String       @default("VIEWER")
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  project   NodosProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+}
+
+model NodosInvitation {
+  id        String       @id @default(cuid())
+  projectId String
+  email     String
+  token     String       @unique
+  role      String       @default("VIEWER")
+  status    String       @default("PENDING")
+  senderId  String
+  expiresAt DateTime
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  project   NodosProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sender    User         @relation("NodosSentInvitations", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([email])
+  @@index([token])
+}
+
 enum ReferralProfileType {
   AFFILIATE
   CUSTOMER
@@ -842,58 +906,3 @@ enum PayoutStatus {
   COMPLETED
   FAILED
 }
-
-model NodosProject {
-  id          String   @id @default(cuid())
-  title       String
-  description String?
-  nodes       Json     @default("[]")
-  edges       Json     @default("[]")
-  isArchived  Boolean  @default(false)
-  ownerId     String
-  bookingId   String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  owner       User              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  booking     Booking?          @relation(fields: [bookingId], references: [id])
-  members     NodosMember[]
-  invitations NodosInvitation[]
-
-  @@index([ownerId])
-  @@index([bookingId])
-}
-
-model NodosMember {
-  id        String       @id @default(cuid())
-  projectId String
-  userId    String
-  role      String       @default("VIEWER")
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
-  project   NodosProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([projectId, userId])
-  @@index([projectId])
-  @@index([userId])
-}
-
-model NodosInvitation {
-  id        String       @id @default(cuid())
-  projectId String
-  email     String
-  token     String       @unique
-  role      String       @default("VIEWER")
-  status    String       @default("PENDING")
-  senderId  String
-  expiresAt DateTime
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
-  project   NodosProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  sender    User         @relation("NodosSentInvitations", fields: [senderId], references: [id], onDelete: Cascade)
-
-  @@index([projectId])
-  @@index([email])
-  @@index([token])
-}
-

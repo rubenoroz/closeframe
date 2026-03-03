@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { Camera, LayoutGrid, Plus, Settings, LogOut, CalendarDays, ChevronDown, User, Users, Monitor, CreditCard, Menu, X, Sun, Moon, Shield, Wallet, Network } from "lucide-react";
+import { Camera, LayoutGrid, Plus, Settings, LogOut, CalendarDays, ChevronDown, User, Users, Monitor, CreditCard, Menu, X, Sun, Moon, Shield, Wallet, Network, Eye } from "lucide-react";
 import Image from "next/image";
 import { ScenaIcon } from "@/components/icons/ScenaIcon";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTheme } from "@/components/ThemeProvider";
 import { useFeatures } from "@/hooks/useFeatures";
 
@@ -30,7 +30,8 @@ export default function DashboardLayout({
     const showAgenda = canUse('bookingConfig');
 
     const navItems = [
-        { href: "/dashboard/settings", label: "Perfil público", icon: <User className="w-5 h-5" /> },
+        // { href: "/dashboard/settings", label: "Ajustes", icon: <Settings className="w-5 h-5" /> }, // Ocultado por transición a V2
+        { href: "/dashboard/profile", label: "Perfil público", icon: <User className="w-5 h-5" /> },
         { href: "/dashboard", label: "Mis Galerías", icon: <LayoutGrid className="w-5 h-5" /> },
 
         // Conditional Agenda Link
@@ -116,6 +117,7 @@ export default function DashboardLayout({
                                 key={item.href}
                                 href={item.href}
                                 onClick={() => setSidebarOpen(false)}
+                                {...(item.href.startsWith('/labs') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
                                 className={cn(
                                     "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
                                     isActive

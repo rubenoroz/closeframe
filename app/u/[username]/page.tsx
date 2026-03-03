@@ -21,7 +21,9 @@ export default async function VanityURLPage({ params }: Props) {
             }
         },
         select: {
-            id: true
+            id: true,
+            username: true,
+            featureOverrides: true
         }
     });
 
@@ -35,6 +37,14 @@ export default async function VanityURLPage({ params }: Props) {
         data: { profileViews: { increment: 1 } }
     });
 
-    // Redirect to the actual profile page
+    // Check if profile v2 is enabled for this user or by ENV
+    const isV2Enabled = process.env.NEXT_PUBLIC_PROFILE_V2_ALL === 'true' ||
+        (user.featureOverrides as any)?.profileVersion === 'v2';
+
+    if (isV2Enabled) {
+        redirect(`/labs/profile/${user.username}`);
+    }
+
+    // Redirect to the actual profile page (v1)
     redirect(`/p/${user.id}`);
 }
