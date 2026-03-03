@@ -371,6 +371,12 @@ export function TemplateViewer({ data, userId }: Props) {
                         letter-spacing: -0.02em;
                     }
 
+                    html, body {
+                        overflow-x: hidden !important;
+                        position: relative;
+                        width: 100%;
+                    }
+
                     body, p, .lead {
                         font-family: 'Lexend', sans-serif !important;
                     }
