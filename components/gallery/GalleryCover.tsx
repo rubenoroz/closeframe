@@ -63,13 +63,14 @@ export default function GalleryCover({
                 <img
                     src={coverUrl}
                     alt="Cover"
-                    className="w-full h-full object-cover opacity-90 animate-in fade-in duration-1000"
+                    className="w-full h-full object-cover opacity-100 animate-in fade-in duration-1000"
                     style={{
                         objectPosition: `${x}% ${y}%`,
                         transform: `scale(${scale})`
                     }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                {/* Very subtle radial overlay to help text legibility at corners without darkening the center */}
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.4)_100%)]" />
             </div>
 
             {/* Content Container - Full Screen Absolute */}
