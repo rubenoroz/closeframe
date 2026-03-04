@@ -16,6 +16,7 @@ interface GalleryHeaderProps {
     cloudAccountId?: string;
     profileUrl?: string; // Optional profile link
     date?: string | null;
+    logoScale?: number; // [NEW] Percentage scale for the logo
 }
 
 export default function GalleryHeader({
@@ -31,6 +32,7 @@ export default function GalleryHeader({
     cloudAccountId,
     profileUrl,
     date, // [NEW]
+    logoScale = 100, // [NEW]
 }: GalleryHeaderProps) {
     useEffect(() => {
         // Dynamically load Google Font if not Inter (default system font)
@@ -83,10 +85,13 @@ export default function GalleryHeader({
                     />
                 </a>
             ) : (
-                <div className={cn(
-                    "relative block",
-                    layoutType === "editorial" ? "h-12 md:h-16 w-auto" : "h-16 w-auto max-w-[200px]"
-                )}>
+                <div
+                    className={cn(
+                        "relative block",
+                        layoutType === "editorial" ? "h-12 md:h-16 w-auto" : "h-16 w-auto max-w-[200px]"
+                    )}
+                    style={{ height: layoutType === "editorial" ? `${(4 * (logoScale / 100))}rem` : `${(4 * (logoScale / 100))}rem` }}
+                >
                     <img
                         src={logo}
                         alt="Studio Logo"

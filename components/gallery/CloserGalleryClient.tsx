@@ -397,6 +397,7 @@ export default function CloserGalleryClient({
                 color={project.headerColor || "#FFFFFF"}
                 background="dark" // Always dark for Closer
                 logo={businessLogo}
+                logoScale={businessLogoScale || 100}
                 cloudAccountId={project.cloudAccountId}
                 coverImage={project.headerImage}
                 coverImageFocus={project.headerImageFocus}
