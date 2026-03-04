@@ -257,46 +257,28 @@ export function TemplateViewer({ data, userId }: Props) {
     const [loadedProjectsCount, setLoadedProjectsCount] = useState(0);
     const isCarouselInitialized = useRef(false);
 
+    const totalProjects = data.projects?.length || 0;
+
     useEffect(() => {
-        // Ejecutar Inicialización de animaciones y scripts de template una vez montado el DOM
-        // [FIX] Wait until all cloud-dependent projects have finished fetching their metadata + images
-        // before allowing OwlCarousel to clone the DOM, otherwise loaders get frozen forever in clones
-        // AND ensuring it only happens ONCE via useRef lock, avoiding visual bounces/resets.
+        // [FIX] Wait until ALL projects are loaded (including non-cloud ones)
+        // to ensure the DOM is final before OwlCarousel takes over and clones nodes.
         if (typeof window !== "undefined" && !isCarouselInitialized.current) {
             try {
                 // @ts-ignore
-                if (window.initTemplateScripts && loadedProjectsCount >= totalCloudProjects) {
+                if (window.initTemplateScripts && loadedProjectsCount >= totalProjects) {
                     isCarouselInitialized.current = true;
+                    // Smaller timeout to avoid the "waiting" feel, 100ms is enough for final DOM settle
                     setTimeout(() => {
                         // @ts-ignore
                         window.initTemplateScripts();
-
-                        // [FIX] Force override OwlCarousel settings after initTemplateScripts
-                        // to defeat aggressive browser caching of public/labs/js/interface.js
-                        if ((window as any).jQuery) {
-                            const $ = (window as any).jQuery;
-                            setTimeout(() => {
-                                const $owl = $('.carousel-project');
-                                if ($owl.length && $owl.hasClass('owl-loaded')) {
-                                    $owl.trigger('destroy.owl.carousel');
-                                    $owl.removeClass('owl-hidden');
-                                    $owl.owlCarousel({
-                                        loop: false,
-                                        margin: 10,
-                                        nav: true,
-                                        dots: true,
-                                        items: 1
-                                    });
-                                }
-                            }, 50);
-                        }
-                    }, 300);
+                        console.log("[Carousel] Initialized successfully with all projects.");
+                    }, 100);
                 }
             } catch (e) {
                 console.error("Error initializing template scripts", e);
             }
         }
-    }, [data, loadedProjectsCount, totalCloudProjects]); // Re-ejecutar si la data cambia mucho
+    }, [data, loadedProjectsCount, totalProjects]);
 
     const c = data.colors || {
         primary: "#23a592",
@@ -969,7 +951,7 @@ export function TemplateViewer({ data, userId }: Props) {
                             <div className="col-md-6" data-aos="fade-up"><h2 className="mb-3 mb-md-0">{data.projectsTitle}</h2></div>
                         </div>
                         <div className="mt-5 pt-5" data-aos="fade-in">
-                            <div className="carousel-project owl-carousel owl-theme" key={JSON.stringify(data.projects)}>
+                            <div className="carousel-project owl-carousel owl-theme">
                                 {data.projects?.map((project, index) => {
                                     const hasGallery = !!project.galleryId;
                                     const hasExternal = !!project.externalLink;
