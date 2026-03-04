@@ -148,8 +148,8 @@ export default function GalleryHeader({
                         <div className={cn(
                             "absolute inset-0",
                             background === "light"
-                                ? "bg-gradient-to-t from-white via-white/80 to-transparent backdrop-blur-[2px]"
-                                : "bg-gradient-to-t from-black via-black/80 to-transparent backdrop-blur-[2px]"
+                                ? "bg-gradient-to-t from-white/40 via-white/10 to-transparent"
+                                : "bg-gradient-to-t from-black/60 via-black/10 to-transparent"
                         )} />
                     ) : (
                         <div className={cn(
