@@ -1987,6 +1987,7 @@ export default function ProfileV2Page() {
                           <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Ancho del Logo (px)</label>
                           <span className="text-xs font-mono font-bold text-white bg-[#333] px-2 py-1 rounded">{data.header.logoWidth || 120}px</span>
                         </div>
+                        <p className="text-[10px] text-neutral-500 mt-1">Este ajuste también afecta el tamaño del logo en tus galerías de entrega.</p>
                         <input
                           type="range"
                           min="60"
