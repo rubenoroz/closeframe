@@ -1,70 +1,184 @@
 "use client";
 
 import { TemplateContent } from "@/types/profile-v2";
-import { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useMemo } from 'react';
+import GalleryLoaderGrid from "@/components/gallery/GalleryLoaderGrid";
 
 interface Props {
     data: TemplateContent;
     userId?: string;
 }
 
-const ProjectItemView = ({ project, resolveImageUrl }: { project: any, resolveImageUrl: any }) => {
+const ProjectItemView = ({ project, resolveImageUrl, onLoaded }: { project: any, resolveImageUrl: any, onLoaded?: () => void }) => {
+    const [loading, setLoading] = useState(false);
     const [collageImages, setCollageImages] = useState<any[]>([]);
-    const [caid, setCaid] = useState<string>("");
+    const [firstCloudImage, setFirstCloudImage] = useState<string | null>(null);
+    const [caid, setCaid] = useState<string | null>(null);
+    const [projectCover, setProjectCover] = useState<string | null>(null);
 
     useEffect(() => {
-        if (project.galleryId && project.showAsCollage) {
-            const fetchImages = async () => {
+        console.log(`[ProjectItemView] Project "${project.title}" galleryId: "${project.galleryId}", showAsCollage: ${project.showAsCollage}`);
+        if (project.galleryId) {
+            const fetchData = async () => {
+                setLoading(true);
                 try {
-                    const res = await fetch(`/api/projects/${project.galleryId}`);
+                    // Use public metadata endpoint instead of private [id] route
+                    const res = await fetch(`/api/projects/metadata/public?id=${project.galleryId}`);
+                    console.log(`[ProjectItemView] Metadata response status: ${res.status} for "${project.title}"`);
                     const pData = await res.json();
                     const p = pData.project;
-                    if (p?.cloudAccountId && p?.rootFolderId) {
-                        setCaid(p.cloudAccountId);
-                        const fRes = await fetch(`/api/cloud/files?cloudAccountId=${p.cloudAccountId}&folderId=${p.rootFolderId}&projectId=${p.id}`);
-                        const fData = await fRes.json();
-                        if (fData.files) {
-                            setCollageImages(fData.files.filter((f: any) => f.mimeType?.startsWith('image/')).slice(0, 3));
+                    console.log(`[ProjectItemView] Metadata for "${project.title}":`, JSON.stringify(p));
+                    if (p) {
+                        if (p.cloudAccountId) setCaid(p.cloudAccountId);
+                        if (p.coverImage) setProjectCover(p.coverImage);
+
+                        if (p.cloudAccountId && p.rootFolderId) {
+                            // Fetch images to use as cover fallback or collage
+                            const filesUrl = `/api/cloud/files?cloudAccountId=${p.cloudAccountId}&folderId=${encodeURIComponent(p.rootFolderId)}&projectId=${p.id}`;
+                            console.log(`[ProjectItemView] Fetching files: ${filesUrl}`);
+                            const fRes = await fetch(filesUrl);
+                            console.log(`[ProjectItemView] Files response status: ${fRes.status}`);
+                            const fData = await fRes.json();
+                            console.log(`[ProjectItemView] Files count: ${fData.files?.length || 0}`);
+                            if (fData.files && fData.files.length > 0) {
+                                const images = fData.files.filter((f: any) =>
+                                    f.mimeType?.startsWith('image/') ||
+                                    /\.(jpg|jpeg|png|webp|gif|heic|heif|tiff|tif)$/i.test(f.name || "")
+                                );
+                                console.log(`[ProjectItemView] Image files count: ${images.length}`);
+                                if (images.length > 0) {
+                                    setFirstCloudImage(images[0].id);
+                                    if (project.showAsCollage) {
+                                        setCollageImages(images.slice(0, 3));
+                                    }
+                                }
+                            }
+                        } else {
+                            console.warn(`[ProjectItemView] Missing cloudAccountId or rootFolderId for "${project.title}"`, { cloudAccountId: p.cloudAccountId, rootFolderId: p.rootFolderId });
                         }
+                    } else {
+                        console.warn(`[ProjectItemView] No project data returned for "${project.title}", response:`, pData);
                     }
-                } catch (e) { }
+                } catch (e) {
+                    console.error(`[ProjectItemView] Error fetching data for "${project.title}"`, e);
+                } finally {
+                    setLoading(false);
+                    if (onLoaded) onLoaded();
+                }
             };
-            fetchImages();
+            fetchData();
+        } else {
+            console.log(`[ProjectItemView] No galleryId for "${project.title}", skipping cloud fetch`);
+            if (onLoaded) onLoaded();
         }
     }, [project.galleryId, project.showAsCollage]);
 
-    const getThumb = (file: any) => {
-        if (!caid || !file) return "";
-        return `/api/cloud/thumbnail?c=${caid}&f=${file.id}&s=600`;
+    const getThumb = (fileIdOrUrl: string) => {
+        if (!caid || !fileIdOrUrl) return "";
+        // If it's already a resolved URL (starts with http or data:), return it
+        if (fileIdOrUrl.startsWith('http') || fileIdOrUrl.startsWith('data:')) return fileIdOrUrl;
+        // encodeURIComponent is mandatory for OneDrive IDs which contain '!' [FIX]
+        return `/api/cloud/thumbnail?c=${caid}&f=${encodeURIComponent(fileIdOrUrl)}&s=1200`;
     };
 
+    // If we have a cloud account ID and the project image looks like a file ID (not a path/URL)
+    // or if the project image is missing but we have a gallery, we might need to resolve it.
+    const projectPlaceholder = (() => {
+        const img = project.image || projectCover;
+        const isDefault = !img || img === "/labs/img/portfolio/1140x641-1.jpg";
+
+        // If it's a cloud project but we don't have the account ID yet, 
+        // don't try to guess or resolve yet to avoid broken URLs (404)
+        if (project.galleryId && !caid && isDefault) {
+            return null;
+        }
+
+        if (!isDefault) {
+            // Updated cloud ID detection: doesn't start with / or http, 
+            // and we either have CAID or it looks like a Cloud ID (OneDrive '!', Dropbox 'id:')
+            const looksLikeCloudId = !img.startsWith('/') && !img.startsWith('http') && (img.includes('!') || img.startsWith('id:'));
+            const isCloudId = caid ? (!img.startsWith('/') && !img.startsWith('http')) : looksLikeCloudId;
+
+            if (isCloudId) return getThumb(img);
+            // It's a path or external URL
+            return resolveImageUrl(img);
+        }
+
+        // It's the default/missing image.
+        if (project.externalLink) {
+            return `https://s0.wp.com/mshots/v1/${encodeURIComponent(project.externalLink.startsWith('http') ? project.externalLink : `https://${project.externalLink}`)}?w=1140&h=641`;
+        }
+
+        // Try cloud first image as fallback [FIX]
+        if (caid && firstCloudImage) return getThumb(firstCloudImage);
+
+        // Ultimate fallback
+        const resolved = resolveImageUrl(img);
+        if (resolved === "/labs/img/portfolio/1140x641-1.jpg") return null;
+        return resolved || null;
+    })();
+
     return (
-        <figure className="position-relative mb-0" style={{ pointerEvents: 'none' }}>
+        <figure className="position-relative mb-0" style={{ pointerEvents: 'none', background: '#111', aspectRatio: '1140/641', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {loading && (
+                <div className="position-absolute w-100 h-100 d-flex align-items-center justify-content-center" style={{ zIndex: 10, background: 'rgba(0,0,0,0.3)' }}>
+                    <div style={{ transform: 'scale(0.4)' }}>
+                        <GalleryLoaderGrid theme="dark" />
+                    </div>
+                </div>
+            )}
             {project.showAsCollage && collageImages.length >= 2 ? (
-                <div className="project-collage" onError={() => setCollageImages([])}>
+                <div className="project-collage" style={{ width: '100%', height: '100%' }}>
                     <div style={{ gridRow: 'span 2' }}>
-                        <img src={getThumb(collageImages[0])} alt="" onError={(e: any) => e.target.src = resolveImageUrl(project.image)} />
+                        <img
+                            src={getThumb(collageImages[0]?.id) || projectPlaceholder || ""}
+                            alt=""
+                            onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                if (projectPlaceholder && target.src !== projectPlaceholder) {
+                                    target.src = projectPlaceholder;
+                                }
+                            }}
+                        />
                     </div>
                     <div>
-                        <img src={getThumb(collageImages[1])} alt="" onError={(e: any) => e.target.src = resolveImageUrl(project.image)} />
+                        <img
+                            src={getThumb(collageImages[1]?.id) || projectPlaceholder || ""}
+                            alt=""
+                            onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                if (projectPlaceholder && target.src !== projectPlaceholder) {
+                                    target.src = projectPlaceholder;
+                                }
+                            }}
+                        />
                     </div>
                     <div>
-                        <img src={getThumb(collageImages[2] || collageImages[0])} alt="" onError={(e: any) => e.target.src = resolveImageUrl(project.image)} />
+                        <img
+                            src={getThumb(collageImages[2]?.id || collageImages[0]?.id) || projectPlaceholder || ""}
+                            alt=""
+                            onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                if (projectPlaceholder && target.src !== projectPlaceholder) {
+                                    target.src = projectPlaceholder;
+                                }
+                            }}
+                        />
                     </div>
                 </div>
             ) : (
-                <img
-                    alt=""
-                    className="w-100 img-fluid"
-                    src={project.image && project.image !== "/labs/img/portfolio/1140x641-1.jpg"
-                        ? resolveImageUrl(project.image)
-                        : (project.externalLink
-                            ? `https://s0.wp.com/mshots/v1/${encodeURIComponent(project.externalLink.startsWith('http') ? project.externalLink : `https://${project.externalLink}`)}?w=1140&h=641`
-                            : resolveImageUrl(project.image))}
-                    onError={(e: any) => {
-                        e.target.src = "/labs/img/portfolio/1140x641-1.jpg";
-                    }}
-                />
+                <div className="w-100 h-100" style={{ overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {projectPlaceholder ? (
+                        <img
+                            alt=""
+                            className="w-100 h-100 img-fluid"
+                            style={{ objectFit: 'cover' }}
+                            src={projectPlaceholder}
+                        />
+                    ) : (
+                        !loading && <i className="fas fa-image text-white-50" style={{ fontSize: '3.5rem' }}></i>
+                    )}
+                </div>
             )}
             <figcaption className="text-white">
                 <h3 className="mb-2 text-white">{project.title}</h3>
@@ -89,45 +203,45 @@ export function TemplateViewer({ data, userId }: Props) {
     })();
     const bookingLeadDays = data.cta?.minAnticipationDays || 0;
 
-    const getMinDate = () => {
+    const minDate = (() => {
         const d = new Date();
-        d.setDate(d.getDate() + (bookingLeadDays || 1));
+        d.setDate(d.getDate() + (bookingLeadDays || 0));
         return d.toISOString().split('T')[0];
-    };
-    const getMaxDate = () => {
-        if (bookingWindowWeeks === 0) return undefined;
+    })();
+
+    const maxDate = (() => {
         const d = new Date();
         d.setDate(d.getDate() + (bookingWindowWeeks * 7));
         return d.toISOString().split('T')[0];
-    };
-    const minDate = getMinDate();
-    const maxDate = getMaxDate();
+    })();
 
     const handleBookingSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!userId) { setBookingError('No se pudo identificar al profesional.'); return; }
         setBookingLoading(true);
         setBookingError(null);
 
-        // Convert the "YYYY-MM-DD" local string to an ISO string representing local noon (12:00:00)
-        // so it creates a visible block in calendar apps during the day instead of midnight
-        const [y, m, d] = bookingForm.date.split('-');
-        const localDate = new Date(parseInt(y), parseInt(m) - 1, parseInt(d), 12, 0, 0);
-
         try {
-            const response = await fetch('/api/public/bookings', {
+            const res = await fetch('/api/booking', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    userId,
-                    ...bookingForm,
-                    date: localDate.toISOString() // explicitly send the ISO offset time
-                }),
+                    metadata: {
+                        userId: userId || 'Richard',
+                        type: 'v2-template'
+                    },
+                    customerName: bookingForm.customerName,
+                    customerEmail: bookingForm.customerEmail,
+                    customerPhone: bookingForm.customerPhone,
+                    date: bookingForm.date,
+                    notes: bookingForm.notes
+                })
             });
-            if (!response.ok) {
-                const d = await response.json();
-                throw new Error(d.error || 'Error al enviar la reserva');
+
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.error || 'Error al procesar la reserva');
             }
+
             setBookingSent(true);
         } catch (err: any) {
             setBookingError(err.message || 'No se pudo enviar la solicitud.');
@@ -136,22 +250,50 @@ export function TemplateViewer({ data, userId }: Props) {
         }
     };
 
+    const totalCloudProjects = useMemo(() => {
+        return data.projects?.filter(p => !!p.galleryId).length || 0;
+    }, [data.projects]);
+
+    const [loadedProjectsCount, setLoadedProjectsCount] = useState(0);
+
     useEffect(() => {
         // Ejecutar Inicialización de animaciones y scripts de template una vez montado el DOM
+        // [FIX] Wait until all cloud-dependent projects have finished fetching their metadata + images
+        // before allowing OwlCarousel to clone the DOM, otherwise loaders get frozen forever in clones
         if (typeof window !== "undefined") {
             try {
                 // @ts-ignore
-                if (window.initTemplateScripts) {
+                if (window.initTemplateScripts && loadedProjectsCount >= totalCloudProjects) {
                     setTimeout(() => {
                         // @ts-ignore
                         window.initTemplateScripts();
+
+                        // [FIX] Force override OwlCarousel settings after initTemplateScripts
+                        // to defeat aggressive browser caching of public/labs/js/interface.js
+                        if ((window as any).jQuery) {
+                            const $ = (window as any).jQuery;
+                            setTimeout(() => {
+                                const $owl = $('.carousel-project');
+                                if ($owl.length && $owl.hasClass('owl-loaded')) {
+                                    $owl.trigger('destroy.owl.carousel');
+                                    $owl.removeClass('owl-hidden');
+                                    $owl.owlCarousel({
+                                        loop: false,
+                                        margin: 10,
+                                        nav: true,
+                                        dots: true,
+                                        items: 1
+                                    });
+                                }
+                            }, 50);
+                        }
                     }, 300);
                 }
             } catch (e) {
                 console.error("Error initializing template scripts", e);
             }
         }
-    }, [data]); // Re-ejecutar si la data cambia mucho
+    }, [data, loadedProjectsCount, totalCloudProjects]); // Re-ejecutar si la data cambia mucho
 
     const c = data.colors || {
         primary: "#23a592",
@@ -179,6 +321,9 @@ export function TemplateViewer({ data, userId }: Props) {
         if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('/uploads/')) {
             return url;
         }
+        // [FIX] Avoid double /labs or prepending /labs to cloud IDs (OneDrive '!', Dropbox 'id:')
+        if (url.startsWith('/labs/')) return url;
+        if (url.startsWith('!') || url.startsWith('id:')) return ""; // Don't try to labs-resolve cloud IDs
         return `/labs${url.startsWith('/') ? '' : '/'}${url}`;
     };
 
@@ -208,6 +353,36 @@ export function TemplateViewer({ data, userId }: Props) {
             {/* Dynamic Color overrides */}
             <style dangerouslySetInnerHTML={{
                 __html: `
+                :root {
+                    --primary: ${c.primary};
+                    --bg-dark: ${c.bgDark};
+                    --bg-light: ${c.bgLight};
+                    --bg-white: ${c.bgWhite};
+                    --text-dark: ${c.textDark};
+                    --text-gray: ${c.textGray};
+                    --text-white: ${c.textWhite};
+                    --header-border: ${headerBorderColor};
+                }
+
+                /* Fix for portrait hero on mobile */
+                @media (max-width: 991px) {
+                    #home::after {
+                        background-size: cover !important;
+                        background-position: center center !important;
+                    }
+                    .menu-is-open .toggler {
+                        z-index: 1070 !important;
+                        opacity: 1 !important;
+                        color: #fff !important;
+                    }
+                }
+
+                .project-collage img {
+                    width: 100% !important;
+                    height: 100% !important;
+                    object-fit: cover !important;
+                }
+
                 /* Background Overrides */
                 body, .bg-white { background-color: ${c.bgWhite} !important; }
                 .bg-dark, .section.bg-dark, .navbar-nav-desctop li ul { background-color: ${c.bgDark} !important; }
@@ -289,205 +464,201 @@ export function TemplateViewer({ data, userId }: Props) {
                         color: ${data.header.navColor} !important; 
                     }
                 ` : ''}
-                    ${data.header.navHoverColor ? `
-                        .navbar-desctop .navbar-nav-desctop > li > a:hover, 
-                        .navbar-desctop .navbar-nav-desctop > li.active > a,
-                        .navbar-desctop .navbar-nav-desctop > li:hover > a { 
-                            color: ${data.header.navHoverColor} !important; 
-                        }
-                    ` : ''}
-
-                    /* Hero Image Effects */
-                    #home {
-                        position: relative;
-                        z-index: 1;
-                        background-image: none !important;
-                        overflow: hidden;
-                        min-height: 100vh; /* FORZAR ALTURA COMPLETA PARA QUE EL BG SE VEA BIEN */
-                        display: flex;
-                        align-items: center;
+                ${data.header.navHoverColor ? `
+                    .navbar-desctop .navbar-nav-desctop > li > a:hover, 
+                    .navbar-desctop .navbar-nav-desctop > li.active > a,
+                    .navbar-desctop .navbar-nav-desctop > li:hover > a { 
+                        color: ${data.header.navHoverColor} !important; 
                     }
+                ` : ''}
+
+                /* Hero Image Effects */
+                #home {
+                    position: relative;
+                    z-index: 1;
+                    background-image: none !important;
+                    overflow: hidden;
+                    min-height: 100vh;
+                    display: flex;
+                    align-items: center;
+                }
+                #home::after {
+                    content: "";
+                    position: absolute;
+                    top: 0;
+                    right: 0;
+                    bottom: 0;
+                    left: 0;
+                    background-image: url('${data.hero.image ? resolveImageUrl(data.hero.image) : "/labs/img/bg/personal.jpg"}') !important;
+                    background-position: ${data.hero.imagePositionX ?? 50}% ${data.hero.imagePositionY ?? 50}% !important;
+                    background-size: ${data.hero.imageScale ? `${data.hero.imageScale}%` : 'cover'} !important;
+                    background-repeat: no-repeat !important;
+                    filter: brightness(${data.hero.imageBrightness ?? 1.0}) blur(${data.hero.imageBlur ?? 0}px) !important;
+                    z-index: -1;
+                    transition: opacity 0.3s ease;
+                }
+
+                /* Center Navigation Arrows Vertically */
+                .owl-nav {
+                    position: absolute;
+                    top: 50% !important;
+                    width: 100%;
+                    transform: translateY(-50%) !important;
+                    pointer-events: none;
+                    z-index: 10;
+                }
+
+                .owl-nav .owl-prev, 
+                .owl-nav .owl-next {
+                    position: absolute !important;
+                    top: 50% !important;
+                    transform: translateY(-50%) !important;
+                    font-size: 10rem !important;
+                    line-height: 1 !important;
+                    font-weight: 100 !important;
+                    font-family: Arial, sans-serif !important;
+                    color: #000 !important;
+                    opacity: 0.15 !important;
+                    transition: all 0.3s ease !important;
+                    background: none !important;
+                    border: none !important;
+                    padding: 0 !important;
+                    margin: 0 !important;
+                    pointer-events: auto;
+                }
+
+                .owl-nav .owl-prev {
+                    left: -100px !important;
+                }
+
+                .owl-nav .owl-next {
+                    right: -100px !important;
+                }
+
+                .owl-nav .owl-prev:hover, 
+                .owl-nav .owl-next:hover {
+                    opacity: 1 !important;
+                }
+
+                /* Typography Upgrade to Lexend */
+                h1, h2, h3, h4, h5, h6, .display-4, .navbar-nav li a {
+                    font-family: 'Lexend', sans-serif !important;
+                    letter-spacing: -0.02em;
+                }
+                html, body {
+                    overflow-x: hidden !important;
+                    position: relative;
+                    width: 100%;
+                }
+                body, p, .lead {
+                    font-family: 'Lexend', sans-serif !important;
+                }
+
+                /* Hide Global Assistant on V2 Profiles */
+                .fixed.bottom-6.right-6 {
+                    display: none !important;
+                }
+                #testimonials {
+                    background-color: #fff !important;
+                    padding-top: 120px !important;
+                    padding-bottom: 120px !important;
+                }
+                .carousel-testimonials .col-testimonial {
+                    position: relative;
+                    padding: 6.2em 3.75em 0 3em;
+                    text-align: left;
+                }
+                .carousel-testimonials .quiote {
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                    font-family: Georgia, "Times New Roman", Times, serif;
+                    font-size: 13rem !important;
+                    line-height: 1;
+                    color: #000 !important;
+                    opacity: 0.11 !important;
+                    z-index: 0;
+                    pointer-events: none;
+                }
+                .carousel-testimonials p {
+                    position: relative;
+                    z-index: 1;
+                    font-size: 1.1rem !important;
+                    line-height: 1.8 !important;
+                    margin-bottom: 2rem;
+                    color: #333 !important;
+                }
+                .carousel-testimonials strong {
+                    color: #000 !important;
+                    font-weight: 700 !important;
+                }
+                .carousel-testimonials .owl-dots {
+                    margin-top: 50px !important;
+                }
+                .carousel-testimonials .owl-dot span {
+                    width: 8px !important;
+                    height: 8px !important;
+                    margin: 5px 7px !important;
+                    background: #d6d6d6 !important;
+                }
+                .carousel-testimonials .owl-dot.active span {
+                    background: #000 !important;
+                }
+
+                /* Responsive Mobile Adjustments */
+                @media (max-width: 991px) {
                     #home::after {
-                        content: "";
-                        position: absolute;
-                        top: 0;
-                        right: 0;
-                        bottom: 0;
-                        left: 0;
-                        background-image: url('${data.hero.image ? resolveImageUrl(data.hero.image) : "/labs/img/bg/personal.jpg"}') !important;
-                        background-position: ${data.hero.imagePositionX ?? 50}% ${data.hero.imagePositionY ?? 50}% !important;
-                        background-size: ${data.hero.imageScale ? `${data.hero.imageScale}%` : 'cover'} !important;
-                        background-repeat: no-repeat !important; /* EVITAR REPETICIÓN DE IMAGEN SI EL SCALING ES MENOR AL CONTENEDOR */
-                        filter: brightness(${data.hero.imageBrightness ?? 1.0}) blur(${data.hero.imageBlur ?? 0}px) !important;
-                        z-index: -1;
-                        transition: opacity 0.3s ease;
+                        background-size: cover !important;
+                        background-position: center center !important;
                     }
-
-                    /* Center Navigation Arrows Vertically */
-                    .owl-nav {
-                        position: absolute;
-                        top: 50% !important;
-                        width: 100%;
-                        transform: translateY(-50%) !important;
-                        pointer-events: none;
-                        z-index: 10;
-                    }
-
-                    .owl-nav .owl-prev, 
-                    .owl-nav .owl-next {
-                        position: absolute !important;
-                        top: 50% !important;
-                        transform: translateY(-50%) !important;
-                        font-size: 10rem !important;
-                        line-height: 1 !important;
-                        font-weight: 100 !important;
-                        font-family: Arial, sans-serif !important; /* System font for thinner character */
-                        color: #000 !important;
-                        opacity: 0.15 !important; /* Always visible */
-                        transition: all 0.3s ease !important;
-                        background: none !important;
-                        border: none !important;
-                        padding: 0 !important;
-                        margin: 0 !important;
-                        pointer-events: auto;
-                    }
-
-                    .owl-nav .owl-prev {
-                        left: -100px !important; /* Increased separation */
-                    }
-
-                    .owl-nav .owl-next {
-                        right: -100px !important; /* Increased separation */
-                    }
-
-                    .owl-nav .owl-prev:hover, 
-                    .owl-nav .owl-next:hover {
+                    .menu-is-open .toggler {
+                        z-index: 1070 !important;
                         opacity: 1 !important;
+                        color: #fff !important;
                     }
+                }
 
-                    /* Typography Upgrade to Lexend */
-                    h1, h2, h3, h4, h5, h6, .display-4, .navbar-nav li a {
-                        font-family: 'Lexend', sans-serif !important;
-                        letter-spacing: -0.02em;
-                    }
+                .mobile-nav-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100vw;
+                    height: 100vh;
+                    background: #000000e6;
+                    backdrop-filter: blur(10px);
+                    z-index: 1065;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    opacity: 0;
+                    pointer-events: none;
+                    transition: opacity 0.3s ease;
+                }
+                .menu-is-open .mobile-nav-overlay {
+                    opacity: 1;
+                    pointer-events: auto;
+                }
 
-                    html, body {
-                        overflow-x: hidden !important;
-                        position: relative;
-                        width: 100%;
+                /* Responsive Desktop Adjustments */
+                @media (min-width: 992px) {
+                    .hero-desktop-offset {
+                        margin-left: -200px !important;
+                        max-width: 600px !important;
                     }
-
-                    body, p, .lead {
-                        font-family: 'Lexend', sans-serif !important;
+                    .about-desktop-offset {
+                        margin-left: -200px !important;
+                        width: calc(100% + 400px) !important;
                     }
-
-                    /* Hide Global Assistant on V2 Profiles */
-                    .fixed.bottom-6.right-6 {
-                        display: none !important;
+                    .about-desktop-title-offset {
+                        margin-left: 150px !important;
                     }
-                    #testimonials {
-                        background-color: #fff !important;
-                        padding-top: 120px !important;
-                        padding-bottom: 120px !important;
+                    .services-desktop-offset {
+                        transform: translate(${data.servicesConfig?.offsetLeft || 0}px, ${-(data.servicesConfig?.offsetTop || 0)}px) !important;
+                        width: calc(100% + ${data.servicesConfig?.widthAddition || 0}px) !important;
                     }
-                    .carousel-testimonials .col-testimonial {
-                        position: relative;
-                        padding: 6.2em 3.75em 0 3em;
-                        text-align: left;
-                    }
-                    .carousel-testimonials .quiote {
-                        position: absolute;
-                        left: 0;
-                        top: 0;
-                        font-family: Georgia, "Times New Roman", Times, serif;
-                        font-size: 13rem !important;
-                        line-height: 1;
-                        color: #000 !important;
-                        opacity: 0.11 !important;
-                        z-index: 0;
-                        pointer-events: none;
-                    }
-                    .carousel-testimonials p {
-                        position: relative;
-                        z-index: 1;
-                        font-size: 1.1rem !important;
-                        line-height: 1.8 !important;
-                        margin-bottom: 2rem;
-                        color: #333 !important;
-                    }
-                    .carousel-testimonials strong {
-                        color: #000 !important;
-                        font-weight: 700 !important;
-                    }
-                    .carousel-testimonials .owl-dots {
-                        margin-top: 50px !important;
-                    }
-                    .carousel-testimonials .owl-dot span {
-                        width: 8px !important;
-                        height: 8px !important;
-                        margin: 5px 7px !important;
-                        background: #d6d6d6 !important;
-                    }
-                    .carousel-testimonials .owl-dot.active span {
-                        background: #000 !important;
-                    }
-
-                    /* Responsive Mobile Adjustments */
-                    @media (max-width: 991px) {
-                        #home::after {
-                            background-size: cover !important;
-                            background-position: center center !important;
-                        }
-                        .menu-is-open .toggler {
-                            z-index: 1070 !important;
-                            opacity: 1 !important;
-                            color: #fff !important;
-                        }
-                    }
-
-                    .mobile-nav-overlay {
-                        position: fixed;
-                        top: 0;
-                        left: 0;
-                        width: 100vw;
-                        height: 100vh;
-                        background: #000000e6;
-                        backdrop-filter: blur(10px);
-                        z-index: 1065;
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        justify-content: center;
-                        opacity: 0;
-                        pointer-events: none;
-                        transition: opacity 0.3s ease;
-                    }
-                    .menu-is-open .mobile-nav-overlay {
-                        opacity: 1;
-                        pointer-events: auto;
-                    }
-
-                    /* Responsive Desktop Adjustments */
-                    @media (min-width: 992px) {
-                        .hero-desktop-offset {
-                            margin-left: -200px !important;
-                            max-width: 600px !important;
-                        }
-                        .about-desktop-offset {
-                            margin-left: -200px !important;
-                            width: calc(100% + 400px) !important;
-                        }
-                        .about-desktop-title-offset {
-                            margin-left: 150px !important;
-                        }
-                        .services-desktop-offset {
-                            transform: translate(${data.servicesConfig?.offsetLeft || 0}px, ${-(data.servicesConfig?.offsetTop || 0)}px) !important;
-                            width: calc(100% + ${data.servicesConfig?.widthAddition || 0}px) !important;
-                        }
-                    }
+                }
                 `
-
-
             }} />
 
             {/* Navbar */}
@@ -814,7 +985,11 @@ export function TemplateViewer({ data, userId }: Props) {
                                                 target={openInNewTab ? "_blank" : "_self"}
                                                 rel={openInNewTab ? "noopener noreferrer" : ""}
                                             >
-                                                <ProjectItemView project={project} resolveImageUrl={resolveImageUrl} />
+                                                <ProjectItemView
+                                                    project={project}
+                                                    resolveImageUrl={resolveImageUrl}
+                                                    onLoaded={() => setLoadedProjectsCount((c) => c + 1)}
+                                                />
                                             </a>
                                         </div>
                                     );
@@ -881,7 +1056,7 @@ export function TemplateViewer({ data, userId }: Props) {
             )}
 
             {/* Footer */}
-            < footer >
+            <footer>
                 <div className="section bg-dark py-5 pb-0">
                     <div className="container">
                         <div className="row">
@@ -907,7 +1082,7 @@ export function TemplateViewer({ data, userId }: Props) {
                 <div className="footer-copy section-sm">
                     <div className="container">{data.footer?.copyrightText}</div>
                 </div>
-            </footer >
+            </footer>
 
             {/* Booking Modal */}
             {showBookingModal && (
@@ -1071,7 +1246,6 @@ export function TemplateViewer({ data, userId }: Props) {
                     </div>
                 </div>
             )}
-        </div >
+        </div>
     );
 }
-

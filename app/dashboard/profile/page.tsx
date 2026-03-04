@@ -1546,6 +1546,24 @@ export default function ProfileV2Page() {
                             </option>
                           ))}
                         </select>
+                        {project.galleryId && (
+                          <div className="flex items-center mt-2 animate-in fade-in slide-in-from-top-1 duration-300">
+                            <label className="relative inline-flex items-center cursor-pointer scale-75 origin-left">
+                              <input
+                                type="checkbox"
+                                className="sr-only peer"
+                                checked={!!project.showAsCollage}
+                                onChange={(e) => {
+                                  const newProjects = [...data.projects];
+                                  newProjects[idx].showAsCollage = e.target.checked;
+                                  setData({ ...data, projects: newProjects });
+                                }}
+                              />
+                              <div className="w-9 h-5 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500"></div>
+                              <span className="ml-2 text-[10px] font-bold text-gray-400 uppercase whitespace-nowrap">Modo Collage (3 Fotos)</span>
+                            </label>
+                          </div>
+                        )}
                       </div>
                       <div>
                         <label className="block text-xs font-semibold text-gray-300 mb-1">O usar Enlace Externo</label>

@@ -1,12 +1,15 @@
+import { CloudFile, CloudFolder, CloudProvider } from "./types";
 
-export class MicrosoftGraphProvider {
+export class MicrosoftGraphProvider implements CloudProvider {
+    providerId = "microsoft";
     private accessToken: string;
 
     constructor(accessToken: string) {
         this.accessToken = accessToken;
     }
 
-    async listFolders(parentId: string = 'root') {
+    async listFolders(parentId: string = 'root', accessToken?: string): Promise<CloudFolder[]> {
+        const token = accessToken || this.accessToken;
         try {
             // If root, we use the special alias 'root', otherwise the item ID
             const endpoint = parentId === 'root'
@@ -17,7 +20,7 @@ export class MicrosoftGraphProvider {
             const url = `${endpoint}?$filter=folder ne null&$select=id,name,folder,parentReference`;
 
             const response = await fetch(url, {
-                headers: { Authorization: `Bearer ${this.accessToken}` }
+                headers: { Authorization: `Bearer ${token}` }
             });
 
             if (!response.ok) {
@@ -40,56 +43,41 @@ export class MicrosoftGraphProvider {
         }
     }
 
-    async listFiles(folderId: string) {
+    async listFiles(folderId: string, accessToken?: string): Promise<CloudFile[]> {
+        const token = accessToken || this.accessToken;
         try {
             const endpoint = folderId === 'root'
                 ? 'https://graph.microsoft.com/v1.0/me/drive/root/children'
                 : `https://graph.microsoft.com/v1.0/me/drive/items/${folderId}/children`;
 
             // Filter for files (folder eq null) and get thumbnails
-            // NOTE: $filter is not always supported on personal accounts for children endpoint, so we fetch all and filter in code
             const url = `${endpoint}?$select=id,name,file,image,video,size,webUrl,mimeType,thumbnails,folder&$expand=thumbnails`;
 
             const response = await fetch(url, {
-                headers: { Authorization: `Bearer ${this.accessToken}` }
+                headers: { Authorization: `Bearer ${token}` }
             });
 
             if (!response.ok) {
                 const error = await response.json();
                 console.error("Microsoft Graph Error (Files):", error);
+
+                // Fallback: Try without OData filter/expand if it fails (sometimes personal folders are finicky)
+                if (response.status === 400) {
+                    const fallbackUrl = `${endpoint}?$select=id,name,file,image,video,size,webUrl,mimeType,folder`;
+                    const fallbackRes = await fetch(fallbackUrl, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    if (fallbackRes.ok) {
+                        const fallData = await fallbackRes.json();
+                        return this.mapGraphItemsToCloudFiles(fallData.value);
+                    }
+                }
+
                 throw new Error(error.error?.message || "Failed to list files");
             }
 
             const data = await response.json();
-
-            // Filter out folders manually
-            const filesOnly = data.value.filter((item: any) => !item.folder);
-
-            return filesOnly.map((item: any) => {
-                // Determine width/height if available
-                let width = item.image?.width || item.video?.width;
-                let height = item.image?.height || item.video?.height;
-
-                // Get largest thumbnail
-                let thumbnailUrl = null;
-                if (item.thumbnails && item.thumbnails.length > 0) {
-                    const thumb = item.thumbnails[0];
-                    thumbnailUrl = thumb.large?.url || thumb.medium?.url || thumb.small?.url;
-                }
-
-                return {
-                    id: item.id,
-                    name: item.name,
-                    mimeType: item.mimeType,
-                    size: item.size,
-                    thumbnailLink: thumbnailUrl, // Direct link to thumbnail
-                    imageMediaMetadata: {
-                        width,
-                        height
-                    },
-                    webViewLink: item.webUrl
-                };
-            });
+            return this.mapGraphItemsToCloudFiles(data.value);
 
         } catch (error) {
             console.error("Microsoft Provider Error (Files):", error);
@@ -97,11 +85,44 @@ export class MicrosoftGraphProvider {
         }
     }
 
-    async getThumbnail(fileId: string): Promise<string | null> {
+    private mapGraphItemsToCloudFiles(items: any[]): CloudFile[] {
+        if (!items) return [];
+
+        // Filter out folders manually
+        const filesOnly = items.filter((item: any) => !item.folder);
+
+        return filesOnly.map((item: any) => {
+            // Determine width/height if available
+            let width = item.image?.width || item.video?.width;
+            let height = item.image?.height || item.video?.height;
+
+            // Get largest thumbnail
+            let thumbnailUrl = null;
+            if (item.thumbnails && item.thumbnails.length > 0) {
+                const thumb = item.thumbnails[0];
+                thumbnailUrl = thumb.large?.url || thumb.medium?.url || thumb.small?.url;
+            }
+
+            return {
+                id: item.id,
+                name: item.name,
+                mimeType: item.file?.mimeType || item.mimeType || "application/octet-stream",
+                size: item.size,
+                thumbnailLink: thumbnailUrl, // Direct link to thumbnail
+                width: width || undefined,
+                height: height || undefined,
+                previewLink: item.webUrl,
+                webViewLink: item.webUrl
+            };
+        });
+    }
+
+    async getThumbnail(fileId: string, accessToken?: string): Promise<string | null> {
+        const token = accessToken || this.accessToken;
         try {
             const url = `https://graph.microsoft.com/v1.0/me/drive/items/${fileId}/thumbnails`;
             const response = await fetch(url, {
-                headers: { Authorization: `Bearer ${this.accessToken}` }
+                headers: { Authorization: `Bearer ${token}` }
             });
 
             if (!response.ok) return null;
@@ -119,22 +140,30 @@ export class MicrosoftGraphProvider {
         }
     }
 
-    async getFileContent(fileId: string) {
-        // Get config to find download URL
-        const url = `https://graph.microsoft.com/v1.0/me/drive/items/${fileId}`;
-        const response = await fetch(url, {
-            headers: { Authorization: `Bearer ${this.accessToken}` }
-        });
+    async getFileLink(fileId: string, accessToken?: string): Promise<string> {
+        const token = accessToken || this.accessToken;
+        try {
+            const url = `https://graph.microsoft.com/v1.0/me/drive/items/${fileId}`;
+            const response = await fetch(url, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
 
-        const data = await response.json();
-        // @microsoft.graph.downloadUrl contains a short-lived URL for content
-        return data["@microsoft.graph.downloadUrl"];
+            if (!response.ok) return "";
+
+            const data = await response.json();
+            // @microsoft.graph.downloadUrl contains a short-lived URL for content
+            return data["@microsoft.graph.downloadUrl"] || "";
+        } catch (e) {
+            console.error("Error getting file link", e);
+            return "";
+        }
     }
 
-    async getQuota() {
+    async getQuota(accessToken?: string) {
+        const token = accessToken || this.accessToken;
         try {
             const response = await fetch("https://graph.microsoft.com/v1.0/me/drive", {
-                headers: { Authorization: `Bearer ${this.accessToken}` }
+                headers: { Authorization: `Bearer ${token}` }
             });
 
             if (!response.ok) return null;

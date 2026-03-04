@@ -65,12 +65,32 @@ export async function GET() {
                     health.web = names.includes("webjpg");
                     health.jpg = names.includes("jpg");
                     health.raw = names.includes("raw");
+                } else if (project.cloudAccount.provider === "microsoft") {
+                    // Microsoft Ping Health check
+                    try {
+                        const url = `https://graph.microsoft.com/v1.0/me/drive/items/${project.rootFolderId}`;
+                        const res = await fetch(url, { headers: { Authorization: `Bearer ${authClient}` } });
+                        if (res.ok) {
+                            health.web = true; health.jpg = true; health.raw = true;
+                        }
+                    } catch (e) { health.cloudDisconnected = true; }
+                } else if (project.cloudAccount.provider === "dropbox") {
+                    // Dropbox Ping Health
+                    try {
+                        const res = await fetch("https://api.dropboxapi.com/2/files/get_metadata", {
+                            method: "POST",
+                            headers: {
+                                Authorization: `Bearer ${authClient}`,
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({ path: project.rootFolderId })
+                        });
+                        if (res.ok) {
+                            health.web = true; health.jpg = true; health.raw = true;
+                        }
+                    } catch (e) { health.cloudDisconnected = true; }
                 } else {
-                    // For other providers, we just mark as connected for now 
-                    // until specific subfolder health logic is implemented
-                    health.web = true;
-                    health.jpg = true;
-                    health.raw = true;
+                    health.web = true; health.jpg = true; health.raw = true;
                 }
 
                 return { ...project, health };
@@ -257,31 +277,48 @@ export async function POST(request: Request) {
             },
         });
 
-        // Create "Moment" folders in Drive if requested
+        // Create "Moment" folders in cloud if requested
         if (moments && Array.isArray(moments) && moments.length > 0) {
             try {
-                // Get fresh auth for this account
+                const account = await prisma.cloudAccount.findUnique({ where: { id: cloudAccountId } });
                 const auth = await getFreshAuth(cloudAccountId);
-                const drive = google.drive({ version: "v3", auth });
 
-                // Create folders in paralell
-                await Promise.all(moments.map(async (momentName: string) => {
-                    if (!momentName || momentName.trim() === "") return;
-                    try {
-                        await drive.files.create({
-                            requestBody: {
-                                name: momentName.trim(),
-                                mimeType: "application/vnd.google-apps.folder",
-                                parents: [rootFolderId]
-                            }
-                        });
-                    } catch (e) {
-                        console.error(`Failed to create folder for moment: ${momentName}`, e);
-                    }
-                }));
+                if (account?.provider === "google") {
+                    const drive = google.drive({ version: "v3", auth: auth as any });
+                    await Promise.all(moments.map(async (m: string) => {
+                        if (!m) return;
+                        try {
+                            await drive.files.create({
+                                requestBody: { name: m.trim(), mimeType: "application/vnd.google-apps.folder", parents: [rootFolderId] }
+                            });
+                        } catch (e) { console.error("Moment creation error (Google):", e); }
+                    }));
+                } else if (account?.provider === "microsoft") {
+                    await Promise.all(moments.map(async (m: string) => {
+                        if (!m) return;
+                        try {
+                            const url = `https://graph.microsoft.com/v1.0/me/drive/items/${rootFolderId}/children`;
+                            await fetch(url, {
+                                method: 'POST',
+                                headers: { Authorization: `Bearer ${auth}`, 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ name: m.trim(), folder: {}, "@microsoft.graph.conflictBehavior": "rename" })
+                            });
+                        } catch (e) { console.error("Moment creation error (Microsoft):", e); }
+                    }));
+                } else if (account?.provider === "dropbox") {
+                    await Promise.all(moments.map(async (m: string) => {
+                        if (!m) return;
+                        try {
+                            await fetch("https://api.dropboxapi.com/2/files/create_folder_v2", {
+                                method: 'POST',
+                                headers: { Authorization: `Bearer ${auth}`, 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ path: `${rootFolderId}/${m.trim()}`, autorename: true })
+                            });
+                        } catch (e) { console.error("Moment creation error (Dropbox):", e); }
+                    }));
+                }
             } catch (err) {
-                console.error("Failed to initialize Drive for creating moments", err);
-                // Non-blocking error
+                console.error("Failed to process moments creation", err);
             }
         }
 

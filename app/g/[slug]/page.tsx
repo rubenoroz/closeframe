@@ -271,7 +271,7 @@ export default async function PublicGalleryPage({ params }: Props) {
             <div className="min-h-screen bg-black text-white flex items-center justify-center p-6 text-center">
                 <div>
                     <h1 className="text-xl font-medium mb-2">No pudimos cargar la galería</h1>
-                    <p className="text-neutral-500 text-sm">Asegúrate de que la carpeta en Drive siga existiendo.</p>
+                    <p className="text-neutral-500 text-sm">Asegúrate de que la carpeta de origen siga existiendo.</p>
                 </div>
             </div>
         );

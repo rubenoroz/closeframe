@@ -130,7 +130,7 @@
         /* Carousel project */
         if ($.fn.owlCarousel) {
             $('.carousel-project').owlCarousel({
-                loop: true,
+                loop: false,
                 margin: 10,
                 nav: true,
                 dots: true,
@@ -139,7 +139,7 @@
 
             /* Carousel project2 */
             $('.carousel-project-2').owlCarousel({
-                loop: true,
+                loop: false,
                 margin: 0,
                 nav: true,
                 dots: true,

@@ -1,35 +1,59 @@
 import { GoogleDriveProvider } from "@/lib/cloud/google-drive-provider";
+import { MicrosoftGraphProvider } from "@/lib/cloud/microsoft-provider";
+import { DropboxProvider } from "@/lib/cloud/dropbox-provider";
+import { KoofrProvider } from "@/lib/cloud/koofr-provider";
 import { getFreshAuth } from "@/lib/cloud/auth-factory";
 import { CloserGalleryStructure, Moment, MediaItem } from "./types";
 import { prisma } from "@/lib/db";
+import { CloudProvider } from "../cloud/types";
 
 const IGNORED_FOLDERS = ["web", "webjpg", "high", "alta", "masters", "crudos", "raw", "selects"];
 const VALID_EXTENSIONS = ["jpg", "jpeg", "png", "mp4", "mov"];
 
 export class GalleryIndexer {
-    private provider: GoogleDriveProvider;
+    private async getProvider(cloudAccountId: string): Promise<{ provider: CloudProvider, authClient: any }> {
+        const account = await prisma.cloudAccount.findUnique({
+            where: { id: cloudAccountId },
+        });
 
-    constructor() {
-        this.provider = new GoogleDriveProvider();
+        if (!account) throw new Error("Cuenta de nube no encontrada");
+
+        const authClient = await getFreshAuth(cloudAccountId);
+        let provider: CloudProvider;
+
+        switch (account.provider) {
+            case "google":
+                provider = new GoogleDriveProvider();
+                break;
+            case "microsoft":
+                provider = new MicrosoftGraphProvider(authClient as string);
+                break;
+            case "dropbox":
+                provider = new DropboxProvider(authClient as string);
+                break;
+            case "koofr":
+                provider = new KoofrProvider(authClient.email, authClient.password);
+                break;
+            default:
+                throw new Error(`Proveedor ${account.provider} no soportado para indexación`);
+        }
+
+        return { provider, authClient };
     }
 
     async indexGallery(cloudAccountId: string, rootFolderId: string, projectId?: string): Promise<CloserGalleryStructure> {
-        // 1. Get Auth & DB Videos Parallel
-        const authClientPromise = getFreshAuth(cloudAccountId);
+        // 1. Get Provider & Auth
+        const { provider, authClient } = await this.getProvider(cloudAccountId);
 
-        const externalVideosPromise = projectId
-            ? (prisma as any).externalVideo.findMany({ where: { projectId } })
-            : Promise.resolve([]);
+        // 2. Get DB Videos Parallel
+        const externalVideos = projectId
+            ? await (prisma as any).externalVideo.findMany({ where: { projectId } })
+            : [];
 
-        const [authClient, externalVideos] = await Promise.all([
-            authClientPromise,
-            externalVideosPromise
-        ]);
-
-        // 2. List Root Contents (Folders & Files)
+        // 3. List Root Contents (Folders & Files)
         const [folders, rootFiles] = await Promise.all([
-            this.provider.listFolders(rootFolderId, authClient),
-            this.provider.listFiles(rootFolderId, authClient)
+            provider.listFolders(rootFolderId, authClient),
+            provider.listFiles(rootFolderId, authClient)
         ]);
 
         const structure: CloserGalleryStructure = {
@@ -38,10 +62,10 @@ export class GalleryIndexer {
             totalItems: 0
         };
 
-        // 3. Process Root Files (Highlights)
+        // 4. Process Root Files (Highlights)
         structure.highlights = rootFiles
             .filter(f => this.isValidFile(f.name, f.mimeType)) // Basic filter
-            .map(f => this.mapFileToMediaItem(f));
+            .map(f => this.mapFileToMediaItem(f, provider.providerId));
 
         // Add root external videos (those without momentName)
         const rootExternal = externalVideos
@@ -52,14 +76,14 @@ export class GalleryIndexer {
 
         structure.totalItems += structure.highlights.length;
 
-        // 4. Process Subfolders (Momentos)
+        // 5. Process Subfolders (Momentos)
         const project = projectId ? await prisma.project.findUnique({ where: { id: projectId }, select: { fileOrder: true, momentsOrder: true, momentsHidden: true } }) : null;
         const momentFolders = folders.filter(f => !IGNORED_FOLDERS.includes(f.name.toLowerCase()));
 
         const momentsData = await Promise.all(momentFolders.map(async (folder, index) => {
-            const files = await this.provider.listFiles(folder.id, authClient);
+            const files = await provider.listFiles(folder.id, authClient);
             const validFiles = files.filter(f => this.isValidFile(f.name, f.mimeType))
-                .map(f => this.mapFileToMediaItem(f));
+                .map(f => this.mapFileToMediaItem(f, provider.providerId));
 
             // Find external videos for this moment (matching folder name)
             const momentExternal = externalVideos
@@ -98,7 +122,7 @@ export class GalleryIndexer {
             const mOrderMap = new Map();
             (project.momentsOrder as string[]).forEach((id, idx) => mOrderMap.set(id, idx));
             structure.moments = momentsData
-                .filter(m => !hiddenSet.has(m.id)) // [NEW] Filter hidden
+                .filter(m => !hiddenSet.has(m.id))
                 .sort((a, b) => {
                     const idxA = mOrderMap.has(a.id) ? mOrderMap.get(a.id) : 999999;
                     const idxB = mOrderMap.has(b.id) ? mOrderMap.get(b.id) : 999999;
@@ -107,7 +131,7 @@ export class GalleryIndexer {
                 .map((m, i) => ({ ...m, order: i }));
         } else {
             structure.moments = momentsData
-                .filter(m => !hiddenSet.has(m.id)) // [NEW] Filter hidden
+                .filter(m => !hiddenSet.has(m.id))
                 .sort((a, b) => a.name.localeCompare(b.name))
                 .map((m, i) => ({ ...m, order: i }));
         }
@@ -134,13 +158,15 @@ export class GalleryIndexer {
         const ext = name.split('.').pop()?.toLowerCase();
         if (!ext || !VALID_EXTENSIONS.includes(ext)) return false;
 
-        if (!mimeType.startsWith("image/") && !mimeType.startsWith("video/")) return false;
+        const isKnownMime = (mimeType || "").startsWith("image/") || (mimeType || "").startsWith("video/") || mimeType === "application/octet-stream";
+        if (!isKnownMime) return false;
 
         return true;
     }
 
-    private mapFileToMediaItem(file: any): MediaItem {
-        const isVideo = file.mimeType.startsWith("video/");
+    private mapFileToMediaItem(file: any, providerId: string): MediaItem {
+        const mime = file.mimeType || "";
+        const isVideo = mime.startsWith("video/");
         return {
             id: file.id,
             url: file.downloadLink || "",
@@ -149,7 +175,7 @@ export class GalleryIndexer {
             width: file.width,
             height: file.height,
             isVideo: isVideo,
-            provider: "drive",
+            provider: providerId as any,
             providerId: file.id
         };
     }

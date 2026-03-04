@@ -1,6 +1,8 @@
 import { Dropbox } from "dropbox";
+import { CloudFile, CloudFolder, CloudProvider } from "./types";
 
-export class DropboxProvider {
+export class DropboxProvider implements CloudProvider {
+    providerId = "dropbox";
     private dbx: Dropbox;
 
     constructor(accessToken: string) {
@@ -10,11 +12,14 @@ export class DropboxProvider {
         });
     }
 
-    async listFolders(parentId?: string) {
+    async listFolders(parentId?: string, accessToken?: string): Promise<CloudFolder[]> {
         try {
-            // Dropbox uses empty string for root, unlike Drive which uses specific ID
-            // BUT, if parentId is provided and it's NOT root, we use it.
-            // If parentId is 'root' or undefined, we use '' (empty string) for Dropbox Root.
+            // If a new accessToken is provided, re-initialize (compatibility with CloudProvider interface)
+            if (accessToken) {
+                this.dbx = new Dropbox({ accessToken, fetch: fetch });
+            }
+
+            // Dropbox uses empty string for root
             const path = (parentId && parentId !== 'root') ? parentId : '';
 
             const response = await this.dbx.filesListFolder({
@@ -26,21 +31,24 @@ export class DropboxProvider {
             const folders = response.result.entries
                 .filter(entry => entry['.tag'] === 'folder')
                 .map(entry => ({
-                    id: entry.path_lower || entry.id, // Use path_lower as ID for easier navigation
+                    id: entry.path_lower || entry.id,
                     name: entry.name
                 }));
 
             return folders;
         } catch (error) {
             console.error("Dropbox listFolders error:", error);
-            // Handle error logic (e.g., if path not found)
             return [];
         }
     }
 
-    async listFiles(folderId: string) {
+    async listFiles(folderId: string, accessToken?: string): Promise<CloudFile[]> {
         try {
-            const path = folderId; // folderId IS the path in our abstraction
+            if (accessToken) {
+                this.dbx = new Dropbox({ accessToken, fetch: fetch });
+            }
+
+            const path = folderId;
 
             const response = await this.dbx.filesListFolder({
                 path: path,
@@ -49,64 +57,68 @@ export class DropboxProvider {
             });
 
             // Filter for files
-            const files = response.result.entries
+            return response.result.entries
                 .filter(entry => entry['.tag'] === 'file')
-                // @ts-ignore - 'size' exists on FileMetadata
-                .map(entry => ({
-                    id: entry.id, // Use strict ID for files
-                    name: entry.name,
-                    mimeType: this.guessMimeType(entry.name),
-                    // @ts-ignore
-                    size: entry.size!.toString(),
-                    // Dropbox handles thumbnails differently (batch or individual)
-                    // We will set thumbnailLink to a proxy URL or use getTemporaryLink
-                    // For now, let's assume we use our proxy for thumbnails
-                    thumbnailLink: null,
-                    // Store strict path for downloads
-                    path_lower: entry.path_lower
-                }));
-
-            return files;
+                .map(entry => {
+                    const file = entry as any;
+                    return {
+                        id: file.id,
+                        name: file.name,
+                        mimeType: this.guessMimeType(file.name),
+                        size: file.size?.toString(),
+                        thumbnailLink: undefined,
+                        downloadLink: undefined, // Will be fetched via getFileLink if needed
+                        path_lower: file.path_lower
+                    };
+                });
         } catch (error) {
             console.error("Dropbox listFiles error:", error);
             return [];
         }
     }
 
-    async getFileContent(fileId: string) {
+    async getFileLink(fileId: string, accessToken?: string): Promise<string> {
         try {
-            // Get temporary link (valid for 4 hours)
+            if (accessToken) {
+                this.dbx = new Dropbox({ accessToken, fetch: fetch });
+            }
+
             const response = await this.dbx.filesGetTemporaryLink({
                 path: fileId
             });
             return response.result.link;
         } catch (error) {
-            console.error("Dropbox getFileContent error:", error);
-            return null;
+            console.error("Dropbox getFileLink error:", error);
+            return "";
         }
     }
 
-    async getThumbnail(fileId: string) {
+    async getThumbnail(fileId: string, accessToken?: string): Promise<string | Buffer | null> {
         try {
-            // Dropbox returns binary data for thumbnails, not a link.
-            // But we can use getTemporaryLink for full res.
-            // For thumbnails, we'll likely use our /api/cloud/thumbnail proxy which calls this class
-            // BUT, this method usually returns a URL in our interface.
-            // Dropbox doesn't give public thumbnail URLs without creating shared links.
+            if (accessToken) {
+                this.dbx = new Dropbox({ accessToken, fetch: fetch });
+            }
 
-            // Getting a temporary link (even for full size) is safer/easier
-            // Or we could implement a fetch logic here if needed.
-            // For now, returning null tells our system to use the "Sharp Fallback" 
-            // OR we can return the temp link of the full image and let Sharp resize it.
+            const response = await this.dbx.filesGetThumbnail({
+                path: fileId,
+                format: { ".tag": "jpeg" },
+                size: { ".tag": "w640h480" },
+                mode: { ".tag": "strict" }
+            });
 
-            const link = await this.getFileContent(fileId);
-            return link;
+            const result = response.result as any;
+            if (result.fileBinary) {
+                return Buffer.from(result.fileBinary);
+            }
+
+            // Fallback to temporary link if binary not available (shouldn't happen with SDK)
+            return this.getFileLink(fileId, accessToken);
         } catch (error) {
+            console.error("Dropbox getThumbnail error:", error);
             return null;
         }
     }
 
-    // Helper
     private guessMimeType(filename: string): string {
         const ext = filename.split('.').pop()?.toLowerCase();
         const map: { [key: string]: string } = {
@@ -121,10 +133,13 @@ export class DropboxProvider {
         return map[ext || ''] || 'application/octet-stream';
     }
 
-    async getQuota() {
+    async getQuota(accessToken?: string) {
         try {
+            if (accessToken) {
+                this.dbx = new Dropbox({ accessToken, fetch: fetch });
+            }
+
             const response = await this.dbx.usersGetSpaceUsage();
-            // Handle individual vs team allocation safely
             let limit = 0;
             if (response.result.allocation['.tag'] === 'individual') {
                 limit = response.result.allocation.allocated;

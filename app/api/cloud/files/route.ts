@@ -233,8 +233,14 @@ export async function GET(request: Request) {
                 const flattenedFiles = results.flat();
 
                 if (flattenedFiles.length > 0) {
-                    mainFiles = [...mainFiles, ...flattenedFiles.filter((f: any) => !isSystemFile(f.name) && isValidMediaFile(f))];
+                    const validFlattened = flattenedFiles.filter((f: any) => !isSystemFile(f.name) && isValidMediaFile(f));
+                    console.log(`[DEBUG] Found ${validFlattened.length} valid media files in subfolders.`);
+                    mainFiles = [...mainFiles, ...validFlattened];
+                } else {
+                    console.log("[DEBUG] No files found in subfolders during flattening.");
                 }
+            } else {
+                console.log("[DEBUG] No candidate subfolders found for flattening.");
             }
         }
 

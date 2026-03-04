@@ -116,7 +116,10 @@ async function getMicrosoftAuth(account: any) {
 
         if (!response.ok) {
             console.error("Microsoft Refresh Failed:", tokens);
-            throw new Error("Failed to refresh Microsoft token");
+            const error = new Error("Failed to refresh Microsoft token: " + (tokens.error_description || tokens.error || "Unknown"));
+            (error as any).status = 401;
+            (error as any).code = "invalid_grant";
+            throw error;
         }
 
         const newExpiry = new Date(Date.now() + tokens.expires_in * 1000);
@@ -190,7 +193,10 @@ async function getDropboxAuth(account: any) {
 
         if (!response.ok) {
             console.error("Dropbox Refresh Failed:", tokens);
-            throw new Error("Failed to refresh Dropbox token");
+            const error = new Error("Failed to refresh Dropbox token: " + (tokens.error_description || tokens.error || "Unknown"));
+            (error as any).status = 401;
+            (error as any).code = "invalid_grant";
+            throw error;
         }
 
         // Calculate new expiry (tokens.expires_in seconds)
