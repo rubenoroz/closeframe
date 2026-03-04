@@ -72,10 +72,7 @@ export default function GalleryHeader({
             // Client Logo
             return profileUrl ? (
                 <a href={profileUrl} target="_blank" rel="noopener noreferrer"
-                    className={cn(
-                        "relative hover:opacity-80 transition-opacity block",
-                        layoutType === "editorial" ? "h-12 md:h-16 w-auto" : "h-16 w-auto max-w-[200px]"
-                    )}
+                    className="relative hover:opacity-80 transition-opacity block w-auto"
                     style={{ height: `${(4 * (logoScale / 100))}rem` }}
                 >
                     <img
@@ -89,11 +86,8 @@ export default function GalleryHeader({
                 </a>
             ) : (
                 <div
-                    className={cn(
-                        "relative block",
-                        layoutType === "editorial" ? "h-12 md:h-16 w-auto" : "h-16 w-auto max-w-[200px]"
-                    )}
-                    style={{ height: layoutType === "editorial" ? `${(4 * (logoScale / 100))}rem` : `${(4 * (logoScale / 100))}rem` }}
+                    className="relative block w-auto"
+                    style={{ height: `${(4 * (logoScale / 100))}rem` }}
                 >
                     <img
                         src={logo}
