@@ -71,10 +71,13 @@ export default function GalleryHeader({
         if (logo) {
             // Client Logo
             return profileUrl ? (
-                <a href={profileUrl} target="_blank" rel="noopener noreferrer" className={cn(
-                    "relative hover:opacity-80 transition-opacity block",
-                    layoutType === "editorial" ? "h-12 md:h-16 w-auto" : "h-16 w-auto max-w-[200px]"
-                )}>
+                <a href={profileUrl} target="_blank" rel="noopener noreferrer"
+                    className={cn(
+                        "relative hover:opacity-80 transition-opacity block",
+                        layoutType === "editorial" ? "h-12 md:h-16 w-auto" : "h-16 w-auto max-w-[200px]"
+                    )}
+                    style={{ height: `${(4 * (logoScale / 100))}rem` }}
+                >
                     <img
                         src={logo}
                         alt="Studio Logo"
