@@ -33,6 +33,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
                 select: {
                     businessName: true,
                     businessLogo: true,
+                    profileV2: {
+                        select: {
+                            content: true
+                        }
+                    }
                 }
             }
         }
@@ -42,7 +47,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
     const title = `${project.headerTitle || project.name} - ${project.user?.businessName || "Closerlens"}`;
     const description = `Galería fotográfica de ${project.user?.businessName || "Closerlens"}`;
-    const logoUrl = project.user?.businessLogo || "https://www.closerlens.com/og-image.png";
+    const profileContent = project.user?.profileV2?.content as any;
+    const logoUrl = profileContent?.header?.logoImage || project.user?.businessLogo || "https://www.closerlens.com/og-image.png";
 
     return {
         title,
@@ -94,7 +100,12 @@ export default async function PublicGalleryPage({ params }: Props) {
                             config: true
                         }
                     },
-                    username: true
+                    username: true,
+                    profileV2: {
+                        select: {
+                            content: true
+                        }
+                    }
                 }
             }
         },
@@ -253,10 +264,10 @@ export default async function PublicGalleryPage({ params }: Props) {
                 project={enhancedProject}
                 structure={structure}
                 businessName={project.user?.businessName}
-                businessLogo={project.user?.businessLogo}
+                businessLogo={(project.user as any)?.profileV2?.content?.header?.logoImage || project.user?.businessLogo}
                 businessWebsite={project.user?.businessWebsite}
                 theme={project.user?.theme}
-                businessLogoScale={project.user?.businessLogoScale}
+                businessLogoScale={(project.user as any)?.profileV2?.content?.header?.logoWidth || project.user?.businessLogoScale}
 
                 collaborativeSections={collaborativeSections}
                 debugMessage={"CHRONOFRAME_UNIFIED_" + Date.now()}

@@ -60,6 +60,14 @@ export async function POST(request: Request) {
         if (data.username) userUpdateData.username = data.username;
         if (data.businessName !== undefined) userUpdateData.businessName = data.businessName;
 
+        // [SYNC] Global branding consistency: Logo and Scale
+        if (data.header?.logoImage !== undefined) {
+            userUpdateData.businessLogo = data.header.logoImage;
+        }
+        if (data.header?.logoWidth !== undefined) {
+            userUpdateData.businessLogoScale = data.header.logoWidth;
+        }
+
         if (Object.keys(userUpdateData).length > 0) {
             await prisma.user.update({
                 where: { id: user.id },
