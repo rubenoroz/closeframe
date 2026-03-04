@@ -1,12 +1,10 @@
 "use client";
 
 import { TemplateContent } from "@/types/profile-v2";
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import GalleryLoaderGrid from "@/components/gallery/GalleryLoaderGrid";
-
-interface Props {
-    data: TemplateContent;
-    userId?: string;
+data: TemplateContent;
+userId ?: string;
 }
 
 const ProjectItemView = ({ project, resolveImageUrl, onLoaded }: { project: any, resolveImageUrl: any, onLoaded?: () => void }) => {
@@ -255,15 +253,18 @@ export function TemplateViewer({ data, userId }: Props) {
     }, [data.projects]);
 
     const [loadedProjectsCount, setLoadedProjectsCount] = useState(0);
+    const isCarouselInitialized = useRef(false);
 
     useEffect(() => {
         // Ejecutar Inicialización de animaciones y scripts de template una vez montado el DOM
         // [FIX] Wait until all cloud-dependent projects have finished fetching their metadata + images
         // before allowing OwlCarousel to clone the DOM, otherwise loaders get frozen forever in clones
-        if (typeof window !== "undefined") {
+        // AND ensuring it only happens ONCE via useRef lock, avoiding visual bounces/resets.
+        if (typeof window !== "undefined" && !isCarouselInitialized.current) {
             try {
                 // @ts-ignore
                 if (window.initTemplateScripts && loadedProjectsCount >= totalCloudProjects) {
+                    isCarouselInitialized.current = true;
                     setTimeout(() => {
                         // @ts-ignore
                         window.initTemplateScripts();
