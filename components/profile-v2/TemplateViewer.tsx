@@ -3,8 +3,10 @@
 import { TemplateContent } from "@/types/profile-v2";
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import GalleryLoaderGrid from "@/components/gallery/GalleryLoaderGrid";
-data: TemplateContent;
-userId ?: string;
+
+interface Props {
+    data: TemplateContent;
+    userId?: string;
 }
 
 const ProjectItemView = ({ project, resolveImageUrl, onLoaded }: { project: any, resolveImageUrl: any, onLoaded?: () => void }) => {
