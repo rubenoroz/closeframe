@@ -125,8 +125,8 @@ export default function GalleryHeader({
                 "relative transition-colors duration-500 overflow-hidden",
                 background === "light" ? "bg-white" : "bg-black",
                 layoutType === "editorial"
-                    ? "py-12 md:py-20 px-6 md:px-12 text-left flex flex-col justify-end min-h-[40vh] md:min-h-[50vh]"
-                    : "py-16 md:py-24 text-center flex flex-col items-center justify-center gap-4"
+                    ? "py-12 md:py-20 px-6 md:px-12 text-left flex flex-col justify-end min-h-[70vh] md:min-h-[85vh]"
+                    : "py-16 md:py-32 text-center flex flex-col items-center justify-center gap-8 min-h-[60vh] md:min-h-[75vh]"
             )}
         >
             {/* Cover Image Background */}
@@ -143,20 +143,17 @@ export default function GalleryHeader({
                             }}
                         />
                     </div>
-                    {/* Dark/Light overlay gradient for editorial to ensure text readability */}
-                    {layoutType === "editorial" ? (
-                        <div className={cn(
-                            "absolute inset-0",
-                            background === "light"
-                                ? "bg-gradient-to-t from-white/40 via-white/10 to-transparent"
-                                : "bg-gradient-to-t from-black/60 via-black/10 to-transparent"
-                        )} />
-                    ) : (
-                        <div className={cn(
-                            "absolute inset-0",
-                            background === "light" ? "bg-white/40" : "bg-black/20"
-                        )} />
-                    )}
+                    {/* Dark/Light overlay gradient for readability */}
+                    <div className={cn(
+                        "absolute inset-0",
+                        layoutType === "editorial"
+                            ? (background === "light"
+                                ? "bg-gradient-to-t from-white/60 via-white/20 to-transparent"
+                                : "bg-gradient-to-t from-black/70 via-black/20 to-transparent")
+                            : (background === "light"
+                                ? "bg-white/30 backdrop-blur-[1px]"
+                                : "bg-black/40 backdrop-blur-[1px]")
+                    )} />
                 </>
             )}
 
@@ -170,7 +167,7 @@ export default function GalleryHeader({
             {/* Content */}
             <div className={cn(
                 "relative z-10 flex flex-col",
-                layoutType === "editorial" ? "items-start gap-6 max-w-4xl" : "items-center gap-4"
+                layoutType === "editorial" ? "items-start gap-8 max-w-4xl" : "items-center gap-8"
             )}>
                 {/* Logo for Non-Editorial Layouts */}
                 {layoutType !== "editorial" && renderLogo()}
@@ -178,9 +175,9 @@ export default function GalleryHeader({
                 {/* Gallery Title */}
                 <h1
                     className={cn(
-                        "font-light tracking-wide",
-                        background === "light" ? "text-neutral-800" : "text-white/90",
-                        layoutType === "editorial" ? "text-4xl md:text-6xl font-normal leading-tight mx-0" : "text-2xl md:text-3xl"
+                        "font-light tracking-wide drop-shadow-lg",
+                        background === "light" ? "text-neutral-800" : "text-white",
+                        layoutType === "editorial" ? "text-5xl md:text-8xl font-medium leading-tight mx-0" : "text-3xl md:text-6xl font-medium"
                     )}
                     style={{
                         fontFamily: fontFamily !== "Inter" ? `'${fontFamily}', sans-serif` : "inherit",
