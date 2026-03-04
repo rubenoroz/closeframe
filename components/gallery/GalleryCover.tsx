@@ -63,13 +63,13 @@ export default function GalleryCover({
                 <img
                     src={coverUrl}
                     alt="Cover"
-                    className="w-full h-full object-cover opacity-60 animate-in fade-in duration-1000"
+                    className="w-full h-full object-cover opacity-90 animate-in fade-in duration-1000"
                     style={{
                         objectPosition: `${x}% ${y}%`,
                         transform: `scale(${scale})`
                     }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/20" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
             </div>
 
             {/* Content Container - Full Screen Absolute */}
