@@ -76,7 +76,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ file
             const provider = new MicrosoftGraphProvider(authClient as string);
 
             downloadFileBuffer = async (fileId: string) => {
-                const downloadUrl = await provider.getFileContent(fileId);
+                const downloadUrl = await provider.getFileLink(fileId);
                 if (!downloadUrl) throw new Error("No download URL found");
                 const res = await fetch(downloadUrl);
                 if (!res.ok) throw new Error("Failed to download content");
@@ -87,7 +87,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ file
             const provider = new DropboxProvider(authClient as string);
 
             downloadFileBuffer = async (fileId: string) => {
-                const downloadUrl = await provider.getFileContent(fileId);
+                const downloadUrl = await provider.getFileLink(fileId);
                 if (!downloadUrl) throw new Error("No download URL found for Dropbox file");
                 const res = await fetch(downloadUrl);
                 if (!res.ok) throw new Error("Failed to download content from Dropbox");
@@ -99,7 +99,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ file
             const provider = new KoofrProvider(authClient.email, authClient.password);
 
             downloadFileBuffer = async (fileId: string) => {
-                const downloadUrl = await provider.getFileContent(fileId);
+                const downloadUrl = await provider.getFileLink(fileId);
                 if (!downloadUrl) throw new Error("No download URL found for Koofr file");
                 const res = await provider.fetchWithAuth(downloadUrl);
                 if (!res.ok) throw new Error("Failed to download content from Koofr");

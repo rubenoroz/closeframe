@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
                     const { MicrosoftGraphProvider } = await import("@/lib/cloud/microsoft-provider");
                     const provider = new MicrosoftGraphProvider(authClient as string);
                     // Get short-lived download URL
-                    const downloadUrl = await provider.getFileContent(fileId);
+                    const downloadUrl = await provider.getFileLink(fileId);
                     if (!downloadUrl) throw new Error("No download URL found");
 
                     // Fetch content

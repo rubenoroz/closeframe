@@ -42,19 +42,19 @@ export async function GET(req: NextRequest) {
         if (account.provider === "microsoft") {
             const { MicrosoftGraphProvider } = await import("@/lib/cloud/microsoft-provider");
             const provider = new MicrosoftGraphProvider(authClient as string);
-            downloadUrl = await provider.getFileContent(fileId);
+            downloadUrl = await provider.getFileLink(fileId);
             // Microsoft pre-signed URLs usually have valid content-type headers when fetched
 
         } else if (account.provider === "dropbox") {
             const { DropboxProvider } = await import("@/lib/cloud/dropbox-provider");
             const provider = new DropboxProvider(authClient as string);
-            downloadUrl = await provider.getFileContent(fileId);
+            downloadUrl = await provider.getFileLink(fileId);
 
         } else if (account.provider === "koofr") {
             const { KoofrProvider } = await import("@/lib/cloud/koofr-provider");
             // @ts-ignore
             const provider = new KoofrProvider(authClient.email, authClient.password);
-            downloadUrl = await provider.getFileContent(fileId);
+            downloadUrl = await provider.getFileLink(fileId);
 
         } else {
             // Google Logic - Stream the file directly
