@@ -444,40 +444,7 @@ export default function GalleryViewer({
                 : 'bg-gradient-to-b from-black/80 to-transparent'
                 } pointer-events-none`}>
                 <div className="flex items-center gap-3 text-lg font-light pointer-events-auto">
-                    {/* ... Logo/Name ... */}
-                    {layoutType !== "editorial" && (
-                        studioLogo ? (
-                            profileUrl ? (
-                                <a
-                                    href={profileUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="h-8 flex items-center justify-center overflow-hidden transition-transform duration-300 origin-left hover:opacity-80"
-                                    style={{ transform: `scale(${studioLogoScale / 100})` }}
-                                >
-                                    <img src={studioLogo} alt={studioName} className="h-full w-auto object-contain max-w-none" />
-                                </a>
-                            ) : (
-                                <div
-                                    className="h-8 flex items-center justify-center overflow-hidden transition-transform duration-300 origin-left"
-                                    style={{ transform: `scale(${studioLogoScale / 100})` }}
-                                >
-                                    <img src={studioLogo} alt={studioName} className="h-full w-auto object-contain max-w-none" />
-                                </div>
-                            )
-                        ) : (
-                            profileUrl ? (
-                                <a href={profileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                                    <Camera className={`w-5 h-5 ${theme === 'light' ? 'text-emerald-600' : 'text-emerald-500'}`} />
-                                    <span className={`tracking-tight font-medium ${theme === 'light' ? 'text-neutral-900' : 'text-white'}`}>{studioName}</span>
-                                </a>
-                            ) : (
-                                <>
-                                    <Camera className={`w-5 h-5 ${theme === 'light' ? 'text-emerald-600' : 'text-emerald-500'}`} />
-                                    <span className={`tracking-tight font-medium ${theme === 'light' ? 'text-neutral-900' : 'text-white'}`}>{studioName}</span>
-                                </>
-                            )
-                        ))}
+                    {/* Logo removed to avoid duplication with Hero Header */}
                 </div>
                 <div className="flex items-center gap-3 pointer-events-auto">
                     {/* Clear selection only if dynamic zip enabled */}
