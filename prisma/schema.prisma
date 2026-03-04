@@ -64,6 +64,7 @@ model User {
   scenaProjects          ScenaProject[]
   sessions               Session[]
   stripeConnectAccount   StripeConnectAccount?
+  isInvited              Boolean               @default(false)
   plan                   Plan?                 @relation(fields: [planId], references: [id])
   profileV2              UserProfileV2?
   tasks                  Task[]                @relation("TaskAssignees")

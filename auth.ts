@@ -74,15 +74,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     });
 
                     if (assignment && assignment.user) {
-                        const planConfig = assignment.user.plan?.config as any || {};
-                        const limits = planConfig.limits || {};
-                        const features = planConfig.features || {};
+                        const { getFeatureLimit, canUseFeature } = await import("@/lib/features/service");
 
-                        const isEnabled = features.referralProgramEnabled ?? false;
+                        // Check if referral program is enabled for this referrer
+                        const isEnabled = await canUseFeature(assignment.userId, 'referralProgramEnabled');
 
                         if (isEnabled) {
-                            const maxReferrals = limits.maxReferrals ?? 0;
+                            const maxReferrals = await getFeatureLimit(assignment.userId, 'invitationQuota');
 
+                            // If limit is null, maybe fallback to legacy maxReferrals or assume 0
+                            // If limit is -1, it's unlimited.
                             if (maxReferrals === -1) {
                                 console.log("[AUTH] Referrer has unlimited invites. Allow.");
                                 return true;
@@ -95,15 +96,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                                 }
                             });
 
-                            console.log(`[AUTH] Referrer usage: ${usageCount}/${maxReferrals}`);
+                            console.log(`[AUTH] Referrer usage: ${usageCount}/${maxReferrals ?? 0}`);
 
-                            if (usageCount < maxReferrals) {
+                            if (usageCount < (maxReferrals ?? 0)) {
                                 return true;
                             } else {
                                 console.log("[AUTH] Referrer limit reached.");
                             }
                         } else {
-                            console.log("[AUTH] Referral program disabled for this referrer's plan.");
+                            console.log("[AUTH] Referral program disabled for this referrer.");
                         }
                     } else {
                         console.log("[AUTH] Invalid referral assignment.");
@@ -113,9 +114,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 }
 
                 // If we get here, no valid invite found
-                console.log("[AUTH] Denying access. InviteRequired.");
-                // Return a specific error query to show the message on login page
-                return "/login?error=InviteRequired";
+                console.log("[AUTH] No invite found during login, but allowing registration to enable paid flow.");
+                return true;
 
             } catch (error) {
                 console.error("[AUTH] Error in signIn callback:", error);
@@ -135,16 +135,23 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 try {
                     const dbUser = await prisma.user.findUnique({
                         where: { id: token.id as string },
-                        select: { role: true, planId: true, plan: { select: { name: true } } }
+                        select: {
+                            role: true,
+                            planId: true,
+                            isInvited: true,
+                            plan: { select: { name: true } }
+                        }
                     });
                     token.role = dbUser?.role || "USER";
                     token.planId = dbUser?.planId || null;
                     token.planName = dbUser?.plan?.name || null;
+                    token.isInvited = dbUser?.isInvited || false;
                 } catch (error) {
                     console.error("Error fetching user role:", error);
                     token.role = "USER";
                     token.planId = null;
                     token.planName = null;
+                    token.isInvited = false;
                 }
             }
             return token;
@@ -157,9 +164,47 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 (session.user as { role?: string }).role = token.role as string || "USER";
                 (session.user as { planId?: string | null }).planId = token.planId as string | null;
                 (session.user as { planName?: string | null }).planName = token.planName as string | null;
+                (session.user as { isInvited?: boolean }).isInvited = token.isInvited as boolean || false;
             }
             return session;
         },
+    },
+    events: {
+        async createUser({ user }) {
+            console.log(`[AUTH] NEW USER CREATED: ${user.email}. Checking for referral cookie...`);
+
+            try {
+                const { cookies } = await import("next/headers");
+                const cookieStore = await cookies();
+                const referralCode = cookieStore.get("cl_ref")?.value;
+
+                if (referralCode && user.id && user.email) {
+                    console.log(`[AUTH] Found referral code ${referralCode} for new user ${user.email}. Registering...`);
+
+                    const { createReferralOnRegistration } = await import("@/lib/services/referral.service");
+
+                    const result = await createReferralOnRegistration(
+                        referralCode,
+                        user.email,
+                        user.id
+                    );
+
+                    if (result.success) {
+                        console.log(`[AUTH] Successfully registered referral for ${user.email}. Marking as invited.`);
+                        await prisma.user.update({
+                            where: { id: user.id },
+                            data: { isInvited: true }
+                        });
+                    } else {
+                        console.warn(`[AUTH] Failed to register referral: ${result.error}`);
+                    }
+                } else {
+                    console.log("[AUTH] No referral code found for new user.");
+                }
+            } catch (error) {
+                console.error("[AUTH] Error in createUser event:", error);
+            }
+        }
     },
     debug: process.env.NODE_ENV === "development",
 });

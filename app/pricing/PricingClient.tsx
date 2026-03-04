@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Check, X, Loader2, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 interface PlanFeature {
@@ -36,6 +36,8 @@ interface PricingClientProps {
 export default function PricingClient({ plans }: PricingClientProps) {
     const { data: session } = useSession();
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const reason = searchParams.get("reason");
     const [billingInterval, setBillingInterval] = useState<"month" | "year">("year");
     const [isLoading, setIsLoading] = useState<string | null>(null);
 
@@ -110,6 +112,16 @@ export default function PricingClient({ plans }: PricingClientProps) {
                     </div>
 
                     <h1 className="text-4xl md:text-5xl font-light pt-8 md:pt-0">Planes y Precios</h1>
+
+                    {reason === "invite_required" && (
+                        <div className="max-w-2xl mx-auto bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-2xl mb-8 animate-in fade-in slide-in-from-top-4 duration-500">
+                            <p className="text-emerald-400 text-sm font-medium">
+                                <span className="block text-lg mb-1">¡Bienvenido a CloserLens! 🚀</span>
+                                Actualmente el acceso gratuito es solo por invitación. Pero no te preocupes, puedes obtener acceso inmediato eligiendo cualquiera de nuestros planes profesionales.
+                            </p>
+                        </div>
+                    )}
+
                     <p className="text-neutral-400 max-w-xl mx-auto">
                         Elige el plan perfecto para potenciar tu carrera profesional.
                     </p>
