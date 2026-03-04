@@ -33,6 +33,7 @@ export const authConfig = {
                 nextUrl.pathname.startsWith('/legal') || // Public legal docs
                 nextUrl.pathname.startsWith('/plan-b') ||
                 nextUrl.pathname.startsWith('/api/upload') || // Guest uploads
+                nextUrl.pathname.startsWith('/api/stripe') || // Stripe previews/checkout (handled inside)
                 nextUrl.pathname.startsWith('/api/auth'); // Auth handlers
 
             // Si es una ruta protegida explícitamente o no es pública, requerir login

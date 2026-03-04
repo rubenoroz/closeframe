@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { FEATURE_POOL } from "@/lib/features";
 import { Check, Loader2 } from "lucide-react";
+import { useSession } from "next-auth/react";
 import type { Region } from "@/lib/geo";
 
 interface Plan {
@@ -37,6 +38,7 @@ interface PricingSectionProps {
 }
 
 export function PricingSection({ plans, region }: PricingSectionProps) {
+    const { data: session } = useSession();
     const router = useRouter();
     const [billingCycle, setBillingCycle] = useState<'month' | 'year'>('year');
     const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
@@ -56,6 +58,11 @@ export function PricingSection({ plans, region }: PricingSectionProps) {
     } | null>(null);
 
     const handleCheckout = async (planId: string, priceId: string | null | undefined, isFree: boolean) => {
+        if (!session) {
+            router.push(`/login?redirect=/pricing`);
+            return;
+        }
+
         if (isFree) {
             router.push('/register');
             return;
@@ -76,7 +83,13 @@ export function PricingSection({ plans, region }: PricingSectionProps) {
                 body: JSON.stringify({ planId, priceId }),
             });
 
-            const preview = await previewResponse.json();
+            let preview;
+            try {
+                preview = await previewResponse.json();
+            } catch (jsonError) {
+                console.error('Failed to parse preview response:', jsonError);
+                throw new Error("El servidor devolvió una respuesta inesperada. Intenta de nuevo.");
+            }
 
             if (!preview.requiresConfirmation) {
                 // New subscription - go directly to Stripe

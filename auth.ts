@@ -113,8 +113,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     console.log("[AUTH] No referral cookie found.");
                 }
 
-                // If we get here, no valid invite found
-                console.log("[AUTH] No invite found during login, but allowing registration to enable paid flow.");
+                // [REVERTED RESTRICTION] Allow all users to register to eliminate blockers.
+                console.log(`[AUTH] Allowing registration for ${user.email} (Restrictions disabled).`);
                 return true;
 
             } catch (error) {

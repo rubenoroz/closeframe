@@ -8,13 +8,13 @@ export async function POST(req: Request) {
     try {
         const session = await auth();
         if (!session?.user?.id) {
-            return new NextResponse("Unauthorized", { status: 401 });
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
         const { planId, priceId } = await req.json();
 
         if (!planId || !priceId) {
-            return new NextResponse("Missing planId or priceId", { status: 400 });
+            return NextResponse.json({ error: "Missing planId or priceId" }, { status: 400 });
         }
 
         // Get user with current plan
@@ -26,7 +26,7 @@ export async function POST(req: Request) {
         });
 
         if (!user) {
-            return new NextResponse("User not found", { status: 404 });
+            return NextResponse.json({ error: "User not found" }, { status: 404 });
         }
 
         // Get target plan
@@ -36,7 +36,7 @@ export async function POST(req: Request) {
         });
 
         if (!targetPlan) {
-            return new NextResponse("Target plan not found", { status: 404 });
+            return NextResponse.json({ error: "Target plan not found" }, { status: 404 });
         }
 
         // No subscription - will redirect to Stripe (no preview needed)
@@ -144,6 +144,9 @@ export async function POST(req: Request) {
 
     } catch (error: any) {
         console.error("[STRIPE_PREVIEW]", error);
-        return new NextResponse(error.message || "Internal Error", { status: 500 });
+        return NextResponse.json(
+            { error: error.message || "Internal Error" },
+            { status: 500 }
+        );
     }
 }

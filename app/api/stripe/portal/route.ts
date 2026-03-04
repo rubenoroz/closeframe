@@ -7,7 +7,7 @@ export async function POST(req: Request) {
     try {
         const session = await auth();
         if (!session?.user?.id) {
-            return new NextResponse("Unauthorized", { status: 401 });
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
         const user = await prisma.user.findUnique({
@@ -15,7 +15,7 @@ export async function POST(req: Request) {
         });
 
         if (!user || !user.stripeCustomerId) {
-            return new NextResponse("User or stripe customer not found", { status: 404 });
+            return NextResponse.json({ error: "User or stripe customer not found" }, { status: 404 });
         }
 
         const stripeSession = await stripe.billingPortal.sessions.create({
@@ -26,6 +26,9 @@ export async function POST(req: Request) {
         return NextResponse.json({ url: stripeSession.url });
     } catch (error: any) {
         console.error("[STRIPE_PORTAL]", error);
-        return new NextResponse(error.message || "Internal Error", { status: 500 });
+        return NextResponse.json(
+            { error: error.message || "Internal Error" },
+            { status: 500 }
+        );
     }
 }
