@@ -49,6 +49,7 @@ export interface TemplateContent {
         logoImage?: string;
         logoCenter?: number;
         logoWidth?: number;
+        galleryLogoWidth?: number; // [NEW] Independent scale for galleries
         navigation: { label: string; url: string; visible?: boolean }[];
         socials: { icon: string; url: string }[];
         navColor?: string;
@@ -145,6 +146,7 @@ export const defaultTemplateContent: TemplateContent = {
         logoImage: "",
         logoCenter: 50,
         logoWidth: 120,
+        galleryLogoWidth: 120,
         navigation: [
             { label: "Inicio", url: "#home", visible: true },
             { label: "Acerca de", url: "#about", visible: true },

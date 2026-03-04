@@ -1984,10 +1984,9 @@ export default function ProfileV2Page() {
                     <div className="pt-4 grid grid-cols-1 md:grid-cols-2 gap-8">
                       <div className="space-y-3">
                         <div className="flex justify-between items-center">
-                          <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Ancho del Logo (px)</label>
+                          <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Logo en Perfil (px)</label>
                           <span className="text-xs font-mono font-bold text-white bg-[#333] px-2 py-1 rounded">{data.header.logoWidth || 120}px</span>
                         </div>
-                        <p className="text-[10px] text-neutral-500 mt-1">Este ajuste también afecta el tamaño del logo en tus galerías de entrega.</p>
                         <input
                           type="range"
                           min="60"
@@ -1995,6 +1994,21 @@ export default function ProfileV2Page() {
                           className="w-full h-1.5 bg-[#444] rounded-lg appearance-none cursor-pointer accent-white"
                           value={data.header.logoWidth || 120}
                           onChange={(e) => setData({ ...data, header: { ...data.header, logoWidth: parseInt(e.target.value) } })}
+                        />
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <label className="text-xs font-bold text-gray-500 uppercase tracking-wider text-emerald-500">Logo en Galerías (px)</label>
+                          <span className="text-xs font-mono font-bold text-white bg-[#333] px-2 py-1 rounded">{data.header.galleryLogoWidth || data.header.logoWidth || 120}px</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="60"
+                          max="300"
+                          className="w-full h-1.5 bg-[#444] rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                          value={data.header.galleryLogoWidth || data.header.logoWidth || 120}
+                          onChange={(e) => setData({ ...data, header: { ...data.header, galleryLogoWidth: parseInt(e.target.value) } })}
                         />
                       </div>
 

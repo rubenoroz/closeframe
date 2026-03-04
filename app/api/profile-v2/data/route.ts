@@ -64,7 +64,10 @@ export async function POST(request: Request) {
         if (data.header?.logoImage !== undefined) {
             userUpdateData.businessLogo = data.header.logoImage;
         }
-        if (data.header?.logoWidth !== undefined) {
+        if (data.header?.galleryLogoWidth !== undefined) {
+            userUpdateData.businessLogoScale = data.header.galleryLogoWidth;
+        } else if (data.header?.logoWidth !== undefined) {
+            // Fallback for older profiles or if gallery-specific width isn't set
             userUpdateData.businessLogoScale = data.header.logoWidth;
         }
 

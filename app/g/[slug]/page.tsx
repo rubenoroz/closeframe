@@ -267,7 +267,7 @@ export default async function PublicGalleryPage({ params }: Props) {
                 businessLogo={(project.user as any)?.profileV2?.content?.header?.logoImage || project.user?.businessLogo}
                 businessWebsite={project.user?.businessWebsite}
                 theme={project.user?.theme}
-                businessLogoScale={(project.user as any)?.profileV2?.content?.header?.logoWidth || project.user?.businessLogoScale}
+                businessLogoScale={(project.user as any)?.profileV2?.content?.header?.galleryLogoWidth || (project.user as any)?.profileV2?.content?.header?.logoWidth || project.user?.businessLogoScale}
 
                 collaborativeSections={collaborativeSections}
                 debugMessage={"CHRONOFRAME_UNIFIED_" + Date.now()}
