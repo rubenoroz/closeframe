@@ -172,12 +172,12 @@ export default function GalleryHeader({
                     className={cn(
                         "font-light tracking-wide drop-shadow-lg",
                         background === "light" ? "text-neutral-800" : "text-white",
-                        layoutType === "editorial" ? "text-5xl md:text-8xl font-medium leading-tight mx-0" : "text-4xl md:text-7xl font-medium leading-tight mx-0"
+                        "text-5xl md:text-8xl font-medium leading-tight mx-0"
                     )}
                     style={{
                         fontFamily: fontFamily !== "Inter" ? `'${fontFamily}', sans-serif` : "inherit",
                         color: color !== "#FFFFFF" ? color : undefined,
-                        fontSize: layoutType !== "editorial" ? `${fontScale}em` : undefined // Override fontScale for editorial sizing or use it as a multiplier
+                        fontSize: `${fontScale}em`
                     }}
                 >
                     {title}
