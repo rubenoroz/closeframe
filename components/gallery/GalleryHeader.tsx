@@ -153,8 +153,8 @@ export default function GalleryHeader({
                         )} />
                     ) : (
                         <div className={cn(
-                            "absolute inset-0 backdrop-blur-sm",
-                            background === "light" ? "bg-white/70" : "bg-black/60"
+                            "absolute inset-0",
+                            background === "light" ? "bg-white/40" : "bg-black/20"
                         )} />
                     )}
                 </>
