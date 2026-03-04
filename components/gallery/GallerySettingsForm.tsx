@@ -545,7 +545,7 @@ export default function GallerySettingsForm({
                         </div>
                         {data.coverImage ? (
                             <div className="space-y-3">
-                                <div className="w-full h-64 rounded-xl overflow-hidden relative border border-neutral-700/50 group">
+                                <div className="w-full h-80 rounded-xl overflow-hidden relative border border-neutral-700/50 group">
                                     <FocalPointPicker
                                         imageUrl={`/api/cloud/thumbnail?c=${cloudAccountId}&f=${data.coverImage}&s=800`}
                                         value={data.coverImageFocus || "50,50"}
@@ -666,7 +666,7 @@ export default function GallerySettingsForm({
                     </div>
                     {data.headerImage ? (
                         <div className="space-y-3">
-                            <div className="w-full h-32 rounded-xl overflow-hidden relative border border-neutral-700/50 group">
+                            <div className="w-full h-80 rounded-xl overflow-hidden relative border border-neutral-700/50 group">
                                 <FocalPointPicker
                                     imageUrl={`/api/cloud/thumbnail?c=${cloudAccountId}&f=${data.headerImage}&s=800`}
                                     value={data.headerImageFocus || "50,50"}
