@@ -18,6 +18,16 @@ export async function POST(req: NextRequest) {
     }
 
     try {
+        if (!process.env.STRIPE_SECRET_KEY) {
+            console.error("[STRIPE] Missing STRIPE_SECRET_KEY");
+            return NextResponse.json({ error: "Configuration Error", message: "Stripe key is missing in production environment." }, { status: 500 });
+        }
+
+        if (!process.env.NEXT_PUBLIC_APP_URL) {
+            console.error("[STRIPE] Missing NEXT_PUBLIC_APP_URL");
+            return NextResponse.json({ error: "Configuration Error", message: "Application URL is not configured." }, { status: 500 });
+        }
+
         const body = await req.json();
         const { planId, priceId, amount, currency, description } = body;
 
@@ -153,6 +163,10 @@ export async function POST(req: NextRequest) {
 
     } catch (error: any) {
         console.error("Create Checkout Error:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        // Include both error and message for compatibility with different frontend patterns
+        return NextResponse.json({
+            error: error.message || "Internal Server Error",
+            message: error.message || "Ocurrió un error inesperado al iniciar el pago."
+        }, { status: 500 });
     }
 }

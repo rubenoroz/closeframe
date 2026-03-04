@@ -86,11 +86,11 @@ export default function PricingClient({ plans }: PricingClientProps) {
                 // Upgrade/Downgrade message
                 window.location.href = '/dashboard/settings?success=true';
             } else {
-                throw new Error(data.message || "Failed to start checkout");
+                throw new Error(data.message || data.error || "Failed to start checkout");
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            alert("Error al iniciar el pago.");
+            alert(`Error al iniciar el pago: ${error.message}`);
         } finally {
             setIsLoading(null);
         }
