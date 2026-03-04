@@ -126,7 +126,7 @@ export default function GalleryHeader({
                 background === "light" ? "bg-white" : "bg-black",
                 layoutType === "editorial"
                     ? "py-12 md:py-20 px-6 md:px-12 text-left flex flex-col justify-end min-h-[70vh] md:min-h-[85vh]"
-                    : "py-16 md:py-32 text-center flex flex-col items-center justify-center gap-8 min-h-[60vh] md:min-h-[75vh]"
+                    : "py-16 md:py-32 px-6 md:px-12 text-left flex flex-col justify-end min-h-[60vh] md:min-h-[75vh]"
             )}
         >
             {/* Cover Image Background */}
@@ -157,27 +157,22 @@ export default function GalleryHeader({
                 </>
             )}
 
-            {/* Absolute Logo for Editorial Layout (Top Left) */}
-            {layoutType === "editorial" && (
-                <div className="absolute top-6 left-6 md:top-12 md:left-12 z-20 drop-shadow-md">
-                    {renderLogo()}
-                </div>
-            )}
+            {/* Absolute Logo (Top Left) - Now for all layouts */}
+            <div className="absolute top-6 left-6 md:top-12 md:left-12 z-20 drop-shadow-md">
+                {renderLogo()}
+            </div>
 
             {/* Content */}
             <div className={cn(
-                "relative z-10 flex flex-col",
-                layoutType === "editorial" ? "items-start gap-8 max-w-4xl" : "items-center gap-8"
+                "relative z-10 flex flex-col items-start gap-8 max-w-4xl"
             )}>
-                {/* Logo for Non-Editorial Layouts */}
-                {layoutType !== "editorial" && renderLogo()}
 
                 {/* Gallery Title */}
                 <h1
                     className={cn(
                         "font-light tracking-wide drop-shadow-lg",
                         background === "light" ? "text-neutral-800" : "text-white",
-                        layoutType === "editorial" ? "text-5xl md:text-8xl font-medium leading-tight mx-0" : "text-3xl md:text-6xl font-medium"
+                        layoutType === "editorial" ? "text-5xl md:text-8xl font-medium leading-tight mx-0" : "text-4xl md:text-7xl font-medium leading-tight mx-0"
                     )}
                     style={{
                         fontFamily: fontFamily !== "Inter" ? `'${fontFamily}', sans-serif` : "inherit",
