@@ -13,6 +13,7 @@ interface GalleryCoverProps {
     profileUrl?: string; // [NEW] Optional profile link
     date?: string | null; // [NEW]
     fontFamily?: string; // [NEW]
+    logoScale?: number; // [NEW]
 }
 
 export default function GalleryCover({
@@ -26,7 +27,8 @@ export default function GalleryCover({
     cloudAccountId,
     profileUrl,
     date, // [NEW]
-    fontFamily = "Inter" // [NEW]
+    fontFamily = "Inter", // [NEW]
+    logoScale = 100 // [NEW]
 }: GalleryCoverProps) {
     useEffect(() => {
         // Dynamically load Google Font if not Inter (default system font)
@@ -76,11 +78,19 @@ export default function GalleryCover({
                 <div className="self-start opacity-80">
                     {logo ? (
                         profileUrl ? (
-                            <a href={profileUrl} target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity">
-                                <img src={logo} alt={studioName} className="h-10 md:h-16 w-auto object-contain opacity-90" />
+                            <a href={profileUrl} target="_blank" rel="noopener noreferrer"
+                                className="hover:opacity-80 transition-opacity block w-auto"
+                                style={{ height: `${(4 * (logoScale / 100))}rem` }}
+                            >
+                                <img src={logo} alt={studioName} className="h-full w-auto object-contain opacity-90" />
                             </a>
                         ) : (
-                            <img src={logo} alt={studioName} className="h-10 md:h-16 w-auto object-contain opacity-90" />
+                            <div
+                                className="block w-auto"
+                                style={{ height: `${(4 * (logoScale / 100))}rem` }}
+                            >
+                                <img src={logo} alt={studioName} className="h-full w-auto object-contain opacity-90" />
+                            </div>
                         )
                     ) : (
                         profileUrl ? (

@@ -375,6 +375,7 @@ export default function CloserGalleryClient({
                 projectName={project.headerTitle || project.name}
                 onEnter={handleEnter}
                 cloudAccountId={project.cloudAccountId}
+                logoScale={businessLogoScale || 100}
                 fontSize={project.headerFontSize}
                 profileUrl={profileUrl}
                 date={project.date} // [NEW]
