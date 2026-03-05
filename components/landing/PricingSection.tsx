@@ -270,7 +270,8 @@ export function PricingSection({ plans, region }: PricingSectionProps) {
                                         featuresList = plan.features;
                                     } else {
                                         const config = getPlanConfig(plan.name);
-                                        featuresList = config.marketingFeatures || FEATURE_POOL.filter(f => {
+                                        // Usamos spread para evitar errores de tipo readonly
+                                        featuresList = config.marketingFeatures ? [...config.marketingFeatures] : FEATURE_POOL.filter(f => {
                                             const pConfig = plan.config || {};
                                             const group = pConfig.features || {};
                                             const limitGroup = pConfig.limits || {};

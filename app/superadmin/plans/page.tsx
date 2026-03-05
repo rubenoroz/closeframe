@@ -664,13 +664,58 @@ export default function PlansPage() {
                                 </div>
                             </div>
 
-                            {/* Features Display (Marketing) - Deprecated in favor of Matrix */}
-                            <div className="bg-neutral-800/50 p-4 rounded-xl border border-neutral-800">
-                                <h3 className="text-sm font-medium text-neutral-300 mb-2">Características del Plan</h3>
-                                <p className="text-sm text-neutral-400">
-                                    Las características y límites de este plan se gestionan desde la vista de <strong>Matriz Detallada</strong>.
-                                    Los cambios que realices allí se reflejarán automáticamente en la tarjeta y en la página de precios.
-                                </p>
+                            {/* Marketing Features List Editor */}
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-sm font-medium text-neutral-300">Lista de beneficios (Landing Page)</h3>
+                                    <span className="text-[10px] text-neutral-500 uppercase">Aparecerán con un check ✅</span>
+                                </div>
+                                <div className="space-y-3">
+                                    {(editingPlan.features || []).map((feature, idx) => (
+                                        <div key={idx} className="flex items-center gap-2 group">
+                                            <div className="flex-1 flex items-center gap-3 px-3 py-2 bg-neutral-800/50 border border-neutral-700 rounded-lg">
+                                                <Check className="w-4 h-4 text-green-500/50" />
+                                                <input
+                                                    type="text"
+                                                    value={feature}
+                                                    onChange={(e) => {
+                                                        const newFeatures = [...editingPlan.features];
+                                                        newFeatures[idx] = e.target.value;
+                                                        setEditingPlan({ ...editingPlan, features: newFeatures });
+                                                    }}
+                                                    className="bg-transparent border-none p-0 focus:ring-0 text-sm w-full text-white"
+                                                />
+                                            </div>
+                                            <button
+                                                onClick={() => removeFeature(idx)}
+                                                className="p-2 text-neutral-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition opacity-0 group-hover:opacity-100"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    ))}
+
+                                    <div className="flex items-center gap-2 mt-2">
+                                        <div className="flex-1 flex items-center gap-3 px-3 py-2 bg-neutral-900 border border-dashed border-neutral-700 rounded-lg focus-within:border-violet-500 transition">
+                                            <Plus className="w-4 h-4 text-violet-500" />
+                                            <input
+                                                type="text"
+                                                value={newFeature}
+                                                onChange={(e) => setNewFeature(e.target.value)}
+                                                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addFeature())}
+                                                placeholder="Agregar beneficio..."
+                                                className="bg-transparent border-none p-0 focus:ring-0 text-sm w-full text-neutral-400"
+                                            />
+                                        </div>
+                                        <button
+                                            onClick={addFeature}
+                                            disabled={!newFeature.trim()}
+                                            className="px-4 py-2 bg-neutral-800 hover:bg-neutral-700 text-sm rounded-lg border border-neutral-700 transition disabled:opacity-50"
+                                        >
+                                            Añadir
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
 
                             {/* Active Toggle */}
