@@ -148,9 +148,19 @@ export default function PricingClient({ plans, region }: PricingClientProps) {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mx-auto">
                     {sortedPlans.map((plan) => {
                         const planConfig = getPlanConfig(plan.name);
-                        let features: string[] = planConfig.marketingFeatures ? [...planConfig.marketingFeatures] : [];
 
-                        if (features.length === 0) {
+                        // Prioridad: 
+                        // 1. Características manuales de la BD (editables en Admin)
+                        // 2. Características del archivo lib/plans.config.ts (hardcoded)
+                        let features: string[] = [];
+                        if (plan.features && Array.isArray(plan.features) && plan.features.length > 0) {
+                            features = plan.features;
+                        } else {
+                            features = planConfig.marketingFeatures ? [...planConfig.marketingFeatures] : [];
+                        }
+
+                        // Si sigue vacío, intentar parsear legacy (aunque arriba ya lo manejamos como array)
+                        if (features.length === 0 && typeof plan.features === 'string') {
                             try {
                                 features = JSON.parse(plan.features);
                             } catch (e) {

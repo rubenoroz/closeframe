@@ -374,62 +374,22 @@ export default function PlansPage() {
                             <span>{plan._count?.users || 0} usuarios</span>
                         </div>
 
-                        {/* Features (Dynamic from Matrix) */}
-                        <ul className="space-y-2">
-                            {FEATURE_POOL.filter(f => {
-                                // Logic to determine if feature should be shown
-                                const config = plan.config || {};
-                                const group = config.features || {};
-                                const limitGroup = config.limits || {};
-
-                                const val = f.type === 'number' ? limitGroup[f.id] : group[f.id];
-                                const finalVal = val !== undefined ? val : f.defaultValue;
-
-                                if (f.type === 'boolean') return finalVal === true;
-                                if (f.type === 'number') return true; // Always show limits? Or only if not -1/0? Let's show all for now or filter.
-                                return !!finalVal;
-                            }).slice(0, 6).map((feature, index) => {
-                                const config = plan.config || {};
-                                const group = config.features || {};
-                                const limitGroup = config.limits || {};
-                                const val = feature.type === 'number' ? limitGroup[feature.id] : group[feature.id];
-                                const finalVal = val !== undefined ? val : feature.defaultValue;
-
-                                return (
-                                    <li key={index} className="flex items-center gap-2 text-sm">
-                                        <Check className="w-4 h-4 text-green-400 shrink-0" />
-                                        <span className="text-neutral-300">
-                                            {feature.type === 'number'
-                                                ? `${feature.label}: ${finalVal === -1 ? 'Ilimitado' : finalVal}`
-                                                : feature.label}
-                                        </span>
-                                    </li>
-                                )
-                            })}
-
-                            {FEATURE_POOL.filter(f => {
-                                const config = plan.config || {};
-                                const group = config.features || {};
-                                const limitGroup = config.limits || {};
-                                const val = f.type === 'number' ? limitGroup[f.id] : group[f.id];
-                                const finalVal = val !== undefined ? val : f.defaultValue;
-                                if (f.type === 'boolean') return finalVal === true;
-                                if (f.type === 'number') return true;
-                                return !!finalVal;
-                            }).length > 6 && (
-                                    <li className="text-sm text-neutral-500">
-                                        +{FEATURE_POOL.filter(f => {
-                                            const config = plan.config || {};
-                                            const group = config.features || {};
-                                            const limitGroup = config.limits || {};
-                                            const val = f.type === 'number' ? limitGroup[f.id] : group[f.id];
-                                            const finalVal = val !== undefined ? val : f.defaultValue;
-                                            if (f.type === 'boolean') return finalVal === true;
-                                            if (f.type === 'number') return true;
-                                            return !!finalVal;
-                                        }).length - 6} más...
-                                    </li>
-                                )}
+                        {/* Features (Marketing) */}
+                        <ul className="space-y-1.5 mt-4 border-t border-neutral-800 pt-4">
+                            {(plan.features || []).slice(0, 6).map((feature, index) => (
+                                <li key={index} className="flex items-start gap-2 text-xs">
+                                    <Check className="w-3.5 h-3.5 text-green-400 shrink-0 mt-0.5" />
+                                    <span className="text-neutral-300 line-clamp-1">{feature}</span>
+                                </li>
+                            ))}
+                            {(plan.features || []).length > 6 && (
+                                <li className="text-xs text-neutral-500 pl-5">
+                                    +{(plan.features || []).length - 6} más...
+                                </li>
+                            )}
+                            {(plan.features || []).length === 0 && (
+                                <li className="text-xs text-neutral-500 italic">No hay características de marketing configuradas.</li>
+                            )}
                         </ul>
 
                         {/* Status Badge */}

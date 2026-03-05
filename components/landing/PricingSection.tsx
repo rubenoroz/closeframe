@@ -263,27 +263,36 @@ export function PricingSection({ plans, region }: PricingSectionProps) {
                             </div>
 
                             <ul className={`space-y-2 mb-12 text-sm flex-1 ${isRecommended ? "text-white/70" : "text-white/50"}`}>
-                                {(getPlanConfig(plan.name).marketingFeatures || FEATURE_POOL.filter(f => {
-                                    const config = plan.config || {};
-                                    const group = config.features || {};
-                                    const limitGroup = config.limits || {};
+                                {(() => {
+                                    // Prioridad de características
+                                    let featuresList: string[] = [];
+                                    if (plan.features && Array.isArray(plan.features) && plan.features.length > 0) {
+                                        featuresList = plan.features;
+                                    } else {
+                                        const config = getPlanConfig(plan.name);
+                                        featuresList = config.marketingFeatures || FEATURE_POOL.filter(f => {
+                                            const pConfig = plan.config || {};
+                                            const group = pConfig.features || {};
+                                            const limitGroup = pConfig.limits || {};
 
-                                    const val = f.type === 'number' ? limitGroup[f.id] : group[f.id];
-                                    const finalVal = val !== undefined ? val : f.defaultValue;
+                                            const val = f.type === 'number' ? limitGroup[f.id] : group[f.id];
+                                            const finalVal = val !== undefined ? val : f.defaultValue;
 
-                                    if (f.type === 'boolean') return finalVal === true;
-                                    if (f.type === 'number') return true;
-                                    return !!finalVal;
-                                }).slice(0, 12).map(f => f.label)).map((feature, i) => {
-                                    return (
+                                            if (f.type === 'boolean') return finalVal === true;
+                                            if (f.type === 'number') return true;
+                                            return !!finalVal;
+                                        }).slice(0, 12).map(f => f.label);
+                                    }
+
+                                    return featuresList.map((feature, i) => (
                                         <li key={i} className={`flex items-start gap-3 ${isRecommended ? "font-bold" : ""}`}>
                                             <Check className={`w-5 h-5 flex-shrink-0 ${isRecommended ? "text-[#cdb8e1]" : "text-[#cdb8e1]"}`} />
                                             <span className="leading-tight">
                                                 {feature}
                                             </span>
                                         </li>
-                                    )
-                                })}
+                                    ));
+                                })()}
                             </ul>
 
                             <button
