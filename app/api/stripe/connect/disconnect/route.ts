@@ -36,9 +36,15 @@ export async function POST(req: NextRequest) {
             console.error("Stripe deauth error (ignoring):", e);
         }
 
-        // Remove from Database
-        await prisma.stripeConnectAccount.delete({
+        // Soft Disconnect from Database: Maintain the record to preserve payment history
+        await prisma.stripeConnectAccount.update({
             where: { userId: session.user.id },
+            data: {
+                stripeAccountId: null,
+                chargesEnabled: false,
+                payoutsEnabled: false,
+                detailsSubmitted: false
+            }
         });
 
         return NextResponse.json({ success: true });

@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
 import { TemplateViewer } from "@/components/profile-v2/TemplateViewer";
-import { TemplateContent } from "@/types/profile-v2";
+import { TemplateContent, defaultTemplateContent } from "@/types/profile-v2";
 import { Metadata } from 'next';
 
 interface Props {
@@ -77,54 +77,26 @@ export default async function LabsProfilePage({ params }: Props) {
     if (user.profileV2?.content) {
         content = user.profileV2.content as unknown as TemplateContent;
     } else {
-        // Fallback: default content based on user info
+        // Fallback: use global defaultTemplateContent and inject user-specific info
         content = {
+            ...defaultTemplateContent,
             header: {
-                logoText: user.businessName || user.username || user.name || "Closerlens",
-                navigation: [
-                    { label: "Home", url: "#home" },
-                    { label: "About", url: "#about" },
-                    { label: "Experience", url: "#experience" },
-                    { label: "Projects", url: "#projects" }
-                ],
-                socials: []
+                ...defaultTemplateContent.header,
+                logoText: user.businessName || user.username || user.name || defaultTemplateContent.header.logoText,
             },
             hero: {
-                heading: `Hola, soy ${user.name}`,
-                description: user.bio || "Bienvenido a mi nuevo perfil.",
-                buttonText: "Contáctame",
-                image: user.coverImage || undefined,
-                visible: true
+                ...defaultTemplateContent.hero,
+                heading: user.name ? `Hola, soy ${user.name}` : defaultTemplateContent.hero.heading,
+                description: user.bio || defaultTemplateContent.hero.description,
             },
             about: {
-                title: "Sobre mí",
-                description: user.bio || "",
-                yearsOfExperience: 0,
-                skills: [],
-                visible: true
+                ...defaultTemplateContent.about,
+                description: user.bio || defaultTemplateContent.about.description,
             },
-            services: [],
-            experience: [],
-            experienceTitle: "Experiencia",
-            projects: [],
-            projectsTitle: "Galerías",
-            projectsViewAllText: "Ver todas",
-            testimonials: [],
-            testimonialsTitle: "Testimonios",
             footer: {
-                email: user.email,
-                socialLabel: "Sígueme",
-                copyrightText: `© ${new Date().getFullYear()} ${user.name}`
-            },
-            colors: {
-                primary: "#23a592",
-                bgDark: "#1d1d1d",
-                bgLight: "#f5f5f5",
-                bgWhite: "#ffffff",
-                textDark: "#343434",
-                textGray: "#767676",
-                textWhite: "#ffffff",
-                headerBorder: "#343434"
+                ...defaultTemplateContent.footer,
+                email: user.email || defaultTemplateContent.footer.email,
+                copyrightText: `© ${new Date().getFullYear()} ${user.businessName || user.name || "Tu Marca"}`
             }
         };
     }

@@ -142,6 +142,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                             role: true,
                             planId: true,
                             isInvited: true,
+                            username: true,
+                            businessName: true,
                             plan: { select: { name: true } }
                         }
                     });
@@ -149,6 +151,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     token.planId = dbUser?.planId || null;
                     token.planName = dbUser?.plan?.name || null;
                     token.isInvited = dbUser?.isInvited || false;
+                    token.username = dbUser?.username || null;
+                    token.businessName = dbUser?.businessName || null;
                 } catch (error) {
                     console.error("Error fetching user role:", error);
                     token.role = "USER";
@@ -168,6 +172,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 (session.user as { planId?: string | null }).planId = token.planId as string | null;
                 (session.user as { planName?: string | null }).planName = token.planName as string | null;
                 (session.user as { isInvited?: boolean }).isInvited = token.isInvited as boolean || false;
+                (session.user as { username?: string | null }).username = token.username as string | null;
+                (session.user as { businessName?: string | null }).businessName = token.businessName as string | null;
             }
             return session;
         },

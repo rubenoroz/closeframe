@@ -49,7 +49,6 @@ export default function DashboardLayout({
         { href: "/dashboard/nodos", label: "Nodos", icon: <Network className="w-5 h-5" /> },
         { href: "/dashboard/clouds", label: "Nubes conectadas", icon: <Settings className="w-5 h-5" /> },
         { href: "/dashboard/payments", label: "Ingresos", icon: <Wallet className="w-5 h-5" /> },
-        { href: "/dashboard/referrals", label: "Referidos", icon: <Users className="w-5 h-5" /> },
         { href: "/dashboard/billing", label: "Suscripción", icon: <CreditCard className="w-5 h-5" /> },
 
         // Conditional Superadmin Link
@@ -150,7 +149,7 @@ export default function DashboardLayout({
                                 )}
                                 <div className="flex-1 text-left">
                                     <p className="text-sm font-medium truncate max-w-[120px]">
-                                        {session?.user?.name || "Usuario"}
+                                        {(session?.user as any)?.businessName || (session?.user as any)?.username || session?.user?.name || "Usuario"}
                                     </p>
                                     <p className="text-xs text-neutral-500 truncate max-w-[120px]">
                                         {session?.user?.email}

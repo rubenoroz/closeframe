@@ -142,7 +142,7 @@ export interface TemplateContent {
 
 export const defaultTemplateContent: TemplateContent = {
     header: {
-        logoText: "",
+        logoText: "TU MARCA",
         logoImage: "",
         logoCenter: 50,
         logoWidth: 120,
@@ -150,33 +150,61 @@ export const defaultTemplateContent: TemplateContent = {
         navigation: [
             { label: "Inicio", url: "#home", visible: true },
             { label: "Acerca de", url: "#about", visible: true },
-            { label: "Experiencia", url: "#experience", visible: true },
-            { label: "Proyectos", url: "#projects", visible: true },
+            { label: "Servicios", url: "#services", visible: true },
+            { label: "Galerías", url: "#projects", visible: true },
             { label: "Testimonios", url: "#testimonials", visible: true },
         ],
         socials: [],
     },
     hero: {
-        heading: "",
-        description: "",
-        buttonText: "Contáctanos",
-        image: "",
+        heading: "Elevando tu presencia visual al siguiente nivel",
+        description: "Bienvenido a mi nuevo portafolio digital. Aquí podrás explorar mis últimos proyectos, servicios profesionales y agendar una colaboración conmigo en un solo clic.",
+        buttonText: "Agenda una Sesión",
+        image: "/hero-photographer.jpg",
         imagePositionX: 50,
         imagePositionY: 50,
         imageScale: 100,
         visible: true,
     },
     about: {
-        title: "",
-        description: "",
-        yearsOfExperience: 0,
-        skills: [],
+        title: "Pasión por el detalle",
+        description: "Soy un creativo dedicado a transformar ideas en experiencias visuales memorables. Mi enfoque se centra en la calidad tecnológica y la narrativa artística, asegurando que cada proyecto cuente una historia única y poderosa.",
+        yearsOfExperience: 5,
+        skills: [
+            { name: "Fotografía Editorial", percentage: 95 },
+            { name: "Dirección de Arte", percentage: 85 },
+            { name: "Post-Postproducción", percentage: 90 }
+        ],
         visible: true,
     },
     services: [
-        { icon: "fas fa-globe", title: "Servicio 1", description: "", image: "", imageWidth: 80, imageOffsetTop: 0, imageOffsetLeft: 0 },
-        { icon: "fas fa-camera", title: "Servicio 2", description: "", image: "", imageWidth: 80, imageOffsetTop: 0, imageOffsetLeft: 0 },
-        { icon: "fas fa-palette", title: "Servicio 3", description: "", image: "", imageWidth: 80, imageOffsetTop: 0, imageOffsetLeft: 0 },
+        {
+            icon: "fas fa-camera",
+            title: "Producción Audiovisual",
+            description: "Cobertura completa para eventos, moda y proyectos corporativos con los más altos estándares.",
+            image: "/gallery-showcase.jpg",
+            imageWidth: 80,
+            imageOffsetTop: 0,
+            imageOffsetLeft: 0
+        },
+        {
+            icon: "fas fa-palette",
+            title: "Dirección Creativa",
+            description: "Conceptualización de marcas y campañas visuales que impactan y perduran en la audiencia.",
+            image: "/studio-showcase.jpg",
+            imageWidth: 80,
+            imageOffsetTop: 0,
+            imageOffsetLeft: 0
+        },
+        {
+            icon: "fas fa-magic",
+            title: "Consultoría de Marca",
+            description: "Asesoría estratégica para optimizar tu presencia digital y narrativa visual profesional.",
+            image: "/organize-showcase.jpg",
+            imageWidth: 80,
+            imageOffsetTop: 0,
+            imageOffsetLeft: 0
+        },
     ],
     servicesConfig: {
         offsetLeft: 0,
@@ -184,35 +212,48 @@ export const defaultTemplateContent: TemplateContent = {
         widthAddition: 0,
         visible: true,
     },
-    experience: [],
-    experienceTitle: "Experiencia",
+    experience: [
+        {
+            years: "Presente",
+            company: "Estudio Creativo",
+            role: "Lead Creative",
+            description: "Liderando proyectos de alto impacto para marcas internacionales."
+        }
+    ],
+    experienceTitle: "Mi Trayectoria",
     experienceVisible: true,
     projects: [],
-    projectsTitle: "Proyectos Destacados",
+    projectsTitle: "Galerías Destacadas",
     projectsVisible: true,
     projectsViewAllText: "Ver todos los proyectos",
-    testimonials: [],
-    testimonialsTitle: "Testimonios",
+    testimonials: [
+        {
+            author: "Cliente de Ejemplo",
+            role: "Marketing Manager",
+            quote: "Trabajar con este estudio fue una experiencia transformadora. La atención al detalle y la profesionalidad superaron todas nuestras expectativas."
+        }
+    ],
+    testimonialsTitle: "Lo que dicen de nosotros",
     testimonialsVisible: true,
     footer: {
-        email: "",
-        socialLabel: "Síguenos en",
-        copyrightText: "",
+        email: "tu@email.com",
+        socialLabel: "Sígueme en mis redes",
+        copyrightText: `© ${new Date().getFullYear()} Tu Marca Digital`,
     },
     colors: {
-        primary: "#0C1236",
-        bgDark: "#1d1d1d",
-        bgLight: "#f5f5f5",
+        primary: "#23a592", // emerald-ish color consistent with closerlens
+        bgDark: "#101010",
+        bgLight: "#f8f8f8",
         bgWhite: "#ffffff",
-        textDark: "#E6E6E6",
-        textGray: "#767676",
-        textWhite: "#FFFFFF",
-        headerBorder: "#333333",
+        textDark: "#1a1a1a",
+        textGray: "#666666",
+        textWhite: "#ffffff",
+        headerBorder: "#222222",
     },
     cta: {
-        buttonText: "Contáctanos",
+        buttonText: "Contáctame",
         reservationWindow: "4 Semanas",
-        minAnticipationDays: 0,
+        minAnticipationDays: 2,
         buttonVisible: true,
     },
     username: "",

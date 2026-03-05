@@ -581,7 +581,7 @@ model CalendarSyncLog {
 model StripeConnectAccount {
   id               String    @id @default(cuid())
   userId           String    @unique
-  stripeAccountId  String    @unique
+  stripeAccountId  String?   @unique
   chargesEnabled   Boolean   @default(false)
   payoutsEnabled   Boolean   @default(false)
   detailsSubmitted Boolean   @default(false)
