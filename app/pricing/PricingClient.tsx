@@ -202,9 +202,16 @@ export default function PricingClient({ plans, region }: PricingClientProps) {
                                     <div className="flex items-baseline gap-1 mb-2">
                                         <span className="text-4xl font-light">{formattedPrice}</span>
                                         {priceAmount && priceAmount > 0 && (
-                                            <span className="text-sm text-neutral-500">
-                                                {currencyLabel} /{billingInterval === "year" ? "año" : "mes"}
-                                            </span>
+                                            <div className="flex flex-col">
+                                                <span className="text-sm text-neutral-500">
+                                                    {currencyLabel} /{billingInterval === "year" ? "mes" : "mes"}
+                                                </span>
+                                                {billingInterval === "year" && (
+                                                    <span className="text-[10px] text-emerald-500/80 font-medium">
+                                                        (Pagas {formatPrice(priceAmount * 12, region)} al año)
+                                                    </span>
+                                                )}
+                                            </div>
                                         )}
                                     </div>
                                     <p className="text-sm text-neutral-400 min-h-[80px] mb-6">{plan.description}</p>
