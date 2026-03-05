@@ -7,7 +7,10 @@ import Resend from "next-auth/providers/resend";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
     adapter: PrismaAdapter(prisma),
-    session: { strategy: "jwt" },
+    session: {
+        strategy: "jwt",
+        maxAge: 7 * 24 * 60 * 60, // 7 days (default is 30 days)
+    },
     ...authConfig,
     providers: [
         ...authConfig.providers,

@@ -11,21 +11,30 @@ export type Region = 'MX' | 'INTL';
  */
 export function getRegionFromHeaders(headers: Headers): Region {
     // Vercel provee automáticamente este header en producción
-    const country = headers.get('x-vercel-ip-country');
+    const country = headers.get('x-vercel-ip-country')?.toUpperCase().trim();
+    const acceptLanguage = headers.get('accept-language')?.toLowerCase() || "";
 
-    // En desarrollo local, el header no existe
-    // Puedes forzar una región para testing con un query param o cookie
+    // Log para depuración en Vercel (opcional, pero útil ahora)
+    console.log(`[GEO] Country: ${country}, Language: ${acceptLanguage}`);
+
+    // Prioridad 1: Vercel Country Header
+    if (country === 'MX') return 'MX';
+
+    // Prioridad 2: Idioma del navegador (es-MX)
+    if (acceptLanguage.includes('es-mx')) return 'MX';
+
+    // Fallback para desarrollo o cuando falten headers
     if (!country) {
         // Fallback para desarrollo: revisar si hay un override
-        const forceRegion = headers.get('x-force-region');
+        const forceRegion = headers.get('x-force-region')?.toUpperCase().trim();
         if (forceRegion === 'MX' || forceRegion === 'INTL') {
-            return forceRegion;
+            return forceRegion as Region;
         }
-        // Default a MX en desarrollo (estás en México)
+        // Default a MX en desarrollo
         return 'MX';
     }
 
-    return country === 'MX' ? 'MX' : 'INTL';
+    return 'INTL';
 }
 
 /**

@@ -259,7 +259,7 @@ export function PricingSection({ plans, region }: PricingSectionProps) {
                                             style: 'decimal',
                                             minimumFractionDigits: 0,
                                             maximumFractionDigits: 0,
-                                        }).format(priceToShow * (billingCycle === 'year' ? 1 : 12))} al año)
+                                        }).format(priceToShow)} al año)
                                     </span>
                                 )}
                             </div>

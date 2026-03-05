@@ -111,13 +111,34 @@ export function PlanBNavbar({ user }: PlanBNavbarProps) {
                     >
                         Precios
                     </a>
-                    <Link
-                        className="text-right text-base font-light text-white hover:text-[#cdb8e1] py-2 px-3 rounded-lg hover:bg-white/10 transition-all cursor-pointer"
-                        onClick={() => setIsMenuOpen(false)}
-                        href="/login"
-                    >
-                        Iniciar Sesión
-                    </Link>
+                    {user ? (
+                        <>
+                            <Link
+                                className="text-right text-base font-medium text-emerald-400 py-2 px-3 rounded-lg hover:bg-white/10 transition-all cursor-pointer"
+                                onClick={() => setIsMenuOpen(false)}
+                                href="/dashboard"
+                            >
+                                Dashboard
+                            </Link>
+                            <button
+                                className="text-right text-base font-light text-red-400 py-2 px-3 rounded-lg hover:bg-white/10 transition-all cursor-pointer"
+                                onClick={() => {
+                                    setIsMenuOpen(false);
+                                    import("next-auth/react").then(mod => mod.signOut({ callbackUrl: "/" }));
+                                }}
+                            >
+                                Cerrar Sesión
+                            </button>
+                        </>
+                    ) : (
+                        <Link
+                            className="text-right text-base font-light text-white hover:text-[#cdb8e1] py-2 px-3 rounded-lg hover:bg-white/10 transition-all cursor-pointer"
+                            onClick={() => setIsMenuOpen(false)}
+                            href="/login"
+                        >
+                            Iniciar Sesión
+                        </Link>
+                    )}
                 </nav>
             </div>
         </>
