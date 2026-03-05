@@ -495,8 +495,8 @@ export default async function PlanBPage() {
                         <div>
                             <h4 className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-10">Legal</h4>
                             <ul className="space-y-4 text-sm font-medium text-white/40">
-                                <li><Link className="hover:text-white transition-colors" href="/legal/terminos_y_condiciones_closerlens">Términos</Link></li>
-                                <li><Link className="hover:text-white transition-colors" href="/legal/politica_de_privacidad_closerlens">Privacidad</Link></li>
+                                <li><Link className="hover:text-white transition-colors" href="/terms">Términos de Servicio</Link></li>
+                                <li><Link className="hover:text-white transition-colors" href="/privacy">Política de Privacidad</Link></li>
                             </ul>
                         </div>
                     </div>
