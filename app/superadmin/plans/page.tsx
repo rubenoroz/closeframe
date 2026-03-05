@@ -591,18 +591,6 @@ export default function PlansPage() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-xs font-medium text-neutral-500 mb-1">
-                                            MXN Mensual
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={(editingPlan as any).stripePriceIdMXNMonthly || ""}
-                                            placeholder="price_..."
-                                            onChange={(e) => setEditingPlan({ ...editingPlan, stripePriceIdMXNMonthly: e.target.value || null } as any)}
-                                            className="w-full px-3 py-2 bg-neutral-900 border border-neutral-700 rounded-lg text-white text-sm focus:outline-none focus:border-violet-500 font-mono"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-neutral-500 mb-1">
                                             MXN Anual
                                         </label>
                                         <input
@@ -615,13 +603,13 @@ export default function PlansPage() {
                                     </div>
                                     <div>
                                         <label className="block text-xs font-medium text-neutral-500 mb-1">
-                                            USD Mensual
+                                            MXN Mensual
                                         </label>
                                         <input
                                             type="text"
-                                            value={(editingPlan as any).stripePriceIdUSDMonthly || ""}
+                                            value={(editingPlan as any).stripePriceIdMXNMonthly || ""}
                                             placeholder="price_..."
-                                            onChange={(e) => setEditingPlan({ ...editingPlan, stripePriceIdUSDMonthly: e.target.value || null } as any)}
+                                            onChange={(e) => setEditingPlan({ ...editingPlan, stripePriceIdMXNMonthly: e.target.value || null } as any)}
                                             className="w-full px-3 py-2 bg-neutral-900 border border-neutral-700 rounded-lg text-white text-sm focus:outline-none focus:border-violet-500 font-mono"
                                         />
                                     </div>
@@ -634,6 +622,18 @@ export default function PlansPage() {
                                             value={(editingPlan as any).stripePriceIdUSDYearly || ""}
                                             placeholder="price_..."
                                             onChange={(e) => setEditingPlan({ ...editingPlan, stripePriceIdUSDYearly: e.target.value || null } as any)}
+                                            className="w-full px-3 py-2 bg-neutral-900 border border-neutral-700 rounded-lg text-white text-sm focus:outline-none focus:border-violet-500 font-mono"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-neutral-500 mb-1">
+                                            USD Mensual
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={(editingPlan as any).stripePriceIdUSDMonthly || ""}
+                                            placeholder="price_..."
+                                            onChange={(e) => setEditingPlan({ ...editingPlan, stripePriceIdUSDMonthly: e.target.value || null } as any)}
                                             className="w-full px-3 py-2 bg-neutral-900 border border-neutral-700 rounded-lg text-white text-sm focus:outline-none focus:border-violet-500 font-mono"
                                         />
                                     </div>
