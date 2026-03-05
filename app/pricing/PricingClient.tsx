@@ -173,7 +173,7 @@ export default function PricingClient({ plans, region }: PricingClientProps) {
                             : (billingInterval === "year" ? plan.priceUSD : plan.monthlyPriceUSD);
 
                         const formattedPrice = priceAmount !== null && priceAmount !== undefined
-                            ? (priceAmount === 0 ? "Gratis" : `$${priceAmount}`)
+                            ? (priceAmount === 0 ? "Gratis" : formatPrice(priceAmount, region))
                             : "—";
 
                         const currencyLabel = region === 'MX' ? 'MXN' : 'USD';

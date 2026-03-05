@@ -32,7 +32,7 @@ export function getRegionFromHeaders(headers: Headers): Region {
  * Obtiene el símbolo de moneda según la región
  */
 export function getCurrencySymbol(region: Region): string {
-    return region === 'MX' ? '$' : '$';
+    return '$'; // Ambos usan '$', pero se mantiene la lógica si cambiara en el futuro
 }
 
 /**

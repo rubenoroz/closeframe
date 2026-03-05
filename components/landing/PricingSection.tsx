@@ -230,6 +230,7 @@ export function PricingSection({ plans, region }: PricingSectionProps) {
 
                     // Format price with locale
                     const formattedPrice = new Intl.NumberFormat(region === 'MX' ? 'es-MX' : 'en-US', {
+                        style: 'decimal',
                         minimumFractionDigits: 0,
                         maximumFractionDigits: 0,
                     }).format(priceToShow);
@@ -255,9 +256,10 @@ export function PricingSection({ plans, region }: PricingSectionProps) {
                                 {billingCycle === 'year' && priceToShow > 0 && (
                                     <span className={`text-xs mt-1 ${isRecommended ? "text-[#cdb8e1]/50" : "text-white/25"}`}>
                                         (Pagas {currencySymbol}{new Intl.NumberFormat(region === 'MX' ? 'es-MX' : 'en-US', {
+                                            style: 'decimal',
                                             minimumFractionDigits: 0,
                                             maximumFractionDigits: 0,
-                                        }).format(priceToShow * 12)} al año)
+                                        }).format(priceToShow * (billingCycle === 'year' ? 1 : 12))} al año)
                                     </span>
                                 )}
                             </div>
