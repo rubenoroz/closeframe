@@ -316,11 +316,11 @@ La versión en español prevalecerá en caso de discrepancia con traducciones.
 
 Para consultas relacionadas con estos Términos:
 
-**Sitio web: **\[Insertar URL de contacto\]
+**Sitio web: **[https://closerlens.com](https://closerlens.com)
 
-**Correo electrónico: **\[Insertar email de soporte\]
+**Correo electrónico: **[CORREO_SOPORTE]
 
-**Razón social: **\[Insertar nombre legal de la empresa\]
+**Razón social: **CloserLens
 
 **DECLARACIÓN DE ACEPTACIÓN**
 

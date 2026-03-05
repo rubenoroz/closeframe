@@ -176,7 +176,7 @@ Usted tiene los siguientes derechos sobre sus datos personales:
 
 **• Revocación de consentimiento: **Retirar su consentimiento en cualquier momento
 
-Para ejercer estos derechos, contáctenos en: \[Insertar email de privacidad\]
+Para ejercer estos derechos, contáctenos en: [CORREO_CONTACTO]
 
 # 8. COOKIES Y TECNOLOGÍAS DE SEGUIMIENTO
 
@@ -208,11 +208,11 @@ Podemos actualizar esta Política de Privacidad ocasionalmente. Le notificaremos
 
 Si tiene preguntas sobre esta Política de Privacidad o desea ejercer sus derechos, puede contactarnos:
 
-**Correo electrónico de privacidad: **\[Insertar email específico para privacidad\]
+**Correo electrónico de privacidad: **[CORREO_LEGAL]
 
-**Correo postal: **\[Insertar dirección completa\]
+**Correo postal: **Zapopan, Jalisco, México
 
-**Sitio web: **\[Insertar URL de contacto\]
+**Sitio web: **[https://closerlens.com](https://closerlens.com)
 
 # 13. DERECHOS ADICIONALES BAJO LEGISLACIÓN MEXICANA
 
@@ -226,7 +226,7 @@ Conforme a la Ley Federal de Protección de Datos Personales en Posesión de los
 
 • Oponerse al uso de sus datos personales para fines específicos (Oposición)
 
-Estos derechos se conocen como derechos ARCO. Para ejercerlos, envíe una solicitud a: \[Insertar email de privacidad\]
+Estos derechos se conocen como derechos ARCO. Para ejercerlos, envíe una solicitud a: [CORREO_LEGAL]
 
 **CONSENTIMIENTO**
 
