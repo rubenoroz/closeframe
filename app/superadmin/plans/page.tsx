@@ -270,6 +270,32 @@ export default function PlansPage() {
         setDragOverPlan(null);
     };
 
+    // Feature Drag and drop handlers
+    const handleFeatureDragStart = (e: React.DragEvent, index: number) => {
+        setDraggedFeatureIndex(index);
+        e.dataTransfer.effectAllowed = 'move';
+    };
+
+    const handleFeatureDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+    };
+
+    const handleFeatureDrop = (e: React.DragEvent, targetIndex: number) => {
+        e.preventDefault();
+        if (draggedFeatureIndex === null || draggedFeatureIndex === targetIndex || !editingPlan) {
+            setDraggedFeatureIndex(null);
+            return;
+        }
+
+        const newFeatures = [...(editingPlan.features || [])];
+        const [removed] = newFeatures.splice(draggedFeatureIndex, 1);
+        newFeatures.splice(targetIndex, 0, removed);
+
+        setEditingPlan({ ...editingPlan, features: newFeatures });
+        setDraggedFeatureIndex(null);
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[60vh]">
