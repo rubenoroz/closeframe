@@ -112,9 +112,11 @@ export default function PlansPage() {
     const [isCreating, setIsCreating] = useState(false);
     const [saving, setSaving] = useState(false);
     const [newFeature, setNewFeature] = useState("");
-    // Drag and drop state
+    // Drag and drop state for plans
     const [draggedPlan, setDraggedPlan] = useState<string | null>(null);
     const [dragOverPlan, setDragOverPlan] = useState<string | null>(null);
+    // Drag and drop state for features
+    const [draggedFeatureIndex, setDraggedFeatureIndex] = useState<number | null>(null);
 
     const fetchPlans = async () => {
         try {
@@ -672,8 +674,21 @@ export default function PlansPage() {
                                 </div>
                                 <div className="space-y-3">
                                     {(editingPlan.features || []).map((feature, idx) => (
-                                        <div key={idx} className="flex items-center gap-2 group">
-                                            <div className="flex-1 flex items-center gap-3 px-3 py-2 bg-neutral-800/50 border border-neutral-700 rounded-lg">
+                                        <div
+                                            key={idx}
+                                            draggable
+                                            onDragStart={(e) => handleFeatureDragStart(e, idx)}
+                                            onDragOver={handleFeatureDragOver}
+                                            onDrop={(e) => handleFeatureDrop(e, idx)}
+                                            className={cn(
+                                                "flex items-center gap-2 group transition-all",
+                                                draggedFeatureIndex === idx ? "opacity-30 scale-95" : "opacity-100"
+                                            )}
+                                        >
+                                            <div className="cursor-grab active:cursor-grabbing p-1 opacity-0 group-hover:opacity-100 transition">
+                                                <GripVertical className="w-4 h-4 text-neutral-600" />
+                                            </div>
+                                            <div className="flex-1 flex items-center gap-3 px-3 py-2 bg-neutral-800/50 border border-neutral-700 rounded-lg group-hover:border-neutral-600 transition">
                                                 <Check className="w-4 h-4 text-green-500/50" />
                                                 <input
                                                     type="text"
