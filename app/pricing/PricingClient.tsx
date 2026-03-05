@@ -185,10 +185,10 @@ export default function PricingClient({ plans }: PricingClientProps) {
                                         <span className="text-4xl font-light">{price}</span>
                                         {plan.priceMXN > 0 && <span className="text-sm text-neutral-500">/{billingInterval === "year" ? "año" : "mes"}</span>}
                                     </div>
-                                    <p className="text-sm text-neutral-400 h-10">{plan.description}</p>
+                                    <p className="text-sm text-neutral-400 min-h-[80px] mb-6">{plan.description}</p>
                                 </div>
 
-                                <div className="space-y-4 mb-8 flex-1">
+                                <div className="space-y-2 mb-8 flex-1">
                                     {features.map((feature, i) => (
                                         <div key={i} className="flex items-start gap-3 text-sm">
                                             <Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />

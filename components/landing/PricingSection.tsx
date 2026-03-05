@@ -261,7 +261,7 @@ export function PricingSection({ plans, region }: PricingSectionProps) {
                                 )}
                             </div>
 
-                            <ul className={`space-y-4 mb-12 text-sm flex-1 ${isRecommended ? "text-white/70" : "text-white/50"}`}>
+                            <ul className={`space-y-2 mb-12 text-sm flex-1 ${isRecommended ? "text-white/70" : "text-white/50"}`}>
                                 {(getPlanConfig(plan.name).marketingFeatures || FEATURE_POOL.filter(f => {
                                     const config = plan.config || {};
                                     const group = config.features || {};
