@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { PLANS, getPlanConfig } from "@/lib/plans.config";
 
 interface PlanFeature {
     text: string;
@@ -144,11 +145,15 @@ export default function PricingClient({ plans }: PricingClientProps) {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mx-auto">
                     {sortedPlans.map((plan) => {
-                        let features: string[] = [];
-                        try {
-                            features = JSON.parse(plan.features);
-                        } catch (e) {
-                            features = [];
+                        const planConfig = getPlanConfig(plan.name);
+                        let features: string[] = planConfig.marketingFeatures ? [...planConfig.marketingFeatures] : [];
+
+                        if (features.length === 0) {
+                            try {
+                                features = JSON.parse(plan.features);
+                            } catch (e) {
+                                features = [];
+                            }
                         }
 
                         const price = billingInterval === "year"
@@ -184,7 +189,7 @@ export default function PricingClient({ plans }: PricingClientProps) {
                                 </div>
 
                                 <div className="space-y-4 mb-8 flex-1">
-                                    {features.slice(0, 8).map((feature, i) => (
+                                    {features.map((feature, i) => (
                                         <div key={i} className="flex items-start gap-3 text-sm">
                                             <Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
                                             <span className="text-neutral-300 leading-tight">

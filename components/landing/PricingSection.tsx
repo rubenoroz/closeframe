@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { FEATURE_POOL } from "@/lib/features";
+import { getPlanConfig } from "@/lib/plans.config";
 import { Check, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import type { Region } from "@/lib/geo";
@@ -261,7 +262,7 @@ export function PricingSection({ plans, region }: PricingSectionProps) {
                             </div>
 
                             <ul className={`space-y-4 mb-12 text-sm flex-1 ${isRecommended ? "text-white/70" : "text-white/50"}`}>
-                                {FEATURE_POOL.filter(f => {
+                                {(getPlanConfig(plan.name).marketingFeatures || FEATURE_POOL.filter(f => {
                                     const config = plan.config || {};
                                     const group = config.features || {};
                                     const limitGroup = config.limits || {};
@@ -272,20 +273,12 @@ export function PricingSection({ plans, region }: PricingSectionProps) {
                                     if (f.type === 'boolean') return finalVal === true;
                                     if (f.type === 'number') return true;
                                     return !!finalVal;
-                                }).slice(0, 12).map((feature, i) => {
-                                    const config = plan.config || {};
-                                    const group = config.features || {};
-                                    const limitGroup = config.limits || {};
-                                    const val = feature.type === 'number' ? limitGroup[feature.id] : group[feature.id];
-                                    const finalVal = val !== undefined ? val : feature.defaultValue;
-
+                                }).slice(0, 12).map(f => f.label)).map((feature, i) => {
                                     return (
                                         <li key={i} className={`flex items-start gap-3 ${isRecommended ? "font-bold" : ""}`}>
                                             <Check className={`w-5 h-5 flex-shrink-0 ${isRecommended ? "text-[#cdb8e1]" : "text-[#cdb8e1]"}`} />
                                             <span className="leading-tight">
-                                                {feature.type === 'number'
-                                                    ? `${feature.label}: ${finalVal === -1 ? 'Ilimitado' : finalVal}`
-                                                    : feature.label}
+                                                {feature}
                                             </span>
                                         </li>
                                     )

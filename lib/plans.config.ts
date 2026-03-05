@@ -29,7 +29,24 @@ export const PLANS = {
             lowResDownloads: false, // Updated to match user request (disabled for free)
             highResDownloads: false,
             selectiveDownload: true,
-        }
+        },
+        marketingFeatures: [
+            "Perfil público personal",
+            "Bio corta",
+            "Enlaces externos limitados (Instagram)",
+            "3 galerías",
+            "Solo imágenes",
+            "Hasta 20 imágenes",
+            "Galería pública con link",
+            "Descargas en baja resolución",
+            "Descarga selectiva",
+            "Marca de agua simulada",
+            "Thumbnails de calidad baja",
+            "Modo claro / oscuro",
+            "Links públicos",
+            "1 nube enlazada",
+            "Este plan no incluye video."
+        ]
     },
     FAMILY: {
         id: 'family',
@@ -62,7 +79,17 @@ export const PLANS = {
             lowResDownloads: true,
             highResDownloads: true,
             selectiveDownload: true,
-        }
+        },
+        marketingFeatures: [
+            "Perfil público profesional",
+            "Bio extendida",
+            "Hasta 50 galerías",
+            "Hasta 2 nubes enlazadas",
+            "Galería de video",
+            "Descargas en alta resolución",
+            "Sincronización de calendario",
+            "Acceso a Scena y Nodos"
+        ]
     },
     PRO: {
         id: 'pro',
@@ -94,7 +121,19 @@ export const PLANS = {
             lowResDownloads: true,
             highResDownloads: true,
             selectiveDownload: true,
-        }
+        },
+        marketingFeatures: [
+            "Perfil público profesional",
+            "Bio extendida",
+            "Campos personalizados",
+            "Imagen de portada",
+            "Ocultar branding",
+            "Hasta 100 galerías",
+            "Soporte de video nativo",
+            "Orden manual",
+            "Descargas en alta resolución",
+            "Integración con Stripe"
+        ]
     },
     STUDIO: {
         id: 'studio',
@@ -127,7 +166,17 @@ export const PLANS = {
             lowResDownloads: true,
             highResDownloads: true,
             selectiveDownload: true,
-        }
+        },
+        marketingFeatures: [
+            "Todo lo de Pro",
+            "Galerías ilimitadas",
+            "Nubes ilimitadas",
+            "Galerías colaborativas",
+            "Música en galerías",
+            "Descargas ZIP dinámicas",
+            "Cero comisión por venta",
+            "Soporte prioritario"
+        ]
     },
     AGENCY: {
         id: 'agency',
@@ -160,7 +209,13 @@ export const PLANS = {
             lowResDownloads: true,
             highResDownloads: true,
             selectiveDownload: true,
-        }
+        },
+        marketingFeatures: [
+            "Todo lo de Studio",
+            "Autenticación externa de video",
+            "Multi-usuario avanzado",
+            "Soporte VIP"
+        ]
     }
 } as const;
 
