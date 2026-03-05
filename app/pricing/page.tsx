@@ -1,6 +1,8 @@
 import React from "react";
 import { prisma } from "@/lib/db";
 import PricingClient from "./PricingClient";
+import { headers } from "next/headers";
+import { getRegionFromHeaders } from "@/lib/geo";
 
 export const dynamic = "force-dynamic";
 
@@ -10,5 +12,8 @@ export default async function PricingPage() {
         orderBy: { sortOrder: 'asc' }
     });
 
-    return <PricingClient plans={plans} />;
+    const headersList = await headers();
+    const region = getRegionFromHeaders(headersList);
+
+    return <PricingClient plans={plans} region={region} />;
 }

@@ -7,6 +7,8 @@ import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { PLANS, getPlanConfig } from "@/lib/plans.config";
+import type { Region } from "@/lib/geo";
+import { formatPrice } from "@/lib/geo";
 
 interface PlanFeature {
     text: string;
@@ -32,9 +34,10 @@ interface Plan {
 
 interface PricingClientProps {
     plans: Plan[];
+    region: Region;
 }
 
-export default function PricingClient({ plans }: PricingClientProps) {
+export default function PricingClient({ plans, region }: PricingClientProps) {
     const { data: session } = useSession();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -57,14 +60,13 @@ export default function PricingClient({ plans }: PricingClientProps) {
             return;
         }
 
-        // Determine correct Price ID based on currency (assuming MXN for now or allow toggle)
-        // ideally we detect user locale or allow currency toggle. For now defaulting to MXN if available.
-        const priceId = billingInterval === "year"
-            ? plan.stripePriceIdMXNYearly
-            : plan.stripePriceIdMXNMonthly;
+        // Determine correct Price ID based on currency
+        const priceId = region === 'MX'
+            ? (billingInterval === "year" ? plan.stripePriceIdMXNYearly : plan.stripePriceIdMXNMonthly)
+            : (billingInterval === "year" ? plan.stripePriceIdUSDYearly : plan.stripePriceIdUSDMonthly);
 
         if (!priceId) {
-            alert("Este plan no está configurado para el periodo seleccionado.");
+            alert("Este plan no está configurado para tu región o periodo seleccionado.");
             return;
         }
 
@@ -156,9 +158,15 @@ export default function PricingClient({ plans }: PricingClientProps) {
                             }
                         }
 
-                        const price = billingInterval === "year"
-                            ? (plan.priceMXN > 0 ? `$${plan.priceMXN}` : "Gratis")
-                            : (plan.monthlyPriceMXN ? `$${plan.monthlyPriceMXN}` : "—");
+                        const priceAmount = region === 'MX'
+                            ? (billingInterval === "year" ? plan.priceMXN : plan.monthlyPriceMXN)
+                            : (billingInterval === "year" ? plan.priceUSD : plan.monthlyPriceUSD);
+
+                        const formattedPrice = priceAmount !== null && priceAmount !== undefined
+                            ? (priceAmount === 0 ? "Gratis" : `$${priceAmount}`)
+                            : "—";
+
+                        const currencyLabel = region === 'MX' ? 'MXN' : 'USD';
 
                         const isPro = plan.name.toLowerCase().includes("pro");
                         const isFree = plan.name.toLowerCase().includes("free");
@@ -182,8 +190,12 @@ export default function PricingClient({ plans }: PricingClientProps) {
                                 <div className="mb-8">
                                     <h3 className="text-xl font-medium mb-2">{plan.displayName}</h3>
                                     <div className="flex items-baseline gap-1 mb-2">
-                                        <span className="text-4xl font-light">{price}</span>
-                                        {plan.priceMXN > 0 && <span className="text-sm text-neutral-500">/{billingInterval === "year" ? "año" : "mes"}</span>}
+                                        <span className="text-4xl font-light">{formattedPrice}</span>
+                                        {priceAmount && priceAmount > 0 && (
+                                            <span className="text-sm text-neutral-500">
+                                                {currencyLabel} /{billingInterval === "year" ? "año" : "mes"}
+                                            </span>
+                                        )}
                                     </div>
                                     <p className="text-sm text-neutral-400 min-h-[80px] mb-6">{plan.description}</p>
                                 </div>

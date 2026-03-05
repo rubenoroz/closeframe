@@ -7,10 +7,14 @@ async function main() {
     console.log("=== PLANS AND STRIPE PRICE IDS ===");
     plans.forEach(plan => {
         console.log(`Plan: ${plan.displayName} (${plan.name})`);
-        console.log(`  MXN Monthly: ${plan.stripePriceIdMXNMonthly}`);
-        console.log(`  MXN Yearly:  ${plan.stripePriceIdMXNYearly}`);
-        console.log(`  USD Monthly: ${plan.stripePriceIdUSDMonthly}`);
-        console.log(`  USD Yearly:  ${plan.stripePriceIdUSDYearly}`);
+        console.log(`  Price MXN (Yearly): ${plan.priceMXN}`);
+        console.log(`  Price USD (Yearly): ${plan.priceUSD}`);
+        console.log(`  Monthly MXN: ${plan.monthlyPriceMXN}`);
+        console.log(`  Monthly USD: ${plan.monthlyPriceUSD}`);
+        console.log(`  MXN Monthly ID: ${plan.stripePriceIdMXNMonthly}`);
+        console.log(`  MXN Yearly ID:  ${plan.stripePriceIdMXNYearly}`);
+        console.log(`  USD Monthly ID: ${plan.stripePriceIdUSDMonthly}`);
+        console.log(`  USD Yearly ID:  ${plan.stripePriceIdUSDYearly}`);
         console.log("-----------------------------------");
     });
 }

@@ -246,8 +246,9 @@ export function PricingSection({ plans, region }: PricingSectionProps) {
                                 {plan.displayName}
                             </span>
                             <div className={`flex flex-col mb-10 ${isRecommended ? "text-[#cdb8e1]" : ""}`}>
-                                <div className="flex items-baseline">
+                                <div className="flex items-baseline gap-2">
                                     <span className="text-5xl font-black">{currencySymbol}{formattedPrice}</span>
+                                    <span className="text-lg font-medium text-white/50">{currencyCode}</span>
                                     {priceToShow > 0 && <span className={`${isRecommended ? "text-[#cdb8e1]/60" : "text-white/30"} text-xs ml-2`}>/mes</span>}
                                 </div>
                                 {/* Show annual total when billing cycle is yearly */}
