@@ -50,12 +50,31 @@ export async function POST(req: NextRequest) {
 
         // ---- CASE 1: Plan Subscription (Platform) ----
         if (planId && priceId) {
+            let activeCustomerId = user.stripeCustomerId;
+
+            // Validate customer exists in Stripe if we have an ID
+            if (activeCustomerId) {
+                try {
+                    const existingCustomer = await stripe.customers.retrieve(activeCustomerId);
+                    if ((existingCustomer as Stripe.DeletedCustomer).deleted) {
+                        throw new Error("Customer deleted");
+                    }
+                } catch (err: any) {
+                    console.warn(`[STRIPE] Customer ${activeCustomerId} not found or deleted. Clearing from DB.`, err.message);
+                    await prisma.user.update({
+                        where: { id: user.id },
+                        data: { stripeCustomerId: null }
+                    });
+                    activeCustomerId = null;
+                }
+            }
+
             // Create Platform Subscription Checkout Session
             const checkoutSession = await stripe.checkout.sessions.create({
                 mode: "subscription",
                 payment_method_types: ["card"],
-                customer: user.stripeCustomerId || undefined,
-                customer_email: !user.stripeCustomerId ? user.email || undefined : undefined,
+                customer: activeCustomerId || undefined,
+                customer_email: !activeCustomerId ? user.email || undefined : undefined,
                 line_items: [
                     {
                         price: priceId,
