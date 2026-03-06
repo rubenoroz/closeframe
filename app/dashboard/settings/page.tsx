@@ -11,6 +11,7 @@ import {
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { signOut } from "next-auth/react";
 import {
     DndContext,
     closestCenter,
@@ -329,6 +330,9 @@ export default function SettingsPage() {
     };
     const [uploadTarget, setUploadTarget] = useState<'coverImage' | 'businessLogo' | null>(null);
     const [isRepositioning, setIsRepositioning] = useState(false);
+    const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -375,6 +379,28 @@ export default function SettingsPage() {
             alert(`Hubo un error al guardar los cambios: ${err.message} `);
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleDeleteAccount = async () => {
+        if (deleteConfirmText !== "ELIMINAR") return;
+
+        setIsDeletingAccount(true);
+        try {
+            const res = await fetch("/api/user/settings", {
+                method: "DELETE",
+            });
+
+            if (!res.ok) {
+                throw new Error("Failed to delete account");
+            }
+
+            // Redirect to confirmation page and sign out
+            await signOut({ callbackUrl: "/account-deleted" });
+        } catch (err: any) {
+            console.error(err);
+            alert("Hubo un error al intentar eliminar tu cuenta.");
+            setIsDeletingAccount(false);
         }
     };
 
@@ -1087,7 +1113,35 @@ export default function SettingsPage() {
                             </DndContext>
                         )}
                     </div>
-                </section >
+                </section>
+
+                {/* DANGER ZONE */}
+                <section className={cn(
+                    "pt-10 border-t",
+                    isLight ? "border-red-100" : "border-red-900/30"
+                )}>
+                    <div className="flex items-center gap-2 md:gap-3 mb-5 md:mb-8 text-red-500/50 text-[10px] md:text-xs uppercase tracking-widest font-bold">
+                        Zona de Peligro
+                    </div>
+                    <div className={cn(
+                        "p-6 rounded-2xl border flex flex-col md:flex-row md:items-center justify-between gap-6",
+                        isLight ? "bg-red-50/50 border-red-100" : "bg-red-500/5 border-red-900/20"
+                    )}>
+                        <div className="space-y-1">
+                            <h3 className={cn("text-base font-medium", isLight ? "text-red-900" : "text-red-400")}>Eliminar cuenta</h3>
+                            <p className="text-xs text-neutral-500 text-pretty">
+                                Una vez que elimines tu cuenta, no podrás revertir esta acción de ninguna manera. Todos tus proyectos y configuraciones se borrarán.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setShowDeleteModal(true)}
+                            className="px-6 py-3 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white transition-all text-xs font-bold whitespace-nowrap"
+                        >
+                            Eliminar definitivamente
+                        </button>
+                    </div>
+                </section>
 
                 {/* ACCOUNT & PLAN REMOVED - MOVED TO /billing */}
 
@@ -1135,6 +1189,83 @@ export default function SettingsPage() {
                     </button>
                 </footer >
             </form >
+
+            {/* CONFIRM DELETE MODAL */}
+            {showDeleteModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+                        onClick={() => setShowDeleteModal(false)}
+                    />
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className={cn(
+                            "relative max-w-md w-full rounded-2xl p-8 border shadow-2xl overflow-hidden",
+                            isLight ? "bg-white border-neutral-200" : "bg-neutral-900 border-neutral-800"
+                        )}
+                    >
+                        <div className="space-y-6">
+                            <div className="bg-red-500/10 w-12 h-12 rounded-full flex items-center justify-center mx-auto">
+                                <Trash2 className="w-6 h-6 text-red-500" />
+                            </div>
+
+                            <div className="text-center space-y-2">
+                                <h3 className="text-xl font-medium">¿Estás absolutamente seguro?</h3>
+                                <p className="text-sm text-neutral-500">
+                                    Esta acción eliminará permanentemente tu cuenta y todos tus datos de nuestros servidores.
+                                </p>
+                            </div>
+
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-bold uppercase tracking-widest opacity-50 block text-center">
+                                    Escribe <span className="text-red-500">ELIMINAR</span> para confirmar
+                                </label>
+                                <input
+                                    type="text"
+                                    value={deleteConfirmText}
+                                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                                    placeholder="ELIMINAR"
+                                    className={cn(
+                                        "w-full px-4 py-3 rounded-xl outline-none text-center font-bold tracking-widest uppercase transition-all",
+                                        isLight
+                                            ? "bg-neutral-50 border border-neutral-200 focus:border-red-500/50"
+                                            : "bg-black/50 border border-neutral-800 focus:border-red-500/50"
+                                    )}
+                                />
+                            </div>
+
+                            <div className="flex gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowDeleteModal(false)}
+                                    className={cn(
+                                        "flex-1 py-3 rounded-xl font-bold text-xs transition-all",
+                                        isLight ? "bg-neutral-100 text-neutral-600" : "bg-neutral-800 text-neutral-400"
+                                    )}
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleDeleteAccount}
+                                    disabled={deleteConfirmText !== "ELIMINAR" || isDeletingAccount}
+                                    className={cn(
+                                        "flex-1 py-3 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2",
+                                        deleteConfirmText === "ELIMINAR" && !isDeletingAccount
+                                            ? "bg-red-500 text-white shadow-lg shadow-red-500/20"
+                                            : "bg-neutral-800 text-neutral-600 cursor-not-allowed"
+                                    )}
+                                >
+                                    {isDeletingAccount ? <Loader2 className="w-4 h-4 animate-spin" /> : "Eliminar cuenta"}
+                                </button>
+                            </div>
+                        </div>
+                    </motion.div>
+                </div>
+            )}
 
             <input
                 type="file"

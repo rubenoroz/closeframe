@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import GuestUploadClient from './GuestUploadClient';
+import MassiveUploadClient from './MassiveUploadClient';
+import { getFeatureAccess } from '@/lib/features/service';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,6 +40,14 @@ export default async function GuestUploadPage({ params }: Props) {
                 </div>
             </div>
         );
+    }
+
+    // Check if owner has massive upload enabled
+    const ownerId = section.gallery.project.userId;
+    const { allowed: massiveUploadEnabled } = await getFeatureAccess(ownerId, 'massiveUpload');
+
+    if (massiveUploadEnabled) {
+        return <MassiveUploadClient token={token} />;
     }
 
     return <GuestUploadClient token={token} />;

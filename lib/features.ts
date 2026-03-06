@@ -48,8 +48,8 @@ export const FEATURE_POOL: FeatureDefinition[] = [
     // --- PROFILE ---
     {
         id: "publicProfile",
-        label: "Perfil Público Personal",
-        description: "Acceso básico al perfil público",
+        label: "Página de Perfil Público",
+        description: "Permite al estudio tener una página de perfil accesible vía /p/[id]",
         category: "profile",
         type: "boolean",
         defaultValue: true,
@@ -175,6 +175,15 @@ export const FEATURE_POOL: FeatureDefinition[] = [
         type: "number",
         defaultValue: 20,
         icon: ImageIcon
+    },
+    {
+        id: "massiveUpload",
+        label: "Subida Masiva de Imágenes",
+        description: "Modal avanzado con drag & drop y previews para invitados",
+        category: "gallery",
+        type: "boolean",
+        defaultValue: false,
+        icon: Zap
     },
     {
         id: "videoGallery",

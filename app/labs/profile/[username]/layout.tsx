@@ -15,27 +15,27 @@ export default function LabsLayout({
             <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Montserrat:400,500,600,700&display=swap" />
             <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;700&display=swap" rel="stylesheet" />
 
-            {/* Template CSS files from /labs/css/ */}
+            {/* Template CSS files from /tutorials/css/ */}
             {/* Link Lexend Font */}
             <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-            <link rel="stylesheet" href="/labs/css/bootstrap.min.css" />
-            <link rel="stylesheet" href="/labs/css/aos.css" />
-            <link rel="stylesheet" href="/labs/css/magnific-popup.css" />
-            <link rel="stylesheet" href="/labs/css/owl.carousel.min.css" />
-            <link rel="stylesheet" href="/labs/css/style.css" />
+            <link rel="stylesheet" href="/tutorials/css/bootstrap.min.css" />
+            <link rel="stylesheet" href="/tutorials/css/aos.css" />
+            <link rel="stylesheet" href="/tutorials/css/magnific-popup.css" />
+            <link rel="stylesheet" href="/tutorials/css/owl.carousel.min.css" />
+            <link rel="stylesheet" href="/tutorials/css/style.css" />
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
 
             {children}
 
-            <Script src="/labs/js/jquery-1.12.4.min.js" strategy="beforeInteractive" />
-            <Script src="/labs/js/popper.min.js" strategy="beforeInteractive" />
-            <Script src="/labs/js/bootstrap.min.js" strategy="lazyOnload" />
-            <Script src="/labs/js/jarallax.min.js" strategy="lazyOnload" />
-            <Script src="/labs/js/jquery.ajaxchimp.min.js" strategy="lazyOnload" />
-            <Script src="/labs/js/jquery.validate.min.js" strategy="lazyOnload" />
-            <Script src="/labs/js/jquery.magnific-popup.min.js" strategy="lazyOnload" />
-            <Script src="/labs/js/aos.js" strategy="lazyOnload" />
-            <Script src="/labs/js/owl.carousel.min.js" strategy="lazyOnload" />
+            <Script src="/tutorials/js/jquery-1.12.4.min.js" strategy="beforeInteractive" />
+            <Script src="/tutorials/js/popper.min.js" strategy="beforeInteractive" />
+            <Script src="/tutorials/js/bootstrap.min.js" strategy="lazyOnload" />
+            <Script src="/tutorials/js/jarallax.min.js" strategy="lazyOnload" />
+            <Script src="/tutorials/js/jquery.ajaxchimp.min.js" strategy="lazyOnload" />
+            <Script src="/tutorials/js/jquery.validate.min.js" strategy="lazyOnload" />
+            <Script src="/tutorials/js/jquery.magnific-popup.min.js" strategy="lazyOnload" />
+            <Script src="/tutorials/js/aos.js" strategy="lazyOnload" />
+            <Script src="/tutorials/js/owl.carousel.min.js" strategy="lazyOnload" />
 
             {/* Script to initialize template scripts after they are loaded */}
             <Script id="init-template-scripts" strategy="lazyOnload">

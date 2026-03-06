@@ -34,6 +34,7 @@ export const authConfig = {
                 nextUrl.pathname.startsWith('/privacy') || // Public redirect
                 nextUrl.pathname.startsWith('/terms') || // Public redirect
                 nextUrl.pathname.startsWith('/plan-b') ||
+                nextUrl.pathname.startsWith('/tutorials') ||
                 nextUrl.pathname.startsWith('/api/upload') || // Guest uploads
                 nextUrl.pathname.startsWith('/api/stripe') || // Stripe previews/checkout (handled inside)
                 nextUrl.pathname.startsWith('/api/auth'); // Auth handlers

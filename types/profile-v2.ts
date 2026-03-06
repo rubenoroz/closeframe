@@ -12,7 +12,7 @@ export interface ProjectItem {
     id: string;
     title: string;
     category?: string;
-    image: string;
+    image?: string;
     galleryId?: string;
     gallerySlug?: string;
     showAsCollage?: boolean;
@@ -104,6 +104,7 @@ export interface TemplateContent {
     projectsTitleColor?: string;
     projectsItemTitleColor?: string;
     projectsItemCategoryColor?: string;
+    projectsItemCategoryBgColor?: string;
     projectsVisible?: boolean;
     projectsViewAllText: string;
     testimonials: TestimonialItem[];
@@ -226,6 +227,7 @@ export const defaultTemplateContent: TemplateContent = {
     projectsTitle: "Galerías Destacadas",
     projectsVisible: true,
     projectsViewAllText: "Ver todos los proyectos",
+    projectsItemCategoryBgColor: "rgba(0,0,0,0.5)",
     testimonials: [
         {
             author: "Cliente de Ejemplo",

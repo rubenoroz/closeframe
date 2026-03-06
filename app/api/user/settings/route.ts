@@ -257,3 +257,29 @@ export async function PATCH(req: NextRequest) {
         }, { status: 500 });
     }
 }
+
+export async function DELETE() {
+    try {
+        const session = await auth();
+        if (!session?.user?.id) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const userId = session.user.id;
+
+        // Note: Stripe subscription cancellation could be added here if needed.
+        // For now, we perform a direct deletion which triggers Prisma cascades.
+
+        await prisma.user.delete({
+            where: { id: userId }
+        });
+
+        return NextResponse.json({ message: "Account deleted successfully" }, { status: 200 });
+    } catch (error: any) {
+        console.error("DELETE Account Error:", error);
+        return NextResponse.json({
+            error: "Error al eliminar la cuenta",
+            details: error?.message || "Internal error"
+        }, { status: 500 });
+    }
+}

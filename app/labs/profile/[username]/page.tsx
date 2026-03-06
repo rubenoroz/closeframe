@@ -2,7 +2,9 @@ import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
 import { TemplateViewer } from "@/components/profile-v2/TemplateViewer";
 import { TemplateContent, defaultTemplateContent } from "@/types/profile-v2";
+import { getInitialProfileData } from "@/lib/profile-v2/templates";
 import { Metadata } from 'next';
+import { getEffectivePlanConfig } from "@/lib/plans.config";
 
 interface Props {
     params: Promise<{
@@ -65,7 +67,13 @@ export default async function LabsProfilePage({ params }: Props) {
             }
         },
         include: {
-            profileV2: true
+            profileV2: true,
+            plan: {
+                select: {
+                    name: true,
+                    config: true
+                }
+            }
         } as any
     }) as any;
 
@@ -73,32 +81,20 @@ export default async function LabsProfilePage({ params }: Props) {
         return notFound();
     }
 
+    // Check Features: Public Profile
+    const effectiveConfig = getEffectivePlanConfig(user.plan?.config || user.plan?.name, user.featureOverrides);
+    const isPublicProfileEnabled = effectiveConfig.features?.publicProfile !== false;
+
+    if (!isPublicProfileEnabled) {
+        return notFound();
+    }
+
     let content: TemplateContent;
     if (user.profileV2?.content) {
         content = user.profileV2.content as unknown as TemplateContent;
     } else {
-        // Fallback: use global defaultTemplateContent and inject user-specific info
-        content = {
-            ...defaultTemplateContent,
-            header: {
-                ...defaultTemplateContent.header,
-                logoText: user.businessName || user.username || user.name || defaultTemplateContent.header.logoText,
-            },
-            hero: {
-                ...defaultTemplateContent.hero,
-                heading: user.name ? `Hola, soy ${user.name}` : defaultTemplateContent.hero.heading,
-                description: user.bio || defaultTemplateContent.hero.description,
-            },
-            about: {
-                ...defaultTemplateContent.about,
-                description: user.bio || defaultTemplateContent.about.description,
-            },
-            footer: {
-                ...defaultTemplateContent.footer,
-                email: user.email || defaultTemplateContent.footer.email,
-                copyrightText: `© ${new Date().getFullYear()} ${user.businessName || user.name || "Tu Marca"}`
-            }
-        };
+        // Fallback: use the refined tutorial template logic
+        content = getInitialProfileData(user);
     }
 
     return <TemplateViewer data={content} userId={user.id} />;

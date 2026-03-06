@@ -178,7 +178,6 @@ export default function GuestUploadClient({ token }: { token: string }) {
                             <input
                                 ref={fileInputRef}
                                 type="file"
-                                multiple
                                 accept="image/jpeg,image/jpg,image/png,image/heic,image/heif"
                                 onChange={(e) => handleFileSelect(e.target.files)}
                                 className="hidden"

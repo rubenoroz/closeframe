@@ -205,7 +205,8 @@ export default function ProfileV2Page() {
       if (res.ok) {
         alert("¡Cambios guardados correctamente!");
       } else {
-        alert("Hubo un error al guardar.");
+        const errData = await res.json();
+        alert(errData.error || "Hubo un error al guardar.");
       }
     } catch (e) {
       console.error(e);
@@ -1460,6 +1461,24 @@ export default function ProfileV2Page() {
                     />
                   </div>
                 </div>
+                <div className="flex-1">
+                  <label className="block text-xs font-semibold text-gray-400 mb-1">Fondo del Tipo de Proyecto</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      className="w-10 h-10 rounded cursor-pointer bg-transparent border-0 p-0 flex-shrink-0"
+                      value={data.projectsItemCategoryBgColor || "#000000"}
+                      onChange={(e) => setData({ ...data, projectsItemCategoryBgColor: e.target.value })}
+                    />
+                    <input
+                      type="text"
+                      className="w-full bg-[#1A1A1A] border-[#444] text-white border rounded-lg h-10 px-3 text-sm uppercase font-mono"
+                      value={data.projectsItemCategoryBgColor || ""}
+                      onChange={(e) => setData({ ...data, projectsItemCategoryBgColor: e.target.value })}
+                      placeholder="rgba(0,0,0,0.5)"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
             <div className="space-y-6">
@@ -1806,17 +1825,37 @@ export default function ProfileV2Page() {
         >
           {isSaving ? "Guardando..." : "Guardar Proyecto"}
         </button>
-        <a
-          href={data.username ? `/u/${data.username}` : '#'}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ padding: '10px 20px', borderRadius: '8px', fontSize: '14px', fontWeight: 600, border: '1px solid #444', backgroundColor: '#1A1A1A', color: '#ccc', textDecoration: 'none', textAlign: 'center', cursor: 'pointer', transition: 'background-color 0.2s', boxShadow: '0 2px 8px rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
-          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#222'; }}
+        <button
+          onClick={() => {
+            if (data.username) {
+              window.open(`/u/${data.username}`, '_blank');
+            } else {
+              alert("Debes definir un 'Username' en el módulo correspondiente antes de poder ver tu perfil público.");
+            }
+          }}
+          style={{
+            padding: '10px 20px',
+            borderRadius: '8px',
+            fontSize: '14px',
+            fontWeight: 600,
+            border: '1px solid #444',
+            backgroundColor: '#1A1A1A',
+            color: data.username ? '#ccc' : '#666',
+            textAlign: 'center',
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6px'
+          }}
+          onMouseEnter={(e) => { if (data.username) e.currentTarget.style.backgroundColor = '#222'; }}
           onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#1A1A1A'; }}
         >
           <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-          Ver Perfil
-        </a>
+          {data.username ? "Ver Perfil" : "Configura tu Username"}
+        </button>
       </div>
 
       <div className="flex-1 overflow-hidden relative">

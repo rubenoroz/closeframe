@@ -114,7 +114,7 @@ const ProjectItemView = ({ project, resolveImageUrl, onLoaded }: { project: any,
 
         // Ultimate fallback
         const resolved = resolveImageUrl(img);
-        if (resolved === "/labs/img/portfolio/1140x641-1.jpg") return null;
+        if (resolved === "/labs/img/portfolio/1140x641-1.jpg" || resolved === "/labs/hero-photographer.jpg") return null;
         return resolved || null;
     })();
 
@@ -182,7 +182,7 @@ const ProjectItemView = ({ project, resolveImageUrl, onLoaded }: { project: any,
             )}
             <figcaption className="text-white">
                 <h3 className="mb-2 text-white">{project.title}</h3>
-                <p>{project.category}</p>
+                <p style={{ display: 'table', padding: '2px 8px', borderRadius: '4px' }}>{project.category}</p>
             </figcaption>
         </figure>
     );
@@ -303,7 +303,7 @@ export function TemplateViewer({ data, userId }: Props) {
 
     const resolveImageUrl = (url?: string) => {
         if (!url) return "";
-        if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('/uploads/')) {
+        if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('/uploads/') || url.startsWith('/tutorials/')) {
             return url;
         }
         // [FIX] Avoid double /labs or prepending /labs to cloud IDs (OneDrive '!', Dropbox 'id:')
@@ -435,6 +435,7 @@ export function TemplateViewer({ data, userId }: Props) {
                 ${data.projectsTitleColor ? `#projects h2 { color: ${data.projectsTitleColor} !important; }` : ''}
                 ${data.projectsItemTitleColor ? `#projects h3, #projects h3.text-white { color: ${data.projectsItemTitleColor} !important; }` : ''}
                 ${data.projectsItemCategoryColor ? `#projects figcaption p { color: ${data.projectsItemCategoryColor} !important; }` : ''}
+                ${data.projectsItemCategoryBgColor ? `#projects figcaption p { background-color: ${data.projectsItemCategoryBgColor} !important; }` : ''}
                 
                 ${data.testimonialsTitleColor ? `#testimonials h2, #testimonials p, #testimonials span, #testimonials strong { color: ${data.testimonialsTitleColor} !important; }` : ''}
                 
@@ -882,7 +883,7 @@ export function TemplateViewer({ data, userId }: Props) {
 
             {/* Services Section */}
             {data.servicesConfig?.visible !== false && (
-                <section className="bg-dark overflow-hidden" style={{ paddingTop: '1rem', paddingBottom: 'calc(3rem + 10px)' }}>
+                <section id="services" className="bg-dark overflow-hidden" style={{ paddingTop: '1rem', paddingBottom: 'calc(3rem + 10px)' }}>
                     <div className="container">
                         <div className="row services-desktop-offset">
                             {data.services?.map((service, index) => (
@@ -1031,7 +1032,7 @@ export function TemplateViewer({ data, userId }: Props) {
                             {data.testimonials?.map((testi, index) => (
                                 <div key={index} className="col-testimonial" data-aos="fade-up">
                                     <span className="quiote">“</span>
-                                    <p data-aos="fade-up">{testi.quote}</p>
+                                    <p data-aos="fade-up" style={{ whiteSpace: 'pre-wrap' }}>{testi.quote}</p>
                                     <p className="mt-5 text-dark" data-aos="fade-up"><strong>{testi.author}</strong> - {testi.role}</p>
                                 </div>
                             ))}

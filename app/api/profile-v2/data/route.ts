@@ -2,17 +2,35 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { defaultTemplateContent } from "@/types/profile-v2";
+import { getInitialProfileData } from "@/lib/profile-v2/templates";
 
-export async function GET() {
+export async function GET(request: Request) {
     try {
+        const { searchParams } = new URL(request.url);
+        const targetUsername = searchParams.get('username');
+
         const session = await auth();
-        if (!session?.user?.email) {
+
+        let userEmail = session?.user?.email;
+        let whereClause: any = { email: userEmail || "" };
+
+        if (targetUsername) {
+            whereClause = { username: targetUsername };
+        } else if (!userEmail) {
             return NextResponse.json({ error: "No autorizado" }, { status: 401 });
         }
 
         const user = await prisma.user.findUnique({
-            where: { email: session.user.email },
-            select: { id: true, username: true },
+            where: whereClause,
+            select: {
+                id: true,
+                username: true,
+                name: true,
+                image: true,
+                businessName: true,
+                businessLogo: true,
+                bio: true
+            },
         });
 
         if (!user) {
@@ -29,8 +47,14 @@ export async function GET() {
             return NextResponse.json({ ...content, username: user.username || content.username || "" });
         }
 
-        // Return default content with the user's username
-        return NextResponse.json({ ...defaultTemplateContent, username: user.username || "" });
+        // Return dynamic initial content (tutorial/base) with the user's data
+        const initialData = getInitialProfileData(user);
+
+        // Ensure we always have the tutorial heading for new users
+        return NextResponse.json({
+            ...initialData,
+            username: user.username || "",
+        });
     } catch (error) {
         console.error("Error loading profile v2 data:", error);
         return NextResponse.json({ error: "Error al cargar datos" }, { status: 500 });
@@ -46,7 +70,7 @@ export async function POST(request: Request) {
 
         const user = await prisma.user.findUnique({
             where: { email: session.user.email },
-            select: { id: true },
+            select: { id: true, featureOverrides: true },
         });
 
         if (!user) {
@@ -71,11 +95,28 @@ export async function POST(request: Request) {
             userUpdateData.businessLogoScale = data.header.logoWidth;
         }
 
+        // Set profileVersion to v2 in featureOverrides
+        const currentOverrides = (user.featureOverrides as any) || {};
+        userUpdateData.featureOverrides = {
+            ...currentOverrides,
+            profileVersion: 'v2'
+        };
+
         if (Object.keys(userUpdateData).length > 0) {
-            await prisma.user.update({
-                where: { id: user.id },
-                data: userUpdateData,
-            });
+            try {
+                await prisma.user.update({
+                    where: { id: user.id },
+                    data: userUpdateData,
+                });
+            } catch (error: any) {
+                // Handle unique constraint for username
+                if (error.code === 'P2002' && error.meta?.target?.includes('username')) {
+                    return NextResponse.json({
+                        error: "El username '" + data.username + "' ya está siendo usado por otro perfil. Por favor elige uno diferente."
+                    }, { status: 400 });
+                }
+                throw error;
+            }
         }
 
         await prisma.userProfileV2.upsert({

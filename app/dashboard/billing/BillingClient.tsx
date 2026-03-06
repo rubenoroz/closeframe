@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { CreditCard, User, BarChart3, FileText, AlertTriangle } from "lucide-react";
+import { CreditCard, User, BarChart3, FileText, AlertTriangle, Trash2, Loader2, X, Check } from "lucide-react";
 import { motion } from "framer-motion";
+import { signOut } from "next-auth/react";
 import { ReferralsContent } from "@/components/dashboard/ReferralsContent";
 
 interface BillingClientProps {
@@ -31,6 +32,32 @@ export default function BillingClient({
             setActiveTab("referrals");
         }
     }, []);
+
+    const [isDeletingAccount, setIsDeletingAccount] = React.useState(false);
+    const [showDeleteModal, setShowDeleteModal] = React.useState(false);
+    const [deleteConfirmText, setDeleteConfirmText] = React.useState("");
+
+    const handleDeleteAccount = async () => {
+        if (deleteConfirmText !== "ELIMINAR") return;
+
+        setIsDeletingAccount(true);
+        try {
+            const res = await fetch("/api/user/settings", {
+                method: "DELETE",
+            });
+
+            if (!res.ok) {
+                throw new Error("Failed to delete account");
+            }
+
+            // Redirect to confirmation page and sign out
+            await signOut({ callbackUrl: "/account-deleted" });
+        } catch (err: any) {
+            console.error(err);
+            alert("Hubo un error al intentar eliminar tu cuenta.");
+            setIsDeletingAccount(false);
+        }
+    };
 
     const handleOpenPortal = async () => {
         try {
@@ -184,25 +211,42 @@ export default function BillingClient({
                             </div>
                         </section>
 
-                        {/* CANCEL */}
-                        <section className="pt-8 border-t border-neutral-900">
+                        {/* CANCEL & DELETE */}
+                        <section className="pt-8 border-t border-neutral-900 space-y-4">
                             <div className="flex items-center gap-3 mb-6 text-red-500/80 font-medium uppercase tracking-widest text-[10px]">
                                 <AlertTriangle className="w-4 h-4" /> Zona de peligro
                             </div>
 
-                            <div className="p-8 rounded-3xl border border-red-900/20 bg-red-950/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                                <div>
-                                    <h4 className="text-red-400 font-medium mb-1">Cancelar suscripción</h4>
-                                    <p className="text-xs text-neutral-500 max-w-md">
-                                        Gestiona la cancelación o pausa de tu suscripción directamente en el portal.
-                                    </p>
+                            <div className="grid gap-4">
+                                <div className="p-8 rounded-3xl border border-red-900/20 bg-red-950/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                                    <div>
+                                        <h4 className="text-red-400 font-medium mb-1 text-sm md:text-base">Cancelar suscripción</h4>
+                                        <p className="text-xs text-neutral-500 max-w-md">
+                                            Gestiona la cancelación o pausa de tu suscripción directamente en el portal de Stripe.
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={handleOpenPortal}
+                                        className="px-6 py-2.5 rounded-full border border-red-900/30 text-red-400/60 hover:text-red-400 hover:border-red-500 hover:bg-red-500/5 transition text-xs font-bold shrink-0"
+                                    >
+                                        Gestionar en Portal
+                                    </button>
                                 </div>
-                                <button
-                                    onClick={handleOpenPortal}
-                                    className="px-6 py-2.5 rounded-full border border-red-900/30 text-red-400/60 hover:text-red-400 hover:border-red-500 hover:bg-red-500/5 transition text-xs font-bold shrink-0"
-                                >
-                                    Gestionar en Portal
-                                </button>
+
+                                <div className="p-8 rounded-3xl border border-red-900/20 bg-red-950/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 shadow-red-500/5 shadow-inner">
+                                    <div>
+                                        <h4 className="text-red-500 font-medium mb-1 text-sm md:text-base">Eliminar cuenta</h4>
+                                        <p className="text-xs text-neutral-500 max-w-md">
+                                            Borra permanentemente tu cuenta y todos tus datos (proyectos, configuraciones, etc.). Esta acción no se puede deshacer.
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={() => setShowDeleteModal(true)}
+                                        className="px-6 py-2.5 rounded-full bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white transition-all text-xs font-bold shrink-0"
+                                    >
+                                        Eliminar definitivamente
+                                    </button>
+                                </div>
                             </div>
                         </section>
                     </>
@@ -212,6 +256,70 @@ export default function BillingClient({
                     </div>
                 )}
             </main>
+
+            {/* CONFIRM DELETE MODAL */}
+            {showDeleteModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+                        onClick={() => setShowDeleteModal(false)}
+                    />
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="relative max-w-md w-full rounded-2xl p-8 border border-neutral-800 bg-neutral-900 shadow-2xl overflow-hidden"
+                    >
+                        <div className="space-y-6">
+                            <div className="bg-red-500/10 w-12 h-12 rounded-full flex items-center justify-center mx-auto">
+                                <Trash2 className="w-6 h-6 text-red-500" />
+                            </div>
+
+                            <div className="text-center space-y-2">
+                                <h3 className="text-xl font-medium text-white">¿Estás absolutamente seguro?</h3>
+                                <p className="text-sm text-neutral-500">
+                                    Esta acción eliminará permanentemente tu cuenta y todos tus datos de nuestros servidores.
+                                </p>
+                            </div>
+
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-bold uppercase tracking-widest opacity-50 block text-center text-neutral-400">
+                                    Escribe <span className="text-red-500">ELIMINAR</span> para confirmar
+                                </label>
+                                <input
+                                    type="text"
+                                    value={deleteConfirmText}
+                                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                                    placeholder="ELIMINAR"
+                                    className="w-full px-4 py-3 rounded-xl outline-none text-center font-bold tracking-widest uppercase transition-all bg-black/50 border border-neutral-800 focus:border-red-500/50 text-white"
+                                />
+                            </div>
+
+                            <div className="flex gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowDeleteModal(false)}
+                                    className="flex-1 py-3 rounded-xl font-bold text-xs transition-all bg-neutral-800 text-neutral-400"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleDeleteAccount}
+                                    disabled={deleteConfirmText !== "ELIMINAR" || isDeletingAccount}
+                                    className={`flex-1 py-3 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 ${deleteConfirmText === "ELIMINAR" && !isDeletingAccount
+                                        ? "bg-red-500 text-white shadow-lg shadow-red-500/20"
+                                        : "bg-neutral-800 text-neutral-600 cursor-not-allowed"
+                                        }`}
+                                >
+                                    {isDeletingAccount ? <Loader2 className="w-4 h-4 animate-spin" /> : "Eliminar cuenta"}
+                                </button>
+                            </div>
+                        </div>
+                    </motion.div>
+                </div>
+            )}
         </div>
     );
 }

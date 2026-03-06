@@ -29,6 +29,7 @@ export const PLANS = {
             lowResDownloads: false, // Updated to match user request (disabled for free)
             highResDownloads: false,
             selectiveDownload: true,
+            publicProfile: true,
         },
         marketingFeatures: [
             "Perfil público personal",
@@ -79,6 +80,7 @@ export const PLANS = {
             lowResDownloads: true,
             highResDownloads: true,
             selectiveDownload: true,
+            publicProfile: true,
         },
         marketingFeatures: [
             "Perfil público profesional",
@@ -121,6 +123,7 @@ export const PLANS = {
             lowResDownloads: true,
             highResDownloads: true,
             selectiveDownload: true,
+            publicProfile: true,
         },
         marketingFeatures: [
             "Perfil público profesional",
@@ -166,6 +169,7 @@ export const PLANS = {
             lowResDownloads: true,
             highResDownloads: true,
             selectiveDownload: true,
+            publicProfile: true,
         },
         marketingFeatures: [
             "Todo lo de Pro",
@@ -209,6 +213,7 @@ export const PLANS = {
             lowResDownloads: true,
             highResDownloads: true,
             selectiveDownload: true,
+            publicProfile: true,
         },
         marketingFeatures: [
             "Todo lo de Studio",

@@ -210,6 +210,24 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 } else {
                     console.log("[AUTH] No referral code found for new user.");
                 }
+
+                // --- DEFAULT PLAN ASSIGNMENT ---
+                if (user.id) {
+                    console.log(`[AUTH] Assigning default FREE plan to user ${user.id}`);
+                    const freePlan = await prisma.plan.findFirst({
+                        where: { name: "free" }
+                    });
+
+                    if (freePlan) {
+                        await prisma.user.update({
+                            where: { id: user.id },
+                            data: { planId: freePlan.id }
+                        });
+                        console.log(`[AUTH] Plan 'free' (${freePlan.id}) assigned to user ${user.id}`);
+                    } else {
+                        console.error("[AUTH] CRITICAL: Plan 'free' not found in database. Cannot assign default plan.");
+                    }
+                }
             } catch (error) {
                 console.error("[AUTH] Error in createUser event:", error);
             }

@@ -77,7 +77,8 @@ export const PLAN_DEFAULTS = {
             collaborativeGalleries: false,
             zipDownloadsEnabled: false,
             calendarSync: false,
-            scenaAccess: true
+            scenaAccess: true,
+            massiveUpload: false
         },
         limits: {
             bioMaxLength: 150,
@@ -170,7 +171,8 @@ export const PLAN_DEFAULTS = {
             store: false,
             closerGalleries: true,
             calendarSync: true,
-            scenaAccess: true
+            scenaAccess: true,
+            massiveUpload: false
         },
         limits: {
             bioMaxLength: 300,
@@ -267,7 +269,8 @@ export const PLAN_DEFAULTS = {
             // Actually checking legacy checks, Pro usually had it.
             // Let's set it to true for Pro, Studio, Agency.
             calendarSync: true,
-            scenaAccess: true
+            scenaAccess: true,
+            massiveUpload: true
         },
         limits: {
             bioMaxLength: 500,
