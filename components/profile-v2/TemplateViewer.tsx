@@ -313,7 +313,7 @@ export function TemplateViewer({ data, userId }: Props) {
     };
 
     return (
-        <div className="richard-template">
+        <div className="richard-template" style={{ overflowX: 'hidden', width: '100vw', maxWidth: '100%' }}>
             <style>{`
                 .project-item figure {
                     aspect-ratio: 1140 / 641 !important;
@@ -640,8 +640,8 @@ export function TemplateViewer({ data, userId }: Props) {
                     }
                 }
 
-                /* iPad & Tablet Landscape Adjustments (768px - 1199px) - Prevents Overflow */
-                @media (min-width: 768px) and (max-width: 1199px) {
+                /* iPad & Tablet Landscape Adjustments (768px - 1439px) - Prevents Overflow on all iPads including iPad Pro */
+                @media (min-width: 768px) and (max-width: 1439px) {
                     html, body {
                         overflow-x: hidden !important; 
                         max-width: 100vw !important;
@@ -678,8 +678,8 @@ export function TemplateViewer({ data, userId }: Props) {
                     }
                 }
 
-                /* Responsive Desktop Adjustments - Strictly > 1200px */
-                @media (min-width: 1200px) {
+                /* Responsive Desktop Adjustments - Strictly > 1440px for the large offsets */
+                @media (min-width: 1440px) {
                     .hero-desktop-offset {
                         margin-left: -200px !important;
                         max-width: 600px !important;
