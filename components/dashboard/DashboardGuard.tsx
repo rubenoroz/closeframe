@@ -23,17 +23,9 @@ export function DashboardGuard({ children }: DashboardGuardProps) {
             return;
         }
 
-        const user = session.user as any;
-        const isFree = !user.planName || user.planName.toLowerCase() === "free";
-        const isAdmin = ["SUPERADMIN", "STAFF", "VIP"].includes(user.role);
-
-        // RESTRICTION LOGIC:
-        // If user is FREE (or no plan) AND NOT invited AND NOT an admin
-        // Then they must go to pricing to pay or get an invite.
-        if (isFree && !user.isInvited && !isAdmin) {
-            console.log("[DASHBOARD_GUARD] Access denied for non-invited free user. Redirecting to billing.");
-            router.push("/pricing?reason=invite_required");
-        }
+        // Los usuarios free ahora pueden acceder al dashboard
+        // con funcionalidades limitadas según su plan.
+        // La restricción de invitación se eliminó para mejorar la UX.
     }, [session, status, router, pathname]);
 
     if (status === "loading") {
@@ -44,21 +36,8 @@ export function DashboardGuard({ children }: DashboardGuardProps) {
         );
     }
 
-    // Double check session to avoid flicker before redirect
+    // Si no hay sesión, no mostrar contenido (será redirigido al login)
     if (!session) return null;
-
-    const user = session.user as any;
-    const isFree = !user.planName || user.planName.toLowerCase() === "free";
-    const isAdmin = ["SUPERADMIN", "STAFF", "VIP"].includes(user.role);
-
-    // If they are going to be redirected, don't show children
-    if (isFree && !user.isInvited && !isAdmin) {
-        return (
-            <div className="flex h-screen w-full items-center justify-center bg-black">
-                <Loader2 className="h-8 w-8 animate-spin text-white" />
-            </div>
-        );
-    }
 
     return <>{children}</>;
 }
