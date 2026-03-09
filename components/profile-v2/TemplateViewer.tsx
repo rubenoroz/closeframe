@@ -626,8 +626,22 @@ export function TemplateViewer({ data, userId }: Props) {
                     pointer-events: auto;
                 }
 
-                /* Responsive Desktop Adjustments */
-                @media (min-width: 992px) {
+                /* Responsive Mobile Adjustments for Typography */
+                @media (max-width: 767px) {
+                    .hero-content-box h1, .about-content-box h1 {
+                        font-size: 2rem !important;
+                    }
+                    .hero-content-box p.lead, .about-content-box p.lead {
+                        font-size: 1.1rem !important;
+                        line-height: 1.6 !important;
+                    }
+                    .hero-content-box, .about-content-box {
+                        padding: 1.5rem !important;
+                    }
+                }
+
+                /* Responsive Desktop Adjustments - Changed to 1200px to avoid breaking iPad Landscape */
+                @media (min-width: 1200px) {
                     .hero-desktop-offset {
                         margin-left: -200px !important;
                         max-width: 600px !important;
