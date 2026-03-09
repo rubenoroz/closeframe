@@ -640,7 +640,45 @@ export function TemplateViewer({ data, userId }: Props) {
                     }
                 }
 
-                /* Responsive Desktop Adjustments - Changed to 1200px to avoid breaking iPad Landscape */
+                /* iPad & Tablet Landscape Adjustments (768px - 1199px) - Prevents Overflow */
+                @media (min-width: 768px) and (max-width: 1199px) {
+                    html, body {
+                        overflow-x: hidden !important; 
+                        max-width: 100vw !important;
+                    }
+                    .hero-content-box {
+                        width: 100% !important;
+                        max-width: 90% !important; /* Keep it contained */
+                        margin-left: 0 !important;
+                    }
+                    .about-content-box {
+                        width: 100% !important;
+                        max-width: 100vw !important; /* Stop the calc(100% + 400px) overflow */
+                        margin-left: 0 !important; /* Stop the -200px offset */
+                        padding-left: 2rem !important;
+                        padding-right: 2rem !important;
+                        box-sizing: border-box !important;
+                        overflow-wrap: break-word !important;
+                    }
+                    h1.display-4.about-desktop-title-offset {
+                        margin-left: 0 !important; /* Stop the 150px title offset */
+                    }
+                    .services-desktop-offset {
+                        transform: none !important; /* Stop translation */
+                        width: 100% !important; /* Stop the calc width */
+                        margin-left: 0 !important;
+                    }
+                    .project-collage {
+                         grid-template-columns: 1fr 1fr !important; /* Fix grid overflow on iPad */
+                         grid-template-rows: auto !important;
+                    }
+                    .project-collage > div:first-child {
+                        grid-column: span 2 !important; /* Make first image full width on tablet */
+                        grid-row: span 1 !important;
+                    }
+                }
+
+                /* Responsive Desktop Adjustments - Strictly > 1200px */
                 @media (min-width: 1200px) {
                     .hero-desktop-offset {
                         margin-left: -200px !important;
