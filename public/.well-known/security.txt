@@ -1,0 +1,9 @@
+Contact: mailto:security@closerlens.com
+Expires: 2027-03-10T15:00:00.000Z
+Canonical: https://closerlens.com/.well-known/security.txt
+
+# Si deseas agregar una firma PGP:
+# 1. Crea tu archivo de llave publica y configúralo en tu dominio
+# Encryption: https://closerlens.com/pgp-key.txt
+# 2. Firma este archivo desde tu terminal con:
+# gpg -u security@closerlens.com --clear-sign security.txt
