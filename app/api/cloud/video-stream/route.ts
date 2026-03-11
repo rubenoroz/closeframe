@@ -4,8 +4,9 @@ import { prisma } from "@/lib/db";
 import { getFreshAuth } from "@/lib/cloud/auth-factory";
 
 /**
- * Video Streaming Proxy for Google Drive
- * Supports HTTP Range requests for seeking
+ * Video/Audio Streaming Proxy & Redirector
+ * Supports HTTP Range requests for seeking (Google Drive)
+ * Redirects directly to CDN for Microsoft and Dropbox
  * 
  * Query params:
  *   - c: cloudAccountId
@@ -21,8 +22,45 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: "Missing cloudAccountId or fileId" }, { status: 400 });
         }
 
+        const account = await prisma.cloudAccount.findUnique({
+            where: { id: cloudAccountId },
+            select: { provider: true }
+        });
+
+        if (!account) {
+            return NextResponse.json({ error: "Cloud account not found" }, { status: 404 });
+        }
+
         // Use centralized auth factory (handles decryption and refresh)
         const authClient = await getFreshAuth(cloudAccountId);
+
+        // [FIX] Si no es Google, tratamos de generar una URL directa u homóloga.
+        if (account.provider === "microsoft") {
+            const { MicrosoftGraphProvider } = await import("@/lib/cloud/microsoft-provider");
+            const provider = new MicrosoftGraphProvider(authClient as string);
+            const downloadUrl = await provider.getFileLink(fileId);
+
+            if (!downloadUrl) return NextResponse.json({ error: "No URL found" }, { status: 404 });
+            // Redirigimos al CDN de Microsoft que soporta Range requests de forma nativa sin auth en la URL temporal.
+            return NextResponse.redirect(downloadUrl);
+
+        } else if (account.provider === "dropbox") {
+            const { DropboxProvider } = await import("@/lib/cloud/dropbox-provider");
+            const provider = new DropboxProvider(authClient as string);
+            const downloadUrl = await provider.getFileLink(fileId);
+
+            if (!downloadUrl) return NextResponse.json({ error: "No URL found" }, { status: 404 });
+            // Dropbox link (temporary) also supports native stream range requests
+            return NextResponse.redirect(downloadUrl);
+
+        } else if (account.provider === "koofr") {
+            // Koofr requiere Auth (Basic) headers, redirigir fallará a menos que generemos un token de link publico.
+            // Redirigiremos al download-direct.
+            const directUrl = new URL(`/api/cloud/download-direct?c=${cloudAccountId}&f=${fileId}&inline=true`, req.url);
+            return NextResponse.redirect(directUrl.toString());
+        }
+
+        // === Fallback (Original Google Drive Streaming Proxy) ===
 
         // @ts-ignore
         const drive = google.drive({ version: "v3", auth: authClient });
@@ -36,7 +74,7 @@ export async function GET(req: NextRequest) {
         const fileSize = parseInt(fileMeta.data.size || "0");
         let mimeType = fileMeta.data.mimeType || "video/mp4";
 
-        // [FIX] Google Drive sometimes returns octet-stream or video/mp4 for audio
+        // Google Drive sometimes returns octet-stream or video/mp4 for audio
         // We fallback to extension detection to ensure <audio> tags work
         if (fileMeta.data.name) {
             const lowerName = fileMeta.data.name.toLowerCase();
